@@ -1,1 +1,37 @@
+Compte-rendu du projet Cisco 
 
+L’objectif de ce mini-lab était de mettre en place un réseau local segmenté en plusieurs VLANs, 
+tout en permettant la communication entre ces VLANs à l’aide d’un routeur configuré en Router-on-a-Stick. 
+Il fallait également intégrer des services comme le DHCP pour l’attribution automatique des adresses IP, 
+ainsi que le Wi-Fi pour connecter un laptop via un point d’accès.
+
+Dans l’énoncé, on nous indiquait que plusieurs ports devaient être configurés en trunk, ce qui m’a amené à opter pour une topologie en étoile. 
+
+Dans cette topologie :
+Un routeur central est relié à un switch principal.
+Ce switch est ensuite connecté aux deux autres switches via des liens trunk.
+Tous les équipements (PCs, APs...) sont répartis sur ces switches selon leur VLAN.
+Cette topologie permet une meilleure centralisation, et comme un seul switch est connecté au routeur, cela facilite la configuration du Router-on-a-Stick
+
+<<-- VLANs et switches -->>
+J’ai commencé par créer les VLANs demandés dans l’énoncé sur chaque switch, en associant les bons ports à chaque VLAN selon le plan. 
+Pour éviter de répéter la configuration sur chaque switch, on aurait aussi pu mettre en place un serveur VTP, 
+ce qui permettrait de créer les VLANs une seule fois, et de les propager automatiquement aux autres switches. 
+Cependant, j’ai choisi de tout faire manuellement pour bien comprendre le processus. (voir capture) 
+
+Les liens entre les switches ont été configurés en mode trunk afin de permettre la circulation du trafic VLAN entre eux.
+
+Ensuite, j’ai configuré le routeur en mode Router-on-a-Stick. Cela consiste à utiliser une seule interface physique sur le routeur, 
+qu’on divise en sous-interfaces pour chaque VLAN. Grâce à cette configuration, le routeur peut assurer le routage inter-VLAN (voir capture) 
+
+
+<<--  DHCP -->>
+J’ai également activé un service DHCP sur le routeur pour que chaque PC ou équipement reçoive automatiquement une adresse IP correcte selon son VLAN. 
+J’ai vérifié cela avec des tests de ping entre les postes pour m’assurer qu’ils avaient bien reçu une IP et qu’ils pouvaient communiquer entre eux.
+(voir capture).
+
+<<-- Wi-Fi -->>
+Une fois le réseau filaire fonctionnel, j’ai configuré les points d’accès (AP) en leur attribuant un SSID propre à chaque VLAN Wi-Fi. Ensuite, 
+j’ai ajouté une carte réseau Wi-Fi sur le laptop dans Packet Tracer, et j’ai configuré la partie sans fil pour qu’il se connecte au bon AP via le bon SSID.
+Cela permettait au laptop de se connecter au réseau via Wi-Fi et de communiquer avec les autres appareils du VLAN, comme s’il était connecté par câble.
+(voir capture).

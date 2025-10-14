@@ -1,0 +1,58 @@
+# Script d'ajout des utilisateurs Active Directory
+Import-Module ActiveDirectory
+
+# Mot de passe 
+$Password = ConvertTo-SecureString "Azerty_2025!" -AsPlainText -Force
+
+# Chemin du fichier CSV
+$CsvPath = "$env:USERPROFILE\Desktop\utilisateurs.csv"
+
+# Import des utilisateurs
+$Users = Import-Csv -Path $CsvPath
+
+# Création des OUs
+New-ADOrganizationalUnit -Name "Utilisateurs" -Path "DC=laplateforme,DC=io" -ErrorAction SilentlyContinue
+New-ADOrganizationalUnit -Name "Groupes" -Path "DC=laplateforme,DC=io" -ErrorAction SilentlyContinue
+
+# Extraction et création des groupes
+$AllGroups = @()
+foreach ($User in $Users) {
+    1..6 | ForEach-Object {
+        $Group = $User."groupe$_"
+        if ($Group) { $AllGroups += $Group }
+    }
+}
+
+$AllGroups | Select-Object -Unique | ForEach-Object {
+    New-ADGroup -Name $_ -GroupScope Global -Path "OU=Groupes,DC=laplateforme,DC=io" -ErrorAction SilentlyContinue
+}
+
+# Création des utilisateurs
+foreach ($User in $Users) {
+    $Prenom = $User.prénom
+    $Nom = $User.nom
+    $Username = "$Prenom.$Nom".ToLower()
+    
+    # Création de l'utilisateur
+    New-ADUser -Name "$Prenom $Nom" `
+               -GivenName $Prenom `
+               -Surname $Nom `
+               -SamAccountName $Username `
+               -UserPrincipalName "$Username@laplateforme.io" `
+               -Path "OU=Utilisateurs,DC=laplateforme,DC=io" `
+               -AccountPassword $Password `
+               -Enabled $true `
+               -ChangePasswordAtLogon $true
+    
+    Write-Host "Utilisateur créé: $Username"
+    
+    # Ajout aux groupes
+    1..6 | ForEach-Object {
+        $Group = $User."groupe$_"
+        if ($Group) {
+            Add-ADGroupMember -Identity $Group -Members $Username -ErrorAction SilentlyContinue
+        }
+    }
+}
+
+Write-Host "Terminé! Mot de passe: Azerty_2025!"

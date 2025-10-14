@@ -1,11 +1,19 @@
-Dans ce devoir, j’ai créé une machine virtuelle avec Windows Server 2019 sous VirtualBox.
-Après l’installation, j’ai configuré un contrôleur de domaine Active Directory de manière graphique, plus simple et plus visuelle pour moi.
-Le domaine que j’ai créé s’appelle laplateforme.io.
-Pour automatiser la création des utilisateurs et des groupes,
-j’ai écrit un script PowerShell basé sur un fichier CSV contenant les informations des utilisateurs.
-Ce script crée automatiquement :
-Les OUs (Utilisateurs / Groupes)
-Les groupes mentionnés dans le fichier CSV
-Les comptes utilisateurs avec un mot de passe par défaut
-L’ajout des utilisateurs aux bons groupes
-L’ensemble du processus est illustré par les captures d’écran ci-jointes (installation, configuration AD) ainsi que le script PowerShell fourni.
+🧾 Compte-rendu du projet Active Directory – Windows Server 2019
+
+L’objectif de ce mini-lab était de mettre en place un contrôleur de domaine Active Directory sur une machine Windows Server, 
+et d’automatiser la création des utilisateurs et des groupes à l’aide d’un script PowerShell.
+Pour cela, j’ai utilisé VirtualBox afin de créer une machine virtuelle dédiée, sur laquelle j’ai installé Windows Server 2019.
+
+<<-- Installation du serveur et configuration du domaine -->>
+
+Une fois le système installé, j’ai lancé l’outil de gestion des rôles pour ajouter le rôle AD DS (Active Directory Domain Services).
+J’ai ensuite promu le serveur en contrôleur de domaine via l’interface graphique, ce qui m’a permis de configurer plus facilement le nom du domaine et les paramètres DNS.
+J’ai choisi le nom de domaine suivant : laplateforme.io. Contrainte de l’énoncé
+(voir captures d’écran de l’installation et de la configuration du domaine)
+
+<<-- Automatisation avec PowerShell -->>
+
+Une fois le domaine en place, j’ai créé un script PowerShell permettant d’automatiser la création des utilisateurs et des groupes.
+Ce script utilise un fichier CSV
+Le fichier CSV contient la liste des utilisateurs à créer automatiquement dans l’Active Directory.
+Chaque ligne correspond à un utilisateur, avec son prénom, son nom, et les groupes auxquels il doit appartenir.

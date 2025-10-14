@@ -1,1 +1,11 @@
-# plateforme-
+Dans ce devoir, j’ai créé une machine virtuelle avec Windows Server 2019 sous VirtualBox.
+Après l’installation, j’ai configuré un contrôleur de domaine Active Directory de manière graphique, plus simple et plus visuelle pour moi.
+Le domaine que j’ai créé s’appelle laplateforme.io.
+Pour automatiser la création des utilisateurs et des groupes,
+j’ai écrit un script PowerShell basé sur un fichier CSV contenant les informations des utilisateurs.
+Ce script crée automatiquement :
+Les OUs (Utilisateurs / Groupes)
+Les groupes mentionnés dans le fichier CSV
+Les comptes utilisateurs avec un mot de passe par défaut
+L’ajout des utilisateurs aux bons groupes
+L’ensemble du processus est illustré par les captures d’écran ci-jointes (installation, configuration AD) ainsi que le script PowerShell fourni.

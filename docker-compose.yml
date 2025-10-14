@@ -16,7 +16,7 @@ services:
     networks:
       - wordpress_network
 
-  # PHP-FPM pour WordPress
+  # PHP pour WordPress
   php:
     image: php:8.2-fpm
     container_name: wordpress_php

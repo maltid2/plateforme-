@@ -1,0 +1,36 @@
+Compte-rendu du projet WordPress avec Docker
+  
+L’objectif de ce mini-projet était de mettre en place un environnement WordPress fonctionnel en utilisant Docker et Docker Compose,
+sans avoir à installer manuellement chaque composant (base de données, serveur web, PHP, etc.) sur la machine hôte.
+L’idée était de séparer chaque service dans un conteneur dédié afin de reproduire une architecture propre et modulaire,
+comme en production. Dans l’énoncé, il était précisé que WordPress devait fonctionner avec une base de données MariaDB, 
+un serveur PHP-FPM pour l’exécution des scripts, et Nginx comme serveur web.
+Docker Compose m’a permis de décrire toute l’infrastructure dans un seul fichier (docker-compose.yml) et de la lancer facilement.
+
+  <<-- Configuration des services -->>
+  
+J’ai commencé par créer le fichier docker-compose.yml, en définissant trois services principaux :
+db : ce service utilise l’image officielle mariadb:latest. 
+J’ai configuré le mot de passe root, le nom de la base de données (wordpress) et un utilisateur avec les droits nécessaires.
+  
+php : ce service utilise l’image php:8.2-fpm. Il installe automatiquement les extensions PHP nécessaires (mysqli, pdo, etc.) 
+et télécharge WordPress s’il n’est pas déjà présent. Le dossier contenant les fichiers WordPress est partagé avec Nginx grâce à un volume Docker 
+(wordpress_data).en fichier php.ini personnalisé est aussi monté dans le conteneur.
+  
+nginx : ce service sert les pages WordPress aux utilisateurs. Il expose les ports 80 et 443, et utilise deux fichiers de configuration (nginx.conf et default.conf) montés depuis mon projet.
+Tous les services sont connectés sur un réseau Docker isolé (wordpress_network) pour qu’ils puissent communiquer entre eux sans interférence.
+(voir script)
+  
+<<-- Volumes et persistance -->>
+  
+J’ai utilisé deux volumes Docker :
+db_data : pour stocker les données de la base MariaDB de façon persistante
+wordpress_data : pour garder les fichiers WordPress même si les conteneurs sont arrêtés ou recréés
+Cela permet de ne pas perdre le site ou les données en cas de redémarrage de Docker ou de la machine.
+(voir capture et script)
+  
+<<-- Lancement et tests -->>
+  
+Une fois le fichier docker-compose.yml prêt, j’ai simplement lancé la commande :
+docker-compose up -d
+Docker a automatiquement téléchargé les images nécessaires, créé les volumes et démarré les conteneurs.

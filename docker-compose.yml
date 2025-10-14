@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  # Base de données MariaDB
+  db:
+    image: mariadb:latest
+    container_name: wordpress_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password_secure_123
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress_user
+      MYSQL_PASSWORD: wordpress_password_123
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - wordpress_network
+
+  # PHP-FPM pour WordPress
+  php:
+    image: php:8.2-fpm
+    container_name: wordpress_php
+    restart: always
+    depends_on:
+      - db
+    volumes:
+      - wordpress_data:/var/www/html
+      - ./php/php.ini:/usr/local/etc/php/php.ini:ro
+    networks:
+      - wordpress_network
+    # Installation des extensions PHP nécessaires pour WordPress
+    command: >
+      bash -c "
+      docker-php-ext-install mysqli pdo pdo_mysql &&
+      docker-php-ext-enable mysqli &&
+      if [ ! -f /var/www/html/wp-config.php ]; then
+        cd /var/www/html &&
+        curl -O https://wordpress.org/latest.tar.gz &&
+        tar -xzf latest.tar.gz --strip-components=1 &&
+        rm latest.tar.gz &&
+        chown -R www-data:www-data /var/www/html
+      fi &&
+      php-fpm
+      "
+
+  # Serveur web Nginx
+  nginx:
+    image: nginx:latest
+    container_name: wordpress_nginx
+    restart: always
+    depends_on:
+      - php
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - wordpress_data:/var/www/html
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - wordpress_network
+
+volumes:
+  # Volume pour les données de la base de données
+  db_data:
+    driver: local
+  # Volume partagé pour WordPress
+  wordpress_data:
+    driver: local
+
+networks:
+  wordpress_network:
+    driver: bridge

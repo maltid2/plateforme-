@@ -49,6 +49,26 @@ console.log(report.scoring.score, report.scoring.letter);
 const { files } = await auditAndReport('https://exemple.com', { pdf: true });
 ```
 
+### Interface web (ce que voit le client)
+
+```bash
+node src/server.js          # http://localhost:3000  (PORT surchargeable)
+```
+
+Serveur HTTP **natif** (aucune dépendance, pas d'Express). Le client saisit
+une URL et obtient sa note A→F + un **lien de rapport partageable**.
+
+| Route | Rôle |
+|---|---|
+| `GET /` | Page de saisie (formulaire) |
+| `POST /api/audit` | Lance l'audit, renvoie `{ score, letter, reportUrl }` en JSON |
+| `GET /r/:id` | Rapport HTML partageable (le lien à transmettre au client) |
+| `GET /r/:id.json` | Résultat brut JSON |
+
+**Sécurité** : garde anti-SSRF (`lib/ssrf-guard.js`) — les cibles internes/
+privées (localhost, 10/8, 192.168/16…) sont refusées, y compris via
+résolution DNS.
+
 ## Modules
 
 | Module | Fichier | Rôle | Dépend d'une API ? |

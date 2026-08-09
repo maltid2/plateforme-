@@ -6,6 +6,7 @@
   "scripts": {
     "audit": "node src/index.js",
     "start": "node src/index.js",
+    "serve": "node src/server.js",
     "test": "node test/smoke.test.js"
   },
   "bin": {

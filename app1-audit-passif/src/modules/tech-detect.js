@@ -24,7 +24,9 @@ function loadFingerprints() {
   const file = path.join(__dirname, '..', '..', 'data', 'fingerprints.json');
   try {
     const raw = fs.readFileSync(file, 'utf8');
-    return JSON.parse(raw).technologies || [];
+    const list = JSON.parse(raw).technologies || [];
+    // On ignore les entrées de commentaire/section (sans nom réel).
+    return list.filter((t) => t && typeof t.name === 'string');
   } catch (err) {
     return [];
   }

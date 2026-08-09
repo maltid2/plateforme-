@@ -1,0 +1,76 @@
+{
+  "_comment": "Base de signatures technologiques minimale (inspirée du format Wappalyzer, open source). Étendre selon les besoins. Les regex 'version' capturent le numéro de version dans le groupe 1.",
+  "technologies": [
+    {
+      "name": "WordPress",
+      "category": "CMS",
+      "cpe": "cpe:2.3:a:wordpress:wordpress",
+      "headers": { "x-powered-by": "" },
+      "meta": { "generator": "WordPress ?([\\d.]+)?" },
+      "html": ["wp-content/", "wp-includes/"],
+      "cookies": ["wordpress_", "wp-settings-"]
+    },
+    {
+      "name": "Drupal",
+      "category": "CMS",
+      "cpe": "cpe:2.3:a:drupal:drupal",
+      "headers": { "x-generator": "Drupal ?([\\d.]+)?", "x-drupal-cache": "" },
+      "meta": { "generator": "Drupal ?([\\d.]+)?" },
+      "html": ["sites/all/", "/sites/default/files"]
+    },
+    {
+      "name": "Joomla",
+      "category": "CMS",
+      "cpe": "cpe:2.3:a:joomla:joomla",
+      "meta": { "generator": "Joomla!? ?([\\d.]+)?" },
+      "html": ["/media/jui/", "com_content"]
+    },
+    {
+      "name": "Nginx",
+      "category": "Web Server",
+      "cpe": "cpe:2.3:a:nginx:nginx",
+      "headers": { "server": "nginx/?([\\d.]+)?" }
+    },
+    {
+      "name": "Apache",
+      "category": "Web Server",
+      "cpe": "cpe:2.3:a:apache:http_server",
+      "headers": { "server": "Apache/?([\\d.]+)?" }
+    },
+    {
+      "name": "PHP",
+      "category": "Programming Language",
+      "cpe": "cpe:2.3:a:php:php",
+      "headers": { "x-powered-by": "PHP/?([\\d.]+)?" }
+    },
+    {
+      "name": "Express",
+      "category": "Web Framework",
+      "cpe": "cpe:2.3:a:openjsf:express",
+      "headers": { "x-powered-by": "Express" }
+    },
+    {
+      "name": "jQuery",
+      "category": "JavaScript Library",
+      "cpe": "cpe:2.3:a:jquery:jquery",
+      "html": ["jquery-?([\\d.]+)?(\\.min)?\\.js", "jquery/([\\d.]+)/"]
+    },
+    {
+      "name": "Bootstrap",
+      "category": "UI Framework",
+      "cpe": "cpe:2.3:a:getbootstrap:bootstrap",
+      "html": ["bootstrap-?([\\d.]+)?(\\.min)?\\.css", "bootstrap/([\\d.]+)/"]
+    },
+    {
+      "name": "React",
+      "category": "JavaScript Framework",
+      "cpe": "cpe:2.3:a:facebook:react",
+      "html": ["data-reactroot", "react-dom"]
+    },
+    {
+      "name": "Cloudflare",
+      "category": "CDN / WAF",
+      "headers": { "server": "cloudflare", "cf-ray": "" }
+    }
+  ]
+}

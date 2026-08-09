@@ -10,10 +10,12 @@ Scan **actif** des ports et services d'un serveur, avec matching CVE —
 
 ## Installation
 
+**Aucune installation requise.** L'application n'a **aucune dépendance externe**
+(modules natifs `net`, `http`/`https` uniquement). Pas de `npm install`.
+
 ```bash
 cd app2-audit-actif
-npm install
-cp .env.example .env   # (optionnel) NVD_API_KEY pour le matching CVE
+cp .env.example .env   # (optionnel) NVD_API_KEY pour augmenter le quota CVE
 ```
 
 ## Utilisation — deux étapes obligatoires

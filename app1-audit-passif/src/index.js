@@ -14,7 +14,7 @@
  *   const report = await audit('https://exemple.com', { pdf: true });
  */
 
-require('dotenv').config();
+require('./lib/env').loadEnv();
 
 const path = require('path');
 const { URL } = require('url');

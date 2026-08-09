@@ -9,24 +9,29 @@ commerciales**, développées selon le cahier des charges.
 | **Autorisation requise** | Aucune | **Mandat écrit signé obligatoire** |
 | **Sortie** | Score A/B/C/D/F + rapport HTML/PDF | Rapport ports + services + CVE |
 
-## Stack technique
+## Stack technique — 100 % natif, zéro dépendance
+
+Les deux applications fonctionnent avec **Node.js seul** : aucune librairie
+externe, aucun `npm install`. Tout repose sur les modules natifs.
 
 - **Runtime** : Node.js (≥ 18)
-- **HTTP** : `axios`
+- **HTTP / HTTPS** : modules natifs `http` / `https` (client maison, voir `src/lib` / `src/modules/http-client.js`)
 - **TLS / réseau** : modules natifs `tls` et `net`
-- **Rapport** : HTML → PDF via `puppeteer` (optionnel)
-- **Config** : `dotenv`
+- **Config `.env`** : chargeur natif maison (`src/lib/env.js`)
+- **Rapport** : HTML natif ; export PDF via `puppeteer` **optionnel** (seule dépendance, et uniquement pour le PDF)
+- **Tests** : module natif `assert` (aucun framework à installer)
 - **Sortie de chaque module** : JSON structuré, assemblé par le moteur de rapport
 
-## Démarrage rapide
+## Démarrage rapide (sans installation)
 
 ```bash
 # App 1 — audit passif (aucune autorisation requise)
-cd app1-audit-passif && npm install
-node src/index.js https://exemple.com --pdf
+cd app1-audit-passif
+node src/index.js https://exemple.com          # HTML immédiat, zéro install
+# node src/index.js https://exemple.com --pdf  # PDF -> npm install puppeteer (optionnel)
 
 # App 2 — audit actif (autorisation obligatoire)
-cd app2-audit-actif && npm install
+cd app2-audit-actif
 node src/index.js consent --target 203.0.113.10 --user "op@ex.com" \
      --mandate CONTRAT-042 --confirm "Je certifie être autorisé à tester ce système"
 node src/index.js scan --target 203.0.113.10 --minCvss 7

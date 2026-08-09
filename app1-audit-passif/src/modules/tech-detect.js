@@ -16,7 +16,6 @@
 
 const fs = require('fs');
 const path = require('path');
-const axios = require('axios');
 const http = require('./http-client');
 
 const NVD_API = 'https://services.nvd.nist.gov/rest/json/cves/2.0';
@@ -136,11 +135,11 @@ async function fetchCVEs(tech, apiKey, minCvss, timeout) {
   const headers = apiKey ? { apiKey } : {};
 
   try {
-    const res = await axios.get(NVD_API, {
+    const res = await http.get(NVD_API, {
       params: { cpeName, resultsPerPage: 20 },
       headers,
       timeout: timeout || 20000,
-      validateStatus: () => true,
+      responseType: 'json',
     });
 
     if (res.status !== 200 || !res.data || !Array.isArray(res.data.vulnerabilities)) {

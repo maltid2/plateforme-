@@ -12,7 +12,7 @@
  * jamais faire échouer le scan.
  */
 
-const axios = require('axios');
+const http = require('../lib/http');
 
 const NVD_API = 'https://services.nvd.nist.gov/rest/json/cves/2.0';
 
@@ -28,11 +28,11 @@ async function fetchCVEs(cpe, version, options = {}) {
   const headers = apiKey ? { apiKey } : {};
 
   try {
-    const res = await axios.get(NVD_API, {
+    const res = await http.get(NVD_API, {
       params: { cpeName, resultsPerPage: 25 },
       headers,
       timeout: options.timeout || 20000,
-      validateStatus: () => true,
+      responseType: 'json',
     });
     if (res.status !== 200 || !res.data || !Array.isArray(res.data.vulnerabilities)) {
       return [];

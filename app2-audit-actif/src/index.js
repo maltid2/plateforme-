@@ -18,7 +18,7 @@
  *      node src/index.js scan --target 203.0.113.10
  */
 
-require('dotenv').config();
+require('./lib/env').loadEnv();
 
 const consentGate = require('./auth/consent-gate');
 const portScan = require('./scanner/port-scan');

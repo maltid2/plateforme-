@@ -13,7 +13,7 @@
  * lookups auprès de services tiers).
  */
 
-const axios = require('axios');
+const http = require('./http-client');
 const { URL } = require('url');
 
 const SAFE_BROWSING_API =
@@ -39,10 +39,10 @@ async function checkSafeBrowsing(targetUrl, apiKey, timeout) {
   };
 
   try {
-    const res = await axios.post(SAFE_BROWSING_API, payload, {
+    const res = await http.post(SAFE_BROWSING_API, payload, {
       params: { key: apiKey },
       timeout: timeout || 15000,
-      validateStatus: () => true,
+      responseType: 'json',
     });
     if (res.status !== 200) {
       return {
@@ -67,10 +67,10 @@ async function checkVirusTotal(domain, apiKey, timeout) {
   if (!apiKey) return { source: 'VirusTotal', status: 'skipped', reason: 'clé API absente' };
 
   try {
-    const res = await axios.get(VIRUSTOTAL_DOMAIN_API + encodeURIComponent(domain), {
+    const res = await http.get(VIRUSTOTAL_DOMAIN_API + encodeURIComponent(domain), {
       headers: { 'x-apikey': apiKey },
       timeout: timeout || 15000,
-      validateStatus: () => true,
+      responseType: 'json',
     });
     if (res.status !== 200) {
       return { source: 'VirusTotal', status: 'error', reason: 'HTTP ' + res.status };

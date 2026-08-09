@@ -12,7 +12,6 @@
  */
 
 const http = require('./http-client');
-const axios = require('axios');
 const { URL } = require('url');
 
 const LEGAL_PATTERNS = [
@@ -52,29 +51,16 @@ const COOKIE_BANNER_PATTERNS = [
 async function checkHttpsRedirect(host, timeout) {
   const httpUrl = 'http://' + host + '/';
   try {
-    const res = await axios.get(httpUrl, {
-      timeout: timeout || 12000,
-      maxRedirects: 0,
-      validateStatus: () => true,
-    });
+    // maxRedirects: 0 -> le client natif renvoie la réponse 3xx sans la suivre.
+    const res = await http.get(httpUrl, { timeout: timeout || 12000, maxRedirects: 0 });
     const status = res.status;
     const location = res.headers['location'] || '';
-    if ((status === 301 || status === 302 || status === 307 || status === 308) &&
-        /^https:\/\//i.test(location)) {
+    if (status >= 300 && status < 400 && /^https:\/\//i.test(location)) {
       return { redirects: true, status, location };
     }
-    // Certains serveurs répondent directement en HTTPS ou ne redirigent pas.
+    // Certains serveurs répondent directement ou ne redirigent pas vers HTTPS.
     return { redirects: false, status, location: location || null };
   } catch (err) {
-    // maxRedirects=0 fait lever axios sur une 3xx : on lit la réponse.
-    if (err.response) {
-      const status = err.response.status;
-      const location = err.response.headers['location'] || '';
-      if ((status >= 300 && status < 400) && /^https:\/\//i.test(location)) {
-        return { redirects: true, status, location };
-      }
-      return { redirects: false, status, location: location || null };
-    }
     return { redirects: null, error: err.message };
   }
 }

@@ -9,14 +9,21 @@ global **A / B / C / D / F** et un rapport en langage clair (HTML + PDF).
 
 ## Installation
 
+**Aucune installation requise.** L'application n'a **aucune dépendance externe** :
+elle fonctionne avec Node.js seul (modules natifs `tls`, `net`, `http`/`https`).
+Pas de `npm install`, pas de librairie open source à récupérer.
+
 ```bash
 cd app1-audit-passif
-npm install
-cp .env.example .env   # (optionnel) renseigner les clés API
+node src/index.js https://exemple.com     # ça tourne, tout de suite
+cp .env.example .env                       # (optionnel) clés API pour B/C
 ```
 
-`puppeteer` est une dépendance **optionnelle** (utilisée seulement pour le PDF).
-Sans lui, le rapport HTML reste généré normalement.
+> **Seule exception, entièrement optionnelle** : l'export **PDF** utilise
+> `puppeteer` (qui embarque un navigateur pour le rendu). Il est déclaré en
+> `optionalDependencies`. Si vous voulez le PDF : `npm install puppeteer`.
+> Sans lui, le rapport **HTML** est généré normalement — le cœur de
+> l'application ne dépend de rien.
 
 ## Utilisation
 

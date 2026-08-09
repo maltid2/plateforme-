@@ -101,6 +101,46 @@ check('runScan : bloqué sans consentement (bout en bout)', async () => {
   );
 });
 
+const roe = require('../src/auth/rules-of-engagement');
+
+check('RoE : matching CIDR IPv4 correct', () => {
+  assert.ok(roe.ipInScopeEntry('203.0.113.10', '203.0.113.0/24'));
+  assert.ok(!roe.ipInScopeEntry('203.0.114.10', '203.0.113.0/24'));
+  assert.ok(roe.ipInScopeEntry('10.0.0.5', '10.0.0.5'));
+});
+
+check('RoE : targetInScope hôte + IP', () => {
+  const scope = ['app.client.com', '203.0.113.0/24'];
+  assert.ok(roe.targetInScope('app.client.com', scope));
+  assert.ok(roe.targetInScope('203.0.113.42', scope));
+  assert.ok(!roe.targetInScope('autre.com', scope));
+  assert.ok(!roe.targetInScope('198.51.100.1', scope));
+});
+
+check('RoE : authorize bloque une cible hors périmètre', () => {
+  const r = roe.authorize('8.8.8.8');
+  assert.strictEqual(r.ok, false);
+});
+
+check('verify : bloqué si cible hors périmètre (bout en bout)', async () => {
+  const verifier = require('../src/verify');
+  await assert.rejects(
+    () => verifier.run('scanme.invalid.example', { timeout: 500 }),
+    (err) => err.code === 'OUT_OF_SCOPE'
+  );
+});
+
+check('RoE : registerEngagement refuse un périmètre vide', () => {
+  const r = roe.registerEngagement({
+    operator: 'op@ex.com',
+    engagementRef: 'REF-1',
+    scope: [],
+    confirmation: 'Je certifie être autorisé à tester ce système',
+    mandateOnFile: true,
+  });
+  assert.strictEqual(r.ok, false);
+});
+
 process.on('exit', () => {
   try { fs.unlinkSync(tmpLog); } catch (e) {}
   if (!process.exitCode) {

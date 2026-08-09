@@ -24,6 +24,8 @@ const consentGate = require('./auth/consent-gate');
 const portScan = require('./scanner/port-scan');
 const bannerGrab = require('./scanner/banner-grab');
 const cveMatcher = require('./cve/matcher');
+const roe = require('./auth/rules-of-engagement');
+const verifier = require('./verify');
 
 /**
  * Enregistre un consentement (étape 1).
@@ -181,15 +183,62 @@ if (require.main === module) {
         }
         process.exit(1);
       });
+  } else if (command === 'engagement') {
+    // Déclare une Règle d'Engagement (périmètre + fenêtre) pour la phase
+    // de vérification (constat d'exploitabilité).
+    const scope = flags.scope ? String(flags.scope).split(',').map((s) => s.trim()) : [];
+    const res = roe.registerEngagement({
+      operator: flags.user,
+      engagementRef: flags.mandate,
+      scope,
+      confirmation: flags.confirm,
+      mandateOnFile: true,
+      windowStart: flags.start,
+      windowEnd: flags.end,
+    });
+    if (res.ok) {
+      console.log('✔ Engagement enregistré :');
+      console.log(JSON.stringify(res.engagement, null, 2));
+    } else {
+      console.error('✗ Engagement refusé : ' + res.reason);
+      process.exit(1);
+    }
+  } else if (command === 'verify') {
+    if (!flags.target) {
+      console.error('Usage : node src/index.js verify --target <host|url> [--allow-intrusive]');
+      process.exit(1);
+    }
+    verifier
+      .run(flags.target, { allowIntrusive: !!flags['allow-intrusive'], log: console.log })
+      .then((report) => {
+        console.log('\n=== Constat ===');
+        console.log(JSON.stringify(report.summary, null, 2));
+      })
+      .catch((err) => {
+        console.error('\n' + err.message);
+        if (err.code === 'OUT_OF_SCOPE') {
+          console.error(
+            'Déclarez d\'abord un engagement couvrant cette cible :\n' +
+              '  node src/index.js engagement --user "vous@ex.com" --mandate REF \\\n' +
+              '       --scope "' + flags.target + '" --confirm "' + consentGate.CONSENT_PHRASE + '"'
+          );
+        }
+        process.exit(1);
+      });
   } else {
     console.log('Commandes disponibles :');
-    console.log('  consent  Enregistrer un consentement (obligatoire avant tout scan)');
-    console.log('  scan     Lancer le scan actif (nécessite un consentement valide)');
+    console.log('  consent     Enregistrer un consentement (obligatoire avant tout scan)');
+    console.log('  scan        Lancer le scan actif (ports + services + CVE)');
+    console.log('  engagement  Déclarer une Règle d\'Engagement (périmètre + fenêtre) pour la vérification');
+    console.log('  verify      Constat d\'exploitabilité NON DESTRUCTIF, sous Règle d\'Engagement');
     console.log('\nExemples :');
     console.log('  node src/index.js consent --target 203.0.113.10 --user "op@ex.com" \\');
     console.log('       --mandate CONTRAT-042 --confirm "' + consentGate.CONSENT_PHRASE + '"');
     console.log('  node src/index.js scan --target 203.0.113.10 --minCvss 7');
+    console.log('  node src/index.js engagement --user "op@ex.com" --mandate CONTRAT-042 \\');
+    console.log('       --scope "203.0.113.0/24,app.client.com" --confirm "' + consentGate.CONSENT_PHRASE + '"');
+    console.log('  node src/index.js verify --target app.client.com');
   }
 }
 
-module.exports = { runScan, grantConsent };
+module.exports = { runScan, grantConsent, registerEngagement: roe.registerEngagement, verify: verifier.run };

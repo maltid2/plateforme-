@@ -278,6 +278,140 @@
       "name": "Varnish",
       "category": "Cache",
       "headers": { "x-varnish": "", "via": "varnish" }
+    },
+
+    { "_section": "== Hébergement / PaaS (typique des SaaS) ==" },
+    {
+      "name": "Vercel",
+      "category": "Hébergement / PaaS",
+      "headers": { "server": "Vercel", "x-vercel-id": "", "x-vercel-cache": "" }
+    },
+    {
+      "name": "Netlify",
+      "category": "Hébergement / PaaS",
+      "headers": { "server": "Netlify", "x-nf-request-id": "" }
+    },
+    {
+      "name": "Heroku",
+      "category": "Hébergement / PaaS",
+      "headers": { "via": "vegur", "server": "Cowboy" }
+    },
+    {
+      "name": "Amazon Web Services",
+      "category": "Hébergement / Cloud",
+      "headers": { "server": "AmazonS3", "x-amz-cf-id": "", "x-amz-request-id": "" }
+    },
+    {
+      "name": "Amazon CloudFront",
+      "category": "CDN / Cloud",
+      "headers": { "via": "CloudFront", "x-amz-cf-pop": "" }
+    },
+    {
+      "name": "Google Cloud / Firebase",
+      "category": "Hébergement / Cloud",
+      "headers": { "server": "Google Frontend", "x-cloud-trace-context": "", "x-firebase-": "" }
+    },
+    {
+      "name": "Microsoft Azure",
+      "category": "Hébergement / Cloud",
+      "headers": { "x-azure-ref": "", "x-msedge-ref": "" }
+    },
+    {
+      "name": "GitHub Pages",
+      "category": "Hébergement statique",
+      "headers": { "server": "GitHub.com", "x-github-request-id": "" }
+    },
+    {
+      "name": "Render",
+      "category": "Hébergement / PaaS",
+      "headers": { "x-render-origin-server": "" }
+    },
+    {
+      "name": "Fastly (SaaS edge)",
+      "category": "Hébergement / Edge",
+      "headers": { "x-timer": "", "fastly-io-info": "" }
+    },
+
+    { "_section": "== Briques SaaS tierces embarquées (pertinent RGPD / cookies) ==" },
+    {
+      "name": "Google Analytics / Tag Manager",
+      "category": "Analytics (tiers)",
+      "html": ["www.googletagmanager.com/gtag", "google-analytics.com/analytics.js", "gtag\\(", "GoogleAnalyticsObject"]
+    },
+    {
+      "name": "Google Ads / DoubleClick",
+      "category": "Publicité (tiers)",
+      "html": ["googleadservices.com", "doubleclick.net", "googlesyndication.com"]
+    },
+    {
+      "name": "Meta Pixel (Facebook)",
+      "category": "Publicité / Tracking (tiers)",
+      "html": ["connect.facebook.net", "fbq\\(", "facebook-jssdk"]
+    },
+    {
+      "name": "Stripe",
+      "category": "Paiement (tiers)",
+      "html": ["js.stripe.com", "Stripe\\("]
+    },
+    {
+      "name": "PayPal",
+      "category": "Paiement (tiers)",
+      "html": ["www.paypal.com/sdk", "paypalobjects.com"]
+    },
+    {
+      "name": "Intercom",
+      "category": "Support client (tiers)",
+      "html": ["widget.intercom.io", "intercomSettings", "intercomcdn.com"]
+    },
+    {
+      "name": "Zendesk",
+      "category": "Support client (tiers)",
+      "html": ["static.zdassets.com", "zendesk.com/embeddable"]
+    },
+    {
+      "name": "HubSpot",
+      "category": "Marketing / CRM (tiers)",
+      "html": ["js.hs-scripts.com", "js.hsforms.net", "hubspot"]
+    },
+    {
+      "name": "Salesforce",
+      "category": "CRM (tiers)",
+      "html": ["salesforce.com", "force.com", "pardot.com"]
+    },
+    {
+      "name": "Mailchimp",
+      "category": "Emailing (tiers)",
+      "html": ["chimpstatic.com", "list-manage.com"]
+    },
+    {
+      "name": "Segment",
+      "category": "Analytics / CDP (tiers)",
+      "html": ["cdn.segment.com", "analytics.load\\("]
+    },
+    {
+      "name": "Hotjar",
+      "category": "Analytics comportemental (tiers)",
+      "html": ["static.hotjar.com", "hj\\(", "_hjSettings"]
+    },
+    {
+      "name": "Sentry",
+      "category": "Monitoring d'erreurs (tiers)",
+      "html": ["browser.sentry-cdn.com", "js.sentry-cdn.com", "Sentry\\.init"]
+    },
+    {
+      "name": "Auth0",
+      "category": "Authentification (tiers)",
+      "html": ["cdn.auth0.com", "auth0.com/js"]
+    },
+    {
+      "name": "Google reCAPTCHA",
+      "category": "Anti-bot (tiers)",
+      "html": ["www.google.com/recaptcha", "grecaptcha"]
+    },
+    {
+      "name": "Cloudflare Turnstile",
+      "category": "Anti-bot (tiers)",
+      "html": ["challenges.cloudflare.com/turnstile"]
     }
   ]
 }

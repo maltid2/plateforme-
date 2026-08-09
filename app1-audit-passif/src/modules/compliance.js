@@ -32,6 +32,24 @@ const LEGAL_PATTERNS = [
   },
 ];
 
+/**
+ * Domaines de services tiers courants (analytics, publicité, tracking).
+ * Leur présence déclenche des obligations RGPD/ePrivacy (consentement).
+ * Point clé pour l'audit des sites web et SaaS.
+ */
+const THIRD_PARTY_TRACKERS = [
+  { label: 'Google Analytics / Tag Manager', re: /googletagmanager\.com|google-analytics\.com/i },
+  { label: 'Google Ads / DoubleClick', re: /googleadservices\.com|doubleclick\.net|googlesyndication\.com/i },
+  { label: 'Meta Pixel (Facebook)', re: /connect\.facebook\.net|fbevents\.js/i },
+  { label: 'Hotjar', re: /static\.hotjar\.com/i },
+  { label: 'Segment', re: /cdn\.segment\.com/i },
+  { label: 'HubSpot', re: /hs-scripts\.com|hsforms\.net/i },
+  { label: 'Intercom', re: /widget\.intercom\.io|intercomcdn\.com/i },
+  { label: 'LinkedIn Insight', re: /snap\.licdn\.com/i },
+  { label: 'TikTok Pixel', re: /analytics\.tiktok\.com/i },
+  { label: 'Microsoft Clarity', re: /clarity\.ms/i },
+];
+
 const COOKIE_BANNER_PATTERNS = [
   /cookiebot/i,
   /onetrust/i,
@@ -90,6 +108,7 @@ async function run(targetUrl, options = {}) {
     target: targetUrl,
     legal: {},
     cookieBanner: false,
+    trackers: [],
     httpsRedirect: null,
     mixedContent: [],
     findings: [],
@@ -137,6 +156,36 @@ async function run(targetUrl, options = {}) {
     });
   }
 
+  // --- Trackers tiers (analytics, pub, tracking) : enjeu RGPD/ePrivacy ---
+  result.trackers = THIRD_PARTY_TRACKERS.filter((t) => t.re.test(body)).map((t) => t.label);
+  if (result.trackers.length && !result.cookieBanner) {
+    // Trackers présents SANS bandeau de consentement = non-conformité probable.
+    result.findings.push({
+      id: 'trackers-without-consent',
+      severity: 'medium',
+      message:
+        result.trackers.length +
+        ' service(s) tiers de suivi détecté(s) sans bandeau de consentement : ' +
+        result.trackers.join(', ') +
+        '.',
+      recommendation:
+        'Ces services déposent généralement des cookies non essentiels. Bloquer leur ' +
+        'chargement tant que l\'utilisateur n\'a pas consenti (RGPD/ePrivacy) et les ' +
+        'documenter dans la politique de confidentialité.',
+    });
+  } else if (result.trackers.length) {
+    result.findings.push({
+      id: 'trackers-present',
+      severity: 'info',
+      message:
+        'Service(s) tiers de suivi détecté(s) : ' +
+        result.trackers.join(', ') +
+        '. Vérifier qu\'ils sont bien conditionnés au consentement.',
+      recommendation:
+        'S\'assurer que le bandeau de consentement bloque réellement ces scripts avant acceptation.',
+    });
+  }
+
   // --- Redirection HTTP -> HTTPS ---
   const redirect = await checkHttpsRedirect(parsed.hostname, options.timeout);
   result.httpsRedirect = redirect;
@@ -170,6 +219,7 @@ async function run(targetUrl, options = {}) {
   let score = 100;
   score -= legalMissing * 8; // jusqu'à -24
   if (!result.cookieBanner) score -= 8;
+  if (result.trackers.length && !result.cookieBanner) score -= 15; // trackers sans consentement
   if (redirect && redirect.redirects === false) score -= 20;
   if (result.mixedContent.length) score -= 20;
   result.score = Math.max(0, score);

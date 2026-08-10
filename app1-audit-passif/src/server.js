@@ -27,6 +27,7 @@ const reportGen = require('./report/generator');
 const ssrf = require('./lib/ssrf-guard');
 const accounts = require('./auth/accounts');
 const stripe = require('./billing/stripe');
+const external = require('./billing/external');
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 
@@ -383,15 +384,58 @@ function handleAccountStatus(req, res) {
 }
 
 /**
- * POST /api/checkout — crée une session de paiement Stripe (self-service).
+ * POST /api/checkout — renvoie le lien de PAIEMENT EXTERNE (self-service).
+ *
+ * Le paiement est encaissé en externe : on redirige vers PAYMENT_URL. Si un
+ * paiement Stripe intégré est configuré à la place, on l'utilise en repli.
  */
 async function handleCheckout(req, res) {
   const key = getApiKey(req);
   const account = key ? accounts.findByKey(key) : null;
   if (!account) return sendJson(res, 401, { error: 'Clé invalide.' });
+
+  // 1) Paiement externe (mode nominal).
+  if (external.isConfigured()) {
+    const link = external.paymentUrl(account);
+    if (link.ok) return sendJson(res, 200, { checkoutUrl: link.url, external: true });
+    return sendJson(res, 503, { error: link.reason });
+  }
+  // 2) Repli : Stripe intégré, si configuré.
   const session = await stripe.createCheckoutSession(account);
-  if (!session.ok) return sendJson(res, 503, { error: session.reason });
+  if (!session.ok) {
+    return sendJson(res, 503, {
+      error: 'Aucun moyen de paiement configuré (PAYMENT_URL ou Stripe).',
+    });
+  }
   return sendJson(res, 200, { checkoutUrl: session.url });
+}
+
+/**
+ * POST /webhook/payment — activation générique après paiement EXTERNE.
+ *
+ * Appelé par la plateforme de paiement externe (ou une automatisation), avec
+ * `Authorization: Bearer <ACTIVATION_SECRET>` et un corps `{ ref | email }`.
+ * Active le compte À VIE (paiement unique).
+ */
+async function handleExternalActivation(req, res) {
+  const raw = await readBody(req, 256 * 1024);
+  const authCheck = external.checkActivationToken(req.headers['authorization']);
+  if (!authCheck.ok) {
+    return sendJson(res, 401, { error: 'Activation refusée : ' + authCheck.reason });
+  }
+  let body;
+  try {
+    body = JSON.parse(raw || '{}');
+  } catch (err) {
+    return sendJson(res, 400, { error: 'Corps JSON invalide.' });
+  }
+  const { target } = external.activationTarget(body);
+  if (!target) {
+    return sendJson(res, 400, { error: 'Cible manquante (ref ou email).' });
+  }
+  const result = accounts.activate(target, { lifetime: true });
+  if (!result.ok) return sendJson(res, 404, { error: result.reason });
+  return sendJson(res, 200, { activated: true, account: result.account });
 }
 
 /**
@@ -444,6 +488,9 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method === 'POST' && pathname === '/api/checkout') {
       return await handleCheckout(req, res);
+    }
+    if (req.method === 'POST' && pathname === '/webhook/payment') {
+      return await handleExternalActivation(req, res);
     }
     if (req.method === 'POST' && pathname === '/webhook/stripe') {
       return await handleStripeWebhook(req, res);

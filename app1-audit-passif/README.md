@@ -79,23 +79,39 @@ vie, en autonomie** — aucune intervention de votre part.
 | `GET /app` | Espace client (créer un compte, payer, auditer) |
 | `POST /api/account` | Crée un compte, renvoie la **clé d'API** (une seule fois) |
 | `GET /api/account/status` | Statut de l'accès (via clé) |
-| `POST /api/checkout` | Crée une session de **paiement unique** Stripe |
-| `POST /webhook/stripe` | **Active automatiquement et à vie** le compte après paiement |
+| `POST /api/checkout` | Renvoie le **lien de paiement externe** (redirection) |
+| `POST /webhook/payment` | **Active à vie** le compte après paiement (webhook générique authentifié) |
 | `POST /api/audit` | Refusé (401) sans clé, (402) si non payé, **illimité** si payé |
 
 **Comptes** (`auth/accounts.js`) : la clé d'API n'est jamais stockée en clair
 (empreinte SHA-256, comparaison temps constant). Un compte payé = audits
 illimités, sans échéance (aucun plafond, on ne fait que compter l'usage).
 
-**Paiement** (`billing/stripe.js`) : Stripe en mode **`payment` (unique, pas
-d'abonnement)**, appelé via son **API REST directement** (aucun SDK à
-installer) ; les webhooks sont vérifiés avec le `crypto` natif (HMAC-SHA256 +
-anti-rejeu). Le paiement active le compte **à vie, sans aucune intervention**.
+**Paiement EXTERNE** (`billing/external.js`) — mode nominal : le paiement est
+encaissé sur **votre plateforme externe** (lien de paiement Stripe, PayPal,
+Gumroad, votre site…). L'app ne traite aucune carte :
 
-> Le traitement des cartes passe par Stripe (obligation PCI/légale) : c'est le
-> seul élément externe, et il n'exige aucune installation — juste 3 variables
-> d'environnement (`STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID` **de type one-time**,
-> `STRIPE_WEBHOOK_SECRET`). Voir `.env.example`.
+1. `POST /api/checkout` redirige le client vers `PAYMENT_URL` (avec sa `ref` +
+   email pré-remplis).
+2. Après paiement, la plateforme externe (ou une automatisation type
+   Zapier/Make) appelle `POST /webhook/payment` avec
+   `Authorization: Bearer <ACTIVATION_SECRET>` et un corps `{ "ref": "<id>" }`
+   ou `{ "email": "..." }` → le compte est **activé à vie**.
+
+```bash
+# Exemple d'activation depuis la plateforme externe :
+curl -X POST https://votre-app/webhook/payment \
+  -H "Authorization: Bearer $ACTIVATION_SECRET" \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"client@ex.com"}'
+```
+
+> Variables : `PAYMENT_URL` (lien externe) + `ACTIVATION_SECRET` (authentifie
+> le webhook d'activation). Voir `.env.example`.
+>
+> **Repli optionnel** : un paiement Stripe intégré reste possible
+> (`billing/stripe.js`, `POST /webhook/stripe`) si vous préférez ne pas
+> encaisser en externe — mais ce n'est plus le mode par défaut.
 
 **Activation manuelle** (ventes manuelles, tests) — sans Stripe :
 

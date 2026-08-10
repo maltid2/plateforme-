@@ -24,6 +24,7 @@ const ssl = require('../src/modules/ssl');
 const headers = require('../src/modules/headers');
 const accounts = require('../src/auth/accounts');
 const stripe = require('../src/billing/stripe');
+const external = require('../src/billing/external');
 const { normalizeUrl } = require('../src/index');
 
 let passed = 0;
@@ -165,6 +166,29 @@ check('stripe : signature de webhook valide acceptée, altérée rejetée', () =
   // Payload altéré => signature invalide.
   assert.strictEqual(stripe.verifyWebhookSignature(payload + 'x', header).ok, false);
   delete process.env.STRIPE_WEBHOOK_SECRET;
+});
+
+check('externe : lien de paiement construit avec ref + email', () => {
+  process.env.PAYMENT_URL = 'https://buy.exemple.com/pay';
+  const link = external.paymentUrl({ id: 'acc-42', email: 'x@ex.com' });
+  assert.ok(link.ok);
+  assert.ok(link.url.includes('ref=acc-42'));
+  assert.ok(link.url.includes('client_reference_id=acc-42'));
+  delete process.env.PAYMENT_URL;
+});
+
+check('externe : jeton d\'activation vérifié (bon/mauvais)', () => {
+  process.env.ACTIVATION_SECRET = 'secret-partage-123';
+  assert.strictEqual(external.checkActivationToken('Bearer secret-partage-123').ok, true);
+  assert.strictEqual(external.checkActivationToken('Bearer mauvais').ok, false);
+  assert.strictEqual(external.checkActivationToken('').ok, false);
+  delete process.env.ACTIVATION_SECRET;
+});
+
+check('externe : cible d\'activation lue depuis ref ou email', () => {
+  assert.strictEqual(external.activationTarget({ ref: 'acc-9' }).target, 'acc-9');
+  assert.strictEqual(external.activationTarget({ email: 'a@b.c' }).target, 'a@b.c');
+  assert.strictEqual(external.activationTarget({}).target, null);
 });
 
 check('stripe : parseEvent => activate à vie sur paiement unique', () => {

@@ -223,7 +223,7 @@ const DASHBOARD_HTML = `<!DOCTYPE html>
 <body>
 <div class="wrap">
   <h1>Espace client</h1>
-  <div class="sub">Créez votre compte, activez votre abonnement, puis lancez <strong>autant d'audits que vous voulez</strong>.</div>
+  <div class="sub">Créez votre compte, payez <strong>une seule fois</strong>, puis lancez <strong>autant d'audits que vous voulez, à vie</strong>.</div>
 
   <div class="box">
     <h2>1. Créer un compte</h2>
@@ -240,9 +240,9 @@ const DASHBOARD_HTML = `<!DOCTYPE html>
   </div>
 
   <div class="box">
-    <h2>3. Activer l'abonnement</h2>
-    <button class="b-green" onclick="checkout()">Payer / activer</button>
-    <div class="muted" id="payOut">Paiement sécurisé hébergé par Stripe.</div>
+    <h2>3. Payer une fois — accès à vie</h2>
+    <button class="b-green" onclick="checkout()">Payer (accès à vie)</button>
+    <div class="muted" id="payOut">Paiement unique, sécurisé, hébergé par Stripe. Aucun abonnement.</div>
   </div>
 
   <div class="box">
@@ -268,7 +268,8 @@ const DASHBOARD_HTML = `<!DOCTYPE html>
       if(j.error){ document.getElementById('statusOut').innerHTML='<span class="inactive">'+j.error+'</span>'; return; }
       var cls = j.active ? 'active' : 'inactive';
       var txt = j.active ? 'ACTIF' : 'INACTIF';
-      document.getElementById('statusOut').innerHTML='<span class="'+cls+'">Abonnement : '+txt+'</span> — '+(j.auditsCount||0)+' audit(s) réalisés'+(j.validUntil?(' — valable jusqu\\'au '+new Date(j.validUntil).toLocaleDateString()):'');
+      var duree = j.active ? (j.validUntil ? ' — valable jusqu\\'au '+new Date(j.validUntil).toLocaleDateString() : ' — accès à vie') : '';
+      document.getElementById('statusOut').innerHTML='<span class="'+cls+'">Accès : '+txt+'</span> — '+(j.auditsCount||0)+' audit(s) réalisés'+duree;
     });
   }
   function checkout(){
@@ -414,11 +415,9 @@ async function handleStripeWebhook(req, res) {
   if (decision.action === 'activate') {
     const target = decision.ref || decision.email;
     if (target) {
-      accounts.activate(target, { days: decision.days, stripeCustomerId: decision.customer });
+      // Paiement unique -> accès à vie (lifetime).
+      accounts.activate(target, { lifetime: true, stripeCustomerId: decision.customer });
     }
-  } else if (decision.action === 'deactivate') {
-    // Désactivation par email si disponible.
-    if (decision.email) accounts.deactivate(decision.email);
   }
   return sendJson(res, 200, { received: true });
 }

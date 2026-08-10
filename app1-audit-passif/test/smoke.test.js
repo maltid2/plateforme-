@@ -167,11 +167,12 @@ check('stripe : signature de webhook valide acceptée, altérée rejetée', () =
   delete process.env.STRIPE_WEBHOOK_SECRET;
 });
 
-check('stripe : parseEvent => activate sur paiement', () => {
-  const ev = { type: 'invoice.paid', data: { object: { client_reference_id: 'acc-1', customer: 'cus_1' } } };
+check('stripe : parseEvent => activate à vie sur paiement unique', () => {
+  const ev = { type: 'checkout.session.completed', data: { object: { client_reference_id: 'acc-1', customer: 'cus_1' } } };
   const d = stripe.parseEvent(ev);
   assert.strictEqual(d.action, 'activate');
   assert.strictEqual(d.ref, 'acc-1');
+  assert.strictEqual(d.lifetime, true); // paiement en une fois
 });
 
 // Nettoyage du dossier de données temporaire.

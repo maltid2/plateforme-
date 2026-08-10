@@ -75,7 +75,7 @@ async function createCheckoutSession(account) {
   }
   const base = process.env.PUBLIC_BASE_URL || 'http://localhost:3000';
   const form = {
-    mode: 'subscription',
+    mode: 'payment', // paiement unique (pas d'abonnement récurrent)
     'line_items[0][price]': process.env.STRIPE_PRICE_ID,
     'line_items[0][quantity]': '1',
     success_url: base + '/app?paid=1',
@@ -156,19 +156,19 @@ function parseEvent(event) {
   const obj = event && event.data && event.data.object ? event.data.object : {};
 
   switch (type) {
+    // Paiement unique réussi -> accès À VIE (lifetime).
     case 'checkout.session.completed':
-    case 'invoice.paid':
-    case 'invoice.payment_succeeded':
+    case 'payment_intent.succeeded':
       return {
         action: 'activate',
         ref: obj.client_reference_id || null,
-        email: obj.customer_email || (obj.customer_details && obj.customer_details.email) || null,
+        email:
+          obj.customer_email ||
+          (obj.customer_details && obj.customer_details.email) ||
+          (obj.receipt_email || null),
         customer: obj.customer || null,
-        days: 30,
+        lifetime: true, // paiement en une fois = accès permanent
       };
-    case 'customer.subscription.deleted':
-    case 'invoice.payment_failed':
-      return { action: 'deactivate', customer: obj.customer || null, email: obj.customer_email || null };
     default:
       return { action: 'ignore' };
   }

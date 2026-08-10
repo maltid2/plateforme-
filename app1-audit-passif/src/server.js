@@ -25,6 +25,8 @@ const crypto = require('crypto');
 const { audit } = require('./index');
 const reportGen = require('./report/generator');
 const ssrf = require('./lib/ssrf-guard');
+const accounts = require('./auth/accounts');
+const stripe = require('./billing/stripe');
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 
@@ -189,7 +191,129 @@ const INDEX_HTML = `<!DOCTYPE html>
 </body>
 </html>`;
 
+// --- Espace client (self-service : compte + paiement + audits illimités) ---
+const DASHBOARD_HTML = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Espace client — audits illimités</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+         margin: 0; background: #0f172a; color: #e2e8f0; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 40px 20px; }
+  h1 { font-size: 26px; margin: 0 0 6px; }
+  .sub { color: #94a3b8; margin-bottom: 24px; }
+  .box { background: #1e293b; border: 1px solid #334155; border-radius: 14px; padding: 22px; margin-bottom: 18px; }
+  .box h2 { margin: 0 0 12px; font-size: 17px; }
+  input { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid #334155;
+          background: #0f172a; color: #e2e8f0; font-size: 15px; margin-bottom: 10px; }
+  button { padding: 12px 18px; border: 0; border-radius: 10px; color: #fff; font-size: 15px;
+           font-weight: 600; cursor: pointer; }
+  .b-blue { background:#2563eb; } .b-green { background:#16a34a; } .b-slate{ background:#334155; }
+  .status { font-size: 14px; margin-top: 8px; }
+  .active { color:#22c55e; } .inactive { color:#f87171; }
+  .key { font-family: monospace; background:#0f172a; padding:10px; border-radius:8px; word-break:break-all;
+         border:1px solid #334155; margin:8px 0; font-size:13px; }
+  .muted { color:#64748b; font-size:12px; }
+  #auditResult { margin-top:12px; font-size:14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Espace client</h1>
+  <div class="sub">Créez votre compte, activez votre abonnement, puis lancez <strong>autant d'audits que vous voulez</strong>.</div>
+
+  <div class="box">
+    <h2>1. Créer un compte</h2>
+    <input id="email" type="email" placeholder="votre@email.com">
+    <button class="b-blue" onclick="createAccount()">Créer mon compte</button>
+    <div id="createOut"></div>
+  </div>
+
+  <div class="box">
+    <h2>2. Votre clé d'accès</h2>
+    <input id="key" type="text" placeholder="Collez votre clé (sk_live_...)">
+    <button class="b-slate" onclick="checkStatus()">Vérifier mon statut</button>
+    <div class="status" id="statusOut"></div>
+  </div>
+
+  <div class="box">
+    <h2>3. Activer l'abonnement</h2>
+    <button class="b-green" onclick="checkout()">Payer / activer</button>
+    <div class="muted" id="payOut">Paiement sécurisé hébergé par Stripe.</div>
+  </div>
+
+  <div class="box">
+    <h2>4. Lancer un audit (illimité)</h2>
+    <input id="auditUrl" type="url" placeholder="https://site-a-auditer.com">
+    <button class="b-blue" onclick="runAudit()">Auditer</button>
+    <div id="auditResult"></div>
+  </div>
+</div>
+<script>
+  function key(){ return document.getElementById('key').value.trim(); }
+  function createAccount(){
+    var email = document.getElementById('email').value.trim();
+    fetch('/api/account',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email})})
+    .then(function(r){return r.json();}).then(function(j){
+      if(j.error){ document.getElementById('createOut').innerHTML='<div class="inactive status">'+j.error+'</div>'; return; }
+      document.getElementById('createOut').innerHTML='<div class="status">Voici votre clé (copiez-la, montrée une seule fois) :</div><div class="key">'+j.apiKey+'</div>';
+      document.getElementById('key').value=j.apiKey;
+    });
+  }
+  function checkStatus(){
+    fetch('/api/account/status',{headers:{'x-api-key':key()}}).then(function(r){return r.json();}).then(function(j){
+      if(j.error){ document.getElementById('statusOut').innerHTML='<span class="inactive">'+j.error+'</span>'; return; }
+      var cls = j.active ? 'active' : 'inactive';
+      var txt = j.active ? 'ACTIF' : 'INACTIF';
+      document.getElementById('statusOut').innerHTML='<span class="'+cls+'">Abonnement : '+txt+'</span> — '+(j.auditsCount||0)+' audit(s) réalisés'+(j.validUntil?(' — valable jusqu\\'au '+new Date(j.validUntil).toLocaleDateString()):'');
+    });
+  }
+  function checkout(){
+    fetch('/api/checkout',{method:'POST',headers:{'x-api-key':key()}}).then(function(r){return r.json();}).then(function(j){
+      if(j.checkoutUrl){ window.location = j.checkoutUrl; }
+      else { document.getElementById('payOut').innerHTML='<span class="inactive">'+(j.error||'Paiement indisponible')+'</span>'; }
+    });
+  }
+  function runAudit(){
+    var url = document.getElementById('auditUrl').value.trim();
+    document.getElementById('auditResult').textContent='Analyse en cours...';
+    fetch('/api/audit',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key()},body:JSON.stringify({url:url})})
+    .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});}).then(function(o){
+      if(!o.ok){ document.getElementById('auditResult').innerHTML='<span class="inactive">'+(o.j.error||'Erreur')+'</span>'; return; }
+      document.getElementById('auditResult').innerHTML='Note <strong>'+o.j.letter+'</strong> ('+o.j.score+'/100) — <a href="'+o.j.reportUrl+'" target="_blank" style="color:#60a5fa">rapport</a> — total : '+o.j.auditsCount+' audits';
+    });
+  }
+</script>
+</body>
+</html>`;
+
+/**
+ * Extrait la clé d'API : en-tête `x-api-key` ou `Authorization: Bearer ...`.
+ */
+function getApiKey(req) {
+  if (req.headers['x-api-key']) return String(req.headers['x-api-key']).trim();
+  const auth = req.headers['authorization'] || '';
+  const m = auth.match(/^Bearer\s+(.+)$/i);
+  return m ? m[1].trim() : null;
+}
+
 async function handleAudit(req, res) {
+  // --- Contrôle d'abonnement : accès illimité tant que le compte est actif ---
+  const key = getApiKey(req);
+  const account = key ? accounts.findByKey(key) : null;
+  if (!account) {
+    return sendJson(res, 401, { error: 'Clé d\'API manquante ou invalide.' });
+  }
+  if (!accounts.isActive(account)) {
+    return sendJson(res, 402, {
+      error: 'Abonnement inactif ou expiré. Aucun audit tant que le paiement n\'est pas actif.',
+      subscribeUrl: '/app',
+    });
+  }
+
   let body;
   try {
     body = JSON.parse(await readBody(req));
@@ -215,6 +339,7 @@ async function handleAudit(req, res) {
   }
 
   const id = saveReport(report);
+  const auditsCount = accounts.recordAudit(account);
   return sendJson(res, 200, {
     id,
     target: report.target,
@@ -223,7 +348,79 @@ async function handleAudit(req, res) {
     meaning: report.scoring.meaning,
     findingsSummary: report.scoring.findingsSummary,
     reportUrl: '/r/' + id,
+    auditsCount,
   });
+}
+
+/**
+ * POST /api/account — crée un compte, renvoie la clé UNE SEULE FOIS.
+ */
+async function handleCreateAccount(req, res) {
+  let body;
+  try {
+    body = JSON.parse(await readBody(req));
+  } catch (err) {
+    return sendJson(res, 400, { error: 'Requête JSON invalide.' });
+  }
+  const result = accounts.createAccount({ email: body.email, plan: body.plan });
+  if (!result.ok) return sendJson(res, 400, { error: result.reason });
+  return sendJson(res, 201, {
+    account: result.account,
+    apiKey: result.apiKey,
+    note: 'Conservez cette clé : elle ne sera plus jamais affichée.',
+  });
+}
+
+/**
+ * GET /api/account/status — statut de l'abonnement (via clé).
+ */
+function handleAccountStatus(req, res) {
+  const key = getApiKey(req);
+  const account = key ? accounts.findByKey(key) : null;
+  if (!account) return sendJson(res, 401, { error: 'Clé invalide.' });
+  return sendJson(res, 200, accounts.publicView(account));
+}
+
+/**
+ * POST /api/checkout — crée une session de paiement Stripe (self-service).
+ */
+async function handleCheckout(req, res) {
+  const key = getApiKey(req);
+  const account = key ? accounts.findByKey(key) : null;
+  if (!account) return sendJson(res, 401, { error: 'Clé invalide.' });
+  const session = await stripe.createCheckoutSession(account);
+  if (!session.ok) return sendJson(res, 503, { error: session.reason });
+  return sendJson(res, 200, { checkoutUrl: session.url });
+}
+
+/**
+ * POST /webhook/stripe — active/désactive automatiquement après paiement.
+ * L'activation est TOTALEMENT autonome (aucune intervention manuelle).
+ */
+async function handleStripeWebhook(req, res) {
+  const raw = await readBody(req, 1024 * 1024);
+  const sig = req.headers['stripe-signature'];
+  const verified = stripe.verifyWebhookSignature(raw, sig);
+  if (!verified.ok) {
+    return sendJson(res, 400, { error: 'Webhook rejeté : ' + verified.reason });
+  }
+  let event;
+  try {
+    event = JSON.parse(raw);
+  } catch (err) {
+    return sendJson(res, 400, { error: 'Payload invalide.' });
+  }
+  const decision = stripe.parseEvent(event);
+  if (decision.action === 'activate') {
+    const target = decision.ref || decision.email;
+    if (target) {
+      accounts.activate(target, { days: decision.days, stripeCustomerId: decision.customer });
+    }
+  } else if (decision.action === 'deactivate') {
+    // Désactivation par email si disponible.
+    if (decision.email) accounts.deactivate(decision.email);
+  }
+  return sendJson(res, 200, { received: true });
 }
 
 const server = http.createServer(async (req, res) => {
@@ -234,8 +431,23 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && pathname === '/') {
       return send(res, 200, INDEX_HTML);
     }
+    if (req.method === 'GET' && pathname === '/app') {
+      return send(res, 200, DASHBOARD_HTML);
+    }
     if (req.method === 'POST' && pathname === '/api/audit') {
       return await handleAudit(req, res);
+    }
+    if (req.method === 'POST' && pathname === '/api/account') {
+      return await handleCreateAccount(req, res);
+    }
+    if (req.method === 'GET' && pathname === '/api/account/status') {
+      return handleAccountStatus(req, res);
+    }
+    if (req.method === 'POST' && pathname === '/api/checkout') {
+      return await handleCheckout(req, res);
+    }
+    if (req.method === 'POST' && pathname === '/webhook/stripe') {
+      return await handleStripeWebhook(req, res);
     }
     // Rapport partageable : /r/<id> ou /r/<id>.json
     const m = pathname.match(/^\/r\/([a-z0-9-]+?)(\.json)?$/i);

@@ -69,6 +69,42 @@ une URL et obtient sa note A→F + un **lien de rapport partageable**.
 privées (localhost, 10/8, 192.168/16…) sont refusées, y compris via
 résolution DNS.
 
+### Self-service : le client paie → audits illimités, sans vous
+
+Une fois abonné, le client lance **autant d'audits qu'il veut, en autonomie**.
+
+| Route | Rôle |
+|---|---|
+| `GET /app` | Espace client (créer un compte, payer, auditer) |
+| `POST /api/account` | Crée un compte, renvoie la **clé d'API** (une seule fois) |
+| `GET /api/account/status` | Statut de l'abonnement (via clé) |
+| `POST /api/checkout` | Crée une session de paiement Stripe (self-service) |
+| `POST /webhook/stripe` | **Active automatiquement** le compte après paiement |
+| `POST /api/audit` | Refusé (401) sans clé, (402) si non payé, **illimité** si actif |
+
+**Comptes** (`auth/accounts.js`) : la clé d'API n'est jamais stockée en clair
+(empreinte SHA-256, comparaison temps constant). Un compte actif = audits
+illimités (aucun plafond, on ne fait que compter l'usage).
+
+**Paiement** (`billing/stripe.js`) : Stripe appelé via son **API REST
+directement** (aucun SDK à installer) ; les webhooks sont vérifiés avec le
+`crypto` natif (HMAC-SHA256 + anti-rejeu). Le paiement active le compte
+**sans aucune intervention de votre part**.
+
+> Le traitement des cartes passe par Stripe (obligation PCI/légale) : c'est le
+> seul élément externe, et il n'exige aucune installation — juste 3 variables
+> d'environnement (`STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`,
+> `STRIPE_WEBHOOK_SECRET`). Voir `.env.example`.
+
+**Activation manuelle** (ventes manuelles, tests) — sans Stripe :
+
+```bash
+node src/admin.js create   --email client@ex.com
+node src/admin.js activate --email client@ex.com --days 30   # ou --lifetime
+node src/admin.js list
+node src/admin.js deactivate --email client@ex.com
+```
+
 ## Modules
 
 | Module | Fichier | Rôle | Dépend d'une API ? |

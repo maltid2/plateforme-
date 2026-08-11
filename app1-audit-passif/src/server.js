@@ -152,6 +152,13 @@ async function runAuditRequest(req) {
 }
 
 function auditResponse(report, id, extra) {
+  // Statut simple par catégorie (langage grand public) : ok si aucune alerte
+  // élevée/moyenne, sinon "à améliorer".
+  const categories = (report.modules || []).map((m) => ({
+    id: m.module,
+    ok: !(m.findings || []).some((f) => f.severity === 'high' || f.severity === 'medium'),
+    degraded: !!m.degraded,
+  }));
   return {
     id,
     target: report.target,
@@ -159,6 +166,7 @@ function auditResponse(report, id, extra) {
     letter: report.scoring.letter,
     meaning: report.scoring.meaning,
     findingsSummary: report.scoring.findingsSummary,
+    categories,
     reportUrl: '/r/' + id,
     ...(extra || {}),
   };

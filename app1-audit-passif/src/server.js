@@ -138,9 +138,12 @@ async function runAuditRequest(req) {
   const guard = await ssrf.assertPublicTarget(normalized);
   if (!guard.ok) return { ok: false, status: 400, error: 'Cible refusée : ' + guard.reason };
 
+  // Paramétrage : liste de modules choisis (optionnelle).
+  const modules = Array.isArray(body.modules) ? body.modules : undefined;
+
   let report;
   try {
-    report = await audit(normalized);
+    report = await audit(normalized, { modules });
   } catch (err) {
     return { ok: false, status: 500, error: 'Audit impossible : ' + err.message };
   }

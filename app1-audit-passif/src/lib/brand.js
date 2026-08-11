@@ -83,6 +83,30 @@ const DESIGN = `
   .reveal.in{opacity:1;transform:none}
   @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
   .floaty{animation:floaty 6s ease-in-out infinite}
+  /* Écran d'intro (animation d'ouverture 3D) */
+  #intro{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;background:radial-gradient(1100px 800px at 50% 38%,#1b1146,#080a14 72%);overflow:hidden;
+    transition:opacity .8s ease,transform .8s ease,filter .8s ease}
+  #intro.gone{opacity:0;transform:scale(1.09);filter:blur(7px);pointer-events:none}
+  #introbg{position:absolute;inset:0;width:100%;height:100%;z-index:0;
+    background:radial-gradient(700px 500px at 50% 40%,rgba(124,92,255,.28),transparent 60%)}
+  .intro-stage{position:relative;z-index:1;perspective:900px;margin-bottom:10px}
+  .intro-shield{transform-style:preserve-3d;animation:introShield 1.5s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes introShield{0%{opacity:0;transform:scale(.35) rotateY(85deg)}60%{opacity:1}100%{opacity:1;transform:scale(1) rotateY(0)}}
+  .intro-ring{position:absolute;left:50%;top:50%;border-radius:50%;border:1px solid rgba(167,139,250,.35);
+    transform:translate(-50%,-50%);animation:introRing 1.6s ease both}
+  @keyframes introRing{0%{opacity:0;transform:translate(-50%,-50%) scale(.2)}100%{opacity:.55;transform:translate(-50%,-50%) scale(1)}}
+  .intro-t{position:relative;z-index:1;opacity:0;animation:introUp .8s ease both}
+  @keyframes introUp{0%{opacity:0;transform:translateY(18px)}100%{opacity:1;transform:none}}
+  @keyframes glowPulse{0%,100%{box-shadow:0 0 0 0 rgba(139,108,255,.45)}50%{box-shadow:0 0 42px 8px rgba(139,108,255,.35)}}
+  .intro-btn{animation:glowPulse 2.2s ease-in-out infinite}
+  /* Toggles de modules (paramétrage de l'audit) */
+  .toggles{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 4px}
+  .mtog{display:inline-flex;align-items:center;gap:8px;padding:8px 13px;border-radius:999px;border:1px solid var(--line);
+    background:var(--card);color:var(--muted);cursor:pointer;font-size:13px;font-weight:600;user-select:none;transition:.15s}
+  .mtog .dot{width:8px;height:8px;border-radius:50%;background:#4a5069;transition:.15s}
+  .mtog.on{border-color:var(--accent);background:rgba(139,108,255,.14);color:#d8ccff}
+  .mtog.on .dot{background:var(--accent);box-shadow:0 0 9px var(--accent)}
   @media(max-width:900px){.app{grid-template-columns:1fr}.sidebar{display:none}}
 `;
 
@@ -161,10 +185,43 @@ function topbar() {
   </div>`;
 }
 
-function shell(active, main) {
-  return `<body><div class="app">${sidebar(active)}
+function shell(active, main, prepend) {
+  return `<body>${prepend || ''}<div class="app">${sidebar(active)}
     <div class="main">${topbar()}<div class="content">${main}</div></div>
   </div>`;
+}
+
+// Écran d'intro : animation d'ouverture 3D puis entrée dans le SaaS.
+function introOverlay() {
+  return `<div id="intro">
+    <div id="introbg"></div>
+    <div class="intro-stage">
+      <div class="intro-ring" style="width:230px;height:230px;animation-delay:.1s"></div>
+      <div class="intro-ring" style="width:320px;height:320px;animation-delay:.25s"></div>
+      <div class="intro-shield">${shield3D()}</div>
+    </div>
+    <div class="intro-t" style="animation-delay:.7s">
+      <div style="display:flex;align-items:center;gap:12px;justify-content:center">${ixLogo(34)}
+        <span style="font-weight:800;font-size:30px;letter-spacing:.02em">IX<span style="background:linear-gradient(120deg,#a78bfa,#c084fc);-webkit-background-clip:text;background-clip:text;color:transparent">AUDIT</span></span></div>
+      <div class="muted" style="letter-spacing:.28em;font-size:12px;margin-top:8px">${escapeHtml(SLOGAN)}</div>
+    </div>
+    <button id="enterBtn" class="btn intro-t intro-btn" style="margin-top:26px;animation-delay:1.3s,0s;padding:14px 30px">
+      Entrer dans IXAUDIT →</button>
+    <div class="intro-t muted" style="animation-delay:1.5s;font-size:12px;margin-top:14px">Analyse passive · non intrusive · sans carte bancaire</div>
+  </div>
+  <script>(function(){
+    var intro=document.getElementById('intro');
+    if(/intro=0/.test(location.search)||sessionStorage.getItem('ix_intro')){ if(intro&&intro.parentNode)intro.parentNode.removeChild(intro); return; }
+    // Fond animé (dégradé qui respire) — léger, sans dépendance.
+    var bg=document.getElementById('introbg'),t0=Date.now();
+    (function anim(){var e=(Date.now()-t0)/1000;var x=50+Math.sin(e*0.5)*12,y=40+Math.cos(e*0.4)*10;
+      bg.style.background='radial-gradient(680px 500px at '+x+'% '+y+'%,rgba(124,92,255,.30),transparent 60%),'+
+        'radial-gradient(520px 420px at '+(100-x)+'% '+(100-y)+'%,rgba(192,132,252,.16),transparent 55%)';
+      if(document.body.contains(intro))requestAnimationFrame(anim);})();
+    function enter(){sessionStorage.setItem('ix_intro','1');intro.classList.add('gone');
+      setTimeout(function(){if(intro&&intro.parentNode)intro.parentNode.removeChild(intro);},850);}
+    document.getElementById('enterBtn').addEventListener('click',enter);
+  })();</script>`;
 }
 
 function footer() {
@@ -204,10 +261,17 @@ function landingPage() {
           <span class="badge" style="letter-spacing:.06em">AUDIT GRATUIT & ILLIMITÉ</span>
           <h1 style="font-size:44px;line-height:1.08;margin:16px 0 14px">Analysez. Comprenez.
             <span style="background:linear-gradient(120deg,#a78bfa,#c084fc);-webkit-background-clip:text;background-clip:text;color:transparent">Sécurisez.</span></h1>
-          <p class="muted" style="font-size:16px;max-width:460px;margin:0 0 22px">${escapeHtml(TAGLINE)}</p>
-          <form id="f" style="display:flex;gap:10px;flex-wrap:wrap;max-width:520px">
-            <input id="url" type="url" placeholder="https://votre-site.com" required style="flex:1 1 240px">
-            <button class="btn" id="btn" type="submit">Démarrer un audit gratuit →</button>
+          <p class="muted" style="font-size:16px;max-width:460px;margin:0 0 18px">${escapeHtml(TAGLINE)}</p>
+          <form id="f" style="max-width:560px">
+            <input id="url" type="url" placeholder="https://votre-site.com" required>
+            <div style="font-size:12px;color:var(--muted);font-weight:600;margin-top:14px">Contrôles à lancer</div>
+            <div class="toggles" id="toggles">
+              ${[['A1', 'SSL/TLS'], ['A2', 'En-têtes HTTP'], ['A3', 'Fichiers exposés'], ['B', 'Réputation'], ['C', 'Technos & CVE'], ['D', 'RGPD']]
+                .map(function (m) {
+                  return `<span class="mtog on" data-mod="${m[0]}"><span class="dot"></span>${m[1]}</span>`;
+                }).join('')}
+            </div>
+            <button class="btn" id="btn" type="submit" style="margin-top:14px">Lancer l'audit gratuit →</button>
           </form>
           <div id="spin" class="muted" style="display:none;margin-top:12px">⏳ Analyse en cours…</div>
           <div id="err" style="display:none;margin-top:12px;color:#fda4af;font-size:14px"></div>
@@ -253,16 +317,22 @@ function landingPage() {
       </div>
     </section>
     ${footer()}`;
-  return `${head('IXAUDIT — Analysez. Comprenez. Sécurisez.')}${shell('home', main)}
+  return `${head('IXAUDIT — Analysez. Comprenez. Sécurisez.')}${shell('home', main, introOverlay())}
 <script>
   var GRADE=${JSON.stringify(GRADE)}, SEV=${JSON.stringify(SEV)};
   var SEVLABEL={high:'Élevé',medium:'Moyen',low:'Faible',info:'Info'};
+  // Toggles de contrôles (paramétrage de l'audit)
+  [].slice.call(document.querySelectorAll('.mtog')).forEach(function(c){
+    c.addEventListener('click',function(){c.classList.toggle('on');});});
   document.getElementById('f').addEventListener('submit',function(e){
     e.preventDefault();
     var url=document.getElementById('url').value.trim(), btn=document.getElementById('btn');
-    document.getElementById('err').style.display='none';document.getElementById('res').style.display='none';
+    var mods=[].slice.call(document.querySelectorAll('.mtog.on')).map(function(c){return c.getAttribute('data-mod');});
+    var errEl=document.getElementById('err');
+    if(!mods.length){errEl.style.display='block';errEl.textContent='Sélectionnez au moins un contrôle à lancer.';return;}
+    errEl.style.display='none';document.getElementById('res').style.display='none';
     document.getElementById('spin').style.display='block';btn.disabled=true;
-    fetch('/api/audit/free',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:url})})
+    fetch('/api/audit/free',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:url,modules:mods})})
     .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
     .then(function(o){
       document.getElementById('spin').style.display='none';btn.disabled=false;

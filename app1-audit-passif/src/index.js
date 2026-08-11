@@ -42,9 +42,25 @@ function normalizeUrl(input) {
 }
 
 /**
- * Exécute l'audit complet.
+ * Catalogue des modules disponibles (id -> métadonnées + exécuteur).
+ * Permet de paramétrer l'audit : ne lancer que les contrôles choisis.
+ */
+const MODULE_CATALOG = [
+  { id: 'A1', name: 'SSL/TLS', run: (u, o) => ssl.run(u, o), onError: (e) => ({ module: 'A1', name: 'SSL/TLS', findings: [], score: 0, error: e.message }) },
+  { id: 'A2', name: 'Headers HTTP', run: (u, o) => headers.run(u, o), onError: (e) => ({ module: 'A2', name: 'Headers HTTP', findings: [], score: 0, error: e.message }) },
+  { id: 'A3', name: 'Fichiers sensibles', run: (u, o) => exposedFiles.run(u, o), onError: (e) => ({ module: 'A3', name: 'Fichiers sensibles', findings: [], score: 0, error: e.message }) },
+  { id: 'B', name: 'Réputation', run: (u, o) => reputation.run(u, o), onError: (e) => ({ module: 'B', name: 'Réputation', findings: [], score: 100, degraded: true, error: e.message }) },
+  { id: 'C', name: 'Technologies + CVE', run: (u, o) => techDetect.run(u, o), onError: (e) => ({ module: 'C', name: 'Technologies + CVE', findings: [], score: 100, degraded: true, error: e.message }) },
+  { id: 'D', name: 'Bonnes pratiques SaaS', run: (u, o) => compliance.run(u, o), onError: (e) => ({ module: 'D', name: 'Bonnes pratiques SaaS', findings: [], score: 100, error: e.message }) },
+];
+
+const ALL_MODULE_IDS = MODULE_CATALOG.map((m) => m.id);
+
+/**
+ * Exécute l'audit (paramétrable : on peut ne lancer qu'une partie des modules).
  * @param {string} targetUrl
- * @param {object} [options] - { pdf, outDir, timeout, minCvss, log }
+ * @param {object} [options] - { pdf, outDir, timeout, minCvss, log, modules }
+ *   options.modules : liste d'ids ('A1','A2','A3','B','C','D'). Défaut : tous.
  * @returns {Promise<object>} rapport structuré
  */
 async function audit(targetUrl, options = {}) {
@@ -52,27 +68,22 @@ async function audit(targetUrl, options = {}) {
   const log = options.log || (() => {});
   const modOptions = { timeout: options.timeout, minCvss: options.minCvss };
 
-  log('▶ Audit passif de ' + url);
+  // Sélection des modules : on garde l'ordre du catalogue.
+  let selected = MODULE_CATALOG;
+  if (Array.isArray(options.modules) && options.modules.length) {
+    const want = new Set(options.modules.map((m) => String(m).toUpperCase()));
+    const filtered = MODULE_CATALOG.filter((m) => want.has(m.id));
+    if (filtered.length) selected = filtered;
+  }
 
-  // Les modules sont indépendants : on peut les lancer en parallèle.
-  // Chaque module encapsule ses propres erreurs, donc Promise.all est sûr.
-  const [
-    sslRes,
-    headersRes,
-    exposedRes,
-    reputationRes,
-    techRes,
-    complianceRes,
-  ] = await Promise.all([
-    ssl.run(url, modOptions).catch((e) => ({ module: 'A1', name: 'SSL/TLS', findings: [], score: 0, error: e.message })),
-    headers.run(url, modOptions).catch((e) => ({ module: 'A2', name: 'Headers HTTP', findings: [], score: 0, error: e.message })),
-    exposedFiles.run(url, modOptions).catch((e) => ({ module: 'A3', name: 'Fichiers sensibles', findings: [], score: 0, error: e.message })),
-    reputation.run(url, modOptions).catch((e) => ({ module: 'B', name: 'Réputation', findings: [], score: 100, degraded: true, error: e.message })),
-    techDetect.run(url, modOptions).catch((e) => ({ module: 'C', name: 'Technologies + CVE', findings: [], score: 100, degraded: true, error: e.message })),
-    compliance.run(url, modOptions).catch((e) => ({ module: 'D', name: 'Bonnes pratiques SaaS', findings: [], score: 100, error: e.message })),
-  ]);
+  log('▶ Audit passif de ' + url + ' (' + selected.map((m) => m.id).join(', ') + ')');
 
-  const modules = [sslRes, headersRes, exposedRes, reputationRes, techRes, complianceRes];
+  // Modules indépendants -> exécution en parallèle. Chaque module encapsule
+  // ses erreurs, donc Promise.all est sûr.
+  const modules = await Promise.all(
+    selected.map((m) => m.run(url, modOptions).catch(m.onError))
+  );
+
   const scoringResult = scoring.compute(modules);
 
   const report = {
@@ -144,4 +155,10 @@ if (require.main === module) {
     });
 }
 
-module.exports = { audit, auditAndReport, normalizeUrl };
+module.exports = {
+  audit,
+  auditAndReport,
+  normalizeUrl,
+  MODULES: MODULE_CATALOG.map((m) => ({ id: m.id, name: m.name })),
+  ALL_MODULE_IDS,
+};

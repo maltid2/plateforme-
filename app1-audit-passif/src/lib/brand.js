@@ -25,11 +25,8 @@ function escapeHtml(s) {
 }
 
 const DESIGN = `
-  @font-face{font-family:'Space Grotesk';font-style:normal;font-weight:500;font-display:swap;src:url('/assets/sg-500.woff2') format('woff2')}
-  @font-face{font-family:'Space Grotesk';font-style:normal;font-weight:700;font-display:swap;src:url('/assets/sg-700.woff2') format('woff2')}
   :root{
     --accent:${ACCENT};--accent-2:#6d4bff;--cyan:#c084fc;
-    --display:'Space Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
     --bg:#080b14;--panel:#0c1220;--panel-2:#0e1526;--card:rgba(255,255,255,.028);
     --line:rgba(255,255,255,.08);--ink:#e9eefb;--muted:#8790a9;
     --radius:16px;--sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
@@ -44,7 +41,7 @@ const DESIGN = `
   .sidebar{background:linear-gradient(180deg,var(--panel),#0a0f1c);border-right:1px solid var(--line);
     padding:20px 16px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh}
   .logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px}
-  .logo .name{font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:.01em}
+  .logo .name{font-weight:800;font-size:19px;letter-spacing:.02em}
   .logo .name b{background:linear-gradient(120deg,#a78bfa,#c084fc);-webkit-background-clip:text;background-clip:text;color:transparent}
   .nav-i{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:11px;color:var(--muted);
     font-weight:600;font-size:14.5px;cursor:pointer;transition:.15s}
@@ -66,24 +63,13 @@ const DESIGN = `
   .chip{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#a9b6d6;
     padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card)}
   /* Boutons */
-  .btn{position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;gap:9px;
-    border:0;cursor:pointer;font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.01em;
-    padding:14px 26px;border-radius:14px;color:#fff;
-    background:linear-gradient(135deg,var(--accent),var(--accent-2));
-    box-shadow:0 14px 30px -12px var(--accent),inset 0 1px 0 rgba(255,255,255,.28);
-    transition:transform .18s cubic-bezier(.2,.7,.2,1),box-shadow .18s}
-  .btn:hover{transform:translateY(-2px);box-shadow:0 20px 44px -12px var(--accent),inset 0 1px 0 rgba(255,255,255,.3)}
-  .btn:active{transform:translateY(0)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;border:0;cursor:pointer;
+    font-weight:700;font-size:14.5px;padding:12px 20px;border-radius:12px;color:#fff;
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:0 12px 28px -12px var(--accent);transition:.16s}
+  .btn:hover{transform:translateY(-1px);box-shadow:0 16px 34px -12px var(--accent)}
   .btn:disabled{opacity:.6;cursor:wait;transform:none}
-  .btn::after{content:'';position:absolute;top:0;left:-130%;width:60%;height:100%;
-    background:linear-gradient(100deg,transparent,rgba(255,255,255,.45),transparent);
-    transform:skewX(-18deg);transition:left .6s}
-  .btn:hover::after{left:140%}
-  .btn span.arw{transition:transform .18s}
-  .btn:hover span.arw{transform:translateX(4px)}
   .btn.soft{background:var(--card);border:1px solid var(--line);color:var(--ink);box-shadow:none}
-  .btn.soft:hover{background:rgba(255,255,255,.06);box-shadow:none}
-  .btn.soft::after{display:none}
+  .btn.soft:hover{background:rgba(255,255,255,.06)}
   /* Cartes / champs */
   .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius)}
   input{width:100%;padding:13px 15px;border-radius:12px;border:1px solid var(--line);font-size:14.5px;
@@ -91,7 +77,7 @@ const DESIGN = `
   input::placeholder{color:#6f7893}
   input:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(139,108,255,.18)}
   label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px}
-  h1,h2,h3{margin:0;letter-spacing:-.03em;font-family:var(--display);font-weight:700}
+  h1,h2,h3{margin:0;letter-spacing:-.02em}
   .muted{color:var(--muted)}
   .reveal{opacity:0;transform:translateY(18px);transition:.7s cubic-bezier(.2,.7,.2,1)}
   .reveal.in{opacity:1;transform:none}
@@ -221,7 +207,7 @@ function landingPage() {
           <p class="muted" style="font-size:16px;max-width:460px;margin:0 0 22px">${escapeHtml(TAGLINE)}</p>
           <form id="f" style="display:flex;gap:10px;flex-wrap:wrap;max-width:520px">
             <input id="url" type="url" placeholder="https://votre-site.com" required style="flex:1 1 240px">
-            <button class="btn" id="btn" type="submit">Démarrer un audit gratuit <span class="arw">→</span></button>
+            <button class="btn" id="btn" type="submit">Démarrer un audit gratuit →</button>
           </form>
           <div id="spin" class="muted" style="display:none;margin-top:12px">⏳ Analyse en cours…</div>
           <div id="err" style="display:none;margin-top:12px;color:#fda4af;font-size:14px"></div>

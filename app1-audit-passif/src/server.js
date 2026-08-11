@@ -22,8 +22,6 @@ require('./lib/env').loadEnv();
 
 const http = require('http');
 const crypto = require('crypto');
-const fs = require('fs');
-const path = require('path');
 const { audit } = require('./index');
 const reportGen = require('./report/generator');
 const ssrf = require('./lib/ssrf-guard');
@@ -90,22 +88,6 @@ function send(res, status, body, headers = {}) {
 function sendJson(res, status, obj) {
   send(res, status, JSON.stringify(obj), {
     'Content-Type': 'application/json; charset=utf-8',
-  });
-}
-
-const ASSETS_DIR = path.join(__dirname, 'assets');
-const ASSET_TYPES = { woff2: 'font/woff2', woff: 'font/woff', css: 'text/css', svg: 'image/svg+xml', png: 'image/png' };
-
-function serveAsset(res, name) {
-  const safe = String(name).replace(/[^a-z0-9._-]/gi, ''); // pas de traversée
-  const ext = safe.split('.').pop();
-  fs.readFile(path.join(ASSETS_DIR, safe), (err, buf) => {
-    if (err) return send(res, 404, 'Not found');
-    res.writeHead(200, {
-      'Content-Type': ASSET_TYPES[ext] || 'application/octet-stream',
-      'Cache-Control': 'public, max-age=31536000, immutable',
-    });
-    res.end(buf);
   });
 }
 
@@ -336,10 +318,6 @@ const server = http.createServer(async (req, res) => {
   const pathname = url.pathname;
 
   try {
-    // Assets statiques (polices auto-hébergées, etc.)
-    if (req.method === 'GET' && pathname.startsWith('/assets/')) {
-      return serveAsset(res, pathname.slice('/assets/'.length));
-    }
     if (req.method === 'GET' && pathname === '/') {
       return send(res, 200, brand.landingPage());
     }

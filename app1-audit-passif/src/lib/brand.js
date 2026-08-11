@@ -163,7 +163,7 @@ function sidebar(active) {
 }
 
 function topbar() {
-  return `<div class="topbar"><span class="lbl">Vérification de sécurité · gratuite</span>
+  return `<div class="topbar" style="justify-content:flex-end">
     <button class="btn soft" onclick="focusScan()">Vérifier mon site</button></div>`;
 }
 
@@ -176,7 +176,7 @@ const FONTS = {
   manrope: { label: 'Manrope', family: 'Manrope' },
   inter: { label: 'Inter', family: 'Inter' },
 };
-const DEFAULT_FONT = process.env.BRAND_FONT || 'space';
+const DEFAULT_FONT = process.env.BRAND_FONT || 'inter';
 
 function fontCss(fontKey) {
   const key = FONTS[fontKey] ? fontKey : DEFAULT_FONT;
@@ -389,7 +389,7 @@ function landingAltPage(fontKey) {
   </header>
 
   <main class="wrap">
-    <div class="eyebrow" style="margin-bottom:14px">Vérification de sécurité · gratuite</div>
+    <div class="eyebrow" style="margin-bottom:14px">Vérification de sécurité</div>
     <h1>${escapeHtml(HEADLINE)}</h1>
     <p class="lead">${escapeHtml(TAGLINE)}</p>
     <form id="f">

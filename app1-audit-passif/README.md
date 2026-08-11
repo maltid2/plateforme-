@@ -109,9 +109,10 @@ curl -X POST https://votre-app/webhook/payment \
 > Variables : `PAYMENT_URL` (lien externe) + `ACTIVATION_SECRET` (authentifie
 > le webhook d'activation). Voir `.env.example`.
 >
-> **Repli optionnel** : un paiement Stripe intégré reste possible
-> (`billing/stripe.js`, `POST /webhook/stripe`) si vous préférez ne pas
-> encaisser en externe — mais ce n'est plus le mode par défaut.
+> **Avec Stripe** (Payment Link + webhook natif) : voir le guide pas à pas
+> [`STRIPE-SETUP.md`](./STRIPE-SETUP.md). Il suffit de 2 variables
+> (`PAYMENT_URL` + `STRIPE_WEBHOOK_SECRET`) ; le webhook signé `/webhook/stripe`
+> active le compte à vie automatiquement.
 
 **Activation manuelle** (ventes manuelles, tests) — sans Stripe :
 

@@ -123,8 +123,17 @@ const DESIGN = `
   .foot{color:var(--muted);font-size:13px;display:flex;gap:28px;flex-wrap:wrap;margin-top:8px}
   .reveal{opacity:0;transform:translateY(10px);transition:.6s ease}
   .reveal.in{opacity:1;transform:none}
+  /* Variante centrée (page d'accueil alternative) */
+  .site-head{display:flex;align-items:center;justify-content:space-between;max-width:920px;margin:0 auto;padding:24px 24px 0}
+  .wrap{max-width:720px;margin:0 auto;padding:40px 24px 70px;text-align:center}
+  .wrap h1{font-size:46px;line-height:1.08}
+  .wrap .lead{font-size:18px;color:var(--muted);max-width:540px;margin:20px auto 30px}
+  .wrap form{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;max-width:560px;margin:0 auto}
+  .wrap .panel{text-align:left;max-width:560px;margin:32px auto 0}
+  .checks.narrow{max-width:720px;margin:24px auto 0;text-align:left}
+  .steps.narrow{max-width:820px;margin:22px auto 0;text-align:left}
   @media(max-width:900px){.app{grid-template-columns:1fr}.sidebar{display:none}.content,.topbar{padding-left:24px;padding-right:24px}
-    .hero-grid{grid-template-columns:1fr!important}.steps{grid-template-columns:1fr}}
+    .hero-grid{grid-template-columns:1fr!important}.steps{grid-template-columns:1fr}.wrap h1{font-size:34px}}
 `;
 
 function sidebar(active) {
@@ -324,4 +333,114 @@ ${fxScript()}
 </body></html>`;
 }
 
-module.exports = { NAME, HEADLINE, TAGLINE, ACCENT, GRADE, SEV, CATS, landingPage, dashboardPage, escapeHtml };
+// Composant d'audit réutilisable (identique à l'accueil).
+function scanPanel() {
+  return `<div class="panel" id="scanCard">
+    <div class="panel-head"><span class="d" id="scanDomain">monsite.fr</span><span class="s" id="scanStatus">Analyse…</span></div>
+    <div id="scanList"></div>
+    <div id="scanScore" class="score" style="display:none">
+      <div class="score-top"><span class="score-n num" id="scoreN">0</span><span class="score-o num">/ 100</span></div>
+      <div class="bar"><i id="bar"></i></div>
+      <div class="score-msg" id="scoreMsg"></div>
+      <div class="muted" style="font-size:13.5px;margin-top:3px" id="scoreSub"></div>
+      <a class="btn" id="scoreCta" href="#">Voir ce que vous pouvez améliorer</a>
+    </div></div>`;
+}
+
+function scanScript() {
+  return `<script>
+  var CATS=${JSON.stringify(CATS.map(function (c) { return { id: c.id, label: c.label, ok: c.ok, warn: c.warn }; }))};
+  var CATMAP={};CATS.forEach(function(c){CATMAP[c.id]=c;});
+  function sColor(s){return s>=75?'var(--ok)':s>=60?'var(--warn)':s>=45?'#c26a1a':'var(--bad)';}
+  function sMsg(s){return s>=90?['Votre site est très bien protégé.','Continuez comme ça.']:
+    s>=75?['Votre site est plutôt bien protégé.','Quelques points peuvent encore être améliorés.']:
+    s>=60?['Votre site est correctement protégé.','Plusieurs améliorations sont recommandées.']:
+    s>=45?['Votre site présente des points faibles.','Il est conseillé d\\'agir prochainement.']:
+    ['Votre site présente des risques importants.','Une mise en sécurité rapide est recommandée.'];}
+  function addRow(label,ok){var list=document.getElementById('scanList');var d=document.createElement('div');d.className='row';
+    d.innerHTML='<span class="mk '+(ok?'ok':'warn')+'">'+(ok?'✓':'!')+'</span><span class="rl">'+label+'</span><span class="rs">'+(ok?'OK':'À vérifier')+'</span>';
+    list.appendChild(d);setTimeout(function(){d.classList.add('in');},30);}
+  function showScore(score,cta){document.getElementById('scanScore').style.display='block';
+    var m=sMsg(score);document.getElementById('scoreMsg').textContent=m[0];document.getElementById('scoreSub').textContent=m[1];
+    if(cta){document.getElementById('scoreCta').setAttribute('href',cta);document.getElementById('scoreCta').setAttribute('target','_blank');}
+    document.getElementById('bar').style.background=sColor(score);
+    setTimeout(function(){document.getElementById('bar').style.width=score+'%';},60);
+    var cur=0,iv=setInterval(function(){cur+=Math.max(1,Math.round(score/26));if(cur>=score){cur=score;clearInterval(iv);}document.getElementById('scoreN').textContent=cur;},30);}
+  function reset(domain){document.getElementById('scanDomain').textContent=domain;document.getElementById('scanStatus').textContent='Analyse…';
+    document.getElementById('scanList').innerHTML='';document.getElementById('scanScore').style.display='none';document.getElementById('bar').style.width='0';}
+  function demo(){reset('monsite.fr');var items=[['Connexion sécurisée',true],['Site accessible',true],['Certificat valide',true],['Protection à améliorer',false],['2 points à vérifier',false]];
+    var i=0;(function n(){if(i<items.length){addRow(items[i][0],items[i][1]);i++;setTimeout(n,340);}else{document.getElementById('scanStatus').textContent='Terminé';showScore(78,null);
+      document.getElementById('scoreCta').addEventListener('click',function(e){e.preventDefault();focusScan();});}})();}
+  document.getElementById('f').addEventListener('submit',function(e){e.preventDefault();
+    var url=document.getElementById('url').value.trim(),btn=document.getElementById('btn'),errEl=document.getElementById('err');
+    var domain=url.replace(/^https?:\\/\\//,'').replace(/\\/.*$/,'');errEl.style.display='none';btn.disabled=true;
+    document.getElementById('scanCard').scrollIntoView({behavior:'smooth',block:'center'});reset(domain||'votre site');
+    fetch('/api/audit/free',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:url})})
+    .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});}).then(function(o){btn.disabled=false;
+      if(!o.ok){errEl.style.display='block';errEl.textContent=o.j.error||'Erreur.';document.getElementById('scanStatus').textContent='Impossible';return;}
+      var j=o.j,cats=(j.categories||[]).filter(function(c){return CATMAP[c.id]&&!c.degraded;});
+      var i=0;(function n(){if(i<cats.length){var c=cats[i],m=CATMAP[c.id];addRow(m.label,c.ok);i++;setTimeout(n,300);}
+        else{document.getElementById('scanStatus').textContent='Terminé';showScore(j.score,j.reportUrl);}})();})
+    .catch(function(err){btn.disabled=false;errEl.style.display='block';errEl.textContent='Erreur réseau : '+err.message;});});
+  setTimeout(demo,250);
+  </script>`;
+}
+
+// ------------------------------------------------------------------
+// ACCUEIL — VARIANTE 2 (centrée, sans sidebar, orientée conversion)
+// ------------------------------------------------------------------
+function landingAltPage() {
+  const steps = [
+    ['01', 'Entrez l\'adresse de votre site', 'Aucune installation, aucune carte bancaire.'],
+    ['02', 'IXAUDIT vérifie pour vous', 'Nous contrôlons automatiquement les points essentiels.'],
+    ['03', 'Vous recevez des explications simples', 'Ce qui va bien, et ce qu\'il faut améliorer.'],
+  ];
+  return `${head(NAME + ' — ' + HEADLINE)}<body>
+  <header class="site-head">
+    <div class="wordmark" style="margin-bottom:0"><span class="mark"></span>${escapeHtml(NAME)}</div>
+    <a class="btn soft" href="/app">Espace client</a>
+  </header>
+
+  <main class="wrap">
+    <div class="eyebrow" style="margin-bottom:14px">Vérification de sécurité · gratuite</div>
+    <h1>${escapeHtml(HEADLINE)}</h1>
+    <p class="lead">${escapeHtml(TAGLINE)}</p>
+    <form id="f">
+      <input id="url" type="url" placeholder="https://votre-site.com" required style="flex:1 1 300px;text-align:left">
+      <button class="btn" id="btn" type="submit">Vérifier mon site</button>
+    </form>
+    <p class="muted" style="font-size:13px;margin-top:14px">Aucune carte bancaire &nbsp;·&nbsp; Résultat en quelques minutes &nbsp;·&nbsp; Explications simples</p>
+    <div id="err" style="display:none;margin-top:12px;color:var(--bad);font-size:14px"></div>
+
+    ${scanPanel()}
+  </main>
+
+  <div style="max-width:920px;margin:0 auto;padding:0 24px 70px">
+    <hr class="rule">
+    <div class="eyebrow">Ce que nous vérifions</div>
+    <h2 style="margin-top:4px">Six vérifications essentielles</h2>
+    <div class="checks narrow">
+      ${CATS.map(function (c, i) {
+        return `<div class="check" onclick="this.classList.toggle('open')">
+          <div class="idx num">0${i + 1}</div>
+          <div><div class="cl">${escapeHtml(c.label)}</div><div class="cd">${escapeHtml(c.ok)}</div>
+            <div class="more"><span class="tech-tag">Contrôle technique : ${escapeHtml(c.tech)}</span></div></div>
+          <div class="plus">+</div></div>`;
+      }).join('')}
+    </div>
+
+    <hr class="rule">
+    <div class="eyebrow">Comment ça marche</div>
+    <h2 style="margin-top:4px">Trois étapes</h2>
+    <div class="steps narrow">
+      ${steps.map(function (s) { return `<div class="step"><div class="n num">${s[0]}</div><div class="t">${s[1]}</div><div class="muted" style="font-size:13.5px">${s[2]}</div></div>`; }).join('')}
+    </div>
+
+    <hr class="rule">
+    <div class="foot"><span>Aucune carte bancaire</span><span>Conforme RGPD</span><span>Vérification non intrusive — on n'attaque jamais votre site</span></div>
+  </div>
+  ${scanScript()}${fxScript()}
+</body></html>`;
+}
+
+module.exports = { NAME, HEADLINE, TAGLINE, ACCENT, GRADE, SEV, CATS, landingPage, landingAltPage, dashboardPage, escapeHtml };

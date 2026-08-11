@@ -332,6 +332,9 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && pathname === '/') {
       return send(res, 200, brand.landingPage());
     }
+    if (req.method === 'GET' && (pathname === '/v2' || pathname === '/decouvrir')) {
+      return send(res, 200, brand.landingAltPage());
+    }
     if (req.method === 'GET' && pathname === '/app') {
       return send(res, 200, brand.dashboardPage());
     }

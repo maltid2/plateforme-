@@ -17,11 +17,11 @@ const HEADLINE = process.env.BRAND_HEADLINE || 'Votre site est-il vraiment sécu
 const TAGLINE =
   process.env.BRAND_TAGLINE ||
   'Découvrez en quelques minutes ce qui pourrait mettre votre entreprise ou vos données en danger.';
-const ACCENT = process.env.BRAND_ACCENT || '#d24f1e'; // orange Braun
+const ACCENT = process.env.BRAND_ACCENT || '#8b6cff'; // violet
 const USER = process.env.BRAND_USER || 'Aymerick';
 
-const GRADE = { A: '#3f7d3f', B: '#3f7d3f', C: '#b5771a', D: '#c26a1a', F: '#a83e2f' };
-const SEV = { high: '#a83e2f', medium: '#c26a1a', low: '#b5771a', info: '#4a4a48' };
+const GRADE = { A: '#22c55e', B: '#4ade80', C: '#facc15', D: '#fb923c', F: '#f43f5e' };
+const SEV = { high: '#f43f5e', medium: '#fb923c', low: '#facc15', info: '#5aa9ff' };
 
 const CATS = [
   { id: 'A1', icon: '🔒', label: 'Connexion sécurisée', tech: 'Certificat SSL/TLS',
@@ -51,9 +51,10 @@ function escapeHtml(s) {
 
 const DESIGN = `
   :root{
-    --accent:${ACCENT};--bg:#f4f3ef;--surface:#ffffff;--ink:#181817;--muted:#75736c;
-    --line:#e2e1db;--line-2:#d3d2ca;--ok:#3f7d3f;--warn:#c26a1a;--bad:#a83e2f;
-    --sans:'Helvetica Neue',Helvetica,Arial,sans-serif;
+    --accent:${ACCENT};--accent-2:#6d4bff;--bg:#0a0f1e;--surface:#0e1426;--surface-2:#101a30;
+    --ink:#eaf0fb;--muted:#8790a9;--line:rgba(255,255,255,.08);--line-2:rgba(255,255,255,.16);
+    --ok:#22c55e;--warn:#fb923c;--bad:#f43f5e;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:var(--sans);color:var(--ink);background:var(--bg);line-height:1.5;
@@ -64,7 +65,7 @@ const DESIGN = `
   .sidebar{background:var(--surface);border-right:1px solid var(--line);padding:26px 22px;display:flex;flex-direction:column;
     position:sticky;top:0;height:100vh}
   .wordmark{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;letter-spacing:.02em;margin-bottom:40px}
-  .mark{width:16px;height:16px;background:var(--accent);display:inline-block}
+  .mark{width:18px;height:18px;border-radius:5px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:inline-block}
   .nav a{display:block;padding:9px 0;color:var(--muted);font-size:14px;font-weight:500;border-left:2px solid transparent;padding-left:12px;margin-left:-12px}
   .nav a:hover{color:var(--ink)}
   .nav a.on{color:var(--ink);border-left-color:var(--accent)}
@@ -79,15 +80,16 @@ const DESIGN = `
   h2{font-size:19px;font-weight:700;letter-spacing:-.01em;margin:0}
   .muted{color:var(--muted)}
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;cursor:pointer;
-    background:var(--accent);color:#fff;font-family:var(--sans);font-weight:600;font-size:15px;padding:13px 22px;border-radius:3px}
-  .btn:hover{background:#b8451a}
-  .btn:disabled{opacity:.55;cursor:wait}
-  .btn.soft{background:transparent;color:var(--ink);border:1px solid var(--line-2)}
-  .btn.soft:hover{background:#eceae4;border-color:var(--muted)}
-  input{width:100%;padding:13px 14px;border:1px solid var(--line-2);border-radius:3px;font-size:15px;background:var(--surface);
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;font-family:var(--sans);font-weight:600;font-size:15px;padding:13px 22px;border-radius:11px;
+    box-shadow:0 12px 26px -14px var(--accent)}
+  .btn:hover{filter:brightness(1.06);transform:translateY(-1px)}
+  .btn:disabled{opacity:.55;cursor:wait;transform:none}
+  .btn.soft{background:rgba(255,255,255,.04);color:var(--ink);border:1px solid var(--line-2);box-shadow:none}
+  .btn.soft:hover{background:rgba(255,255,255,.08);transform:none}
+  input{width:100%;padding:13px 14px;border:1px solid var(--line-2);border-radius:11px;font-size:15px;background:rgba(255,255,255,.04);
     color:var(--ink);outline:none;font-family:var(--sans)}
-  input:focus{border-color:var(--ink)}
-  .panel{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:24px}
+  input:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(139,108,255,.18)}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:24px}
   .panel-head{display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:12px}
   .panel-head .d{font-weight:700}
   .panel-head .s{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
@@ -108,7 +110,7 @@ const DESIGN = `
   /* liste des vérifications (grille sobre) */
   .checks{border-top:1px solid var(--line);margin-top:18px}
   .check{border-bottom:1px solid var(--line);padding:18px 0;cursor:pointer;display:grid;grid-template-columns:44px 1fr 20px;gap:14px;align-items:start}
-  .check:hover{background:rgba(0,0,0,.015)}
+  .check:hover{background:rgba(255,255,255,.03)}
   .check .idx{font-size:13px;color:var(--muted);font-weight:600;padding-top:2px}
   .check .cl{font-weight:600}
   .check .cd{color:var(--muted);font-size:13.5px;margin-top:2px}
@@ -317,7 +319,7 @@ function dashboardPage() {
   function createAccount(){var email=document.getElementById('email').value.trim();
     fetch('/api/account',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email})}).then(function(r){return r.json();}).then(function(j){
       if(j.error){document.getElementById('createOut').innerHTML='<span style="color:var(--bad)">'+j.error+'</span>';return;}
-      document.getElementById('createOut').innerHTML='<div class="muted">Votre clé (à copier, affichée une seule fois) :</div><div style="font-family:monospace;font-size:12px;background:#f4f3ef;border:1px solid var(--line);border-radius:3px;padding:9px;word-break:break-all;margin-top:6px">'+j.apiKey+'</div>';
+      document.getElementById('createOut').innerHTML='<div class="muted">Votre clé (à copier, affichée une seule fois) :</div><div style="font-family:monospace;font-size:12px;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:8px;padding:9px;word-break:break-all;margin-top:6px">'+j.apiKey+'</div>';
       document.getElementById('key').value=j.apiKey;});}
   function checkStatus(){fetch('/api/account/status',{headers:{'x-api-key':key()}}).then(function(r){return r.json();}).then(function(j){
       if(j.error){setStatus(false,j.error);return;}var d=j.active?(j.validUntil?('valable jusqu\\'au '+new Date(j.validUntil).toLocaleDateString()):'accès à vie'):'paiement requis';

@@ -1,9 +1,9 @@
 'use strict';
 
 /**
- * Marque IXAUDIT + système de design (app-shell bleu électrique).
+ * Marque IXAUDIT + système de design (app-shell violet).
  *
- * Style : application SaaS sombre, sidebar à gauche, bleu électrique sur
+ * Style : application SaaS sombre, sidebar à gauche, violet électrique sur
  * fond navy, cartes en verre, bouclier 3D holographique. Zéro dépendance.
  *
  * Rebranding via env : BRAND_NAME, BRAND_TAGLINE, BRAND_ACCENT, BRAND_LOGO.
@@ -14,10 +14,10 @@ const SLOGAN = process.env.BRAND_SLOGAN || 'SÉCURISEZ. PROTÉGEZ. AVANCEZ.';
 const TAGLINE =
   process.env.BRAND_TAGLINE ||
   'IXAUDIT analyse votre posture de sécurité et vous délivre un rapport clair, avec des recommandations concrètes.';
-const ACCENT = process.env.BRAND_ACCENT || '#3b82f6';
+const ACCENT = process.env.BRAND_ACCENT || '#8b6cff';
 
 const GRADE = { A: '#22c55e', B: '#4ade80', C: '#facc15', D: '#fb923c', F: '#f43f5e' };
-const SEV = { high: '#f43f5e', medium: '#fb923c', low: '#facc15', info: '#38bdf8' };
+const SEV = { high: '#f43f5e', medium: '#fb923c', low: '#facc15', info: '#c084fc' };
 
 function escapeHtml(s) {
   return String(s == null ? '' : s)
@@ -26,7 +26,7 @@ function escapeHtml(s) {
 
 const DESIGN = `
   :root{
-    --accent:${ACCENT};--accent-2:#2563eb;--cyan:#38bdf8;
+    --accent:${ACCENT};--accent-2:#6d4bff;--cyan:#c084fc;
     --bg:#080b14;--panel:#0c1220;--panel-2:#0e1526;--card:rgba(255,255,255,.028);
     --line:rgba(255,255,255,.08);--ink:#e9eefb;--muted:#8790a9;
     --radius:16px;--sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
@@ -42,16 +42,16 @@ const DESIGN = `
     padding:20px 16px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh}
   .logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px}
   .logo .name{font-weight:800;font-size:19px;letter-spacing:.02em}
-  .logo .name b{background:linear-gradient(120deg,#60a5fa,#38bdf8);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .logo .name b{background:linear-gradient(120deg,#a78bfa,#c084fc);-webkit-background-clip:text;background-clip:text;color:transparent}
   .nav-i{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:11px;color:var(--muted);
     font-weight:600;font-size:14.5px;cursor:pointer;transition:.15s}
   .nav-i .ic{width:20px;text-align:center;opacity:.9}
   .nav-i:hover{background:rgba(255,255,255,.04);color:var(--ink)}
-  .nav-i.on{background:linear-gradient(90deg,rgba(59,130,246,.20),rgba(59,130,246,.06));color:#cfe0ff;
+  .nav-i.on{background:linear-gradient(90deg,rgba(139,108,255,.20),rgba(139,108,255,.06));color:#d8ccff;
     box-shadow:inset 2px 0 0 var(--accent)}
   .side-card{margin-top:auto;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:15px}
   .badge{font-size:10.5px;font-weight:800;letter-spacing:.04em;padding:3px 8px;border-radius:999px;
-    background:rgba(59,130,246,.16);color:#8fbaff}
+    background:rgba(139,108,255,.16);color:#c9b8ff}
   .acct{display:flex;align-items:center;gap:11px;padding:12px 8px 2px;border-top:1px solid var(--line);margin-top:12px}
   .avatar{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--cyan));
     display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#04102a}
@@ -75,7 +75,7 @@ const DESIGN = `
   input{width:100%;padding:13px 15px;border-radius:12px;border:1px solid var(--line);font-size:14.5px;
     background:rgba(255,255,255,.04);color:var(--ink);outline:none;transition:.16s}
   input::placeholder{color:#6f7893}
-  input:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(59,130,246,.18)}
+  input:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(139,108,255,.18)}
   label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px}
   h1,h2,h3{margin:0;letter-spacing:-.02em}
   .muted{color:var(--muted)}
@@ -86,12 +86,12 @@ const DESIGN = `
   @media(max-width:900px){.app{grid-template-columns:1fr}.sidebar{display:none}}
 `;
 
-// Logo IX (bouclier bleu)
+// Logo IX (bouclier violet)
 function ixLogo(size) {
   const s = size || 30;
   return `<svg width="${s}" height="${s}" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs><linearGradient id="ixg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#60a5fa"/><stop offset="1" stop-color="#22d3ee"/></linearGradient></defs>
+      <stop offset="0" stop-color="#a78bfa"/><stop offset="1" stop-color="#c084fc"/></linearGradient></defs>
     <path d="M24 3 L41 10 V25 C41 35 33 42 24 45 C15 42 7 35 7 25 V10 Z" fill="url(#ixg)" opacity=".16"/>
     <path d="M24 3 L41 10 V25 C41 35 33 42 24 45 C15 42 7 35 7 25 V10 Z" stroke="url(#ixg)" stroke-width="2"/>
     <path d="M19 16 V32" stroke="url(#ixg)" stroke-width="3.4" stroke-linecap="round"/>
@@ -103,16 +103,16 @@ function ixLogo(size) {
 function shield3D() {
   return `<div class="floaty" style="position:relative;width:300px;height:300px">
     <div style="position:absolute;left:50%;bottom:16px;transform:translateX(-50%);width:220px;height:46px;
-      background:radial-gradient(ellipse,rgba(56,189,248,.5),transparent 70%);filter:blur(8px)"></div>
+      background:radial-gradient(ellipse,rgba(192,132,252,.5),transparent 70%);filter:blur(8px)"></div>
     <svg width="300" height="300" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg"
-      style="position:relative;filter:drop-shadow(0 20px 50px rgba(59,130,246,.55))">
+      style="position:relative;filter:drop-shadow(0 20px 50px rgba(139,108,255,.55))">
       <defs>
         <linearGradient id="sg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#7cc4ff"/><stop offset="1" stop-color="#2563eb"/></linearGradient>
+          <stop offset="0" stop-color="#c4b5fd"/><stop offset="1" stop-color="#6d4bff"/></linearGradient>
         <linearGradient id="sg2" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#bfe3ff"/><stop offset="1" stop-color="#38bdf8"/></linearGradient>
+          <stop offset="0" stop-color="#ddd6fe"/><stop offset="1" stop-color="#c084fc"/></linearGradient>
       </defs>
-      <ellipse cx="100" cy="176" rx="66" ry="12" fill="#1e40af" opacity=".35"/>
+      <ellipse cx="100" cy="176" rx="66" ry="12" fill="#4c1d95" opacity=".35"/>
       <path d="M100 26 L156 46 V96 C156 132 132 158 100 172 C68 158 44 132 44 96 V46 Z" fill="url(#sg)" opacity=".22"/>
       <path d="M100 26 L156 46 V96 C156 132 132 158 100 172 C68 158 44 132 44 96 V46 Z" stroke="url(#sg2)" stroke-width="2.4"/>
       <path d="M100 26 L100 172" stroke="url(#sg2)" stroke-width="1" opacity=".4"/>
@@ -198,12 +198,12 @@ function landingPage() {
   const main = `
     <section class="card reveal" style="position:relative;overflow:hidden;padding:38px 40px;
       background:radial-gradient(900px 400px at 85% -20%,rgba(37,99,235,.55),transparent 60%),
-      radial-gradient(600px 400px at 10% 120%,rgba(56,189,248,.18),transparent 55%),var(--panel-2)">
+      radial-gradient(600px 400px at 10% 120%,rgba(192,132,252,.18),transparent 55%),var(--panel-2)">
       <div style="display:grid;grid-template-columns:1.1fr .9fr;gap:20px;align-items:center">
         <div>
           <span class="badge" style="letter-spacing:.06em">AUDIT GRATUIT & ILLIMITÉ</span>
           <h1 style="font-size:44px;line-height:1.08;margin:16px 0 14px">Analysez. Comprenez.
-            <span style="background:linear-gradient(120deg,#60a5fa,#38bdf8);-webkit-background-clip:text;background-clip:text;color:transparent">Sécurisez.</span></h1>
+            <span style="background:linear-gradient(120deg,#a78bfa,#c084fc);-webkit-background-clip:text;background-clip:text;color:transparent">Sécurisez.</span></h1>
           <p class="muted" style="font-size:16px;max-width:460px;margin:0 0 22px">${escapeHtml(TAGLINE)}</p>
           <form id="f" style="display:flex;gap:10px;flex-wrap:wrap;max-width:520px">
             <input id="url" type="url" placeholder="https://votre-site.com" required style="flex:1 1 240px">
@@ -230,7 +230,7 @@ function landingPage() {
       ${stats.map(function (s, i) {
         return `<div class="card reveal" style="padding:18px 18px;transition-delay:${i * 60}ms">
           <div style="display:flex;align-items:center;gap:10px">
-            <div style="width:34px;height:34px;border-radius:10px;background:rgba(59,130,246,.14);
+            <div style="width:34px;height:34px;border-radius:10px;background:rgba(139,108,255,.14);
               display:flex;align-items:center;justify-content:center;font-size:16px">${s[0]}</div>
             <span class="muted" style="font-size:12.5px">${s[1]}</span></div>
           <div style="font-size:22px;font-weight:800;margin:10px 0 2px">${s[2]}</div>
@@ -245,7 +245,7 @@ function landingPage() {
         ${steps.map(function (s) {
           return `<div style="text-align:center">
             <div style="width:46px;height:46px;border-radius:50%;margin:0 auto 12px;font-weight:800;
-              background:rgba(59,130,246,.14);border:1px solid rgba(59,130,246,.35);color:#8fbaff;
+              background:rgba(139,108,255,.14);border:1px solid rgba(139,108,255,.35);color:#c9b8ff;
               display:flex;align-items:center;justify-content:center">${s[0]}</div>
             <div style="font-weight:700;margin-bottom:4px">${s[1]}</div>
             <div class="muted" style="font-size:13.5px">${s[2]}</div></div>`;
@@ -323,8 +323,8 @@ function dashboardPage() {
       ${cards.map(function (c, i) {
         return `<div class="card reveal" style="padding:22px;transition-delay:${i * 60}ms">
           <div style="display:flex;align-items:center;gap:11px;margin-bottom:14px">
-            <div style="width:34px;height:34px;border-radius:10px;background:rgba(59,130,246,.14);
-              border:1px solid rgba(59,130,246,.3);color:#8fbaff;font-weight:800;
+            <div style="width:34px;height:34px;border-radius:10px;background:rgba(139,108,255,.14);
+              border:1px solid rgba(139,108,255,.3);color:#c9b8ff;font-weight:800;
               display:flex;align-items:center;justify-content:center">${c[0]}</div>
             <h3 style="font-size:16.5px">${c[1]}</h3></div>${c[2]}</div>`;
       }).join('')}

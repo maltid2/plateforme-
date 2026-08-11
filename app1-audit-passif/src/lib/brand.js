@@ -59,6 +59,10 @@ const DESIGN = `
   *{box-sizing:border-box}
   body{margin:0;font-family:var(--sans);color:var(--ink);background:var(--bg);line-height:1.5;
     -webkit-font-smoothing:antialiased;font-size:15px}
+  body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+    background:radial-gradient(720px 480px at 84% -10%,rgba(139,108,255,.20),transparent 60%),
+    radial-gradient(600px 460px at -8% 112%,rgba(109,75,255,.16),transparent 60%),
+    radial-gradient(500px 380px at 50% 120%,rgba(91,155,255,.08),transparent 60%)}
   a{color:inherit;text-decoration:none}
   .num{font-variant-numeric:tabular-nums}
   .app{display:grid;grid-template-columns:232px 1fr;min-height:100vh}
@@ -89,7 +93,9 @@ const DESIGN = `
   input{width:100%;padding:13px 14px;border:1px solid var(--line-2);border-radius:11px;font-size:15px;background:rgba(255,255,255,.04);
     color:var(--ink);outline:none;font-family:var(--sans)}
   input:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(139,108,255,.18)}
-  .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:24px}
+  .panel{background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.015));border:1px solid var(--line);
+    border-radius:16px;padding:24px;backdrop-filter:blur(8px)}
+  .panel.glow{box-shadow:0 40px 90px -50px rgba(139,108,255,.65),0 0 0 1px rgba(139,108,255,.06)}
   .panel-head{display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:12px}
   .panel-head .d{font-weight:700}
   .panel-head .s{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
@@ -99,19 +105,21 @@ const DESIGN = `
   .mk.ok{color:var(--ok)}.mk.warn{color:var(--warn)}
   .row .rl{flex:1}
   .row .rs{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
-  .score{margin-top:20px}
-  .score-top{display:flex;align-items:baseline;gap:6px}
-  .score-n{font-size:46px;font-weight:700;letter-spacing:-.02em;line-height:1}
-  .score-o{color:var(--muted);font-size:15px}
-  .bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden;margin:14px 0}
-  .bar i{display:block;height:100%;width:0;transition:width 1s ease}
-  .score-msg{font-weight:600}
-  .score .btn{margin-top:16px}
+  .score{margin-top:20px;padding-top:18px;border-top:1px solid var(--line)}
+  .score-flex{display:flex;align-items:center;gap:20px}
+  .gauge{width:108px;height:108px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;
+    background:conic-gradient(var(--gc,var(--accent)) calc(var(--gp,0)*1%),rgba(255,255,255,.08) 0);
+    box-shadow:0 0 34px -8px var(--accent);transition:background .3s}
+  .gauge .gin{width:84px;height:84px;border-radius:50%;background:#0c1120;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .score-n{font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1}
+  .score-o{color:var(--muted);font-size:12px;margin-top:2px}
+  .score-msg{font-weight:700;font-size:15.5px}
   /* liste des vérifications (grille sobre) */
   .checks{border-top:1px solid var(--line);margin-top:18px}
-  .check{border-bottom:1px solid var(--line);padding:18px 0;cursor:pointer;display:grid;grid-template-columns:44px 1fr 20px;gap:14px;align-items:start}
-  .check:hover{background:rgba(255,255,255,.03)}
-  .check .idx{font-size:13px;color:var(--muted);font-weight:600;padding-top:2px}
+  .check{border-bottom:1px solid var(--line);padding:18px 14px;cursor:pointer;display:grid;grid-template-columns:44px 1fr 20px;gap:14px;align-items:start;
+    border-radius:12px;transition:background .15s}
+  .check:hover{background:rgba(139,108,255,.07)}
+  .check .idx{font-size:13px;color:#c9b8ff;font-weight:700;padding-top:2px}
   .check .cl{font-weight:600}
   .check .cd{color:var(--muted);font-size:13.5px;margin-top:2px}
   .check .more{display:none;color:var(--muted);font-size:13.5px;margin-top:10px}
@@ -199,17 +207,7 @@ function landingPage() {
         <div id="err" style="display:none;margin-top:12px;color:var(--bad);font-size:14px"></div>
       </div>
 
-      <div class="panel" id="scanCard">
-        <div class="panel-head"><span class="d" id="scanDomain">monsite.fr</span><span class="s" id="scanStatus">Analyse…</span></div>
-        <div id="scanList"></div>
-        <div id="scanScore" class="score" style="display:none">
-          <div class="score-top"><span class="score-n num" id="scoreN">0</span><span class="score-o num">/ 100</span></div>
-          <div class="bar"><i id="bar"></i></div>
-          <div class="score-msg" id="scoreMsg"></div>
-          <div class="muted" style="font-size:13.5px;margin-top:3px" id="scoreSub"></div>
-          <a class="btn" id="scoreCta" href="#">Voir ce que vous pouvez améliorer</a>
-        </div>
-      </div>
+      ${scanPanel()}
     </div>
 
     <hr class="rule">
@@ -239,45 +237,7 @@ function landingPage() {
     <hr class="rule">
     <div class="foot"><span>Aucune carte bancaire</span><span>Conforme RGPD</span><span>Vérification non intrusive — on n'attaque jamais votre site</span></div>`;
 
-  return `${head(NAME + ' — ' + HEADLINE)}${shell('home', main)}
-<script>
-  var CATS=${JSON.stringify(CATS.map(function (c) { return { id: c.id, label: c.label, ok: c.ok, warn: c.warn }; }))};
-  var CATMAP={};CATS.forEach(function(c){CATMAP[c.id]=c;});
-  function sColor(s){return s>=75?'var(--ok)':s>=60?'var(--warn)':s>=45?'#c26a1a':'var(--bad)';}
-  function sMsg(s){return s>=90?['Votre site est très bien protégé.','Continuez comme ça.']:
-    s>=75?['Votre site est plutôt bien protégé.','Quelques points peuvent encore être améliorés.']:
-    s>=60?['Votre site est correctement protégé.','Plusieurs améliorations sont recommandées.']:
-    s>=45?['Votre site présente des points faibles.','Il est conseillé d\\'agir prochainement.']:
-    ['Votre site présente des risques importants.','Une mise en sécurité rapide est recommandée.'];}
-  function addRow(label,ok,explain){var list=document.getElementById('scanList');
-    var d=document.createElement('div');d.className='row';
-    d.innerHTML='<span class="mk '+(ok?'ok':'warn')+'">'+(ok?'✓':'!')+'</span><span class="rl">'+label+'</span><span class="rs">'+(ok?'OK':'À vérifier')+'</span>';
-    list.appendChild(d);setTimeout(function(){d.classList.add('in');},30);}
-  function showScore(score,cta){document.getElementById('scanScore').style.display='block';
-    var m=sMsg(score);document.getElementById('scoreMsg').textContent=m[0];document.getElementById('scoreSub').textContent=m[1];
-    if(cta){document.getElementById('scoreCta').setAttribute('href',cta);document.getElementById('scoreCta').setAttribute('target','_blank');}
-    document.getElementById('bar').style.background=sColor(score);
-    setTimeout(function(){document.getElementById('bar').style.width=score+'%';},60);
-    var cur=0,iv=setInterval(function(){cur+=Math.max(1,Math.round(score/26));if(cur>=score){cur=score;clearInterval(iv);}document.getElementById('scoreN').textContent=cur;},30);}
-  function reset(domain){document.getElementById('scanDomain').textContent=domain;document.getElementById('scanStatus').textContent='Analyse…';
-    document.getElementById('scanList').innerHTML='';document.getElementById('scanScore').style.display='none';document.getElementById('bar').style.width='0';}
-  function demo(){reset('monsite.fr');var items=[['Connexion sécurisée',true],['Site accessible',true],['Certificat valide',true],['Protection à améliorer',false],['2 points à vérifier',false]];
-    var i=0;(function n(){if(i<items.length){addRow(items[i][0],items[i][1]);i++;setTimeout(n,340);}else{document.getElementById('scanStatus').textContent='Terminé';showScore(78,null);
-      document.getElementById('scoreCta').addEventListener('click',function(e){e.preventDefault();focusScan();});}})();}
-  document.getElementById('f').addEventListener('submit',function(e){e.preventDefault();
-    var url=document.getElementById('url').value.trim(),btn=document.getElementById('btn'),errEl=document.getElementById('err');
-    var domain=url.replace(/^https?:\\/\\//,'').replace(/\\/.*$/,'');errEl.style.display='none';btn.disabled=true;
-    document.getElementById('scanCard').scrollIntoView({behavior:'smooth',block:'center'});reset(domain||'votre site');
-    fetch('/api/audit/free',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:url})})
-    .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});}).then(function(o){btn.disabled=false;
-      if(!o.ok){errEl.style.display='block';errEl.textContent=o.j.error||'Erreur.';document.getElementById('scanStatus').textContent='Impossible';return;}
-      var j=o.j,cats=(j.categories||[]).filter(function(c){return CATMAP[c.id]&&!c.degraded;});
-      var i=0;(function n(){if(i<cats.length){var c=cats[i],m=CATMAP[c.id];addRow(m.label,c.ok);i++;setTimeout(n,300);}
-        else{document.getElementById('scanStatus').textContent='Terminé';showScore(j.score,j.reportUrl);}})();})
-    .catch(function(err){btn.disabled=false;errEl.style.display='block';errEl.textContent='Erreur réseau : '+err.message;});});
-  setTimeout(demo,250);
-</script>
-${fxScript()}
+  return `${head(NAME + ' — ' + HEADLINE)}${shell('home', main)}${scanScript()}${fxScript()}
 </body></html>`;
 }
 
@@ -337,15 +297,16 @@ ${fxScript()}
 
 // Composant d'audit réutilisable (identique à l'accueil).
 function scanPanel() {
-  return `<div class="panel" id="scanCard">
+  return `<div class="panel glow" id="scanCard">
     <div class="panel-head"><span class="d" id="scanDomain">monsite.fr</span><span class="s" id="scanStatus">Analyse…</span></div>
     <div id="scanList"></div>
     <div id="scanScore" class="score" style="display:none">
-      <div class="score-top"><span class="score-n num" id="scoreN">0</span><span class="score-o num">/ 100</span></div>
-      <div class="bar"><i id="bar"></i></div>
-      <div class="score-msg" id="scoreMsg"></div>
-      <div class="muted" style="font-size:13.5px;margin-top:3px" id="scoreSub"></div>
-      <a class="btn" id="scoreCta" href="#">Voir ce que vous pouvez améliorer</a>
+      <div class="score-flex">
+        <div class="gauge" id="gauge"><div class="gin"><span class="score-n num" id="scoreN">0</span><span class="score-o num">/100</span></div></div>
+        <div><div class="score-msg" id="scoreMsg"></div>
+          <div class="muted" style="font-size:13.5px;margin-top:3px" id="scoreSub"></div>
+          <a class="btn" id="scoreCta" href="#" style="margin-top:12px;padding:11px 18px;font-size:14px">Voir ce que vous pouvez améliorer</a></div>
+      </div>
     </div></div>`;
 }
 
@@ -365,11 +326,12 @@ function scanScript() {
   function showScore(score,cta){document.getElementById('scanScore').style.display='block';
     var m=sMsg(score);document.getElementById('scoreMsg').textContent=m[0];document.getElementById('scoreSub').textContent=m[1];
     if(cta){document.getElementById('scoreCta').setAttribute('href',cta);document.getElementById('scoreCta').setAttribute('target','_blank');}
-    document.getElementById('bar').style.background=sColor(score);
-    setTimeout(function(){document.getElementById('bar').style.width=score+'%';},60);
-    var cur=0,iv=setInterval(function(){cur+=Math.max(1,Math.round(score/26));if(cur>=score){cur=score;clearInterval(iv);}document.getElementById('scoreN').textContent=cur;},30);}
+    var g=document.getElementById('gauge');g.style.setProperty('--gc',sColor(score));
+    var cur=0,iv=setInterval(function(){cur+=Math.max(1,Math.round(score/26));if(cur>=score){cur=score;clearInterval(iv);}
+      document.getElementById('scoreN').textContent=cur;g.style.setProperty('--gp',cur);},30);}
   function reset(domain){document.getElementById('scanDomain').textContent=domain;document.getElementById('scanStatus').textContent='Analyse…';
-    document.getElementById('scanList').innerHTML='';document.getElementById('scanScore').style.display='none';document.getElementById('bar').style.width='0';}
+    document.getElementById('scanList').innerHTML='';document.getElementById('scanScore').style.display='none';
+    var g=document.getElementById('gauge');if(g)g.style.setProperty('--gp',0);}
   function demo(){reset('monsite.fr');var items=[['Connexion sécurisée',true],['Site accessible',true],['Certificat valide',true],['Protection à améliorer',false],['2 points à vérifier',false]];
     var i=0;(function n(){if(i<items.length){addRow(items[i][0],items[i][1]);i++;setTimeout(n,340);}else{document.getElementById('scanStatus').textContent='Terminé';showScore(78,null);
       document.getElementById('scoreCta').addEventListener('click',function(e){e.preventDefault();focusScan();});}})();}

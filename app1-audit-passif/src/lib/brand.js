@@ -51,10 +51,10 @@ function escapeHtml(s) {
 
 const DESIGN = `
   :root{
-    --accent:${ACCENT};--accent-2:#6d4bff;--bg:#0a0f1e;--surface:#0e1426;--surface-2:#101a30;
-    --ink:#eaf0fb;--muted:#8790a9;--line:rgba(255,255,255,.08);--line-2:rgba(255,255,255,.16);
+    --accent:${ACCENT};--accent-2:#6d4bff;--bg:#000000;--surface:#0c0c16;--surface-2:#111120;
+    --ink:#eef0f8;--muted:#8b8ea3;--line:rgba(255,255,255,.09);--line-2:rgba(255,255,255,.17);
     --ok:#22c55e;--warn:#fb923c;--bad:#f43f5e;
-    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    --sans:var(--font,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif);
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:var(--sans);color:var(--ink);background:var(--bg);line-height:1.5;
@@ -110,7 +110,7 @@ const DESIGN = `
   .gauge{width:108px;height:108px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;
     background:conic-gradient(var(--gc,var(--accent)) calc(var(--gp,0)*1%),rgba(255,255,255,.08) 0);
     box-shadow:0 0 34px -8px var(--accent);transition:background .3s}
-  .gauge .gin{width:84px;height:84px;border-radius:50%;background:#0c1120;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .gauge .gin{width:84px;height:84px;border-radius:50%;background:#0a0a12;display:flex;flex-direction:column;align-items:center;justify-content:center}
   .score-n{font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1}
   .score-o{color:var(--muted);font-size:12px;margin-top:2px}
   .score-msg{font-weight:700;font-size:15.5px}
@@ -167,10 +167,33 @@ function topbar() {
     <button class="btn soft" onclick="focusScan()">Vérifier mon site</button></div>`;
 }
 
-function head(title) {
+// Polices proposées (auto-hébergées, licences libres). Changer le défaut via
+// la variable d'environnement BRAND_FONT, ou prévisualiser via ?font=<clé>.
+const FONTS = {
+  system: { label: 'Système', family: null },
+  space: { label: 'Space Grotesk', family: 'Space Grotesk' },
+  sora: { label: 'Sora', family: 'Sora' },
+  manrope: { label: 'Manrope', family: 'Manrope' },
+  inter: { label: 'Inter', family: 'Inter' },
+};
+const DEFAULT_FONT = process.env.BRAND_FONT || 'space';
+
+function fontCss(fontKey) {
+  const key = FONTS[fontKey] ? fontKey : DEFAULT_FONT;
+  const f = FONTS[key] || FONTS.system;
+  if (!f.family) {
+    return `<style>:root{--font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}</style>`;
+  }
+  const faces = [400, 600, 700].map((w) =>
+    `@font-face{font-family:'${f.family}';font-style:normal;font-weight:${w};font-display:swap;src:url('/assets/${key}-${w}.woff2') format('woff2')}`
+  ).join('');
+  return `<style>${faces}:root{--font:'${f.family}',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}</style>`;
+}
+
+function head(title, fontKey) {
   return `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${escapeHtml(title)}</title><style>${DESIGN}</style></head>`;
+<title>${escapeHtml(title)}</title><style>${DESIGN}</style>${fontCss(fontKey)}</head>`;
 }
 
 function shell(active, main) {
@@ -187,7 +210,7 @@ function fxScript() {
 // ------------------------------------------------------------------
 // ACCUEIL
 // ------------------------------------------------------------------
-function landingPage() {
+function landingPage(fontKey) {
   const steps = [
     ['01', 'Entrez l\'adresse de votre site', 'Aucune installation, aucune carte bancaire.'],
     ['02', 'IXAUDIT vérifie pour vous', 'Nous contrôlons automatiquement les points essentiels.'],
@@ -237,14 +260,14 @@ function landingPage() {
     <hr class="rule">
     <div class="foot"><span>Aucune carte bancaire</span><span>Conforme RGPD</span><span>Vérification non intrusive — on n'attaque jamais votre site</span></div>`;
 
-  return `${head(NAME + ' — ' + HEADLINE)}${shell('home', main)}${scanScript()}${fxScript()}
+  return `${head(NAME + ' — ' + HEADLINE, fontKey)}${shell('home', main)}${scanScript()}${fxScript()}
 </body></html>`;
 }
 
 // ------------------------------------------------------------------
 // ESPACE CLIENT
 // ------------------------------------------------------------------
-function dashboardPage() {
+function dashboardPage(fontKey) {
   const cards = [
     ['01', 'Créer un compte', `<label style="display:block;font-size:12px;color:var(--muted);margin-bottom:6px">Votre email</label><input id="email" type="email" placeholder="vous@entreprise.com">
       <button class="btn" style="margin-top:12px;width:100%" onclick="createAccount()">Créer mon compte</button><div id="createOut" style="margin-top:10px;font-size:14px"></div>`],
@@ -269,7 +292,7 @@ function dashboardPage() {
           <span class="num" style="color:var(--accent);font-weight:700;font-size:13px">${c[0]}</span><h2 style="font-size:16px">${c[1]}</h2></div>${c[2]}</div>`;
       }).join('')}
     </div>`;
-  return `${head('Espace client · ' + NAME)}${shell('verify', main)}
+  return `${head('Espace client · ' + NAME, fontKey)}${shell('verify', main)}
 <script>
   var GC=${JSON.stringify(GRADE)};
   function focusScan(){location.href='/';}
@@ -353,13 +376,13 @@ function scanScript() {
 // ------------------------------------------------------------------
 // ACCUEIL — VARIANTE 2 (centrée, sans sidebar, orientée conversion)
 // ------------------------------------------------------------------
-function landingAltPage() {
+function landingAltPage(fontKey) {
   const steps = [
     ['01', 'Entrez l\'adresse de votre site', 'Aucune installation, aucune carte bancaire.'],
     ['02', 'IXAUDIT vérifie pour vous', 'Nous contrôlons automatiquement les points essentiels.'],
     ['03', 'Vous recevez des explications simples', 'Ce qui va bien, et ce qu\'il faut améliorer.'],
   ];
-  return `${head(NAME + ' — ' + HEADLINE)}<body>
+  return `${head(NAME + ' — ' + HEADLINE, fontKey)}<body>
   <header class="site-head">
     <div class="wordmark" style="margin-bottom:0"><span class="mark"></span>${escapeHtml(NAME)}</div>
     <a class="btn soft" href="/app">Espace client</a>

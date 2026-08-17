@@ -33,7 +33,26 @@ export default function Security() {
                   width: `${60 + i * 20}%`,
                   height: `${60 + i * 20}%`,
                 }}
-              />
+              >
+                {/* point travelling along the contour */}
+                <motion.div
+                  className="absolute inset-0"
+                  animate={{ rotate: i % 2 ? -360 : 360 }}
+                  transition={{
+                    duration: 10 + i * 4,
+                    repeat: Infinity,
+                    ease: "linear",
+                  }}
+                >
+                  <span
+                    className="absolute left-1/2 top-0 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full"
+                    style={{
+                      background: i % 2 ? "#57E6D1" : "#A7F36B",
+                      boxShadow: `0 0 8px ${i % 2 ? "#57E6D1" : "#A7F36B"}`,
+                    }}
+                  />
+                </motion.div>
+              </motion.div>
             ))}
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
@@ -56,7 +75,7 @@ export default function Security() {
         <Reveal delay={0.1} className="order-1 lg:order-2">
           <SectionLabel>Security &amp; compliance</SectionLabel>
           <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-[2.6rem]">
-            Built to earn your security team&apos;s trust
+            Built secure from the ground up.
           </h2>
           <p className="mt-5 max-w-lg text-lg leading-relaxed text-muted">
             SentinelScope operates with least-privilege, read-only access and

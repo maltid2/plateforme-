@@ -8,15 +8,15 @@ import { Container, Reveal, SectionLabel } from "./ui";
 const QUOTES = [
   {
     quote:
-      "Within the first week, SentinelScope found three exposed services we didn't know existed. It replaced a spreadsheet and two contractors with a single source of truth.",
+      "SentinelScope finally gave us a clear view of what was exposed and what needed attention first.",
     name: "Maya Laurent",
-    role: "VP of Security",
+    role: "VP Security",
     company: "Northstar",
     initials: "ML",
   },
   {
     quote:
-      "The prioritization is what changed everything for us. My engineers finally trust the queue — they fix what's ranked critical because it genuinely is critical.",
+      "We reduced triage time dramatically without adding another complicated tool to our workflow.",
     name: "Jonas Meyer",
     role: "Engineering Director",
     company: "Cloudline",

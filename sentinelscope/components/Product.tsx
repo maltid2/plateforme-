@@ -1,26 +1,32 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { CheckCircle2, ChevronRight, Search, ShieldCheck, Target } from "lucide-react";
+import { CheckCircle2, Compass, ListChecks, ShieldCheck } from "lucide-react";
 import { Container, Reveal, SectionLabel } from "./ui";
 import { viewport, ease } from "@/lib/motion";
 
 const STEPS = [
   {
-    icon: Search,
+    icon: Compass,
     title: "Discover",
-    body: "Continuously enumerate your entire external footprint — domains, APIs, cloud buckets, and forgotten hosts.",
-  },
-  {
-    icon: Target,
-    title: "Validate",
-    body: "Safely test each asset to confirm which weaknesses are real and reachable, cutting out theoretical noise.",
+    body: "Map every external asset automatically.",
   },
   {
     icon: ShieldCheck,
-    title: "Prioritize",
-    body: "Rank every confirmed issue by exploitability and impact, then route it to the right owner with fix guidance.",
+    title: "Validate",
+    body: "Confirm what is actually exposed and exploitable.",
   },
+  {
+    icon: ListChecks,
+    title: "Prioritize",
+    body: "Give developers a clear path to remediation.",
+  },
+];
+
+const META = [
+  { l: "Severity", v: "High", c: "text-sev-high" },
+  { l: "Status", v: "Open", c: "text-sev-critical" },
+  { l: "Detected", v: "4 min ago", c: "text-acc-cyan" },
 ];
 
 export default function Product() {
@@ -29,13 +35,13 @@ export default function Product() {
       <Container className="grid items-center gap-16 lg:grid-cols-2">
         {/* steps */}
         <Reveal>
-          <SectionLabel>How it works</SectionLabel>
+          <SectionLabel>From detection to decision</SectionLabel>
           <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-[2.6rem]">
-            From detection to decision
+            Make every finding actionable.
           </h2>
           <p className="mt-4 max-w-lg text-lg text-muted">
-            SentinelScope turns raw scan data into a clear, prioritized path to
-            a smaller attack surface.
+            SentinelScope turns raw scan data into a clear, prioritized path
+            from detection to a resolved, verified fix.
           </p>
 
           <div className="relative mt-10 pl-6">
@@ -78,63 +84,58 @@ export default function Product() {
           </div>
         </Reveal>
 
-        {/* detail card */}
+        {/* finding detail card */}
         <Reveal delay={0.15}>
-          <div className="rounded-2xl border border-line bg-card/70 p-6 shadow-soft backdrop-blur-xl">
+          <motion.div
+            initial={{ opacity: 0, clipPath: "inset(0 0 100% 0)" }}
+            whileInView={{ opacity: 1, clipPath: "inset(0 0 0% 0)" }}
+            viewport={viewport}
+            transition={{ duration: 0.8, ease }}
+            className="rounded-2xl border border-line bg-card/70 p-6 shadow-glow backdrop-blur-xl"
+          >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm font-medium text-muted">
-                <span className="h-2 w-2 rounded-full bg-sev-critical shadow-[0_0_8px_#F4576B]" />
+                <span className="h-2 w-2 rounded-full bg-sev-high shadow-[0_0_8px_#FF9715]" />
                 Finding detail
               </div>
-              <span className="rounded-full bg-sev-critical/15 px-2.5 py-1 text-[11px] font-semibold text-sev-critical">
-                Critical
+              <span className="rounded-full bg-sev-high/15 px-2.5 py-1 text-[11px] font-semibold text-sev-high">
+                High
               </span>
             </div>
 
             <h3 className="mt-4 text-lg font-semibold tracking-tight">
-              Exposed admin interface without MFA
+              Missing security header
             </h3>
             <p className="mt-1 font-mono text-xs text-muted">
-              admin-panel.dev · discovered 2h ago
+              app.sentinelscope.dev
             </p>
 
             <div className="mt-5 grid grid-cols-3 gap-3 text-center">
-              {[
-                { l: "Exploitability", v: "High", c: "text-sev-critical" },
-                { l: "Impact", v: "Severe", c: "text-sev-high" },
-                { l: "Confidence", v: "98%", c: "text-acc-green" },
-              ].map((m) => (
+              {META.map((m) => (
                 <div
                   key={m.l}
                   className="rounded-xl border border-line bg-bg2/50 p-3"
                 >
-                  <div className={`text-base font-bold ${m.c}`}>{m.v}</div>
+                  <div className={`text-sm font-bold ${m.c}`}>{m.v}</div>
                   <div className="mt-0.5 text-[11px] text-muted">{m.l}</div>
                 </div>
               ))}
             </div>
 
-            <div className="mt-5 space-y-2.5 rounded-xl border border-line bg-bg2/40 p-4">
+            <div className="mt-5 rounded-xl border border-line bg-bg2/40 p-4">
               <div className="text-xs font-semibold uppercase tracking-wider text-muted">
-                Recommended fix
+                Recommendation
               </div>
-              {[
-                "Restrict access to trusted networks",
-                "Enforce multi-factor authentication",
-                "Rotate exposed admin credentials",
-              ].map((t) => (
-                <div key={t} className="flex items-center gap-2.5 text-sm text-ink/90">
-                  <CheckCircle2 className="h-4 w-4 flex-none text-acc-green" />
-                  {t}
-                </div>
-              ))}
+              <div className="mt-2 flex items-start gap-2.5 text-sm text-ink/90">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 flex-none text-acc-green" />
+                Add a strict Content-Security-Policy header
+              </div>
             </div>
 
-            <button className="mt-5 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-acc-violet/15 px-4 py-2.5 text-sm font-semibold text-acc-violet transition-colors hover:bg-acc-violet/25">
-              Assign to owner
-              <ChevronRight className="h-4 w-4" />
+            <button className="mt-5 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-acc-violet/15 px-4 py-2.5 text-sm font-semibold text-acc-violet transition-colors hover:bg-acc-violet/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-acc-violet/50">
+              Assign to engineering
             </button>
-          </div>
+          </motion.div>
         </Reveal>
       </Container>
     </section>

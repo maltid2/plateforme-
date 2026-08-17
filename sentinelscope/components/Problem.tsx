@@ -6,42 +6,47 @@ import { AlertTriangle, Check, Eye, X } from "lucide-react";
 import { Container, Reveal, SectionLabel } from "./ui";
 import { viewport } from "@/lib/motion";
 
+type Risk = "safe" | "medium" | "high" | "unknown";
+
 type Node = {
   id: string;
   x: number;
   y: number;
   label: string;
-  state: "safe" | "risk" | "unknown";
+  kind: string;
+  risk: Risk;
 };
 
 const NODES: Node[] = [
-  { id: "core", x: 50, y: 50, label: "Core", state: "safe" },
-  { id: "n1", x: 20, y: 24, label: "api.prod", state: "safe" },
-  { id: "n2", x: 82, y: 30, label: "staging", state: "risk" },
-  { id: "n3", x: 16, y: 74, label: "cdn", state: "safe" },
-  { id: "n4", x: 84, y: 72, label: "old-service", state: "unknown" },
-  { id: "n5", x: 50, y: 14, label: "auth", state: "safe" },
-  { id: "n6", x: 50, y: 88, label: "admin-panel", state: "risk" },
+  { id: "core", x: 50, y: 50, label: "sentinelscope.dev", kind: "Primary domain", risk: "safe" },
+  { id: "api", x: 20, y: 22, label: "api.sentinelscope.dev", kind: "API", risk: "medium" },
+  { id: "staging", x: 82, y: 28, label: "staging-app.dev", kind: "Subdomain", risk: "high" },
+  { id: "cert", x: 15, y: 72, label: "*.sentinelscope.dev", kind: "TLS certificate", risk: "safe" },
+  { id: "old", x: 85, y: 70, label: "old-service.dev", kind: "Legacy application", risk: "unknown" },
+  { id: "endpoint", x: 50, y: 13, label: "exposed endpoint", kind: "Public API route", risk: "medium" },
+  { id: "admin", x: 50, y: 88, label: "admin-panel.dev", kind: "Admin interface", risk: "high" },
 ];
 
 const EDGES: [string, string][] = [
-  ["core", "n1"],
-  ["core", "n2"],
-  ["core", "n3"],
-  ["core", "n4"],
-  ["core", "n5"],
-  ["core", "n6"],
+  ["core", "api"],
+  ["core", "staging"],
+  ["core", "cert"],
+  ["core", "old"],
+  ["core", "endpoint"],
+  ["core", "admin"],
 ];
 
-const stateColor = {
-  safe: "#57E6D1",
-  risk: "#F4576B",
-  unknown: "#F5C451",
+const RISK_META: Record<Risk, { color: string; label: string }> = {
+  safe: { color: "#57E6D1", label: "Low risk" },
+  medium: { color: "#F5C451", label: "Medium risk" },
+  high: { color: "#F4576B", label: "High risk" },
+  unknown: { color: "#8B98A8", label: "Unclassified" },
 };
 
 export default function Problem() {
   const [dismissed, setDismissed] = useState(false);
   const [solved, setSolved] = useState(false);
+  const [hovered, setHovered] = useState<string | null>(null);
 
   return (
     <section id="problem" className="relative py-20 sm:py-28">
@@ -50,29 +55,33 @@ export default function Problem() {
         <Reveal>
           <SectionLabel>The visibility gap</SectionLabel>
           <h2 className="mt-5 text-3xl font-bold leading-tight tracking-tight sm:text-[2.6rem]">
-            You can&apos;t protect what you can&apos;t{" "}
-            <span className="text-gradient-violet">see</span>.
+            Your attack surface changes{" "}
+            <span className="text-gradient-violet">every day.</span>
           </h2>
           <p className="mt-5 max-w-lg text-lg leading-relaxed text-muted">
-            Cloud sprawl, forgotten subdomains, and shadow deployments quietly
-            grow your attack surface every week. Most teams only discover an
-            exposed asset after it becomes an incident.
+            New domains, APIs, certificates and cloud assets appear constantly.
+            SentinelScope helps your team understand what is exposed before it
+            becomes an incident.
           </p>
 
-          <ul className="mt-8 space-y-4">
-            {[
-              "Unknown assets appear faster than teams can inventory them.",
-              "Findings pile up in spreadsheets with no clear priority.",
-              "Critical exposures hide inside thousands of low-risk noise.",
-            ].map((t) => (
-              <li key={t} className="flex items-start gap-3">
-                <span className="mt-0.5 grid h-6 w-6 flex-none place-items-center rounded-md bg-sev-critical/10 text-sev-critical">
-                  <AlertTriangle className="h-3.5 w-3.5" />
-                </span>
-                <span className="text-muted">{t}</span>
-              </li>
+          <div className="mt-8 flex flex-wrap gap-4">
+            {(
+              [
+                ["safe", "Low risk"],
+                ["medium", "Medium risk"],
+                ["high", "High risk"],
+                ["unknown", "Unclassified"],
+              ] as [Risk, string][]
+            ).map(([r, l]) => (
+              <span key={r} className="inline-flex items-center gap-2 text-sm text-muted">
+                <span
+                  className="h-2.5 w-2.5 rounded-full"
+                  style={{ background: RISK_META[r].color }}
+                />
+                {l}
+              </span>
             ))}
-          </ul>
+          </div>
         </Reveal>
 
         {/* interactive asset map */}
@@ -83,7 +92,7 @@ export default function Problem() {
               <Eye className="h-3.5 w-3.5 text-acc-cyan" /> Live asset map
             </div>
 
-            <svg viewBox="0 0 100 100" className="relative h-full w-full">
+            <svg viewBox="0 0 100 100" className="relative h-full w-full overflow-visible">
               {EDGES.map(([a, b]) => {
                 const na = NODES.find((n) => n.id === a)!;
                 const nb = NODES.find((n) => n.id === b)!;
@@ -104,11 +113,18 @@ export default function Problem() {
                 );
               })}
               {NODES.map((n, i) => {
-                const isRisk = n.state === "risk" && !solved;
-                const color = solved && n.id === "n6" ? stateColor.safe : stateColor[n.state];
+                const solvedHere = solved && (n.id === "admin" || n.id === "staging");
+                const risk: Risk = solvedHere ? "safe" : n.risk;
+                const color = RISK_META[risk].color;
+                const pulse = (risk === "high" || risk === "medium") && !solvedHere;
                 return (
-                  <g key={n.id}>
-                    {isRisk && (
+                  <g
+                    key={n.id}
+                    onMouseEnter={() => setHovered(n.id)}
+                    onMouseLeave={() => setHovered(null)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    {pulse && (
                       <motion.circle
                         cx={n.x}
                         cy={n.y}
@@ -122,10 +138,12 @@ export default function Problem() {
                         style={{ transformOrigin: `${n.x}px ${n.y}px` }}
                       />
                     )}
+                    {/* invisible larger hit area */}
+                    <circle cx={n.x} cy={n.y} r={6} fill="transparent" />
                     <motion.circle
                       cx={n.x}
                       cy={n.y}
-                      r={n.id === "core" ? 4.2 : 2.6}
+                      r={n.id === "core" ? 4.2 : hovered === n.id ? 3.4 : 2.6}
                       fill={color}
                       initial={{ scale: 0, opacity: 0 }}
                       whileInView={{ scale: 1, opacity: 1 }}
@@ -142,12 +160,48 @@ export default function Problem() {
             {NODES.filter((n) => n.id !== "core").map((n) => (
               <span
                 key={n.id}
-                className="pointer-events-none absolute -translate-x-1/2 translate-y-2 font-mono text-[9px] text-muted"
+                className="pointer-events-none absolute -translate-x-1/2 translate-y-2 whitespace-nowrap font-mono text-[9px] text-muted"
                 style={{ left: `${n.x}%`, top: `${n.y}%` }}
               >
                 {n.label}
               </span>
             ))}
+
+            {/* hover tooltip */}
+            <AnimatePresence>
+              {hovered && (
+                <motion.div
+                  key={hovered}
+                  initial={{ opacity: 0, y: 4, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 4, scale: 0.96 }}
+                  transition={{ duration: 0.18 }}
+                  className="pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-[140%] rounded-lg border border-line bg-bg2/95 px-3 py-2 shadow-glow backdrop-blur-xl"
+                  style={{
+                    left: `${NODES.find((n) => n.id === hovered)!.x}%`,
+                    top: `${NODES.find((n) => n.id === hovered)!.y}%`,
+                  }}
+                >
+                  {(() => {
+                    const n = NODES.find((x) => x.id === hovered)!;
+                    const solvedHere = solved && (n.id === "admin" || n.id === "staging");
+                    const risk = solvedHere ? "safe" : n.risk;
+                    return (
+                      <>
+                        <div className="font-mono text-[11px] text-ink">{n.label}</div>
+                        <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-muted">
+                          <span
+                            className="h-1.5 w-1.5 rounded-full"
+                            style={{ background: RISK_META[risk].color }}
+                          />
+                          {n.kind} · {RISK_META[risk].label}
+                        </div>
+                      </>
+                    );
+                  })()}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* popup */}
             <AnimatePresence>
@@ -157,7 +211,7 @@ export default function Problem() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 8, scale: 0.96 }}
                   transition={{ duration: 0.4 }}
-                  className="absolute bottom-4 left-4 right-4 z-10 rounded-xl border border-sev-critical/30 bg-bg2/95 p-3.5 shadow-glow backdrop-blur-xl"
+                  className="absolute bottom-4 left-4 right-4 z-30 rounded-xl border border-sev-critical/30 bg-bg2/95 p-3.5 shadow-glow backdrop-blur-xl"
                 >
                   <div className="flex items-start gap-3">
                     <span className="mt-0.5 grid h-7 w-7 flex-none place-items-center rounded-lg bg-sev-critical/15 text-sev-critical">
@@ -175,13 +229,13 @@ export default function Problem() {
                   <div className="mt-3 flex gap-2">
                     <button
                       onClick={() => setSolved(true)}
-                      className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-acc-green/15 px-3 py-2 text-xs font-semibold text-acc-green transition-colors hover:bg-acc-green/25"
+                      className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-acc-green/15 px-3 py-2 text-xs font-semibold text-acc-green transition-colors hover:bg-acc-green/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-acc-green/50"
                     >
-                      <Check className="h-3.5 w-3.5" /> Solve
+                      <Check className="h-3.5 w-3.5" /> Solve issue
                     </button>
                     <button
                       onClick={() => setDismissed(true)}
-                      className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white/[0.05] px-3 py-2 text-xs font-semibold text-muted transition-colors hover:bg-white/[0.1] hover:text-ink"
+                      className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white/[0.05] px-3 py-2 text-xs font-semibold text-muted transition-colors hover:bg-white/[0.1] hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
                     >
                       <X className="h-3.5 w-3.5" /> Ignore
                     </button>
@@ -192,7 +246,7 @@ export default function Problem() {
                 <motion.div
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="absolute bottom-4 left-4 right-4 z-10 flex items-center gap-2.5 rounded-xl border border-acc-green/30 bg-bg2/95 p-3.5 text-sm font-semibold text-acc-green shadow-glow-green backdrop-blur-xl"
+                  className="absolute bottom-4 left-4 right-4 z-30 flex items-center gap-2.5 rounded-xl border border-acc-green/30 bg-bg2/95 p-3.5 text-sm font-semibold text-acc-green shadow-glow-green backdrop-blur-xl"
                 >
                   <Check className="h-4 w-4" /> Exposure remediated and verified.
                 </motion.div>

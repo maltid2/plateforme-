@@ -7,19 +7,21 @@ import { viewport } from "@/lib/motion";
 
 const LOGOS = ["Northstar", "Vertex", "Cloudline", "Orbital", "Acme Labs"];
 
-const STATS = [
-  { n: 1200000, suffix: "+", label: "Assets monitored" },
-  { n: 4.2, decimals: 1, suffix: "M", label: "Findings triaged" },
-  { n: 60, suffix: "%", label: "Less time to remediation" },
-  { n: 99.98, decimals: 2, suffix: "%", label: "Platform uptime" },
+type Stat = { value: React.ReactNode; label: string };
+
+const STATS: Stat[] = [
+  { value: <Counter to={50} suffix="k+" />, label: "Assets monitored" },
+  { value: <Counter to={99.9} decimals={1} suffix="%" />, label: "Uptime" },
+  { value: "24/7", label: "Visibility" },
+  { value: <Counter to={4.9} decimals={1} suffix="/5" />, label: "Customer rating" },
 ];
 
 export default function TrustBar() {
   return (
     <section className="relative border-y border-line bg-bg2/40 py-14">
       <Container>
-        <Reveal className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-muted">
-          Trusted by security teams at fast-moving companies
+        <Reveal className="text-center text-sm font-semibold text-muted">
+          Built for teams that cannot afford blind spots.
         </Reveal>
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-x-10 gap-y-6 sm:gap-x-16">
@@ -48,9 +50,7 @@ export default function TrustBar() {
               className="text-center"
             >
               <div className="text-3xl font-bold tracking-tight sm:text-4xl">
-                <span className="text-gradient">
-                  <Counter to={s.n} decimals={s.decimals ?? 0} suffix={s.suffix} />
-                </span>
+                <span className="text-gradient">{s.value}</span>
               </div>
               <div className="mt-1.5 text-sm text-muted">{s.label}</div>
             </motion.div>

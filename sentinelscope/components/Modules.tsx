@@ -18,68 +18,74 @@ type Module = {
   label: string;
   icon: LucideIcon;
   headline: string;
+  accent: string;
   cards: { title: string; body: string }[];
 };
 
 const MODULES: Module[] = [
   {
     id: "attack",
-    label: "Attack Surface",
+    label: "Attack",
     icon: Radar,
+    accent: "#57E6D1",
     headline: "See your organization the way an attacker does",
     cards: [
-      { title: "External discovery", body: "Continuously map internet-facing assets across every domain and cloud." },
-      { title: "Exposure alerts", body: "Get notified the moment a new asset or open port appears online." },
-      { title: "Shadow IT detection", body: "Surface unmanaged services and forgotten deployments automatically." },
-      { title: "Change tracking", body: "Watch your surface evolve over time with a full historical timeline." },
+      { title: "Dynamic Application Testing", body: "Probe running web apps for real, exploitable weaknesses." },
+      { title: "API Scanning", body: "Discover and test REST and GraphQL endpoints continuously." },
+      { title: "AI Pentesting", body: "Chain findings into attack paths with guided, automated testing." },
+      { title: "Surface Monitoring", body: "Watch every internet-facing asset change in near real time." },
     ],
   },
   {
     id: "code",
     label: "Code",
     icon: Code2,
-    headline: "Catch risky code before it ships",
+    accent: "#8D7CFF",
+    headline: "Catch risky code before it ever ships",
     cards: [
-      { title: "Dependency scanning", body: "Flag vulnerable open-source packages with real reachability context." },
-      { title: "Secret detection", body: "Stop hardcoded keys and tokens from reaching your production branches." },
-      { title: "SAST checks", body: "Analyze source for injection, auth, and logic flaws on every push." },
-      { title: "Owner mapping", body: "Route each finding to the team that owns the affected code path." },
+      { title: "Static Code Analysis", body: "Flag injection, auth and logic flaws on every push." },
+      { title: "Dependencies", body: "Surface vulnerable packages with real reachability context." },
+      { title: "Secrets Detection", body: "Stop hardcoded keys and tokens from reaching production." },
+      { title: "IaC Scanning", body: "Catch insecure infrastructure-as-code before it deploys." },
     ],
   },
   {
     id: "cloud",
     label: "Cloud",
     icon: Cloud,
+    accent: "#A7F36B",
     headline: "Keep every cloud environment locked down",
     cards: [
-      { title: "Misconfig detection", body: "Identify public buckets, weak IAM, and open groups across accounts." },
-      { title: "Posture scoring", body: "Benchmark each environment against your own security baseline." },
-      { title: "Drift alerts", body: "Detect when infrastructure quietly moves away from a secure state." },
-      { title: "Multi-cloud view", body: "Unify posture across every provider in a single, filterable inventory." },
+      { title: "Cloud Posture", body: "Benchmark each account against your security baseline." },
+      { title: "Container Images", body: "Scan images for vulnerabilities before they run." },
+      { title: "Virtual Machines", body: "Assess exposed hosts and their patch status at scale." },
+      { title: "Cloud Asset Search", body: "Query every resource across providers from one place." },
     ],
   },
   {
     id: "test",
-    label: "Testing",
+    label: "Test",
     icon: FlaskConical,
+    accent: "#F5C451",
     headline: "Validate real risk with safe, continuous testing",
     cards: [
-      { title: "Automated pentests", body: "Run safe, repeatable attack simulations against your live surface." },
-      { title: "Proof of exploit", body: "Confirm which findings are genuinely reachable and exploitable." },
-      { title: "Regression checks", body: "Verify that fixed issues stay fixed on every future scan." },
-      { title: "Scheduled runs", body: "Test on a cadence that matches your release and compliance needs." },
+      { title: "Automated Testing", body: "Run safe, repeatable attack simulations on a schedule." },
+      { title: "Security Validation", body: "Confirm which findings are genuinely reachable." },
+      { title: "Vulnerability Verification", body: "Prove exploitability before it reaches your queue." },
+      { title: "Continuous Retesting", body: "Re-check fixed issues automatically to confirm closure." },
     ],
   },
   {
     id: "defend",
     label: "Defend",
     icon: ShieldCheck,
+    accent: "#57E6D1",
     headline: "Turn findings into resolved, verified fixes",
     cards: [
-      { title: "Guided remediation", body: "Every issue ships with clear, step-by-step fix instructions." },
-      { title: "Auto-triage", body: "Deduplicate and rank findings so teams focus only on what matters." },
-      { title: "Fix verification", body: "Automatically re-test once a fix lands to confirm the risk is gone." },
-      { title: "Reporting", body: "Share posture and progress with stakeholders in one clean view." },
+      { title: "Runtime Protection", body: "Detect and block exploitation attempts in production." },
+      { title: "Alerting", body: "Route the right signal to the right team, without noise." },
+      { title: "Incident Response", body: "Move from detection to containment with clear playbooks." },
+      { title: "Security Workflows", body: "Automate triage and remediation across your tools." },
     ],
   },
 ];
@@ -93,10 +99,10 @@ export default function Modules() {
       <Container>
         <Reveal className="mx-auto max-w-2xl text-center">
           <div className="flex justify-center">
-            <SectionLabel>One platform, five modules</SectionLabel>
+            <SectionLabel>Modules</SectionLabel>
           </div>
           <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-[2.6rem]">
-            Security that spans your whole stack
+            Security coverage that grows with you.
           </h2>
           <p className="mt-4 text-lg text-muted">
             Start with what you need today and expand coverage without adding
@@ -114,7 +120,7 @@ export default function Modules() {
                 key={m.id}
                 onClick={() => setActive(m.id)}
                 aria-pressed={on}
-                className={`inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold transition-all duration-200 ${
+                className={`inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-acc-violet/60 ${
                   on
                     ? "border-acc-violet/40 bg-acc-violet/15 text-ink"
                     : "border-line bg-white/[0.02] text-muted hover:border-white/15 hover:text-ink"
@@ -137,9 +143,17 @@ export default function Modules() {
               exit={{ opacity: 0, x: -24 }}
               transition={{ duration: 0.4, ease: [0.2, 0.7, 0.2, 1] }}
             >
-              <h3 className="max-w-2xl text-xl font-semibold tracking-tight sm:text-2xl">
-                {current.headline}
-              </h3>
+              <div className="flex items-center gap-3">
+                <span
+                  className="grid h-10 w-10 place-items-center rounded-xl"
+                  style={{ background: `${current.accent}1f`, color: current.accent }}
+                >
+                  <current.icon className="h-5 w-5" strokeWidth={1.8} />
+                </span>
+                <h3 className="max-w-2xl text-xl font-semibold tracking-tight sm:text-2xl">
+                  {current.headline}
+                </h3>
+              </div>
               <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {current.cards.map((c, i) => (
                   <motion.div
@@ -147,8 +161,12 @@ export default function Modules() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: i * 0.08 }}
-                    className="rounded-xl border border-line bg-bg2/40 p-5"
+                    className="rounded-xl border border-line bg-bg2/40 p-5 transition-colors hover:border-white/15"
                   >
+                    <span
+                      className="mb-3 block h-1 w-8 rounded-full"
+                      style={{ background: current.accent }}
+                    />
                     <h4 className="text-sm font-semibold tracking-tight text-ink">
                       {c.title}
                     </h4>

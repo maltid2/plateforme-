@@ -2,59 +2,87 @@
 
 import { motion } from "framer-motion";
 import {
-  Boxes,
-  GitBranch,
+  ArrowRight,
+  KeyRound,
+  ListChecks,
   Radar,
   ScanLine,
-  ShieldAlert,
-  Workflow,
+  Signal,
+  Webhook,
+  type LucideIcon,
 } from "lucide-react";
 import { Container, Reveal, SectionLabel } from "./ui";
 import { staggerParent, fadeUp, viewport } from "@/lib/motion";
 
-const FEATURES = [
+type Feature = {
+  icon: LucideIcon;
+  category: string;
+  title: string;
+  body: string;
+  glow: "cyan" | "violet" | "green";
+};
+
+const FEATURES: Feature[] = [
   {
     icon: Radar,
-    title: "Continuous asset discovery",
-    body: "Map every domain, subdomain, IP, and cloud resource automatically — including the ones no one remembers deploying.",
+    category: "Discovery",
+    title: "Attack surface discovery",
+    body: "Find domains, services and applications that are missing from your inventory.",
     glow: "cyan",
+  },
+  {
+    icon: Signal,
+    category: "Monitoring",
+    title: "Continuous monitoring",
+    body: "Track changes across your internet-facing assets every day.",
+    glow: "violet",
   },
   {
     icon: ScanLine,
-    title: "Automated attack testing",
-    body: "Run safe, continuous checks against your external surface to surface real, exploitable weaknesses before attackers do.",
-    glow: "violet",
-  },
-  {
-    icon: ShieldAlert,
-    title: "Risk-based prioritization",
-    body: "Every finding is scored by exploitability and business impact, so your team fixes what actually matters first.",
+    category: "AppSec",
+    title: "Dynamic application testing",
+    body: "Detect security weaknesses in running web applications.",
     glow: "green",
   },
   {
-    icon: GitBranch,
-    title: "Code-to-cloud context",
-    body: "Trace an exposed endpoint back to the repository, service, and owner responsible — no more guessing who to ping.",
+    icon: Webhook,
+    category: "API",
+    title: "API security testing",
+    body: "Map REST and GraphQL endpoints and test them for common vulnerabilities.",
     glow: "violet",
   },
   {
-    icon: Boxes,
-    title: "Unified inventory",
-    body: "One living source of truth for assets, services, and their security posture across every environment you run.",
+    icon: KeyRound,
+    category: "Access",
+    title: "Authenticated scanning",
+    body: "Test application areas that are only visible to logged-in users.",
     glow: "cyan",
   },
   {
-    icon: Workflow,
-    title: "Workflow automation",
-    body: "Push prioritized issues straight into Jira, Slack, or Linear with full context and clear remediation steps.",
+    icon: ListChecks,
+    category: "Triage",
+    title: "Actionable prioritization",
+    body: "Focus your team on the findings that create the highest real-world risk.",
     glow: "green",
   },
-] as const;
+];
 
 const glowMap = {
   cyan: "group-hover:shadow-glow-cyan text-acc-cyan bg-acc-cyan/10",
   violet: "group-hover:shadow-glow text-acc-violet bg-acc-violet/10",
   green: "group-hover:shadow-glow-green text-acc-green bg-acc-green/10",
+};
+
+const borderHover = {
+  cyan: "hover:border-acc-cyan/40",
+  violet: "hover:border-acc-violet/40",
+  green: "hover:border-acc-green/40",
+};
+
+const linkColor = {
+  cyan: "text-acc-cyan",
+  violet: "text-acc-violet",
+  green: "text-acc-green",
 };
 
 export default function Features() {
@@ -66,7 +94,7 @@ export default function Features() {
             <SectionLabel>Platform</SectionLabel>
           </div>
           <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-[2.6rem]">
-            Everything you need to close the gap
+            One platform. Complete external visibility.
           </h2>
           <p className="mt-4 text-lg text-muted">
             From first discovery to verified fix, SentinelScope gives your team
@@ -84,23 +112,40 @@ export default function Features() {
           {FEATURES.map((f) => {
             const Icon = f.icon;
             return (
-              <motion.div
+              <motion.a
+                href="#modules"
                 key={f.title}
                 variants={fadeUp}
-                className="group relative rounded-2xl border border-line bg-card/60 p-6 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-white/15"
+                className={`group relative flex flex-col overflow-hidden rounded-2xl border border-line bg-card/60 p-6 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-acc-violet/60 ${borderHover[f.glow]}`}
               >
-                <div
-                  className={`grid h-12 w-12 place-items-center rounded-xl transition-shadow duration-300 ${glowMap[f.glow]}`}
-                >
-                  <Icon className="h-6 w-6" strokeWidth={1.8} />
+                {/* decorative animated glow blob */}
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-white/[0.04] opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100"
+                />
+                <div className="flex items-center justify-between">
+                  <div
+                    className={`grid h-12 w-12 place-items-center rounded-xl transition-all duration-300 group-hover:-translate-y-0.5 ${glowMap[f.glow]}`}
+                  >
+                    <Icon className="h-6 w-6 transition-transform duration-300 group-hover:rotate-6" strokeWidth={1.8} />
+                  </div>
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                    {f.category}
+                  </span>
                 </div>
                 <h3 className="mt-5 text-lg font-semibold tracking-tight">
                   {f.title}
                 </h3>
-                <p className="mt-2.5 text-sm leading-relaxed text-muted">
+                <p className="mt-2.5 flex-1 text-sm leading-relaxed text-muted">
                   {f.body}
                 </p>
-              </motion.div>
+                <span
+                  className={`mt-5 inline-flex items-center gap-1.5 text-sm font-semibold ${linkColor[f.glow]}`}
+                >
+                  Learn more
+                  <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                </span>
+              </motion.a>
             );
           })}
         </motion.div>

@@ -2,24 +2,8 @@
 
 import { Container, Reveal, SectionLabel } from "./ui";
 
-const ROW_A = [
-  "GitHub",
-  "GitLab",
-  "Jira",
-  "Slack",
-  "Linear",
-  "Microsoft Teams",
-  "Vanta",
-];
-const ROW_B = [
-  "Drata",
-  "VS Code",
-  "PagerDuty",
-  "Datadog",
-  "Okta",
-  "AWS",
-  "Google Cloud",
-];
+const ROW_A = ["GitHub", "GitLab", "Jira", "Slack", "Linear"];
+const ROW_B = ["Teams", "Vanta", "Drata", "VS Code"];
 
 function Chip({ name }: { name: string }) {
   return (
@@ -56,11 +40,10 @@ export default function Integrations() {
             <SectionLabel>Integrations</SectionLabel>
           </div>
           <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-[2.6rem]">
-            Works with the tools you already run
+            Don&apos;t break the developer flow.
           </h2>
           <p className="mt-4 text-lg text-muted">
-            Connect SentinelScope to your stack in minutes and push findings
-            wherever your team already works.
+            Connect your security workflow to the tools your team already uses.
           </p>
         </Reveal>
       </Container>

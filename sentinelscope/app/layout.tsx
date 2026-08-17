@@ -2,14 +2,14 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SentinelScope — See every exposed asset before attackers do",
+  title: "SentinelScope — Voyez chaque actif exposé avant les attaquants",
   description:
-    "Discover your external attack surface, continuously test your applications, and turn security findings into clear, prioritized actions.",
+    "Découvrez votre surface d'attaque externe, testez vos applications en continu et transformez les résultats de sécurité en actions claires et priorisées.",
   metadataBase: new URL("https://sentinelscope.example"),
   openGraph: {
     title: "SentinelScope",
     description:
-      "Continuous attack surface intelligence for teams that cannot afford blind spots.",
+      "Le renseignement continu sur la surface d'attaque pour les équipes qui ne peuvent se permettre aucun angle mort.",
     type: "website",
   },
 };
@@ -20,7 +20,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="fr">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link

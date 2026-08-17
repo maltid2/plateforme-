@@ -25,15 +25,15 @@ type Module = {
 const MODULES: Module[] = [
   {
     id: "attack",
-    label: "Attack",
+    label: "Attaque",
     icon: Radar,
     accent: "#57E6D1",
-    headline: "See your organization the way an attacker does",
+    headline: "Voyez votre organisation comme le ferait un attaquant",
     cards: [
-      { title: "Dynamic Application Testing", body: "Probe running web apps for real, exploitable weaknesses." },
-      { title: "API Scanning", body: "Discover and test REST and GraphQL endpoints continuously." },
-      { title: "AI Pentesting", body: "Chain findings into attack paths with guided, automated testing." },
-      { title: "Surface Monitoring", body: "Watch every internet-facing asset change in near real time." },
+      { title: "Test dynamique des applications", body: "Sondez vos applications web en fonctionnement à la recherche de failles réellement exploitables." },
+      { title: "Analyse des API", body: "Découvrez et testez en continu vos points d'accès REST et GraphQL." },
+      { title: "Pentest assisté par IA", body: "Enchaînez les vulnérabilités en chemins d'attaque grâce à des tests automatisés et guidés." },
+      { title: "Surveillance de la surface", body: "Observez chaque changement de vos actifs exposés en quasi temps réel." },
     ],
   },
   {
@@ -41,12 +41,12 @@ const MODULES: Module[] = [
     label: "Code",
     icon: Code2,
     accent: "#8D7CFF",
-    headline: "Catch risky code before it ever ships",
+    headline: "Interceptez le code à risque avant sa mise en production",
     cards: [
-      { title: "Static Code Analysis", body: "Flag injection, auth and logic flaws on every push." },
-      { title: "Dependencies", body: "Surface vulnerable packages with real reachability context." },
-      { title: "Secrets Detection", body: "Stop hardcoded keys and tokens from reaching production." },
-      { title: "IaC Scanning", body: "Catch insecure infrastructure-as-code before it deploys." },
+      { title: "Analyse statique du code", body: "Signalez les failles d'injection, d'authentification et de logique à chaque push." },
+      { title: "Dépendances", body: "Faites remonter les paquets vulnérables avec leur contexte d'exploitabilité réel." },
+      { title: "Détection de secrets", body: "Empêchez les clés et jetons codés en dur d'atteindre la production." },
+      { title: "Analyse IaC", body: "Détectez l'infrastructure-as-code non sécurisée avant son déploiement." },
     ],
   },
   {
@@ -54,12 +54,12 @@ const MODULES: Module[] = [
     label: "Cloud",
     icon: Cloud,
     accent: "#A7F36B",
-    headline: "Keep every cloud environment locked down",
+    headline: "Gardez chaque environnement cloud verrouillé",
     cards: [
-      { title: "Cloud Posture", body: "Benchmark each account against your security baseline." },
-      { title: "Container Images", body: "Scan images for vulnerabilities before they run." },
-      { title: "Virtual Machines", body: "Assess exposed hosts and their patch status at scale." },
-      { title: "Cloud Asset Search", body: "Query every resource across providers from one place." },
+      { title: "Posture cloud", body: "Évaluez chaque compte par rapport à votre référentiel de sécurité." },
+      { title: "Images de conteneurs", body: "Analysez les images à la recherche de vulnérabilités avant leur exécution." },
+      { title: "Machines virtuelles", body: "Évaluez à grande échelle les hôtes exposés et leur niveau de correctifs." },
+      { title: "Recherche d'actifs cloud", body: "Interrogez toutes vos ressources, tous fournisseurs confondus, depuis un seul endroit." },
     ],
   },
   {
@@ -67,25 +67,25 @@ const MODULES: Module[] = [
     label: "Test",
     icon: FlaskConical,
     accent: "#F5C451",
-    headline: "Validate real risk with safe, continuous testing",
+    headline: "Validez le risque réel par des tests continus et sans danger",
     cards: [
-      { title: "Automated Testing", body: "Run safe, repeatable attack simulations on a schedule." },
-      { title: "Security Validation", body: "Confirm which findings are genuinely reachable." },
-      { title: "Vulnerability Verification", body: "Prove exploitability before it reaches your queue." },
-      { title: "Continuous Retesting", body: "Re-check fixed issues automatically to confirm closure." },
+      { title: "Tests automatisés", body: "Lancez des simulations d'attaque sûres et reproductibles, à intervalle régulier." },
+      { title: "Validation de sécurité", body: "Confirmez quelles vulnérabilités sont réellement atteignables." },
+      { title: "Vérification des vulnérabilités", body: "Prouvez l'exploitabilité avant que la vulnérabilité n'arrive dans votre file." },
+      { title: "Re-test continu", body: "Revérifiez automatiquement les problèmes corrigés pour confirmer leur clôture." },
     ],
   },
   {
     id: "defend",
-    label: "Defend",
+    label: "Défense",
     icon: ShieldCheck,
     accent: "#57E6D1",
-    headline: "Turn findings into resolved, verified fixes",
+    headline: "Transformez les vulnérabilités en correctifs résolus et vérifiés",
     cards: [
-      { title: "Runtime Protection", body: "Detect and block exploitation attempts in production." },
-      { title: "Alerting", body: "Route the right signal to the right team, without noise." },
-      { title: "Incident Response", body: "Move from detection to containment with clear playbooks." },
-      { title: "Security Workflows", body: "Automate triage and remediation across your tools." },
+      { title: "Protection à l'exécution", body: "Détectez et bloquez les tentatives d'exploitation en production." },
+      { title: "Alertes", body: "Acheminez le bon signal vers la bonne équipe, sans bruit." },
+      { title: "Réponse à incident", body: "Passez de la détection au confinement grâce à des playbooks clairs." },
+      { title: "Flux de sécurité", body: "Automatisez le tri et la remédiation à travers vos outils." },
     ],
   },
 ];
@@ -102,11 +102,11 @@ export default function Modules() {
             <SectionLabel>Modules</SectionLabel>
           </div>
           <h2 className="mt-5 text-3xl font-bold leading-[1.12] tracking-tight sm:text-[2.6rem] lg:text-[3.25rem]">
-            Security coverage that grows with you.
+            Une couverture de sécurité qui grandit avec vous.
           </h2>
           <p className="mt-4 text-lg text-muted">
-            Start with what you need today and expand coverage without adding
-            another tool.
+            Commencez avec ce dont vous avez besoin aujourd'hui et étendez votre
+            couverture sans ajouter un autre outil.
           </p>
         </Reveal>
 

@@ -24,44 +24,44 @@ type Feature = {
 const FEATURES: Feature[] = [
   {
     Picto: PictoRadar,
-    category: "Discovery",
-    title: "Attack surface discovery",
-    body: "Find domains, services and applications that are missing from your inventory.",
+    category: "Découverte",
+    title: "Découverte de la surface d'attaque",
+    body: "Repérez les domaines, services et applications absents de votre inventaire.",
     glow: "cyan",
   },
   {
     Picto: PictoMonitor,
-    category: "Monitoring",
-    title: "Continuous monitoring",
-    body: "Track changes across your internet-facing assets every day.",
+    category: "Surveillance",
+    title: "Surveillance continue",
+    body: "Suivez chaque jour les changements sur vos actifs exposés sur Internet.",
     glow: "violet",
   },
   {
     Picto: PictoScan,
     category: "AppSec",
-    title: "Dynamic application testing",
-    body: "Detect security weaknesses in running web applications.",
+    title: "Test dynamique des applications",
+    body: "Détectez les failles de sécurité dans vos applications web en fonctionnement.",
     glow: "green",
   },
   {
     Picto: PictoNodes,
     category: "API",
-    title: "API security testing",
-    body: "Map REST and GraphQL endpoints and test them for common vulnerabilities.",
+    title: "Test de sécurité des API",
+    body: "Cartographiez vos points d'accès REST et GraphQL et testez-les contre les vulnérabilités courantes.",
     glow: "violet",
   },
   {
     Picto: PictoKeyUser,
-    category: "Access",
-    title: "Authenticated scanning",
-    body: "Test application areas that are only visible to logged-in users.",
+    category: "Accès",
+    title: "Analyse authentifiée",
+    body: "Testez les zones de l'application accessibles uniquement aux utilisateurs connectés.",
     glow: "cyan",
   },
   {
     Picto: PictoPriority,
-    category: "Triage",
-    title: "Actionable prioritization",
-    body: "Focus your team on the findings that create the highest real-world risk.",
+    category: "Priorisation",
+    title: "Priorisation actionnable",
+    body: "Concentrez votre équipe sur les vulnérabilités au risque réel le plus élevé.",
     glow: "green",
   },
 ];
@@ -90,14 +90,14 @@ export default function Features() {
       <Container>
         <Reveal className="mx-auto max-w-2xl text-center">
           <div className="flex justify-center">
-            <SectionLabel>Platform</SectionLabel>
+            <SectionLabel>Plateforme</SectionLabel>
           </div>
           <h2 className="mt-5 text-3xl font-bold leading-[1.12] tracking-tight sm:text-[2.6rem] lg:text-[3.25rem]">
-            One platform. Complete external visibility.
+            Une plateforme. Une visibilité externe totale.
           </h2>
           <p className="mt-4 text-lg text-muted">
-            From first discovery to verified fix, SentinelScope gives your team
-            one continuous view of exposure and risk.
+            De la première découverte au correctif vérifié, SentinelScope offre à
+            votre équipe une vue continue de l'exposition et du risque.
           </p>
         </Reveal>
 
@@ -141,7 +141,7 @@ export default function Features() {
                 <span
                   className={`mt-5 inline-flex items-center gap-1.5 text-sm font-semibold ${linkColor[f.glow]}`}
                 >
-                  Learn more
+                  En savoir plus
                   <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                 </span>
               </motion.a>

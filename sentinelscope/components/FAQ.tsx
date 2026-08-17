@@ -7,36 +7,36 @@ import { Container, Reveal, SectionLabel } from "./ui";
 
 const FAQS = [
   {
-    q: "What is attack surface monitoring?",
-    a: "Attack surface monitoring continuously discovers and tracks every internet-facing asset you own — domains, subdomains, APIs, certificates, and cloud resources — so you always know what is exposed, even as it changes from one day to the next.",
+    q: "Qu'est-ce que la surveillance de la surface d'attaque ?",
+    a: "La surveillance de la surface d'attaque découvre et suit en continu chacun de vos actifs exposés sur Internet — domaines, sous-domaines, API, certificats et ressources cloud — pour que vous sachiez toujours ce qui est exposé, même lorsque cela change d'un jour à l'autre.",
   },
   {
-    q: "How does dynamic application security testing work?",
-    a: "Dynamic testing interacts with your running applications the way a real attacker would, sending crafted requests to surface issues like injection, broken access control, and misconfigurations — without needing access to your source code.",
+    q: "Comment fonctionne le test dynamique de sécurité des applications ?",
+    a: "Le test dynamique interagit avec vos applications en fonctionnement comme le ferait un véritable attaquant, en envoyant des requêtes conçues pour révéler des failles telles que les injections, les contrôles d'accès défaillants et les mauvaises configurations — sans nécessiter l'accès à votre code source.",
   },
   {
-    q: "Can SentinelScope scan authenticated applications?",
-    a: "Yes. With authenticated scanning, SentinelScope can log in and test the areas of your application that are only visible to signed-in users, where much of the real risk usually lives.",
+    q: "SentinelScope peut-il analyser des applications authentifiées ?",
+    a: "Oui. Grâce à l'analyse authentifiée, SentinelScope peut se connecter et tester les zones de votre application visibles uniquement par les utilisateurs connectés, là où se concentre souvent l'essentiel du risque réel.",
   },
   {
-    q: "Is it safe to scan production?",
-    a: "Every check is designed to be non-destructive and rate-limited. You control the scope and cadence, and all activity is fully logged, so scanning production stays safe and predictable.",
+    q: "Est-il sûr d'analyser un environnement de production ?",
+    a: "Chaque contrôle est conçu pour être non destructif et à débit limité. Vous maîtrisez le périmètre et la fréquence, et toute l'activité est journalisée : analyser la production reste sûr et prévisible.",
   },
   {
-    q: "Does it support REST and GraphQL APIs?",
-    a: "It does. SentinelScope maps both REST and GraphQL endpoints, understands their schemas, and tests them for common vulnerabilities such as broken authorization and excessive data exposure.",
+    q: "Prend-il en charge les API REST et GraphQL ?",
+    a: "Oui. SentinelScope cartographie les points d'accès REST comme GraphQL, comprend leurs schémas et les teste contre les vulnérabilités courantes telles que les autorisations défaillantes et l'exposition excessive de données.",
   },
   {
-    q: "How quickly do scans complete?",
-    a: "Most scans finish in minutes to a few hours depending on the size of your surface. Discovery and monitoring run continuously in the background, so you get updates as your environment changes rather than waiting for a scheduled window.",
+    q: "En combien de temps les analyses se terminent-elles ?",
+    a: "La plupart des analyses se terminent en quelques minutes à quelques heures selon la taille de votre surface. La découverte et la surveillance s'exécutent en continu en arrière-plan : vous êtes informé au fil des changements de votre environnement, sans attendre une fenêtre planifiée.",
   },
   {
-    q: "Can it integrate with CI/CD tools?",
-    a: "Yes. SentinelScope connects to the tools your team already uses — including GitHub, GitLab, Jira, and Slack — so findings flow straight into your existing pipelines and workflows with full context.",
+    q: "S'intègre-t-il aux outils CI/CD ?",
+    a: "Oui. SentinelScope se connecte aux outils que votre équipe utilise déjà — dont GitHub, GitLab, Jira et Slack — pour que les résultats remontent directement dans vos pipelines et flux existants, avec tout le contexte.",
   },
   {
-    q: "Does it replace a manual penetration test?",
-    a: "It complements rather than replaces one. SentinelScope gives you continuous, automated coverage between engagements, while a manual pentest adds deep, human-driven testing — together they give you the strongest picture of your risk.",
+    q: "Remplace-t-il un test d'intrusion manuel ?",
+    a: "Il le complète plutôt qu'il ne le remplace. SentinelScope assure une couverture automatisée et continue entre les missions, tandis qu'un test d'intrusion manuel apporte une analyse humaine approfondie — ensemble, ils offrent la vision la plus complète de votre risque.",
   },
 ];
 
@@ -110,10 +110,10 @@ export default function FAQ() {
             <SectionLabel>FAQ</SectionLabel>
           </div>
           <h2 className="mt-5 text-3xl font-bold leading-[1.12] tracking-tight sm:text-[2.6rem] lg:text-[3.25rem]">
-            Questions, answered
+            Vos questions, nos réponses
           </h2>
           <p className="mt-4 text-lg text-muted">
-            Everything you need to know about how SentinelScope works.
+            Tout ce qu'il faut savoir sur le fonctionnement de SentinelScope.
           </p>
         </Reveal>
 

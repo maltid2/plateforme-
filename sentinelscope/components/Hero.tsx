@@ -31,11 +31,11 @@ export default function Hero() {
             className="inline-flex items-center gap-2 rounded-full border border-line bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-acc-cyan"
           >
             <Sparkles className="h-3.5 w-3.5" />
-            Continuous attack surface intelligence
+            Renseignement continu sur la surface d&apos;attaque
           </motion.div>
 
           <h1 className="mt-6 text-[2.25rem] font-extrabold leading-[1.05] tracking-tight xs:text-[2.75rem] sm:text-[3.5rem] lg:text-[4.5rem]">
-            {["See every", "exposed asset", "before attackers do."].map((line, i) => (
+            {["Voyez chaque", "actif exposé", "avant les attaquants."].map((line, i) => (
               <motion.span
                 key={i}
                 initial={{ opacity: 0, y: 18 }}
@@ -54,9 +54,9 @@ export default function Hero() {
             transition={{ duration: 0.6, ease, delay: 0.5 }}
             className="mt-6 max-w-xl text-lg leading-relaxed text-muted"
           >
-            Discover your external attack surface, continuously test your
-            applications, and turn security findings into clear, prioritized
-            actions.
+            Découvrez votre surface d&apos;attaque externe, testez vos
+            applications en continu et transformez les résultats de sécurité
+            en actions claires et priorisées.
           </motion.p>
 
           <motion.div
@@ -66,7 +66,7 @@ export default function Hero() {
             className="mt-8 flex flex-wrap items-center gap-3"
           >
             <Button href="#cta" className="px-7 py-3.5 text-[15px]">
-              Book a demo
+              Réserver une démo
             </Button>
             <Button
               href="#features"
@@ -74,7 +74,7 @@ export default function Hero() {
               className="px-7 py-3.5 text-[15px]"
               icon={<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />}
             >
-              Explore the platform
+              Explorer la plateforme
             </Button>
           </motion.div>
 
@@ -84,7 +84,7 @@ export default function Hero() {
             transition={{ duration: 0.6, delay: 0.85 }}
             className="mt-5 text-sm text-muted"
           >
-            No credit card required · Setup in minutes
+            Sans carte bancaire · Installation en quelques minutes
           </motion.p>
         </div>
 

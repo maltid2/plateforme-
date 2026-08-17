@@ -7,10 +7,10 @@ import { Menu, Radar, X } from "lucide-react";
 import { Button } from "./ui";
 
 const LINKS = [
-  { label: "Product", href: "#features" },
+  { label: "Produit", href: "#features" },
   { label: "Solutions", href: "#modules" },
-  { label: "Resources", href: "#faq" },
-  { label: "Pricing", href: "#cta" },
+  { label: "Ressources", href: "#faq" },
+  { label: "Tarifs", href: "#cta" },
 ];
 
 export function Logo() {
@@ -65,15 +65,15 @@ export default function Navbar() {
             href="#"
             className="text-sm font-medium text-muted transition-colors hover:text-ink"
           >
-            Log in
+            Connexion
           </Link>
           <Button href="#cta" className="px-5 py-2.5">
-            Book a demo
+            Réserver une démo
           </Button>
         </div>
 
         <button
-          aria-label={open ? "Close menu" : "Open menu"}
+          aria-label={open ? "Fermer le menu" : "Ouvrir le menu"}
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
           className="grid h-10 w-10 place-items-center rounded-lg border border-line bg-white/[0.03] text-ink md:hidden"
@@ -108,10 +108,10 @@ export default function Navbar() {
                   onClick={() => setOpen(false)}
                   className="px-3 py-2 text-sm font-medium text-muted"
                 >
-                  Log in
+                  Connexion
                 </Link>
                 <Button href="#cta" className="w-full" onClick={() => setOpen(false)}>
-                  Book a demo
+                  Réserver une démo
                 </Button>
               </div>
             </div>

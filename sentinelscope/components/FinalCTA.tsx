@@ -81,17 +81,17 @@ export default function FinalCTA() {
       <Container>
         <Reveal className="mx-auto max-w-3xl text-center">
           <h2 className="text-4xl font-extrabold leading-[1.08] tracking-tight sm:text-5xl lg:text-[3.75rem]">
-            Find your blind spots before{" "}
-            <span className="text-gradient">someone else does.</span>
+            Trouvez vos angles morts{" "}
+            <span className="text-gradient">avant les autres.</span>
           </h2>
           <p className="mx-auto mt-6 max-w-xl text-lg text-muted">
-            Get a complete view of your external attack surface and start
-            reducing risk today.
+            Obtenez une vue complète de votre surface d&apos;attaque externe et
+            commencez à réduire le risque dès aujourd&apos;hui.
           </p>
 
           <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
             <Button href="#" className="px-8 py-3.5 text-[15px]">
-              Book a demo
+              Réserver une démo
             </Button>
             <Button
               href="#features"
@@ -99,11 +99,11 @@ export default function FinalCTA() {
               className="px-8 py-3.5 text-[15px]"
               icon={<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />}
             >
-              Explore the platform
+              Explorer la plateforme
             </Button>
           </div>
           <p className="mt-5 text-sm text-muted">
-            No credit card required · See results in minutes
+            Sans carte bancaire · Des résultats en quelques minutes
           </p>
         </Reveal>
       </Container>

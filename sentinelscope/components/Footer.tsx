@@ -6,24 +6,24 @@ import { Container } from "./ui";
 
 const COLUMNS = [
   {
-    title: "Product",
-    links: ["Attack surface", "Code security", "Cloud posture", "Testing", "Pricing"],
+    title: "Produit",
+    links: ["Surface d'attaque", "Sécurité du code", "Posture cloud", "Tests", "Tarifs"],
   },
   {
     title: "Solutions",
-    links: ["For startups", "For enterprise", "For security teams", "For engineering"],
+    links: ["Pour les startups", "Pour les grands comptes", "Pour les équipes sécurité", "Pour l'ingénierie"],
   },
   {
-    title: "Resources",
-    links: ["Documentation", "Security", "Changelog", "Status", "Blog"],
+    title: "Ressources",
+    links: ["Documentation", "Sécurité", "Journal des versions", "Statut", "Blog"],
   },
   {
-    title: "Company",
-    links: ["About", "Careers", "Customers", "Contact"],
+    title: "Entreprise",
+    links: ["À propos", "Carrières", "Clients", "Contact"],
   },
   {
-    title: "Legal",
-    links: ["Privacy", "Terms", "Cookies", "Compliance"],
+    title: "Légal",
+    links: ["Confidentialité", "Conditions", "Cookies", "Conformité"],
   },
 ];
 
@@ -49,8 +49,8 @@ export default function Footer() {
               Sentinel<span className="text-acc-cyan">Scope</span>
             </Link>
             <p className="mt-4 text-sm leading-relaxed text-muted">
-              Continuous attack surface intelligence for teams that want to see
-              every exposed asset before attackers do.
+              Le renseignement continu sur la surface d&apos;attaque, pour les
+              équipes qui veulent voir chaque actif exposé avant les attaquants.
             </p>
             <div className="mt-6 flex items-center gap-3">
               {[
@@ -97,11 +97,11 @@ export default function Footer() {
 
         <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-line pt-8 sm:flex-row">
           <p className="text-sm text-muted">
-            © 2026 SentinelScope. All rights reserved.
+            © 2026 SentinelScope. Tous droits réservés.
           </p>
           <div className="flex items-center gap-2 text-xs text-muted">
             <span className="h-1.5 w-1.5 rounded-full bg-acc-green shadow-[0_0_8px_#A7F36B]" />
-            All systems operational
+            Tous les systèmes opérationnels
           </div>
         </div>
       </Container>

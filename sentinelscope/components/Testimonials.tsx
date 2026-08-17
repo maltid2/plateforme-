@@ -8,17 +8,17 @@ import { Container, Reveal, SectionLabel } from "./ui";
 const QUOTES = [
   {
     quote:
-      "SentinelScope finally gave us a clear view of what was exposed and what needed attention first.",
+      "SentinelScope nous a enfin donné une vision claire de ce qui était exposé et de ce qu'il fallait traiter en priorité.",
     name: "Maya Laurent",
-    role: "VP Security",
+    role: "VP Sécurité",
     company: "Northstar",
     initials: "ML",
   },
   {
     quote:
-      "We reduced triage time dramatically without adding another complicated tool to our workflow.",
+      "Nous avons réduit considérablement le temps de tri, sans ajouter un outil compliqué de plus à notre organisation.",
     name: "Jonas Meyer",
-    role: "Engineering Director",
+    role: "Directeur de l'ingénierie",
     company: "Cloudline",
     initials: "JM",
   },
@@ -38,10 +38,10 @@ export default function Testimonials() {
       <Container className="max-w-4xl">
         <Reveal className="text-center">
           <div className="flex justify-center">
-            <SectionLabel>Customer stories</SectionLabel>
+            <SectionLabel>Témoignages clients</SectionLabel>
           </div>
           <h2 className="mt-5 text-3xl font-bold leading-[1.12] tracking-tight sm:text-[2.6rem] lg:text-[3.25rem]">
-            Security teams that move faster
+            Des équipes de sécurité plus rapides
           </h2>
         </Reveal>
 
@@ -81,14 +81,14 @@ export default function Testimonials() {
 
               <div className="flex items-center gap-2">
                 <button
-                  aria-label="Previous testimonial"
+                  aria-label="Témoignage précédent"
                   onClick={() => go(-1)}
                   className="grid h-10 w-10 place-items-center rounded-full border border-line bg-white/[0.03] text-muted transition-colors hover:border-white/20 hover:text-ink"
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </button>
                 <button
-                  aria-label="Next testimonial"
+                  aria-label="Témoignage suivant"
                   onClick={() => go(1)}
                   className="grid h-10 w-10 place-items-center rounded-full border border-line bg-white/[0.03] text-muted transition-colors hover:border-white/20 hover:text-ink"
                 >
@@ -102,7 +102,7 @@ export default function Testimonials() {
             {QUOTES.map((_, idx) => (
               <button
                 key={idx}
-                aria-label={`Go to testimonial ${idx + 1}`}
+                aria-label={`Aller au témoignage ${idx + 1}`}
                 onClick={() => {
                   setDir(idx > i ? 1 : -1);
                   setI(idx);

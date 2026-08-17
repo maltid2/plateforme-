@@ -37,13 +37,14 @@ export default function Integrations() {
       <Container>
         <Reveal className="mx-auto max-w-2xl text-center">
           <div className="flex justify-center">
-            <SectionLabel>Integrations</SectionLabel>
+            <SectionLabel>Intégrations</SectionLabel>
           </div>
           <h2 className="mt-5 text-3xl font-bold leading-[1.12] tracking-tight sm:text-[2.6rem] lg:text-[3.25rem]">
-            Don&apos;t break the developer flow.
+            Ne cassez pas le flux des développeurs.
           </h2>
           <p className="mt-4 text-lg text-muted">
-            Connect your security workflow to the tools your team already uses.
+            Connectez votre flux de sécurité aux outils que votre équipe utilise
+            déjà.
           </p>
         </Reveal>
       </Container>

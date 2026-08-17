@@ -10,10 +10,10 @@ const LOGOS = ["Northstar", "Vertex", "Cloudline", "Orbital", "Acme Labs"];
 type Stat = { value: React.ReactNode; label: string };
 
 const STATS: Stat[] = [
-  { value: <Counter to={50} suffix="k+" />, label: "Assets monitored" },
-  { value: <Counter to={99.9} decimals={1} suffix="%" />, label: "Uptime" },
-  { value: "24/7", label: "Visibility" },
-  { value: <Counter to={4.9} decimals={1} suffix="/5" />, label: "Customer rating" },
+  { value: <Counter to={50} suffix="k+" />, label: "Actifs surveillés" },
+  { value: <Counter to={99.9} decimals={1} suffix="%" />, label: "Disponibilité" },
+  { value: "24/7", label: "Visibilité" },
+  { value: <Counter to={4.9} decimals={1} suffix="/5" />, label: "Satisfaction client" },
 ];
 
 export default function TrustBar() {
@@ -21,7 +21,7 @@ export default function TrustBar() {
     <section className="relative border-y border-line bg-bg2/40 py-14">
       <Container>
         <Reveal className="text-center text-sm font-semibold text-muted">
-          Built for teams that cannot afford blind spots.
+          Conçu pour les équipes qui ne peuvent se permettre aucun angle mort.
         </Reveal>
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-x-10 gap-y-6 sm:gap-x-16">

@@ -6,11 +6,11 @@ import { Container, Reveal, SectionLabel } from "./ui";
 import { viewport, ease } from "@/lib/motion";
 
 const BADGES = [
-  { icon: ShieldCheck, label: "SOC 2 ready" },
-  { icon: Lock, label: "ISO 27001 aligned" },
-  { icon: ScanFace, label: "Read-only access" },
-  { icon: Timer, label: "Short-lived tokens" },
-  { icon: KeyRound, label: "No customer data sharing" },
+  { icon: ShieldCheck, label: "Prêt pour SOC 2" },
+  { icon: Lock, label: "Aligné ISO 27001" },
+  { icon: ScanFace, label: "Accès en lecture seule" },
+  { icon: Timer, label: "Jetons éphémères" },
+  { icon: KeyRound, label: "Aucun partage de données client" },
 ];
 
 export default function Security() {
@@ -73,14 +73,14 @@ export default function Security() {
 
         {/* copy */}
         <Reveal delay={0.1} className="order-1 lg:order-2">
-          <SectionLabel>Security &amp; compliance</SectionLabel>
+          <SectionLabel>Sécurité &amp; conformité</SectionLabel>
           <h2 className="mt-5 text-3xl font-bold leading-[1.12] tracking-tight sm:text-[2.6rem] lg:text-[3.25rem]">
-            Built secure from the ground up.
+            Sécurisé dès la conception.
           </h2>
           <p className="mt-5 max-w-lg text-lg leading-relaxed text-muted">
-            SentinelScope operates with least-privilege, read-only access and
-            never stores your customer data. Every scan is scoped, logged, and
-            fully under your control.
+            SentinelScope fonctionne avec un accès en lecture seule et le
+            moindre privilège, et ne stocke jamais vos données client. Chaque
+            analyse est cadrée, journalisée et entièrement sous votre contrôle.
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">

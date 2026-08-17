@@ -88,10 +88,10 @@ function Sparkline() {
 }
 
 const ALERTS = [
-  { sev: "Critical", color: "#F4576B", asset: "api.sentinelscope.dev", tag: "New", tagCls: "bg-acc-violet/15 text-acc-violet" },
-  { sev: "High", color: "#FF9715", asset: "staging-app.dev", tag: "In progress", tagCls: "bg-white/[0.06] text-muted" },
-  { sev: "High", color: "#FF9715", asset: "old-service.dev", tag: "New", tagCls: "bg-acc-violet/15 text-acc-violet" },
-  { sev: "Medium", color: "#F5C451", asset: "cdn.sentinelscope.dev", tag: "Resolved", tagCls: "bg-acc-green/15 text-acc-green" },
+  { sev: "Critique", color: "#F4576B", asset: "api.sentinelscope.dev", tag: "Nouveau", tagCls: "bg-acc-violet/15 text-acc-violet" },
+  { sev: "Élevé", color: "#FF9715", asset: "staging-app.dev", tag: "En cours", tagCls: "bg-white/[0.06] text-muted" },
+  { sev: "Élevé", color: "#FF9715", asset: "old-service.dev", tag: "Nouveau", tagCls: "bg-acc-violet/15 text-acc-violet" },
+  { sev: "Moyen", color: "#F5C451", asset: "cdn.sentinelscope.dev", tag: "Résolu", tagCls: "bg-acc-green/15 text-acc-green" },
 ];
 
 export default function HeroDashboard() {
@@ -112,11 +112,11 @@ export default function HeroDashboard() {
               <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
               <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
             </span>
-            <span className="ml-2 font-medium">Attack surface overview</span>
+            <span className="ml-2 font-medium">Vue de la surface d&apos;attaque</span>
           </div>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-acc-green/10 px-2.5 py-1 text-[11px] font-semibold text-acc-green">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-acc-green" />
-            Live
+            En direct
           </span>
         </div>
 
@@ -124,7 +124,7 @@ export default function HeroDashboard() {
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-xl border border-line bg-bg2/60 p-4">
             <div className="mb-2 flex items-center gap-2 text-xs text-muted">
-              <ShieldCheck className="h-3.5 w-3.5 text-acc-cyan" /> Risk score
+              <ShieldCheck className="h-3.5 w-3.5 text-acc-cyan" /> Score de risque
             </div>
             <div className="flex items-center gap-3">
               <RiskRing />
@@ -132,18 +132,18 @@ export default function HeroDashboard() {
                 <div className="mb-1 flex items-center gap-1 font-semibold text-acc-green">
                   <ArrowUpRight className="h-3.5 w-3.5" /> +12 pts
                 </div>
-                this week
+                cette semaine
               </div>
             </div>
           </div>
           <div className="rounded-xl border border-line bg-bg2/60 p-4">
             <div className="mb-1 flex items-center gap-2 text-xs text-muted">
-              <Activity className="h-3.5 w-3.5 text-acc-violet" /> Risk trend
+              <Activity className="h-3.5 w-3.5 text-acc-violet" /> Tendance du risque
             </div>
             <Sparkline />
             <div className="mt-1 flex justify-between text-[10px] text-muted">
-              <span>30d ago</span>
-              <span>Today</span>
+              <span>il y a 30 j</span>
+              <span>Aujourd&apos;hui</span>
             </div>
           </div>
         </div>
@@ -151,9 +151,9 @@ export default function HeroDashboard() {
         {/* stat chips */}
         <div className="mt-3 grid grid-cols-3 gap-3">
           {[
-            { n: <Counter to={1284} />, l: "Assets discovered" },
-            { n: <Counter to={23} />, l: "Critical findings", accent: "text-sev-critical" },
-            { n: <Counter to={98.4} decimals={1} suffix="%" />, l: "Monitored" },
+            { n: <Counter to={1284} />, l: "Actifs découverts" },
+            { n: <Counter to={23} />, l: "Vulnérabilités critiques", accent: "text-sev-critical" },
+            { n: <Counter to={98.4} decimals={1} suffix="%" />, l: "Surveillé" },
           ].map((s, i) => (
             <motion.div
               key={i}
@@ -203,7 +203,7 @@ export default function HeroDashboard() {
         transition={{ duration: 0.6, delay: 1.1, ease }}
         className="absolute -right-3 -top-4 hidden rounded-xl border border-line bg-card/90 px-3 py-2 shadow-glow backdrop-blur-xl sm:block"
       >
-        <div className="text-[11px] text-muted">New exposed asset</div>
+        <div className="text-[11px] text-muted">Nouvel actif exposé</div>
         <div className="text-sm font-semibold text-acc-cyan">admin-panel.dev</div>
       </motion.div>
     </motion.div>

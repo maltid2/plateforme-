@@ -8,25 +8,25 @@ import { viewport, ease } from "@/lib/motion";
 const STEPS = [
   {
     icon: Compass,
-    title: "Discover",
-    body: "Map every external asset automatically.",
+    title: "Découvrir",
+    body: "Cartographiez automatiquement chaque actif externe.",
   },
   {
     icon: ShieldCheck,
-    title: "Validate",
-    body: "Confirm what is actually exposed and exploitable.",
+    title: "Valider",
+    body: "Confirmez ce qui est réellement exposé et exploitable.",
   },
   {
     icon: ListChecks,
-    title: "Prioritize",
-    body: "Give developers a clear path to remediation.",
+    title: "Prioriser",
+    body: "Donnez aux développeurs un chemin de correction clair.",
   },
 ];
 
 const META = [
-  { l: "Severity", v: "High", c: "text-sev-high" },
-  { l: "Status", v: "Open", c: "text-sev-critical" },
-  { l: "Detected", v: "4 min ago", c: "text-acc-cyan" },
+  { l: "Sévérité", v: "Élevée", c: "text-sev-high" },
+  { l: "Statut", v: "Ouvert", c: "text-sev-critical" },
+  { l: "Détecté", v: "il y a 4 min", c: "text-acc-cyan" },
 ];
 
 export default function Product() {
@@ -35,13 +35,13 @@ export default function Product() {
       <Container className="grid items-center gap-16 lg:grid-cols-2">
         {/* steps */}
         <Reveal>
-          <SectionLabel>From detection to decision</SectionLabel>
+          <SectionLabel>De la détection à la décision</SectionLabel>
           <h2 className="mt-5 text-3xl font-bold leading-[1.12] tracking-tight sm:text-[2.6rem] lg:text-[3.25rem]">
-            Make every finding actionable.
+            Rendez chaque vulnérabilité actionnable.
           </h2>
           <p className="mt-4 max-w-lg text-lg text-muted">
-            SentinelScope turns raw scan data into a clear, prioritized path
-            from detection to a resolved, verified fix.
+            SentinelScope transforme les données brutes d'analyse en un parcours
+            clair et priorisé, de la détection au correctif résolu et vérifié.
           </p>
 
           <div className="relative mt-10 pl-6">
@@ -96,15 +96,15 @@ export default function Product() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm font-medium text-muted">
                 <span className="h-2 w-2 rounded-full bg-sev-high shadow-[0_0_8px_#FF9715]" />
-                Finding detail
+                Détail de la vulnérabilité
               </div>
               <span className="rounded-full bg-sev-high/15 px-2.5 py-1 text-[11px] font-semibold text-sev-high">
-                High
+                Élevée
               </span>
             </div>
 
             <h3 className="mt-4 text-lg font-semibold tracking-tight">
-              Missing security header
+              En-tête de sécurité manquant
             </h3>
             <p className="mt-1 font-mono text-xs text-muted">
               app.sentinelscope.dev
@@ -124,16 +124,16 @@ export default function Product() {
 
             <div className="mt-5 rounded-xl border border-line bg-bg2/40 p-4">
               <div className="text-xs font-semibold uppercase tracking-wider text-muted">
-                Recommendation
+                Recommandation
               </div>
               <div className="mt-2 flex items-start gap-2.5 text-sm text-ink/90">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 flex-none text-acc-green" />
-                Add a strict Content-Security-Policy header
+                Ajouter un en-tête Content-Security-Policy strict
               </div>
             </div>
 
             <button className="mt-5 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-acc-violet/15 px-4 py-2.5 text-sm font-semibold text-acc-violet transition-colors hover:bg-acc-violet/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-acc-violet/50">
-              Assign to engineering
+              Assigner à l'équipe technique
             </button>
           </motion.div>
         </Reveal>

@@ -18,13 +18,13 @@ type Node = {
 };
 
 const NODES: Node[] = [
-  { id: "core", x: 50, y: 50, label: "sentinelscope.dev", kind: "Primary domain", risk: "safe" },
+  { id: "core", x: 50, y: 50, label: "sentinelscope.dev", kind: "Domaine principal", risk: "safe" },
   { id: "api", x: 20, y: 22, label: "api.sentinelscope.dev", kind: "API", risk: "medium" },
-  { id: "staging", x: 82, y: 28, label: "staging-app.dev", kind: "Subdomain", risk: "high" },
-  { id: "cert", x: 15, y: 72, label: "*.sentinelscope.dev", kind: "TLS certificate", risk: "safe" },
-  { id: "old", x: 85, y: 70, label: "old-service.dev", kind: "Legacy application", risk: "unknown" },
-  { id: "endpoint", x: 50, y: 13, label: "exposed endpoint", kind: "Public API route", risk: "medium" },
-  { id: "admin", x: 50, y: 88, label: "admin-panel.dev", kind: "Admin interface", risk: "high" },
+  { id: "staging", x: 82, y: 28, label: "staging-app.dev", kind: "Sous-domaine", risk: "high" },
+  { id: "cert", x: 15, y: 72, label: "*.sentinelscope.dev", kind: "Certificat TLS", risk: "safe" },
+  { id: "old", x: 85, y: 70, label: "old-service.dev", kind: "Application héritée", risk: "unknown" },
+  { id: "endpoint", x: 50, y: 13, label: "exposed endpoint", kind: "Route API publique", risk: "medium" },
+  { id: "admin", x: 50, y: 88, label: "admin-panel.dev", kind: "Interface d'administration", risk: "high" },
 ];
 
 const EDGES: [string, string][] = [
@@ -37,10 +37,10 @@ const EDGES: [string, string][] = [
 ];
 
 const RISK_META: Record<Risk, { color: string; label: string }> = {
-  safe: { color: "#57E6D1", label: "Low risk" },
-  medium: { color: "#F5C451", label: "Medium risk" },
-  high: { color: "#F4576B", label: "High risk" },
-  unknown: { color: "#8B98A8", label: "Unclassified" },
+  safe: { color: "#57E6D1", label: "Risque faible" },
+  medium: { color: "#F5C451", label: "Risque moyen" },
+  high: { color: "#F4576B", label: "Risque élevé" },
+  unknown: { color: "#8B98A8", label: "Non classé" },
 };
 
 export default function Problem() {
@@ -53,24 +53,24 @@ export default function Problem() {
       <Container className="grid items-center gap-14 lg:grid-cols-2">
         {/* copy */}
         <Reveal>
-          <SectionLabel>The visibility gap</SectionLabel>
+          <SectionLabel>L&apos;angle mort</SectionLabel>
           <h2 className="mt-5 text-3xl font-bold leading-tight tracking-tight sm:text-[2.6rem] lg:text-[3.25rem]">
-            Your attack surface changes{" "}
-            <span className="text-gradient-violet">every day.</span>
+            Votre surface d'attaque change{" "}
+            <span className="text-gradient-violet">chaque jour.</span>
           </h2>
           <p className="mt-5 max-w-lg text-lg leading-relaxed text-muted">
-            New domains, APIs, certificates and cloud assets appear constantly.
-            SentinelScope helps your team understand what is exposed before it
-            becomes an incident.
+            De nouveaux domaines, API, certificats et actifs cloud apparaissent en
+            permanence. SentinelScope aide votre équipe à comprendre ce qui est
+            exposé avant que cela ne devienne un incident.
           </p>
 
           <div className="mt-8 flex flex-wrap gap-4">
             {(
               [
-                ["safe", "Low risk"],
-                ["medium", "Medium risk"],
-                ["high", "High risk"],
-                ["unknown", "Unclassified"],
+                ["safe", "Risque faible"],
+                ["medium", "Risque moyen"],
+                ["high", "Risque élevé"],
+                ["unknown", "Non classé"],
               ] as [Risk, string][]
             ).map(([r, l]) => (
               <span key={r} className="inline-flex items-center gap-2 text-sm text-muted">
@@ -89,7 +89,7 @@ export default function Problem() {
           <div className="relative aspect-square w-full max-w-lg rounded-2xl border border-line bg-card/50 p-4 shadow-soft backdrop-blur-sm">
             <div className="absolute inset-0 rounded-2xl bg-grid-fade opacity-40" />
             <div className="absolute left-4 top-4 z-10 flex items-center gap-2 text-xs text-muted">
-              <Eye className="h-3.5 w-3.5 text-acc-cyan" /> Live asset map
+              <Eye className="h-3.5 w-3.5 text-acc-cyan" /> Carte des actifs en direct
             </div>
 
             <svg viewBox="0 0 100 100" className="relative h-full w-full overflow-visible">
@@ -219,10 +219,10 @@ export default function Problem() {
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-semibold text-ink">
-                        New attack surface issue
+                        Nouveau problème de surface d'attaque
                       </div>
                       <div className="mt-0.5 truncate font-mono text-xs text-muted">
-                        admin-panel.dev · exposed login
+                        admin-panel.dev · connexion exposée
                       </div>
                     </div>
                   </div>
@@ -231,13 +231,13 @@ export default function Problem() {
                       onClick={() => setSolved(true)}
                       className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-acc-green/15 px-3 py-2 text-xs font-semibold text-acc-green transition-colors hover:bg-acc-green/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-acc-green/50"
                     >
-                      <Check className="h-3.5 w-3.5" /> Solve issue
+                      <Check className="h-3.5 w-3.5" /> Résoudre
                     </button>
                     <button
                       onClick={() => setDismissed(true)}
                       className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white/[0.05] px-3 py-2 text-xs font-semibold text-muted transition-colors hover:bg-white/[0.1] hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
                     >
-                      <X className="h-3.5 w-3.5" /> Ignore
+                      <X className="h-3.5 w-3.5" /> Ignorer
                     </button>
                   </div>
                 </motion.div>
@@ -248,7 +248,7 @@ export default function Problem() {
                   animate={{ opacity: 1, y: 0 }}
                   className="absolute bottom-4 left-4 right-4 z-30 flex items-center gap-2.5 rounded-xl border border-acc-green/30 bg-bg2/95 p-3.5 text-sm font-semibold text-acc-green shadow-glow-green backdrop-blur-xl"
                 >
-                  <Check className="h-4 w-4" /> Exposure remediated and verified.
+                  <Check className="h-4 w-4" /> Exposition corrigée et vérifiée.
                 </motion.div>
               )}
             </AnimatePresence>

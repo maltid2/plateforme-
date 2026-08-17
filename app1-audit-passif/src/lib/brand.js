@@ -142,9 +142,57 @@ const DESIGN = `
   .wrap .panel{text-align:left;max-width:560px;margin:32px auto 0}
   .checks.narrow{max-width:720px;margin:24px auto 0;text-align:left}
   .steps.narrow{max-width:820px;margin:22px auto 0;text-align:left}
+  /* ---- Landing marketing (style Aikido) ---- */
+  .mk{max-width:1160px;margin:0 auto;padding:0 28px}
+  .topbar2{position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:16px;
+    max-width:1200px;margin:0 auto;padding:18px 28px;background:rgba(0,0,0,.55);backdrop-filter:blur(10px)}
+  .brand2{display:flex;align-items:center;gap:9px;font-weight:800;font-size:19px}
+  .brand2 b{color:var(--accent)}
+  .pillnav{display:flex;align-items:center;gap:2px;background:#0e0e1a;border:1px solid var(--line);border-radius:999px;padding:6px}
+  .pillnav a{color:var(--muted);font-weight:600;font-size:14px;padding:9px 16px;border-radius:999px}
+  .pillnav a:hover{color:var(--ink);background:rgba(255,255,255,.05)}
+  .tagpill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:13px;font-weight:600;color:#c9b8ff;background:rgba(139,108,255,.06)}
+  .tagpill .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent)}
+  .hero2{display:grid;grid-template-columns:1.05fr .95fr;gap:44px;align-items:center;padding:44px 0 30px}
+  .h1big{font-size:56px;line-height:1.03;letter-spacing:-.03em;font-weight:800;margin:18px 0 16px}
+  .sub2{color:var(--muted);font-size:18px;max-width:470px;margin:0 0 24px}
+  .checklist{display:flex;flex-direction:column;gap:10px;margin:0 0 24px;max-width:460px}
+  .ck{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:12px;padding:11px 14px;font-weight:500;font-size:14.5px}
+  .ck .cc{width:22px;height:22px;border-radius:50%;background:var(--ok);color:#04170d;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex:0 0 auto}
+  .btn.lg{padding:15px 26px;font-size:16px;border-radius:14px}
+  .btn.ghost2{background:rgba(139,108,255,.12);color:#d8ccff;border:1px solid rgba(139,108,255,.28);box-shadow:none}
+  .btn.ghost2:hover{background:rgba(139,108,255,.2);transform:none}
+  .trustline{color:var(--muted);font-size:13px;margin-top:16px}
+  .sec2{padding:64px 0;border-top:1px solid var(--line)}
+  .split2{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
+  .seclabel{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:6px 12px;font-size:11px;font-weight:700;color:#c9b8ff;letter-spacing:.06em;text-transform:uppercase}
+  .h2big{font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:1.14;margin:14px 0 12px}
+  .chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+  .chip2{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--line-2);border-radius:999px;padding:10px 16px;font-weight:600;font-size:14px;color:var(--ink);background:rgba(255,255,255,.02)}
+  .chip2 .i{font-size:15px}
+  .advice{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));border:1px solid var(--line);border-radius:18px;padding:22px}
+  .acc{border:1px solid var(--line);border-radius:12px;margin-top:10px;overflow:hidden;transition:.15s}
+  .acc .q{display:flex;align-items:center;justify-content:space-between;padding:13px 15px;cursor:pointer;font-weight:600;font-size:14px}
+  .acc .a{display:none;padding:0 15px 14px;color:var(--muted);font-size:13.5px}
+  .acc.open .a{display:block}
+  .acc.open{border-color:rgba(139,108,255,.32);background:rgba(139,108,255,.06)}
+  .cta2{text-align:center;padding:70px 0;border-top:1px solid var(--line)}
+  .footer2{border-top:1px solid var(--line);padding:30px 0;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
+  @media(max-width:960px){.hero2,.split2{grid-template-columns:1fr}.h1big{font-size:40px}.pillnav{display:none}}
   @media(max-width:900px){.app{grid-template-columns:1fr}.sidebar{display:none}.content,.topbar{padding-left:24px;padding-right:24px}
     .hero-grid{grid-template-columns:1fr!important}.steps{grid-template-columns:1fr}.wrap h1{font-size:34px}}
 `;
+
+function ixLogo(size) {
+  const s = size || 26;
+  return `<svg width="${s}" height="${s}" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle">
+    <defs><linearGradient id="ixl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a78bfa"/><stop offset="1" stop-color="#6d4bff"/></linearGradient></defs>
+    <path d="M24 3 L41 10 V25 C41 35 33 42 24 45 C15 42 7 35 7 25 V10 Z" fill="url(#ixl)" opacity=".16"/>
+    <path d="M24 3 L41 10 V25 C41 35 33 42 24 45 C15 42 7 35 7 25 V10 Z" stroke="url(#ixl)" stroke-width="2"/>
+    <path d="M19 16 V32" stroke="url(#ixl)" stroke-width="3.4" stroke-linecap="round"/>
+    <path d="M24 16 L33 32 M33 16 L24 32" stroke="url(#ixl)" stroke-width="3.4" stroke-linecap="round"/>
+  </svg>`;
+}
 
 function sidebar(active) {
   const items = [
@@ -211,56 +259,94 @@ function fxScript() {
 // ACCUEIL
 // ------------------------------------------------------------------
 function landingPage(fontKey) {
+  const checks = [
+    'Analyse en moins de 2 minutes',
+    'Un score clair sur 100',
+    'Des explications simples, sans jargon',
+    'Les priorités à corriger',
+  ];
   const steps = [
     ['01', 'Entrez l\'adresse de votre site', 'Aucune installation, aucune carte bancaire.'],
     ['02', 'IXAUDIT vérifie pour vous', 'Nous contrôlons automatiquement les points essentiels.'],
     ['03', 'Vous recevez des explications simples', 'Ce qui va bien, et ce qu\'il faut améliorer.'],
   ];
-  const main = `
-    <div class="hero-grid" style="display:grid;grid-template-columns:1fr 380px;gap:48px;align-items:start">
+  const body = `<body>
+  <div class="topbar2">
+    <div class="brand2">${ixLogo(26)} IX<b>AUDIT</b></div>
+    <nav class="pillnav">
+      <a href="#verifs">Vérifications</a><a href="#simple">En clair</a><a href="#comment">Comment ça marche</a>
+    </nav>
+    <button class="btn" onclick="focusScan()">Vérifier mon site</button>
+  </div>
+
+  <div class="mk">
+    <section class="hero2">
       <div>
-        <div class="eyebrow">Vérification de sécurité</div>
-        <h1>${escapeHtml(HEADLINE)}</h1>
-        <p class="muted" style="font-size:16px;max-width:440px;margin:18px 0 26px">${escapeHtml(TAGLINE)}</p>
-        <form id="f" style="display:flex;gap:10px;flex-wrap:wrap;max-width:500px">
-          <input id="url" type="url" placeholder="https://votre-site.com" required style="flex:1 1 240px">
-          <button class="btn" id="btn" type="submit">Vérifier mon site</button>
+        <span class="tagpill"><span class="dot"></span>Vérification de sécurité web</span>
+        <h1 class="h1big">${escapeHtml(HEADLINE)}</h1>
+        <p class="sub2">${escapeHtml(TAGLINE)}</p>
+        <div class="checklist">${checks.map(function (c) { return `<div class="ck"><span class="cc">✓</span>${c}</div>`; }).join('')}</div>
+        <form id="f" style="display:flex;gap:10px;flex-wrap:wrap;max-width:520px">
+          <input id="url" type="url" placeholder="https://votre-site.com" required style="flex:1 1 250px">
+          <button class="btn lg" id="btn" type="submit">Vérifier mon site</button>
         </form>
-        <p class="muted" style="font-size:13px;margin-top:16px">Aucune carte bancaire &nbsp;·&nbsp; Résultat en quelques minutes &nbsp;·&nbsp; Explications simples</p>
         <div id="err" style="display:none;margin-top:12px;color:var(--bad);font-size:14px"></div>
+        <div class="trustline">Sans carte bancaire · Sans inscription · On n'attaque jamais votre site</div>
       </div>
+      <div>${scanPanel()}</div>
+    </section>
 
-      ${scanPanel()}
-    </div>
+    <section class="sec2" id="verifs">
+      <span class="seclabel">Ce que nous vérifions</span>
+      <h2 class="h2big">Tout le nécessaire, expliqué simplement</h2>
+      <div class="chips">
+        ${CATS.map(function (c) { return `<span class="chip2"><span class="i">${c.icon}</span>${escapeHtml(c.label)}</span>`; }).join('')}
+      </div>
+    </section>
 
-    <hr class="rule">
+    <section class="sec2" id="simple">
+      <div class="split2">
+        <div>
+          <span class="seclabel">En clair</span>
+          <h2 class="h2big">On traduit le jargon technique en langage humain</h2>
+          <p class="sub2">Pas besoin d'être expert. Pour chaque point, on vous dit ce que c'est, si ça vous concerne, et comment le corriger — sans termes compliqués.</p>
+          <button class="btn ghost2" onclick="focusScan()">Voir sur mon site →</button>
+        </div>
+        <div class="advice">
+          <div style="display:flex;align-items:center;gap:16px">
+            <div class="gauge" style="--gp:78;--gc:var(--ok)"><div class="gin"><span class="score-n">78</span><span class="score-o">/100</span></div></div>
+            <div><div style="font-weight:700;font-size:16px">Protection du site — à améliorer</div>
+              <div class="muted" style="font-size:13px">Une protection standard est absente</div></div>
+          </div>
+          <div class="acc" onclick="this.classList.toggle('open')"><div class="q">En bref <span>▾</span></div><div class="a">Votre site ne bloque pas certains contenus non autorisés. Un pirate pourrait en profiter pour injecter du code.</div></div>
+          <div class="acc" onclick="this.classList.toggle('open')"><div class="q">Est-ce que ça me concerne ? <span>▾</span></div><div class="a">Oui — c'est une protection de base attendue sur tout site professionnel aujourd'hui.</div></div>
+          <div class="acc" onclick="this.classList.toggle('open')"><div class="q">Comment corriger ? <span>▾</span></div><div class="a">Transmettez le rapport à la personne qui gère votre site : IXAUDIT indique précisément la marche à suivre.</div></div>
+        </div>
+      </div>
+    </section>
 
-    <div class="eyebrow">Ce que nous vérifions</div>
-    <h2>Six vérifications essentielles</h2>
-    <div class="checks">
-      ${CATS.map(function (c, i) {
-        return `<div class="check" onclick="this.classList.toggle('open')">
-          <div class="idx num">0${i + 1}</div>
-          <div><div class="cl">${escapeHtml(c.label)}</div><div class="cd">${escapeHtml(c.ok)}</div>
-            <div class="more"><span class="tech-tag">Contrôle technique : ${escapeHtml(c.tech)}</span></div></div>
-          <div class="plus">+</div></div>`;
-      }).join('')}
-    </div>
+    <section class="sec2" id="comment">
+      <span class="seclabel">Comment ça marche</span>
+      <h2 class="h2big">Trois étapes, deux minutes</h2>
+      <div class="steps" style="margin-top:24px">
+        ${steps.map(function (s) {
+          return `<div class="step"><div class="n num">${s[0]}</div><div class="t">${s[1]}</div><div class="muted" style="font-size:13.5px">${s[2]}</div></div>`;
+        }).join('')}
+      </div>
+    </section>
 
-    <hr class="rule">
+    <section class="cta2">
+      <span class="seclabel">Prêt ?</span>
+      <h2 class="h2big" style="max-width:620px;margin-left:auto;margin-right:auto">Découvrez le niveau de sécurité de votre site</h2>
+      <p class="sub2" style="margin:0 auto 24px">C'est gratuit, sans inscription, et vous obtenez un rapport clair en quelques minutes.</p>
+      <button class="btn lg" onclick="focusScan()">Vérifier mon site gratuitement →</button>
+    </section>
 
-    <div class="eyebrow">Comment ça marche</div>
-    <h2>Trois étapes</h2>
-    <div class="steps">
-      ${steps.map(function (s) {
-        return `<div class="step"><div class="n num">${s[0]}</div><div class="t">${s[1]}</div><div class="muted" style="font-size:13.5px">${s[2]}</div></div>`;
-      }).join('')}
-    </div>
+    <div class="footer2"><span>${NAME} — La sécurité de votre site, expliquée simplement.</span>
+      <span>Aucune carte bancaire · Conforme RGPD · Vérification non intrusive</span></div>
+  </div>`;
 
-    <hr class="rule">
-    <div class="foot"><span>Aucune carte bancaire</span><span>Conforme RGPD</span><span>Vérification non intrusive — on n'attaque jamais votre site</span></div>`;
-
-  return `${head(NAME + ' — ' + HEADLINE, fontKey)}${shell('home', main)}${scanScript()}${fxScript()}
+  return `${head(NAME + ' — ' + HEADLINE, fontKey)}${body}${scanScript()}${fxScript()}
 </body></html>`;
 }
 

@@ -1,0 +1,89 @@
+"use client";
+
+import { motion } from "framer-motion";
+import { KeyRound, Lock, ScanFace, ShieldCheck, Timer } from "lucide-react";
+import { Container, Reveal, SectionLabel } from "./ui";
+import { viewport, ease } from "@/lib/motion";
+
+const BADGES = [
+  { icon: ShieldCheck, label: "SOC 2 ready" },
+  { icon: Lock, label: "ISO 27001 aligned" },
+  { icon: ScanFace, label: "Read-only access" },
+  { icon: Timer, label: "Short-lived tokens" },
+  { icon: KeyRound, label: "No customer data sharing" },
+];
+
+export default function Security() {
+  return (
+    <section id="security" className="relative py-20 sm:py-28">
+      <Container className="grid items-center gap-16 lg:grid-cols-2">
+        {/* shield illustration */}
+        <Reveal className="order-2 lg:order-1">
+          <div className="relative mx-auto grid aspect-square w-full max-w-md place-items-center">
+            <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(87,230,209,0.14),transparent_65%)] blur-2xl" />
+            {[0, 1, 2].map((i) => (
+              <motion.div
+                key={i}
+                initial={{ scale: 0.7, opacity: 0 }}
+                whileInView={{ scale: 1, opacity: 1 }}
+                viewport={viewport}
+                transition={{ duration: 0.8, delay: i * 0.15, ease }}
+                className="absolute rounded-full border border-line"
+                style={{
+                  width: `${60 + i * 20}%`,
+                  height: `${60 + i * 20}%`,
+                }}
+              />
+            ))}
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              whileInView={{ scale: 1, opacity: 1 }}
+              viewport={viewport}
+              transition={{ duration: 0.7, ease }}
+              className="relative grid h-28 w-28 place-items-center rounded-3xl border border-acc-cyan/30 bg-card/80 shadow-glow-cyan backdrop-blur-xl"
+            >
+              <ShieldCheck className="h-12 w-12 text-acc-cyan" strokeWidth={1.6} />
+              <motion.span
+                className="absolute inset-0 rounded-3xl border border-acc-cyan/40"
+                animate={{ scale: [1, 1.25], opacity: [0.6, 0] }}
+                transition={{ duration: 2.4, repeat: Infinity, ease: "easeOut" }}
+              />
+            </motion.div>
+          </div>
+        </Reveal>
+
+        {/* copy */}
+        <Reveal delay={0.1} className="order-1 lg:order-2">
+          <SectionLabel>Security &amp; compliance</SectionLabel>
+          <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-[2.6rem]">
+            Built to earn your security team&apos;s trust
+          </h2>
+          <p className="mt-5 max-w-lg text-lg leading-relaxed text-muted">
+            SentinelScope operates with least-privilege, read-only access and
+            never stores your customer data. Every scan is scoped, logged, and
+            fully under your control.
+          </p>
+
+          <div className="mt-8 flex flex-wrap gap-3">
+            {BADGES.map((b, i) => {
+              const Icon = b.icon;
+              return (
+                <motion.div
+                  key={b.label}
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={viewport}
+                  transition={{ duration: 0.4, delay: i * 0.08 }}
+                  className="inline-flex items-center gap-2 rounded-full border border-line bg-white/[0.03] px-4 py-2 text-sm font-medium text-ink/90"
+                >
+                  <Icon className="h-4 w-4 text-acc-green" strokeWidth={1.9} />
+                  {b.label}
+                </motion.div>
+              );
+            })}
+          </div>
+        </Reveal>
+      </Container>
+    </section>
+  );
+}

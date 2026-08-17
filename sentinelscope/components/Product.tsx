@@ -36,7 +36,7 @@ export default function Product() {
         {/* steps */}
         <Reveal>
           <SectionLabel>From detection to decision</SectionLabel>
-          <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-[2.6rem]">
+          <h2 className="mt-5 text-3xl font-bold leading-[1.12] tracking-tight sm:text-[2.6rem] lg:text-[3.25rem]">
             Make every finding actionable.
           </h2>
           <p className="mt-4 max-w-lg text-lg text-muted">

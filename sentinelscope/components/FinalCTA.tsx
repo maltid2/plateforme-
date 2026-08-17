@@ -80,7 +80,7 @@ export default function FinalCTA() {
 
       <Container>
         <Reveal className="mx-auto max-w-3xl text-center">
-          <h2 className="text-4xl font-extrabold leading-[1.08] tracking-tight sm:text-5xl">
+          <h2 className="text-4xl font-extrabold leading-[1.08] tracking-tight sm:text-5xl lg:text-[3.75rem]">
             Find your blind spots before{" "}
             <span className="text-gradient">someone else does.</span>
           </h2>

@@ -1,21 +1,20 @@
 "use client";
 
 import { motion } from "framer-motion";
-import {
-  ArrowRight,
-  KeyRound,
-  ListChecks,
-  Radar,
-  ScanLine,
-  Signal,
-  Webhook,
-  type LucideIcon,
-} from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Container, Reveal, SectionLabel } from "./ui";
+import {
+  PictoKeyUser,
+  PictoMonitor,
+  PictoNodes,
+  PictoPriority,
+  PictoRadar,
+  PictoScan,
+} from "./Pictograms";
 import { staggerParent, fadeUp, viewport } from "@/lib/motion";
 
 type Feature = {
-  icon: LucideIcon;
+  Picto: (p: { className?: string }) => JSX.Element;
   category: string;
   title: string;
   body: string;
@@ -24,42 +23,42 @@ type Feature = {
 
 const FEATURES: Feature[] = [
   {
-    icon: Radar,
+    Picto: PictoRadar,
     category: "Discovery",
     title: "Attack surface discovery",
     body: "Find domains, services and applications that are missing from your inventory.",
     glow: "cyan",
   },
   {
-    icon: Signal,
+    Picto: PictoMonitor,
     category: "Monitoring",
     title: "Continuous monitoring",
     body: "Track changes across your internet-facing assets every day.",
     glow: "violet",
   },
   {
-    icon: ScanLine,
+    Picto: PictoScan,
     category: "AppSec",
     title: "Dynamic application testing",
     body: "Detect security weaknesses in running web applications.",
     glow: "green",
   },
   {
-    icon: Webhook,
+    Picto: PictoNodes,
     category: "API",
     title: "API security testing",
     body: "Map REST and GraphQL endpoints and test them for common vulnerabilities.",
     glow: "violet",
   },
   {
-    icon: KeyRound,
+    Picto: PictoKeyUser,
     category: "Access",
     title: "Authenticated scanning",
     body: "Test application areas that are only visible to logged-in users.",
     glow: "cyan",
   },
   {
-    icon: ListChecks,
+    Picto: PictoPriority,
     category: "Triage",
     title: "Actionable prioritization",
     body: "Focus your team on the findings that create the highest real-world risk.",
@@ -93,7 +92,7 @@ export default function Features() {
           <div className="flex justify-center">
             <SectionLabel>Platform</SectionLabel>
           </div>
-          <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-[2.6rem]">
+          <h2 className="mt-5 text-3xl font-bold leading-[1.12] tracking-tight sm:text-[2.6rem] lg:text-[3.25rem]">
             One platform. Complete external visibility.
           </h2>
           <p className="mt-4 text-lg text-muted">
@@ -110,7 +109,7 @@ export default function Features() {
           className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
         >
           {FEATURES.map((f) => {
-            const Icon = f.icon;
+            const Picto = f.Picto;
             return (
               <motion.a
                 href="#modules"
@@ -125,9 +124,9 @@ export default function Features() {
                 />
                 <div className="flex items-center justify-between">
                   <div
-                    className={`grid h-12 w-12 place-items-center rounded-xl transition-all duration-300 group-hover:-translate-y-0.5 ${glowMap[f.glow]}`}
+                    className={`grid h-12 w-12 place-items-center rounded-xl ring-1 ring-inset ring-white/5 transition-all duration-300 group-hover:-translate-y-[3px] ${glowMap[f.glow]}`}
                   >
-                    <Icon className="h-6 w-6 transition-transform duration-300 group-hover:rotate-6" strokeWidth={1.8} />
+                    <Picto className="h-[26px] w-[26px] transition-transform duration-300 group-hover:scale-[1.06]" />
                   </div>
                   <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
                     {f.category}

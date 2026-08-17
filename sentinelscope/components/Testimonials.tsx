@@ -40,7 +40,7 @@ export default function Testimonials() {
           <div className="flex justify-center">
             <SectionLabel>Customer stories</SectionLabel>
           </div>
-          <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-[2.6rem]">
+          <h2 className="mt-5 text-3xl font-bold leading-[1.12] tracking-tight sm:text-[2.6rem] lg:text-[3.25rem]">
             Security teams that move faster
           </h2>
         </Reveal>

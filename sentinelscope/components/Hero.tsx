@@ -34,7 +34,7 @@ export default function Hero() {
             Continuous attack surface intelligence
           </motion.div>
 
-          <h1 className="mt-6 text-[2rem] font-extrabold leading-[1.06] tracking-tight xs:text-[2.5rem] sm:text-6xl">
+          <h1 className="mt-6 text-[2.25rem] font-extrabold leading-[1.05] tracking-tight xs:text-[2.75rem] sm:text-[3.5rem] lg:text-[4.5rem]">
             {["See every", "exposed asset", "before attackers do."].map((line, i) => (
               <motion.span
                 key={i}

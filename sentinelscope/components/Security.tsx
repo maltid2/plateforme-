@@ -74,7 +74,7 @@ export default function Security() {
         {/* copy */}
         <Reveal delay={0.1} className="order-1 lg:order-2">
           <SectionLabel>Security &amp; compliance</SectionLabel>
-          <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-[2.6rem]">
+          <h2 className="mt-5 text-3xl font-bold leading-[1.12] tracking-tight sm:text-[2.6rem] lg:text-[3.25rem]">
             Built secure from the ground up.
           </h2>
           <p className="mt-5 max-w-lg text-lg leading-relaxed text-muted">

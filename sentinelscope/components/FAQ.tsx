@@ -109,7 +109,7 @@ export default function FAQ() {
           <div className="flex justify-center">
             <SectionLabel>FAQ</SectionLabel>
           </div>
-          <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-[2.6rem]">
+          <h2 className="mt-5 text-3xl font-bold leading-[1.12] tracking-tight sm:text-[2.6rem] lg:text-[3.25rem]">
             Questions, answered
           </h2>
           <p className="mt-4 text-lg text-muted">

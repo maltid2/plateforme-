@@ -54,7 +54,7 @@ export default function Problem() {
         {/* copy */}
         <Reveal>
           <SectionLabel>The visibility gap</SectionLabel>
-          <h2 className="mt-5 text-3xl font-bold leading-tight tracking-tight sm:text-[2.6rem]">
+          <h2 className="mt-5 text-3xl font-bold leading-tight tracking-tight sm:text-[2.6rem] lg:text-[3.25rem]">
             Your attack surface changes{" "}
             <span className="text-gradient-violet">every day.</span>
           </h2>

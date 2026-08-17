@@ -10,9 +10,9 @@ const LOGOS = ["Northstar", "Vertex", "Cloudline", "Orbital", "Acme Labs"];
 type Stat = { value: React.ReactNode; label: string };
 
 const STATS: Stat[] = [
-  { value: <Counter to={50} suffix="k+" />, label: "Actifs surveillés" },
+  { value: <Counter to={50} suffix="k+" />, label: "Sites audités" },
   { value: <Counter to={99.9} decimals={1} suffix="%" />, label: "Disponibilité" },
-  { value: "24/7", label: "Visibilité" },
+  { value: "24/7", label: "Analyse continue" },
   { value: <Counter to={4.9} decimals={1} suffix="/5" />, label: "Satisfaction client" },
 ];
 

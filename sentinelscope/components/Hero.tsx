@@ -1,9 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, Sparkles } from "lucide-react";
-import { Button, Container } from "./ui";
+import { Sparkles } from "lucide-react";
+import { Container } from "./ui";
 import HeroDashboard from "./HeroDashboard";
+import AuditForm from "./AuditForm";
 import { ease } from "@/lib/motion";
 
 export default function Hero() {
@@ -31,7 +32,7 @@ export default function Hero() {
             className="inline-flex items-center gap-2 rounded-full border border-line bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-acc-cyan"
           >
             <Sparkles className="h-3.5 w-3.5" />
-            Renseignement continu sur la surface d&apos;attaque
+            Audit de sécurité web automatisé
           </motion.div>
 
           <h1 className="mt-6 text-[2.25rem] font-extrabold leading-[1.05] tracking-tight xs:text-[2.75rem] sm:text-[3.5rem] lg:text-[4.5rem]">
@@ -54,38 +55,19 @@ export default function Hero() {
             transition={{ duration: 0.6, ease, delay: 0.5 }}
             className="mt-6 max-w-xl text-lg leading-relaxed text-muted"
           >
-            Découvrez votre surface d&apos;attaque externe, testez vos
-            applications en continu et transformez les résultats de sécurité
-            en actions claires et priorisées.
+            Entrez l&apos;adresse de votre site et obtenez en quelques minutes
+            un audit de sécurité complet : un score clair, les vulnérabilités
+            détectées et les actions à mener — sans installation.
           </motion.p>
 
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease, delay: 0.65 }}
-            className="mt-8 flex flex-wrap items-center gap-3"
+            className="mt-8"
           >
-            <Button href="#cta" className="px-7 py-3.5 text-[15px]">
-              Réserver une démo
-            </Button>
-            <Button
-              href="#features"
-              variant="ghost"
-              className="px-7 py-3.5 text-[15px]"
-              icon={<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />}
-            >
-              Explorer la plateforme
-            </Button>
+            <AuditForm id="audit-hero" />
           </motion.div>
-
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.85 }}
-            className="mt-5 text-sm text-muted"
-          >
-            Sans carte bancaire · Installation en quelques minutes
-          </motion.p>
         </div>
 
         {/* right */}

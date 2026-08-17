@@ -1,8 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
-import { Button, Container, Reveal } from "./ui";
+import { Container, Reveal } from "./ui";
+import AuditForm from "./AuditForm";
 
 const POINTS = [
   { x: 12, y: 30 },
@@ -85,25 +85,15 @@ export default function FinalCTA() {
             <span className="text-gradient">avant les autres.</span>
           </h2>
           <p className="mx-auto mt-6 max-w-xl text-lg text-muted">
-            Obtenez une vue complète de votre surface d&apos;attaque externe et
-            commencez à réduire le risque dès aujourd&apos;hui.
+            Entrez l&apos;adresse de votre site et lancez votre premier audit
+            de sécurité maintenant.
           </p>
 
-          <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-            <Button href="#" className="px-8 py-3.5 text-[15px]">
-              Réserver une démo
-            </Button>
-            <Button
-              href="#features"
-              variant="ghost"
-              className="px-8 py-3.5 text-[15px]"
-              icon={<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />}
-            >
-              Explorer la plateforme
-            </Button>
+          <div className="mt-9">
+            <AuditForm id="audit-cta" align="center" />
           </div>
-          <p className="mt-5 text-sm text-muted">
-            Sans carte bancaire · Des résultats en quelques minutes
+          <p className="mt-6 text-sm text-muted">
+            Paiement unique · Audits illimités · Sans abonnement
           </p>
         </Reveal>
       </Container>

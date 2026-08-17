@@ -67,8 +67,8 @@ export default function Navbar() {
           >
             Connexion
           </Link>
-          <Button href="#cta" className="px-5 py-2.5">
-            Réserver une démo
+          <Button href="#audit-hero" className="px-5 py-2.5">
+            Analyser mon site
           </Button>
         </div>
 
@@ -110,8 +110,8 @@ export default function Navbar() {
                 >
                   Connexion
                 </Link>
-                <Button href="#cta" className="w-full" onClick={() => setOpen(false)}>
-                  Réserver une démo
+                <Button href="#audit-hero" className="w-full" onClick={() => setOpen(false)}>
+                  Analyser mon site
                 </Button>
               </div>
             </div>

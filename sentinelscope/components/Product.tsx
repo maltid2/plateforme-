@@ -1,25 +1,25 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { CheckCircle2, Compass, ListChecks, ShieldCheck } from "lucide-react";
+import { CheckCircle2, Globe, ListChecks, ScanLine } from "lucide-react";
 import { Container, Reveal, SectionLabel } from "./ui";
 import { viewport, ease } from "@/lib/motion";
 
 const STEPS = [
   {
-    icon: Compass,
-    title: "Découvrir",
-    body: "Cartographiez automatiquement chaque actif externe.",
+    icon: Globe,
+    title: "Entrez votre URL",
+    body: "Indiquez l'adresse de votre site, sans installation ni configuration.",
   },
   {
-    icon: ShieldCheck,
-    title: "Valider",
-    body: "Confirmez ce qui est réellement exposé et exploitable.",
+    icon: ScanLine,
+    title: "Analyse automatique",
+    body: "SentinelScope teste la sécurité de votre site de façon non intrusive.",
   },
   {
     icon: ListChecks,
-    title: "Prioriser",
-    body: "Donnez aux développeurs un chemin de correction clair.",
+    title: "Rapport & score",
+    body: "Recevez un score clair, les vulnérabilités détectées et les actions à mener.",
   },
 ];
 
@@ -35,13 +35,13 @@ export default function Product() {
       <Container className="grid items-center gap-16 lg:grid-cols-2">
         {/* steps */}
         <Reveal>
-          <SectionLabel>De la détection à la décision</SectionLabel>
+          <SectionLabel>Comment ça marche</SectionLabel>
           <h2 className="mt-5 text-3xl font-bold leading-[1.12] tracking-tight sm:text-[2.6rem] lg:text-[3.25rem]">
-            Rendez chaque vulnérabilité actionnable.
+            De votre URL à un rapport actionnable.
           </h2>
           <p className="mt-4 max-w-lg text-lg text-muted">
-            SentinelScope transforme les données brutes d'analyse en un parcours
-            clair et priorisé, de la détection au correctif résolu et vérifié.
+            Trois étapes, aucune compétence technique requise : SentinelScope
+            transforme une simple adresse en un rapport clair et priorisé.
           </p>
 
           <div className="relative mt-10 pl-6">

@@ -58,10 +58,10 @@ function renderPlainCategories(modules) {
     const mod = byId[c.id];
     const st = categoryStatus(mod);
     const pill = st === 'ok'
-      ? '<span class="pill ok">✓ Tout va bien</span>'
+      ? '<span class="pill ok">Tout va bien</span>'
       : st === 'warn'
-        ? '<span class="pill warn">⚠ À améliorer</span>'
-        : '<span class="pill unk">— Non vérifié</span>';
+        ? '<span class="pill warn">À améliorer</span>'
+        : '<span class="pill unk">Non vérifié</span>';
     const text = st === 'warn' ? c.warn : st === 'ok' ? c.ok : 'Cette vérification n\'a pas pu être effectuée (source externe indisponible).';
     const ico = brand.picto ? brand.picto(c.pic, c.acc || '#64748b') : '';
     return `<div class="pcat">
@@ -77,18 +77,18 @@ function renderPriorities(modules) {
     if (f.severity === 'high' || f.severity === 'medium' || f.severity === 'low') all.push(f);
   }));
   if (!all.length) {
-    return '<p class="allgood">🎉 Aucun point bloquant détecté. Continuez à surveiller régulièrement votre site.</p>';
+    return '<p class="allgood">Aucun point bloquant détecté. Continuez à surveiller régulièrement votre site.</p>';
   }
   const groups = [
-    { sev: 'high', title: '🔴 À corriger en priorité', desc: 'Ces points peuvent réellement mettre votre site ou vos données en danger.' },
-    { sev: 'medium', title: '🟠 À améliorer', desc: 'Des points importants pour renforcer votre sécurité.' },
-    { sev: 'low', title: '🟡 Recommandations', desc: 'Des améliorations conseillées, sans urgence.' },
+    { sev: 'high', title: 'À corriger en priorité', desc: 'Ces points peuvent réellement mettre votre site ou vos données en danger.' },
+    { sev: 'medium', title: 'À améliorer', desc: 'Des points importants pour renforcer votre sécurité.' },
+    { sev: 'low', title: 'Recommandations', desc: 'Des améliorations conseillées, sans urgence.' },
   ];
   return groups.map((g) => {
     const items = all.filter((f) => f.severity === g.sev);
     if (!items.length) return '';
     return `<div class="pgroup">
-      <div class="pgroup-h" style="border-color:${SEVERITY_COLOR[g.sev]}"><strong>${g.title}</strong>
+      <div class="pgroup-h" style="border-color:${SEVERITY_COLOR[g.sev]}"><span class="gdot" style="background:${SEVERITY_COLOR[g.sev]}"></span><strong>${g.title}</strong>
         <span class="cnt" style="background:${SEVERITY_COLOR[g.sev]}">${items.length}</span></div>
       <div class="muted small">${g.desc}</div>
       ${items.map((f) => `<div class="pitem">
@@ -106,8 +106,8 @@ function renderExposedFiles(modules) {
   const rows = mod.tested.map((t) => {
     const exposed = !!t.exposed;
     const badge = exposed
-      ? '<span class="fbadge bad">⚠ Accessible</span>'
-      : '<span class="fbadge ok">✓ Non accessible</span>';
+      ? '<span class="fbadge bad">Accessible</span>'
+      : '<span class="fbadge ok">Non accessible</span>';
     const note = exposed
       ? 'Ce fichier est accessible publiquement : à retirer rapidement.'
       : 'Ce fichier n\'est pas accessible publiquement. Rien à faire.';
@@ -118,7 +118,7 @@ function renderExposedFiles(modules) {
   const nbExposed = mod.tested.filter((t) => t.exposed).length;
   const intro = nbExposed
     ? 'Nous avons trouvé <strong>' + nbExposed + ' fichier(s) sensible(s) accessible(s)</strong> à sécuriser.'
-    : 'Aucun fichier sensible n\'est accessible publiquement. ✔';
+    : 'Aucun fichier sensible n\'est accessible publiquement.';
   return `<h2 class="sec">Fichiers vérifiés</h2>
     <div class="muted small">Pour chaque fichier sensible testé, nous indiquons s\'il est accessible ou non depuis Internet.</div>
     <div class="muted small" style="margin-top:6px">${intro}</div>
@@ -128,7 +128,7 @@ function renderExposedFiles(modules) {
 
 // --- Section technique (profils IT) ---
 function renderFindings(findings) {
-  if (!findings || !findings.length) return '<p class="ok">Aucun problème détecté sur ce contrôle. ✔</p>';
+  if (!findings || !findings.length) return '<p class="ok">Aucun problème détecté sur ce contrôle.</p>';
   const order = { high: 0, medium: 1, low: 2, info: 3 };
   const sorted = [...findings].sort((a, b) => (order[a.severity] ?? 9) - (order[b.severity] ?? 9));
   return '<ul class="findings">' + sorted.map((f) => {
@@ -148,7 +148,7 @@ function renderModuleCard(mod) {
     '<h3>' + escapeHtml(mod.name || mod.module) + ' <span class="mod-id">(' + escapeHtml(mod.module) + ')</span></h3>' +
     (mod.score != null ? '<span class="module-score" style="color:' + scoreColor + '">' + mod.score + '/100</span>' : '') +
     '</div>' +
-    (mod.error ? '<p class="mod-error">⚠ ' + escapeHtml(mod.error) + '</p>' : '') +
+    (mod.error ? '<p class="mod-error">' + escapeHtml(mod.error) + '</p>' : '') +
     (mod.degraded ? '<p class="mod-note">Mode dégradé : une ou plusieurs sources externes n\'ont pas pu être interrogées.</p>' : '') +
     renderFindings(mod.findings) + '</section>';
 }
@@ -198,10 +198,11 @@ function buildHtml(report) {
   .pcat-t{color:#b4bfcc;font-size:13.5px;margin-top:8px}
   .pgroup{margin-top:16px}
   .pgroup-h{display:flex;align-items:center;gap:10px;border-left:4px solid;padding-left:10px;font-size:16px;font-weight:700}
+  .gdot{width:11px;height:11px;border-radius:50%;flex:0 0 auto}
   .cnt{color:#fff;font-size:12px;font-weight:800;border-radius:999px;padding:1px 8px}
   .pitem{border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;margin-top:10px;background:rgba(18,24,33,.4)}
   .pitem-m{font-weight:600}
-  .pitem-w{font-size:13.5px;color:#F5C451;background:rgba(255,151,21,.12);border-left:3px solid #FF9715;margin-top:8px;padding:8px 11px;border-radius:0 8px 8px 0}
+  .pitem-w{font-size:13.5px;color:#EAF2FF;background:rgba(255,255,255,.05);border-left:3px solid #EAF2FF;margin-top:8px;padding:8px 11px;border-radius:0 8px 8px 0}
   .pitem-r{font-size:13.5px;color:#c8e6a6;background:rgba(167,243,107,.1);border-left:3px solid #A7F36B;margin-top:8px;padding:8px 11px;border-radius:0 8px 8px 0}
   .ftable{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
   .ftable th{text-align:left;color:#8B98A8;font-size:12px;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid rgba(255,255,255,.14);padding:8px 10px}
@@ -225,7 +226,7 @@ function buildHtml(report) {
   .badge{color:#fff;font-size:11px;font-weight:800;padding:2px 8px;border-radius:8px;text-transform:uppercase}
   .msg{font-size:14px}
   .reco{font-size:13px;color:#c3ccd6;margin-top:6px;padding:5px 10px;border-left:3px solid rgba(255,255,255,.16);border-radius:0 6px 6px 0}
-  .reco.why{border-left-color:#FF9715;color:#F5C451;background:rgba(255,151,21,.08)}
+  .reco.why{border-left-color:#EAF2FF;color:#EAF2FF;background:rgba(255,255,255,.04)}
   .ok{color:#A7F36B;font-size:14px}
   footer{margin-top:38px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);font-size:12px;color:#8B98A8;text-align:center}
   @media print{body{background:#07090D}.page{padding:0}}

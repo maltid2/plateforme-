@@ -25,6 +25,15 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+// Raison par défaut (« pourquoi le changer ») si le finding n'en fournit pas.
+function whyFallback(severity) {
+  if (severity === 'high')
+    return 'Ce point peut être exploité directement par un attaquant pour compromettre votre site ou accéder à vos données.';
+  if (severity === 'medium')
+    return 'Ce point affaiblit la sécurité de votre site et facilite d\'éventuelles attaques.';
+  return 'Amélioration recommandée : elle renforce la sécurité de votre site sans caractère d\'urgence.';
+}
+
 // --- Langage simple ---
 function plainScore(score) {
   if (score >= 90) return { color: '#16a34a', title: 'Votre site est très bien protégé', sub: 'Continuez comme ça !' };
@@ -54,8 +63,9 @@ function renderPlainCategories(modules) {
         ? '<span class="pill warn">⚠ À améliorer</span>'
         : '<span class="pill unk">— Non vérifié</span>';
     const text = st === 'warn' ? c.warn : st === 'ok' ? c.ok : 'Cette vérification n\'a pas pu être effectuée (source externe indisponible).';
+    const ico = brand.picto ? brand.picto(c.pic, c.acc || '#64748b') : '';
     return `<div class="pcat">
-      <div class="pcat-h"><span class="pico">${c.icon}</span><strong>${escapeHtml(c.label)}</strong>${pill}</div>
+      <div class="pcat-h"><span class="pico" style="color:${c.acc || '#64748b'}">${ico}</span><strong>${escapeHtml(c.label)}</strong>${pill}</div>
       <div class="pcat-t">${escapeHtml(text)}</div></div>`;
   }).join('');
 }
@@ -83,9 +93,37 @@ function renderPriorities(modules) {
       <div class="muted small">${g.desc}</div>
       ${items.map((f) => `<div class="pitem">
         <div class="pitem-m">${escapeHtml(f.message)}</div>
+        <div class="pitem-w"><strong>Pourquoi le changer :</strong> ${escapeHtml(f.why || whyFallback(f.severity))}</div>
         ${f.recommendation ? '<div class="pitem-r"><strong>Ce qu\'il faut faire :</strong> ' + escapeHtml(f.recommendation) + '</div>' : ''}</div>`).join('')}
     </div>`;
   }).join('');
+}
+
+// Tableau « Fichiers vérifiés » : accessible ou non, pour chaque chemin testé.
+function renderExposedFiles(modules) {
+  const mod = modules.find((m) => m && m.module === 'A3');
+  if (!mod || !Array.isArray(mod.tested) || !mod.tested.length) return '';
+  const rows = mod.tested.map((t) => {
+    const exposed = !!t.exposed;
+    const badge = exposed
+      ? '<span class="fbadge bad">⚠ Accessible</span>'
+      : '<span class="fbadge ok">✓ Non accessible</span>';
+    const note = exposed
+      ? 'Ce fichier est accessible publiquement : à retirer rapidement.'
+      : 'Ce fichier n\'est pas accessible publiquement. Rien à faire.';
+    return `<tr><td class="fpath">${escapeHtml(t.path)}</td>
+      <td class="fdesc">${escapeHtml(t.label || '')}<div class="muted small">${note}</div></td>
+      <td class="fstat">${badge}</td></tr>`;
+  }).join('');
+  const nbExposed = mod.tested.filter((t) => t.exposed).length;
+  const intro = nbExposed
+    ? 'Nous avons trouvé <strong>' + nbExposed + ' fichier(s) sensible(s) accessible(s)</strong> à sécuriser.'
+    : 'Aucun fichier sensible n\'est accessible publiquement. ✔';
+  return `<h2 class="sec">Fichiers vérifiés</h2>
+    <div class="muted small">Pour chaque fichier sensible testé, nous indiquons s\'il est accessible ou non depuis Internet.</div>
+    <div class="muted small" style="margin-top:6px">${intro}</div>
+    <table class="ftable"><thead><tr><th>Fichier</th><th>Détail</th><th>État</th></tr></thead>
+      <tbody>${rows}</tbody></table>`;
 }
 
 // --- Section technique (profils IT) ---
@@ -98,6 +136,7 @@ function renderFindings(findings) {
     const label = SEVERITY_LABEL[f.severity] || f.severity;
     return '<li><span class="badge" style="background:' + color + '">' + escapeHtml(label) + '</span> ' +
       '<span class="msg">' + escapeHtml(f.message) + '</span>' +
+      '<div class="reco why"><strong>Pourquoi :</strong> ' + escapeHtml(f.why || whyFallback(f.severity)) + '</div>' +
       (f.recommendation ? '<div class="reco"><strong>Recommandation :</strong> ' + escapeHtml(f.recommendation) + '</div>' : '') + '</li>';
   }).join('') + '</ul>';
 }
@@ -128,6 +167,7 @@ function buildHtml(report) {
   body{font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0f172a;margin:0;background:#f1f5f9}
   .page{max-width:860px;margin:0 auto;padding:32px 34px;background:#fff}
   .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px}
+  .blogo{width:24px;height:24px;display:inline-flex}.blogo svg{width:100%;height:100%}
   .brand .b{background:linear-gradient(120deg,#8b6cff,#5b9bff);-webkit-background-clip:text;background-clip:text;color:transparent}
   .cover{border-bottom:2px solid #eef2f7;padding-bottom:18px}
   .cover .t{font-size:24px;font-weight:800;margin:16px 0 4px}
@@ -147,7 +187,8 @@ function buildHtml(report) {
   .pcats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
   .pcat{border:1px solid #eef2f7;border-radius:12px;padding:14px}
   .pcat-h{display:flex;align-items:center;gap:9px;font-size:15px}
-  .pico{font-size:18px}
+  .pico{width:20px;height:20px;flex:0 0 auto;display:inline-flex}
+  .pico svg{width:100%;height:100%}
   .pill{margin-left:auto;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px}
   .pill.ok{background:#dcfce7;color:#15803d}.pill.warn{background:#ffedd5;color:#c2410c}.pill.unk{background:#eef2f7;color:#64748b}
   .pcat-t{color:#475569;font-size:13.5px;margin-top:8px}
@@ -156,7 +197,16 @@ function buildHtml(report) {
   .cnt{color:#fff;font-size:12px;font-weight:800;border-radius:999px;padding:1px 8px}
   .pitem{border:1px solid #eef2f7;border-radius:10px;padding:12px 14px;margin-top:10px}
   .pitem-m{font-weight:600}
-  .pitem-r{font-size:13.5px;color:#334155;margin-top:6px;padding-left:10px;border-left:3px solid #cbd5e1}
+  .pitem-w{font-size:13.5px;color:#7c2d12;background:#fff7ed;border-left:3px solid #fb923c;margin-top:8px;padding:7px 10px;border-radius:0 6px 6px 0}
+  .pitem-r{font-size:13.5px;color:#334155;margin-top:8px;padding:7px 10px;border-left:3px solid #22c55e;background:#f0fdf4;border-radius:0 6px 6px 0}
+  .ftable{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+  .ftable th{text-align:left;color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:.04em;border-bottom:2px solid #eef2f7;padding:8px 10px}
+  .ftable td{border-bottom:1px solid #eef2f7;padding:11px 10px;vertical-align:top}
+  .fpath{font-family:ui-monospace,Menlo,monospace;color:#0f172a;white-space:nowrap}
+  .fdesc{color:#334155}
+  .fstat{white-space:nowrap;text-align:right}
+  .fbadge{font-size:12px;font-weight:800;padding:4px 10px;border-radius:999px;white-space:nowrap}
+  .fbadge.ok{background:#dcfce7;color:#15803d}.fbadge.bad{background:#fee2e2;color:#b91c1c}
   .allgood{background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;border-radius:12px;padding:16px;font-weight:600}
   .tech{margin-top:14px;border-top:2px dashed #e5e9f0;padding-top:16px}
   .tech-note{background:#f8fafc;border:1px solid #eef2f7;border-radius:10px;padding:12px 14px;color:#64748b;font-size:13px;margin-bottom:8px}
@@ -177,7 +227,7 @@ function buildHtml(report) {
 </style></head>
 <body><div class="page">
   <header class="cover">
-    <div class="brand">🛡️ <span>IX<span class="b">AUDIT</span></span></div>
+    <div class="brand"><span class="blogo">${brand.picto ? brand.picto('radar', '#8b6cff') : ''}</span> <span>IX<span class="b">AUDIT</span></span></div>
     <div class="t">Votre rapport de sécurité</div>
     <div class="target">${escapeHtml(target)}</div>
     <div class="date">Vérifié le ${escapeHtml(dateStr)}</div>
@@ -195,8 +245,10 @@ function buildHtml(report) {
   <div class="pcats">${renderPlainCategories(modules)}</div>
 
   <h2 class="sec">Vos priorités</h2>
-  <div class="muted small">Ce que vous pouvez améliorer, du plus important au moins urgent.</div>
+  <div class="muted small">Pour chaque point : ce que c'est, pourquoi le changer, et ce qu'il faut faire.</div>
   ${renderPriorities(modules)}
+
+  ${renderExposedFiles(modules)}
 
   <div class="tech">
     <h2 class="sec" style="margin-top:6px">Détails techniques</h2>

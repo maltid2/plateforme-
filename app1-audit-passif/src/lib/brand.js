@@ -628,4 +628,4 @@ function landingAltPage(fontKey) {
   return landingPage(fontKey);
 }
 
-module.exports = { NAME, HEADLINE, TAGLINE, GRADE, SEV, CATS, landingPage, landingAltPage, dashboardPage, escapeHtml };
+module.exports = { NAME, HEADLINE, TAGLINE, GRADE, SEV, CATS, picto, landingPage, landingAltPage, dashboardPage, escapeHtml };

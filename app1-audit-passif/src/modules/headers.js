@@ -120,7 +120,8 @@ async function run(targetUrl, options = {}) {
       result.findings.push({
         id: 'missing-' + check.key,
         severity: check.severity,
-        message: 'En-tête manquant : ' + check.label + '. ' + check.why,
+        message: 'En-tête de sécurité manquant : ' + check.label + '.',
+        why: check.why,
         recommendation: check.recommendation,
       });
     }
@@ -139,6 +140,8 @@ async function run(targetUrl, options = {}) {
           leak.label +
           ': ' +
           String(value),
+        why:
+          'Révéler la version exacte de votre serveur ou de votre framework aide un attaquant à cibler les failles connues de cette version précise.',
         recommendation:
           'Masquer ou retirer cet en-tête pour ne pas révéler la stack technique.',
       });

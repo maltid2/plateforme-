@@ -1,0 +1,24 @@
+{
+  "name": "app2-audit-actif",
+  "version": "1.0.0",
+  "description": "Suite d'audit de sécurité serveur actif — scan de ports, fingerprinting et matching CVE, uniquement après autorisation écrite (gate légal).",
+  "main": "src/index.js",
+  "scripts": {
+    "consent": "node src/index.js consent",
+    "scan": "node src/index.js scan",
+    "start": "node src/index.js",
+    "test": "node test/smoke.test.js"
+  },
+  "keywords": [
+    "security",
+    "port-scan",
+    "fingerprinting",
+    "cve",
+    "active-audit"
+  ],
+  "license": "MIT",
+  "dependencies": {},
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "IXAUDIT — audit de sécurité web",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:18",
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": {
+      "label": "IXAUDIT (site)",
+      "onAutoForward": "openPreview"
+    }
+  },
+  "postAttachCommand": "cd app1-audit-passif && echo '→ IXAUDIT démarre sur le port 3000…' && node src/server.js"
+}

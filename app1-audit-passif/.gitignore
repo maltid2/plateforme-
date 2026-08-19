@@ -1,0 +1,8 @@
+node_modules/
+reports/
+.env
+*.log
+
+# Données clients (comptes + clés hachées) — ne jamais versionner
+data/accounts.json
+data/*.tmp

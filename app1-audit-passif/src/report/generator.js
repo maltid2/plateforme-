@@ -202,7 +202,7 @@ function buildHtml(report) {
   .cnt{color:#fff;font-size:12px;font-weight:800;border-radius:999px;padding:1px 8px}
   .pitem{border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;margin-top:10px;background:rgba(18,24,33,.4)}
   .pitem-m{font-weight:600}
-  .pitem-w{font-size:13.5px;color:#EAF2FF;background:rgba(255,255,255,.05);border-left:3px solid #EAF2FF;margin-top:8px;padding:8px 11px;border-radius:0 8px 8px 0}
+  .pitem-w{font-size:13.5px;color:#4DA3FF;background:rgba(77,163,255,.10);border-left:3px solid #4DA3FF;margin-top:8px;padding:8px 11px;border-radius:0 8px 8px 0}
   .pitem-r{font-size:13.5px;color:#c8e6a6;background:rgba(167,243,107,.1);border-left:3px solid #A7F36B;margin-top:8px;padding:8px 11px;border-radius:0 8px 8px 0}
   .ftable{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
   .ftable th{text-align:left;color:#8B98A8;font-size:12px;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid rgba(255,255,255,.14);padding:8px 10px}
@@ -226,7 +226,7 @@ function buildHtml(report) {
   .badge{color:#fff;font-size:11px;font-weight:800;padding:2px 8px;border-radius:8px;text-transform:uppercase}
   .msg{font-size:14px}
   .reco{font-size:13px;color:#c3ccd6;margin-top:6px;padding:5px 10px;border-left:3px solid rgba(255,255,255,.16);border-radius:0 6px 6px 0}
-  .reco.why{border-left-color:#EAF2FF;color:#EAF2FF;background:rgba(255,255,255,.04)}
+  .reco.why{border-left-color:#4DA3FF;color:#4DA3FF;background:rgba(77,163,255,.08)}
   .ok{color:#A7F36B;font-size:14px}
   footer{margin-top:38px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);font-size:12px;color:#8B98A8;text-align:center}
   @media print{body{background:#07090D}.page{padding:0}}

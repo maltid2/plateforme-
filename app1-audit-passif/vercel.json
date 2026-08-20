@@ -3,7 +3,7 @@
   "functions": {
     "api/index.js": {
       "maxDuration": 60,
-      "includeFiles": "{src/assets/**,data/**}"
+      "includeFiles": "src/assets/**"
     }
   },
   "rewrites": [

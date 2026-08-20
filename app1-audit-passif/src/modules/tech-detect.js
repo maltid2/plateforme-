@@ -21,10 +21,10 @@ const http = require('./http-client');
 const NVD_API = 'https://services.nvd.nist.gov/rest/json/cves/2.0';
 
 function loadFingerprints() {
-  const file = path.join(__dirname, '..', '..', 'data', 'fingerprints.json');
   try {
-    const raw = fs.readFileSync(file, 'utf8');
-    const list = JSON.parse(raw).technologies || [];
+    // require() (au lieu de fs) pour que le bundler Vercel embarque le JSON.
+    const data = require('../../data/fingerprints.json');
+    const list = (data && data.technologies) || [];
     // On ignore les entrées de commentaire/section (sans nom réel).
     return list.filter((t) => t && typeof t.name === 'string');
   } catch (err) {

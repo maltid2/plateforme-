@@ -342,7 +342,7 @@ async function handleStripeWebhook(req, res) {
   return sendJson(res, 200, { received: true });
 }
 
-const server = http.createServer(async (req, res) => {
+async function requestHandler(req, res) {
   const url = new URL(req.url, 'http://localhost');
   const pathname = url.pathname;
 
@@ -394,7 +394,9 @@ const server = http.createServer(async (req, res) => {
   } catch (err) {
     return sendJson(res, 500, { error: 'Erreur serveur : ' + err.message });
   }
-});
+}
+
+const server = http.createServer(requestHandler);
 
 if (require.main === module) {
   server.listen(PORT, () => {
@@ -402,4 +404,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { server, saveReport, REPORTS };
+module.exports = { server, requestHandler, saveReport, REPORTS };

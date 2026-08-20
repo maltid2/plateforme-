@@ -13,9 +13,13 @@ const fs = require('fs');
 const path = require('path');
 
 function dataDir() {
-  return process.env.AUDIT_DATA_DIR
-    ? path.resolve(process.env.AUDIT_DATA_DIR)
-    : path.join(__dirname, '..', '..', 'data');
+  if (process.env.AUDIT_DATA_DIR) return path.resolve(process.env.AUDIT_DATA_DIR);
+  // En serverless (Vercel/Lambda), le système de fichiers est en lecture
+  // seule sauf /tmp : on y écrit pour éviter les erreurs EROFS.
+  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    return '/tmp/ixaudit-data';
+  }
+  return path.join(__dirname, '..', '..', 'data');
 }
 
 function filePath(name) {

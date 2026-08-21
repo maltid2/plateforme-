@@ -166,7 +166,13 @@ async function runAuditRequest(req) {
     return { ok: false, status: 500, error: 'Audit impossible : ' + err.message };
   }
   const id = saveReport(report);
-  return { ok: true, report, id };
+  // On renvoie aussi le HTML complet du rapport : en environnement
+  // serverless (Vercel), le stockage en mémoire n'est pas partagé entre
+  // instances, donc GET /r/:id peut tomber sur une instance « vide ». En
+  // renvoyant le HTML ici, le client peut afficher le rapport directement
+  // (Blob URL) sans dépendre d'un stockage serveur partagé.
+  const entry = REPORTS.get(id);
+  return { ok: true, report, id, html: entry ? entry.html : null };
 }
 
 function auditResponse(report, id, extra) {
@@ -208,7 +214,7 @@ async function handleAudit(req, res) {
   const r = await runAuditRequest(req);
   if (!r.ok) return sendJson(res, r.status, { error: r.error });
   const auditsCount = accounts.recordAudit(account);
-  return sendJson(res, 200, auditResponse(r.report, r.id, { auditsCount }));
+  return sendJson(res, 200, auditResponse(r.report, r.id, { auditsCount, reportHtml: r.html }));
 }
 
 /**
@@ -227,7 +233,7 @@ async function handleFreeAudit(req, res) {
   }
   const r = await runAuditRequest(req);
   if (!r.ok) return sendJson(res, r.status, { error: r.error });
-  return sendJson(res, 200, auditResponse(r.report, r.id, { free: true }));
+  return sendJson(res, 200, auditResponse(r.report, r.id, { free: true, reportHtml: r.html }));
 }
 
 /**

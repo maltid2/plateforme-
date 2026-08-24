@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowRight,
@@ -11,7 +11,17 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-type Phase = "idle" | "scanning" | "done";
+type Phase = "idle" | "scanning" | "done" | "error";
+
+type Finding = { ok: boolean; label: string };
+type Result = {
+  host: string;
+  score: number;
+  grade: string;
+  meaning?: string;
+  findings: Finding[];
+  reportHtml?: string;
+};
 
 const STEPS = [
   "Résolution du domaine",
@@ -21,38 +31,6 @@ const STEPS = [
   "Génération du rapport",
 ];
 
-/** Deterministic pseudo-score from the hostname (illustrative preview). */
-function fakeAudit(host: string) {
-  let h = 0;
-  for (let i = 0; i < host.length; i++) h = (h * 31 + host.charCodeAt(i)) >>> 0;
-  const score = 58 + (h % 40); // 58–97
-  const grade =
-    score >= 90 ? "A" : score >= 80 ? "B" : score >= 70 ? "C" : score >= 60 ? "D" : "F";
-  const pool = [
-    { ok: true, label: "Connexion HTTPS valide et à jour" },
-    { ok: score < 92, label: "En-tête Content-Security-Policy manquant" },
-    { ok: score < 75, label: "En-tête HSTS absent" },
-    { ok: score < 84, label: "Version du serveur exposée" },
-    { ok: true, label: "Aucun port sensible ouvert détecté" },
-    { ok: score < 68, label: "Cookie sans attribut Secure" },
-  ];
-  const findings = pool.slice(0, 4);
-  return { score, grade, findings };
-}
-
-function normalize(input: string): string | null {
-  let v = input.trim();
-  if (!v) return null;
-  if (!/^https?:\/\//i.test(v)) v = "https://" + v;
-  try {
-    const u = new URL(v);
-    if (!u.hostname.includes(".")) return null;
-    return u.hostname.replace(/^www\./, "");
-  } catch {
-    return null;
-  }
-}
-
 const gradeColor: Record<string, string> = {
   A: "#8D7CFF",
   B: "#8D7CFF",
@@ -61,8 +39,21 @@ const gradeColor: Record<string, string> = {
   F: "#F4576B",
 };
 
+/** Ouvre le rapport HTML complet dans un nouvel onglet (Blob URL, sans serveur). */
+function openReport(html?: string) {
+  if (!html) return;
+  try {
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const u = URL.createObjectURL(blob);
+    const w = window.open(u, "_blank");
+    if (!w) window.location.href = u;
+  } catch {
+    /* ignore */
+  }
+}
+
 export default function AuditForm({
-  id = "audit",
+  id,
   align = "start",
 }: {
   id?: string;
@@ -72,59 +63,95 @@ export default function AuditForm({
   const [phase, setPhase] = useState<Phase>("idle");
   const [step, setStep] = useState(0);
   const [host, setHost] = useState("");
-  const [error, setError] = useState(false);
+  const [inputError, setInputError] = useState(false);
+  const [errMsg, setErrMsg] = useState("");
+  const [result, setResult] = useState<Result | null>(null);
+  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const result = useMemo(() => (host ? fakeAudit(host) : null), [host]);
+  const stopTimer = () => {
+    if (timer.current) {
+      clearInterval(timer.current);
+      timer.current = null;
+    }
+  };
 
-  const run = (e: React.FormEvent) => {
+  const run = async (e: React.FormEvent) => {
     e.preventDefault();
-    const h = normalize(value);
-    if (!h) {
-      setError(true);
+    const raw = value.trim();
+    if (!raw || !raw.includes(".")) {
+      setInputError(true);
       return;
     }
-    setError(false);
-    setHost(h);
+    setInputError(false);
+    setErrMsg("");
+    setResult(null);
+    setHost(raw.replace(/^https?:\/\//i, "").replace(/\/.*$/, ""));
     setPhase("scanning");
     setStep(0);
 
-    const reduce =
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const per = reduce ? 90 : 520;
+    // Fait avancer les étapes visuellement jusqu'à l'avant-dernière, en
+    // attendant la vraie réponse du moteur.
+    stopTimer();
+    timer.current = setInterval(() => {
+      setStep((s) => (s < STEPS.length - 1 ? s + 1 : s));
+    }, 650);
 
-    STEPS.forEach((_, i) => {
-      setTimeout(() => setStep(i), per * i);
-    });
-    setTimeout(() => setPhase("done"), per * STEPS.length);
+    try {
+      const r = await fetch("/api/audit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: raw }),
+      });
+      const j = await r.json();
+      stopTimer();
+      if (!r.ok) {
+        setErrMsg(j?.error || "Une erreur est survenue pendant l'analyse.");
+        setPhase("error");
+        return;
+      }
+      setResult(j as Result);
+      setStep(STEPS.length);
+      setPhase("done");
+    } catch (err) {
+      stopTimer();
+      setErrMsg(
+        "Impossible de contacter le service d'analyse. Réessayez dans un instant."
+      );
+      setPhase("error");
+    }
   };
 
   const reset = () => {
+    stopTimer();
     setPhase("idle");
     setHost("");
     setStep(0);
+    setResult(null);
+    setErrMsg("");
   };
 
   return (
-    <div className={align === "center" ? "mx-auto w-full max-w-xl" : "w-full max-w-xl"}>
+    <div
+      id={id}
+      className={align === "center" ? "mx-auto w-full max-w-xl scroll-mt-28" : "w-full max-w-xl scroll-mt-28"}
+    >
       <form onSubmit={run} className="flex flex-col gap-3 sm:flex-row">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
           <input
-            id={id}
             type="text"
             inputMode="url"
             autoComplete="url"
             value={value}
             onChange={(e) => {
               setValue(e.target.value);
-              setError(false);
+              setInputError(false);
             }}
             placeholder="votre-site.fr"
             aria-label="Adresse de votre site à auditer"
-            aria-invalid={error}
+            aria-invalid={inputError}
             className={`h-[52px] w-full rounded-full border bg-white/[0.03] py-3.5 pl-11 pr-4 text-[15px] text-ink placeholder:text-muted/70 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-acc-violet/60 ${
-              error ? "border-sev-critical/60" : "border-line focus:border-white/20"
+              inputError ? "border-sev-critical/60" : "border-line focus:border-white/20"
             }`}
           />
         </div>
@@ -147,11 +174,11 @@ export default function AuditForm({
       </form>
 
       <p
-        className={`mt-3 text-sm ${error ? "text-sev-critical" : "text-muted"} ${
+        className={`mt-3 text-sm ${inputError ? "text-sev-critical" : "text-muted"} ${
           align === "center" ? "text-center" : ""
         }`}
       >
-        {error
+        {inputError
           ? "Entrez une adresse de site valide, par exemple votre-site.fr"
           : "Sans inscription · Audit non intrusif · Résultat en quelques minutes"}
       </p>
@@ -169,16 +196,16 @@ export default function AuditForm({
               {phase === "scanning" ? (
                 <div>
                   <div className="mb-4 flex items-center gap-2 text-sm text-muted">
-                    <Loader2 className="h-4 w-4 animate-spin text-acc-cyan" />
+                    <Loader2 className="h-4 w-4 animate-spin text-acc-violet" />
                     Analyse de <span className="font-mono text-ink">{host}</span>
                   </div>
                   <div className="space-y-2.5">
                     {STEPS.map((s, i) => (
                       <div key={s} className="flex items-center gap-2.5 text-sm">
                         {i < step ? (
-                          <CheckCircle2 className="h-4 w-4 flex-none text-acc-green" />
+                          <CheckCircle2 className="h-4 w-4 flex-none text-acc-violet" />
                         ) : i === step ? (
-                          <Loader2 className="h-4 w-4 flex-none animate-spin text-acc-cyan" />
+                          <Loader2 className="h-4 w-4 flex-none animate-spin text-acc-violet" />
                         ) : (
                           <span className="h-4 w-4 flex-none rounded-full border border-line" />
                         )}
@@ -189,15 +216,28 @@ export default function AuditForm({
                     ))}
                   </div>
                 </div>
+              ) : phase === "error" ? (
+                <div>
+                  <div className="flex items-start gap-2.5 text-sm">
+                    <ShieldAlert className="mt-0.5 h-4 w-4 flex-none text-sev-critical" />
+                    <span className="text-ink">{errMsg}</span>
+                  </div>
+                  <button
+                    onClick={reset}
+                    className="mt-4 text-sm font-medium text-acc-violet transition-colors hover:text-ink"
+                  >
+                    Réessayer
+                  </button>
+                </div>
               ) : result ? (
                 <div>
                   <div className="flex items-center gap-4">
                     <div
                       className="grid h-16 w-16 flex-none place-items-center rounded-2xl text-2xl font-extrabold"
                       style={{
-                        background: `${gradeColor[result.grade]}1f`,
-                        color: gradeColor[result.grade],
-                        boxShadow: `0 0 30px -8px ${gradeColor[result.grade]}`,
+                        background: `${gradeColor[result.grade] || "#8D7CFF"}1f`,
+                        color: gradeColor[result.grade] || "#8D7CFF",
+                        boxShadow: `0 0 30px -8px ${gradeColor[result.grade] || "#8D7CFF"}`,
                       }}
                     >
                       {result.grade}
@@ -210,16 +250,16 @@ export default function AuditForm({
                         <span className="text-sm text-muted">/ 100</span>
                       </div>
                       <div className="truncate font-mono text-xs text-muted">
-                        {host}
+                        {result.host}
                       </div>
                     </div>
                   </div>
 
                   <ul className="mt-4 space-y-2">
-                    {result.findings.map((f) => (
-                      <li key={f.label} className="flex items-start gap-2.5 text-sm">
+                    {result.findings.map((f, i) => (
+                      <li key={i} className="flex items-start gap-2.5 text-sm">
                         {f.ok ? (
-                          <ShieldCheck className="mt-0.5 h-4 w-4 flex-none text-acc-green" />
+                          <ShieldCheck className="mt-0.5 h-4 w-4 flex-none text-acc-violet" />
                         ) : (
                           <ShieldAlert className="mt-0.5 h-4 w-4 flex-none text-sev-high" />
                         )}
@@ -231,13 +271,14 @@ export default function AuditForm({
                   </ul>
 
                   <div className="mt-5 flex flex-wrap items-center gap-3">
-                    <a
-                      href="#cta"
-                      className="inline-flex items-center gap-1.5 rounded-full bg-acc-violet/15 px-4 py-2 text-sm font-semibold text-acc-violet transition-colors hover:bg-acc-violet/25"
+                    <button
+                      onClick={() => openReport(result.reportHtml)}
+                      disabled={!result.reportHtml}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-acc-violet/15 px-4 py-2 text-sm font-semibold text-acc-violet transition-colors hover:bg-acc-violet/25 disabled:opacity-50"
                     >
                       Voir le rapport complet
                       <ArrowRight className="h-4 w-4" />
-                    </a>
+                    </button>
                     <button
                       onClick={reset}
                       className="text-sm font-medium text-muted transition-colors hover:text-ink"
@@ -247,8 +288,8 @@ export default function AuditForm({
                   </div>
 
                   <p className="mt-3 text-xs text-muted">
-                    Aperçu — lancez l&apos;audit complet pour le détail des
-                    vulnérabilités et le rapport PDF.
+                    Audit réel et non intrusif — le rapport complet détaille chaque
+                    point, pourquoi le corriger et l&apos;état des fichiers exposés.
                   </p>
                 </div>
               ) : null}

@@ -11,8 +11,8 @@
 type Props = { className?: string };
 
 const ACC = {
-  green: "#A7F36B",
-  cyan: "#57E6D1",
+  green: "#A78BFA",
+  cyan: "#C084FC",
   violet: "#8D7CFF",
   yellow: "#F5C451",
   red: "#F4576B",

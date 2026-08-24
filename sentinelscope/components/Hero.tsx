@@ -19,7 +19,7 @@ export default function Hero() {
           transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
           className="absolute left-1/2 top-[-12%] h-[560px] w-[820px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(141,124,255,0.22),transparent_60%)] blur-2xl"
         />
-        <div className="absolute right-[6%] top-[30%] h-[380px] w-[380px] rounded-full bg-[radial-gradient(circle,rgba(87,230,209,0.12),transparent_65%)] blur-2xl" />
+        <div className="absolute right-[6%] top-[30%] h-[380px] w-[380px] rounded-full bg-[radial-gradient(circle,rgba(192,132,252,0.12),transparent_65%)] blur-2xl" />
       </div>
 
       <Container className="grid items-center gap-14 lg:grid-cols-[1.05fr_.95fr]">

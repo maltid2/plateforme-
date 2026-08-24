@@ -94,7 +94,7 @@ async function audit(targetUrl, options = {}) {
   };
 
   log(
-    '✔ Score global : ' +
+    'OK Score global : ' +
       scoringResult.score +
       '/100 (' +
       scoringResult.letter +

@@ -465,7 +465,7 @@ function landingPage(fontKey) {
     <div class="wrap center reveal">
       <h2 class="h2big">Découvrez le niveau de sécurité de votre site.</h2>
       <p class="sublead" style="margin-bottom:32px">Gratuit, sans inscription, avec un rapport clair en quelques minutes.</p>
-      <button class="btn" style="padding:16px 30px;font-size:16px" onclick="focusScan()">Analyser mon site gratuitement →</button>
+      <button class="btn" style="padding:16px 30px;font-size:16px" onclick="focusScan()">Analyser mon site gratuitement -></button>
       <div class="trustline" style="margin-top:20px">Paiement unique · Audits illimités · Sans abonnement</div>
     </div>
   </section>
@@ -504,7 +504,7 @@ function howCard() {
     <div class="muted" style="font-family:ui-monospace,monospace;font-size:12px">Protection du site · Content-Security-Policy</div>
     <div style="border:1px solid var(--line);background:rgba(13,17,24,.5);border-radius:14px;padding:16px;margin-top:16px">
       <div class="eyebrow" style="margin-bottom:10px">Recommandation</div>
-      <div style="display:flex;gap:10px;align-items:flex-start;font-size:14px"><span style="color:var(--green)">✓</span>Ajouter un en-tête Content-Security-Policy pour bloquer les contenus non autorisés.</div>
+      <div style="display:flex;gap:10px;align-items:flex-start;font-size:14px"><span style="color:var(--green)">OK</span>Ajouter un en-tête Content-Security-Policy pour bloquer les contenus non autorisés.</div>
     </div>
     <a class="btn" style="width:100%;margin-top:16px;box-sizing:border-box" onclick="focusScan()">Vérifier mon site</a>
   </div>`;
@@ -539,7 +539,7 @@ function scanScript() {
     s>=45?['Votre site présente des points faibles.','Il est conseillé d\\'agir prochainement.']:
     ['Votre site présente des risques importants.','Une mise en sécurité rapide est recommandée.'];}
   function addRow(label,ok){var list=document.getElementById('scanList');var d=document.createElement('div');d.className='row';
-    d.innerHTML='<span class="mk '+(ok?'ok':'warn')+'">'+(ok?'✓':'!')+'</span><span class="rl">'+label+'</span><span class="rs">'+(ok?'OK':'À vérifier')+'</span>';
+    d.innerHTML='<span class="mk '+(ok?'ok':'warn')+'">'+(ok?'OK':'!')+'</span><span class="rl">'+label+'</span><span class="rs">'+(ok?'OK':'À vérifier')+'</span>';
     list.appendChild(d);setTimeout(function(){d.classList.add('in');},30);}
   function openReport(html,fallback){
     if(html){try{var b=new Blob([html],{type:'text/html;charset=utf-8'});var u=URL.createObjectURL(b);

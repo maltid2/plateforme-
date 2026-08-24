@@ -95,7 +95,7 @@ export default function Product() {
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm font-medium text-muted">
-                <span className="h-2 w-2 rounded-full bg-sev-high shadow-[0_0_8px_#FF9715]" />
+                <span className="h-2 w-2 rounded-full bg-sev-high shadow-[0_0_8px_#8B5CF6]" />
                 Détail de la vulnérabilité
               </div>
               <span className="rounded-full bg-sev-high/15 px-2.5 py-1 text-[11px] font-semibold text-sev-high">

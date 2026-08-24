@@ -96,7 +96,7 @@ const ASSETS: (View & {
 })[] = [
   {
     sev: "Critique",
-    color: "#F4576B",
+    color: "#A855F7",
     asset: "api.sentinelscope.dev",
     tag: "Nouveau",
     tagCls: "bg-acc-violet/15 text-acc-violet",
@@ -107,7 +107,7 @@ const ASSETS: (View & {
   },
   {
     sev: "Élevé",
-    color: "#FF9715",
+    color: "#8B5CF6",
     asset: "staging-app.dev",
     tag: "En cours",
     tagCls: "bg-white/[0.06] text-muted",
@@ -118,7 +118,7 @@ const ASSETS: (View & {
   },
   {
     sev: "Élevé",
-    color: "#FF9715",
+    color: "#8B5CF6",
     asset: "old-service.dev",
     tag: "Nouveau",
     tagCls: "bg-acc-violet/15 text-acc-violet",
@@ -129,7 +129,7 @@ const ASSETS: (View & {
   },
   {
     sev: "Moyen",
-    color: "#F5C451",
+    color: "#A78BFA",
     asset: "cdn.sentinelscope.dev",
     tag: "Résolu",
     tagCls: "bg-acc-violet/15 text-acc-violet",

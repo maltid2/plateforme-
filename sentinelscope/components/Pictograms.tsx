@@ -14,8 +14,8 @@ const ACC = {
   green: "#8D7CFF",
   cyan: "#8D7CFF",
   violet: "#8D7CFF",
-  yellow: "#F5C451",
-  red: "#F4576B",
+  yellow: "#A78BFA",
+  red: "#A855F7",
 };
 
 const base = {

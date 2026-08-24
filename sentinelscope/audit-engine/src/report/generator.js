@@ -17,8 +17,8 @@ const path = require('path');
 const brand = require('../lib/brand');
 
 const SEVERITY_LABEL = { high: 'Élevé', medium: 'Moyen', low: 'Faible', info: 'Info' };
-// Danger (#EF4444) uniquement pour le critique ; recommandation en orange mat.
-const SEVERITY_COLOR = { high: '#EF4444', medium: '#F59E0B', low: '#D08A2A', info: '#8B5CF6' };
+// Danger (#A855F7) uniquement pour le critique ; recommandation en orange mat.
+const SEVERITY_COLOR = { high: '#A855F7', medium: '#8B5CF6', low: '#A78BFA', info: '#8B5CF6' };
 
 function escapeHtml(str) {
   if (str == null) return '';
@@ -47,9 +47,9 @@ function whyFallback(severity) {
 function plainScore(score) {
   if (score >= 90) return { color: '#A78BFA', title: 'Votre site est très bien protégé', sub: 'Continuez comme ça !' };
   if (score >= 75) return { color: '#A78BFA', title: 'Votre site est plutôt bien protégé', sub: 'Quelques points peuvent encore être améliorés.' };
-  if (score >= 60) return { color: '#F59E0B', title: 'Votre site est correctement protégé', sub: 'Plusieurs améliorations sont recommandées.' };
-  if (score >= 45) return { color: '#F59E0B', title: 'Votre site présente des points faibles', sub: 'Il est conseillé d\'agir prochainement.' };
-  return { color: '#EF4444', title: 'Votre site présente des risques importants', sub: 'Une mise en sécurité rapide est recommandée.' };
+  if (score >= 60) return { color: '#8B5CF6', title: 'Votre site est correctement protégé', sub: 'Plusieurs améliorations sont recommandées.' };
+  if (score >= 45) return { color: '#8B5CF6', title: 'Votre site présente des points faibles', sub: 'Il est conseillé d\'agir prochainement.' };
+  return { color: '#A855F7', title: 'Votre site présente des risques importants', sub: 'Une mise en sécurité rapide est recommandée.' };
 }
 
 /** Statut simple d'une catégorie à partir de son module. */
@@ -152,7 +152,7 @@ function renderFindings(findings) {
 
 function renderModuleCard(mod) {
   if (!mod) return '';
-  const scoreColor = mod.score >= 80 ? '#22C55E' : mod.score >= 60 ? '#F59E0B' : '#EF4444';
+  const scoreColor = mod.score >= 80 ? '#A78BFA' : mod.score >= 60 ? '#8B5CF6' : '#A855F7';
   const gauge = mod.score != null
     ? '<span class="mscore"><span class="mring" style="--p:' + Math.max(0, Math.min(100, mod.score)) + ';--c:' + scoreColor + '"></span><span class="mnum" style="color:' + scoreColor + '">' + mod.score + '/100</span></span>'
     : '';
@@ -192,7 +192,7 @@ function buildHtml(report) {
   :root{
     --bg:#08080D;--card:#11111A;--sub:#171724;--line:rgba(255,255,255,.08);
     --v:#8B5CF6;--vl:#A78BFA;--vd:#5B21B6;
-    --ink:#F4F4F5;--ink2:#A1A1AA;--ok:#22C55E;--reco:#F59E0B;--bad:#EF4444;
+    --ink:#F4F4F5;--ink2:#A1A1AA;--ok:#A78BFA;--reco:#8B5CF6;--bad:#A855F7;
   }
   *{box-sizing:border-box}
   html{-webkit-text-size-adjust:100%}
@@ -255,8 +255,8 @@ function buildHtml(report) {
     box-shadow:inset 0 1px 0 rgba(255,255,255,.07),inset 0 -3px 6px rgba(0,0,0,.45)}
   .pico svg{width:19px;height:19px}
   .pill{margin-left:auto;font-size:11px;font-weight:800;padding:4px 11px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
-  .pill.ok{background:rgba(34,197,94,.12);color:#4ADE80;border-color:rgba(34,197,94,.28)}
-  .pill.warn{background:rgba(245,158,11,.13);color:var(--reco);border-color:rgba(245,158,11,.30)}
+  .pill.ok{background:rgba(167,139,250,.12);color:#A78BFA;border-color:rgba(167,139,250,.28)}
+  .pill.warn{background:rgba(139,92,246,.13);color:var(--reco);border-color:rgba(139,92,246,.30)}
   .pill.unk{background:rgba(255,255,255,.05);color:var(--ink2);border-color:var(--line)}
   .pcat-t{color:#cfcfd6;font-size:13.5px;margin-top:10px;line-height:1.5}
   /* Priorités */
@@ -270,14 +270,14 @@ function buildHtml(report) {
   .pitem-m{font-weight:700}
   .pitem-w,.pitem-r{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;margin-top:10px;padding:10px 12px;border-radius:8px;line-height:1.5}
   .pitem-w{color:#c7bef2;background:rgba(91,33,182,.16);border-left:3px solid var(--v)}
-  .pitem-r{color:#a9dcbb;background:rgba(34,197,94,.09);border-left:3px solid rgba(34,197,94,.55)}
+  .pitem-r{color:#A78BFA;background:rgba(167,139,250,.09);border-left:3px solid rgba(167,139,250,.55)}
   .pitem-w strong,.pitem-r strong{color:var(--ink)}
   .pic-i{flex:0 0 auto;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;
     border:1px solid var(--line);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),inset 0 -2px 5px rgba(0,0,0,.5);margin-top:1px}
   .pitem-w .pic-i{color:var(--vl);background:linear-gradient(150deg,rgba(139,92,246,.2),transparent)}
-  .pitem-r .pic-i{color:#4ADE80;background:linear-gradient(150deg,rgba(34,197,94,.18),transparent)}
+  .pitem-r .pic-i{color:#A78BFA;background:linear-gradient(150deg,rgba(167,139,250,.18),transparent)}
   .pic-i svg{width:14px;height:14px}
-  .allgood{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);color:#7bdfa0;border-radius:16px;padding:16px;font-weight:600;margin-top:14px}
+  .allgood{background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.25);color:#A78BFA;border-radius:16px;padding:16px;font-weight:600;margin-top:14px}
   /* Panneau générique (verre) */
   .panel{border:1px solid var(--line);border-radius:16px;padding:6px 4px;margin-top:14px;overflow-x:auto;
     background:linear-gradient(180deg,rgba(23,23,36,.55),rgba(17,17,26,.55))}
@@ -289,8 +289,8 @@ function buildHtml(report) {
   .fdesc{color:#c9c9d0}
   .fstat{white-space:nowrap;text-align:right}
   .fbadge{font-size:12px;font-weight:800;padding:5px 11px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
-  .fbadge.ok{background:rgba(34,197,94,.12);color:#4ADE80;border-color:rgba(34,197,94,.28)}
-  .fbadge.bad{background:rgba(239,68,68,.14);color:#F87171;border-color:rgba(239,68,68,.32)}
+  .fbadge.ok{background:rgba(167,139,250,.12);color:#A78BFA;border-color:rgba(167,139,250,.28)}
+  .fbadge.bad{background:rgba(168,85,247,.14);color:#A855F7;border-color:rgba(168,85,247,.32)}
   /* Détails techniques — panneaux accordéon */
   .tech{margin-top:18px}
   .tech-sep{height:1px;margin:18px 0 4px;background:linear-gradient(90deg,transparent,rgba(139,92,246,.35),transparent)}
@@ -310,7 +310,7 @@ function buildHtml(report) {
     -webkit-mask:radial-gradient(circle 7px at center,transparent 98%,#000 100%);mask:radial-gradient(circle 7px at center,transparent 98%,#000 100%)}
   .mnum{font-weight:800;font-size:13.5px}
   .module-body{padding:2px 18px 16px}
-  .mod-error{color:#F87171;font-size:13px}.mod-note{color:var(--ink2);font-size:12px;font-style:italic}
+  .mod-error{color:#A855F7;font-size:13px}.mod-note{color:var(--ink2);font-size:12px;font-style:italic}
   ul.findings{list-style:none;padding:0;margin:6px 0 0}
   ul.findings li{padding:13px 0;border-top:1px solid var(--line)}
   ul.findings li:first-child{border-top:none}
@@ -319,9 +319,9 @@ function buildHtml(report) {
   .msg{font-size:14px}
   .reco{font-size:13px;color:#c9c9d0;margin-top:8px;padding:8px 12px;border-left:3px solid var(--line);border-radius:0 8px 8px 0;background:rgba(255,255,255,.02)}
   .reco.why{border-left-color:var(--v);color:#c7bef2;background:rgba(91,33,182,.14)}
-  .reco.act{border-left-color:rgba(34,197,94,.55);color:#a9dcbb;background:rgba(34,197,94,.08)}
+  .reco.act{border-left-color:rgba(167,139,250,.55);color:#A78BFA;background:rgba(167,139,250,.08)}
   .reco strong{color:var(--ink)}
-  .ok{color:#7bdfa0;font-size:14px}
+  .ok{color:#A78BFA;font-size:14px}
   footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--line);font-size:12px;color:var(--ink2);text-align:center;line-height:1.7}
   /* Révélation au scroll — masquée uniquement si le JS est actif (progressif) */
   .reveal{transition:opacity .25s ease,transform .25s ease}

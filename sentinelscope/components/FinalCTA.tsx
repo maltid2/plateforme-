@@ -39,7 +39,7 @@ function Constellation() {
           y1={POINTS[a].y}
           x2={POINTS[b].x}
           y2={POINTS[b].y}
-          stroke="rgba(87,230,209,0.14)"
+          stroke="rgba(192,132,252,0.14)"
           strokeWidth="0.15"
         />
       ))}
@@ -49,7 +49,7 @@ function Constellation() {
           cx={p.x}
           cy={p.y}
           r="0.5"
-          fill={i % 2 ? "#57E6D1" : "#A7F36B"}
+          fill={i % 2 ? "#C084FC" : "#A78BFA"}
           animate={{ opacity: [0.2, 0.9, 0.2] }}
           transition={{
             duration: 4 + (i % 3),

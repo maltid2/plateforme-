@@ -184,13 +184,12 @@ function buildHtml(report) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Rapport de sécurité — ${escapeHtml(target)}</title>
 <script>document.documentElement.classList.add('js')</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  @font-face{font-family:'Inter';font-weight:400;font-display:swap;src:url('/assets/inter-400.woff2') format('woff2')}
-  @font-face{font-family:'Inter';font-weight:600;font-display:swap;src:url('/assets/inter-600.woff2') format('woff2')}
-  @font-face{font-family:'Inter';font-weight:700;font-display:swap;src:url('/assets/inter-700.woff2') format('woff2')}
-  @font-face{font-family:'Inter';font-weight:800;font-display:swap;src:url('/assets/inter-700.woff2') format('woff2')}
   :root{
-    --bg:#08080D;--card:#11111A;--sub:#171724;--line:rgba(255,255,255,.08);
+    --bg:#07090D;--card:#11111A;--sub:#171724;--line:rgba(255,255,255,.08);
     --v:#8B5CF6;--vl:#A78BFA;--vd:#5B21B6;
     --ink:#F4F4F5;--ink2:#A1A1AA;--ok:#A78BFA;--reco:#8B5CF6;--bad:#A855F7;
   }

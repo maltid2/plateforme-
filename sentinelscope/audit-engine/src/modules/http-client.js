@@ -20,6 +20,7 @@
 const http = require('http');
 const https = require('https');
 const { URL } = require('url');
+const ssrfGuard = require('../lib/ssrf-guard');
 
 const USER_AGENT =
   'SecAudit-Passive/1.0 (+audit passif non intrusif; contact: audit@localhost)';
@@ -85,13 +86,22 @@ function request(method, urlStr, options = {}, _redirectCount = 0) {
       ) {
         res.resume(); // vide le flux
         const nextUrl = new URL(res.headers.location, url).toString();
+        // Anti-SSRF : chaque cible de redirection est re-validée, pour empêcher
+        // qu'un site public redirige vers une IP privée ou les métadonnées cloud.
         return resolve(
-          request(
-            method,
-            nextUrl,
-            { ...options, params: undefined, maxRedirects: maxRedirects - 1 },
-            _redirectCount + 1
-          )
+          ssrfGuard.assertPublicTarget(nextUrl).then((g) => {
+            if (!g.ok) {
+              const err = new Error('Redirection refusée : ' + g.reason);
+              err.code = 'SSRF_REDIRECT_BLOCKED';
+              throw err;
+            }
+            return request(
+              method,
+              nextUrl,
+              { ...options, params: undefined, maxRedirects: maxRedirects - 1 },
+              _redirectCount + 1
+            );
+          })
         );
       }
 

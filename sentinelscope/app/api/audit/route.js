@@ -71,6 +71,9 @@ export async function POST(req) {
   }
   const raw = body && body.url ? String(body.url).trim() : "";
   if (!raw) return NextResponse.json({ error: "URL manquante." }, { status: 400 });
+  if (raw.length > 2048) {
+    return NextResponse.json({ error: "Adresse trop longue." }, { status: 400 });
+  }
 
   const ip =
     (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "unknown";
@@ -101,9 +104,11 @@ export async function POST(req) {
   try {
     report = await engine.audit(url, { timeout: 15000 });
   } catch (e) {
+    // Détail journalisé côté serveur uniquement ; message générique au client.
+    console.error("[audit] échec de l'analyse:", e && e.message ? e.message : e);
     return NextResponse.json(
-      { error: "Audit impossible : " + (e && e.message ? e.message : "erreur inconnue") },
-      { status: 500 }
+      { error: "L'analyse n'a pas pu aboutir. Vérifiez l'adresse et réessayez." },
+      { status: 502 }
     );
   }
 

@@ -13,7 +13,7 @@
  * Rebranding via env : BRAND_NAME, BRAND_HEADLINE, BRAND_TAGLINE, BRAND_FONT.
  */
 
-const NAME = process.env.BRAND_NAME || 'IXAUDIT';
+const NAME = process.env.BRAND_NAME || 'SentinelScope';
 const HEADLINE = process.env.BRAND_HEADLINE || 'Votre site est-il vraiment sécurisé ?';
 const TAGLINE =
   process.env.BRAND_TAGLINE ||

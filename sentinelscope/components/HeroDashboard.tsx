@@ -36,8 +36,8 @@ function RiskRing({ score = 86, size = 108 }: { score?: number; size?: number })
         />
         <defs>
           <linearGradient id="ringg" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#A78BFA" />
-            <stop offset="1" stopColor="#C084FC" />
+            <stop offset="0" stopColor="#8D7CFF" />
+            <stop offset="1" stopColor="#8D7CFF" />
           </linearGradient>
         </defs>
       </svg>
@@ -61,11 +61,11 @@ function Sparkline() {
       <defs>
         <linearGradient id="spg" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0" stopColor="#8D7CFF" />
-          <stop offset="1" stopColor="#C084FC" />
+          <stop offset="1" stopColor="#8D7CFF" />
         </linearGradient>
         <linearGradient id="spgf" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#C084FC" stopOpacity="0.22" />
-          <stop offset="1" stopColor="#C084FC" stopOpacity="0" />
+          <stop offset="0" stopColor="#8D7CFF" stopOpacity="0.22" />
+          <stop offset="1" stopColor="#8D7CFF" stopOpacity="0" />
         </linearGradient>
       </defs>
       <motion.path

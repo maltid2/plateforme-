@@ -27,7 +27,7 @@ const MODULES: Module[] = [
     id: "attack",
     label: "Attaque",
     icon: Radar,
-    accent: "#C084FC",
+    accent: "#8D7CFF",
     headline: "Voyez votre organisation comme le ferait un attaquant",
     cards: [
       { title: "Test dynamique des applications", body: "Sondez vos applications web en fonctionnement à la recherche de failles réellement exploitables." },
@@ -53,7 +53,7 @@ const MODULES: Module[] = [
     id: "cloud",
     label: "Cloud",
     icon: Cloud,
-    accent: "#A78BFA",
+    accent: "#8D7CFF",
     headline: "Gardez chaque environnement cloud verrouillé",
     cards: [
       { title: "Posture cloud", body: "Évaluez chaque compte par rapport à votre référentiel de sécurité." },
@@ -79,7 +79,7 @@ const MODULES: Module[] = [
     id: "defend",
     label: "Défense",
     icon: ShieldCheck,
-    accent: "#C084FC",
+    accent: "#8D7CFF",
     headline: "Transformez les vulnérabilités en correctifs résolus et vérifiés",
     cards: [
       { title: "Protection à l'exécution", body: "Détectez et bloquez les tentatives d'exploitation en production." },

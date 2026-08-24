@@ -1,0 +1,417 @@
+{
+  "_comment": "Base de signatures technologiques (format inspiré de Wappalyzer, open source). Détection par en-têtes HTTP, cookies, balises meta et motifs HTML/JS. Les regex 'version' capturent le numéro de version dans le groupe 1. Base data-driven : ajouter une techno = ajouter une entrée ici, sans toucher au code. Couvre volontairement plusieurs langages (PHP, Node, Python, Ruby, Java, .NET) car les sites n'utilisent pas tous le même.",
+
+  "technologies": [
+
+    { "_section": "== Serveurs web ==" },
+    {
+      "name": "Nginx",
+      "category": "Serveur web",
+      "cpe": "cpe:2.3:a:nginx:nginx",
+      "headers": { "server": "nginx/?([\\d.]+)?" }
+    },
+    {
+      "name": "Apache httpd",
+      "category": "Serveur web",
+      "cpe": "cpe:2.3:a:apache:http_server",
+      "headers": { "server": "Apache/?([\\d.]+)?" }
+    },
+    {
+      "name": "Microsoft IIS",
+      "category": "Serveur web",
+      "cpe": "cpe:2.3:a:microsoft:internet_information_services",
+      "headers": { "server": "Microsoft-IIS/?([\\d.]+)?" }
+    },
+    {
+      "name": "LiteSpeed",
+      "category": "Serveur web",
+      "cpe": "cpe:2.3:a:litespeedtech:litespeed_web_server",
+      "headers": { "server": "LiteSpeed" }
+    },
+    {
+      "name": "Apache Tomcat",
+      "category": "Serveur applicatif (Java)",
+      "cpe": "cpe:2.3:a:apache:tomcat",
+      "headers": { "server": "Apache-Coyote", "x-powered-by": "(?:Servlet|JSP)" }
+    },
+    {
+      "name": "Caddy",
+      "category": "Serveur web",
+      "headers": { "server": "Caddy" }
+    },
+    {
+      "name": "Kestrel (ASP.NET Core)",
+      "category": "Serveur applicatif (.NET)",
+      "headers": { "server": "Kestrel" }
+    },
+    {
+      "name": "Gunicorn",
+      "category": "Serveur applicatif (Python)",
+      "headers": { "server": "gunicorn/?([\\d.]+)?" }
+    },
+    {
+      "name": "Werkzeug (Flask)",
+      "category": "Serveur applicatif (Python)",
+      "headers": { "server": "Werkzeug/?([\\d.]+)?" }
+    },
+
+    { "_section": "== Langages / runtimes ==" },
+    {
+      "name": "PHP",
+      "category": "Langage",
+      "cpe": "cpe:2.3:a:php:php",
+      "headers": { "x-powered-by": "PHP/?([\\d.]+)?" },
+      "cookies": ["PHPSESSID"]
+    },
+    {
+      "name": "ASP.NET",
+      "category": "Framework (.NET)",
+      "cpe": "cpe:2.3:a:microsoft:asp.net",
+      "headers": { "x-powered-by": "ASP\\.NET", "x-aspnet-version": "([\\d.]+)" },
+      "cookies": ["ASP.NET_SessionId"]
+    },
+    {
+      "name": "Node.js",
+      "category": "Runtime",
+      "cpe": "cpe:2.3:a:nodejs:node.js",
+      "headers": { "x-powered-by": "Express|Next\\.js|Nuxt" }
+    },
+    {
+      "name": "Java (JSESSIONID)",
+      "category": "Langage",
+      "cookies": ["JSESSIONID"]
+    },
+    {
+      "name": "Python",
+      "category": "Langage",
+      "headers": { "server": "Werkzeug|gunicorn|Python" }
+    },
+
+    { "_section": "== Frameworks web ==" },
+    {
+      "name": "Express",
+      "category": "Framework (Node.js)",
+      "cpe": "cpe:2.3:a:openjsf:express",
+      "headers": { "x-powered-by": "Express" }
+    },
+    {
+      "name": "Next.js",
+      "category": "Framework (Node.js)",
+      "cpe": "cpe:2.3:a:vercel:next.js",
+      "headers": { "x-powered-by": "Next\\.js", "x-nextjs-cache": "" },
+      "html": ["/_next/static/", "__NEXT_DATA__"]
+    },
+    {
+      "name": "Nuxt.js",
+      "category": "Framework (Node.js)",
+      "headers": { "x-powered-by": "Nuxt" },
+      "html": ["/_nuxt/", "__NUXT__"]
+    },
+    {
+      "name": "Laravel",
+      "category": "Framework (PHP)",
+      "cpe": "cpe:2.3:a:laravel:laravel",
+      "cookies": ["laravel_session", "XSRF-TOKEN"]
+    },
+    {
+      "name": "Symfony",
+      "category": "Framework (PHP)",
+      "cpe": "cpe:2.3:a:sensiolabs:symfony",
+      "headers": { "x-debug-token-link": "" },
+      "cookies": ["symfony"]
+    },
+    {
+      "name": "CodeIgniter",
+      "category": "Framework (PHP)",
+      "cpe": "cpe:2.3:a:codeigniter:codeigniter",
+      "cookies": ["ci_session"]
+    },
+    {
+      "name": "Django",
+      "category": "Framework (Python)",
+      "cpe": "cpe:2.3:a:djangoproject:django",
+      "cookies": ["csrftoken", "django_language"]
+    },
+    {
+      "name": "Flask",
+      "category": "Framework (Python)",
+      "headers": { "server": "Werkzeug" }
+    },
+    {
+      "name": "Ruby on Rails",
+      "category": "Framework (Ruby)",
+      "cpe": "cpe:2.3:a:rubyonrails:rails",
+      "headers": { "x-powered-by": "Phusion Passenger", "x-runtime": "" },
+      "cookies": ["_rails", "_session_id"]
+    },
+    {
+      "name": "Spring",
+      "category": "Framework (Java)",
+      "cpe": "cpe:2.3:a:vmware:spring_framework",
+      "headers": { "x-application-context": "" }
+    },
+
+    { "_section": "== CMS / e-commerce ==" },
+    {
+      "name": "WordPress",
+      "category": "CMS",
+      "cpe": "cpe:2.3:a:wordpress:wordpress",
+      "meta": { "generator": "WordPress ?([\\d.]+)?" },
+      "html": ["wp-content/", "wp-includes/"],
+      "cookies": ["wordpress_", "wp-settings-"]
+    },
+    {
+      "name": "Drupal",
+      "category": "CMS",
+      "cpe": "cpe:2.3:a:drupal:drupal",
+      "headers": { "x-generator": "Drupal ?([\\d.]+)?", "x-drupal-cache": "", "x-drupal-dynamic-cache": "" },
+      "meta": { "generator": "Drupal ?([\\d.]+)?" },
+      "html": ["sites/all/", "/sites/default/files"]
+    },
+    {
+      "name": "Joomla",
+      "category": "CMS",
+      "cpe": "cpe:2.3:a:joomla:joomla",
+      "meta": { "generator": "Joomla!? ?([\\d.]+)?" },
+      "html": ["/media/jui/", "com_content"]
+    },
+    {
+      "name": "TYPO3",
+      "category": "CMS",
+      "cpe": "cpe:2.3:a:typo3:typo3",
+      "meta": { "generator": "TYPO3 ?([\\d.]+)?" },
+      "html": ["/typo3temp/", "/typo3conf/"]
+    },
+    {
+      "name": "Magento",
+      "category": "E-commerce",
+      "cpe": "cpe:2.3:a:magento:magento",
+      "cookies": ["X-Magento-", "mage-"],
+      "html": ["/static/version", "Mage.Cookies"]
+    },
+    {
+      "name": "PrestaShop",
+      "category": "E-commerce",
+      "cpe": "cpe:2.3:a:prestashop:prestashop",
+      "meta": { "generator": "PrestaShop" },
+      "cookies": ["PrestaShop-"]
+    },
+    {
+      "name": "Shopify",
+      "category": "E-commerce (SaaS)",
+      "headers": { "x-shopify-stage": "", "x-sorting-hat-shopid": "" },
+      "html": ["cdn.shopify.com", "Shopify.theme"]
+    },
+    {
+      "name": "Wix",
+      "category": "CMS (SaaS)",
+      "headers": { "x-wix-request-id": "" },
+      "html": ["static.wixstatic.com"]
+    },
+    {
+      "name": "Squarespace",
+      "category": "CMS (SaaS)",
+      "headers": { "server": "Squarespace" },
+      "html": ["static1.squarespace.com"]
+    },
+    {
+      "name": "Ghost",
+      "category": "CMS",
+      "cpe": "cpe:2.3:a:ghost:ghost",
+      "meta": { "generator": "Ghost ?([\\d.]+)?" }
+    },
+
+    { "_section": "== Bibliothèques / frameworks front ==" },
+    {
+      "name": "jQuery",
+      "category": "Bibliothèque JavaScript",
+      "cpe": "cpe:2.3:a:jquery:jquery",
+      "html": ["jquery-?([\\d.]+)?(\\.min)?\\.js", "jquery/([\\d.]+)/", "jQuery v([\\d.]+)"]
+    },
+    {
+      "name": "Bootstrap",
+      "category": "Framework UI",
+      "cpe": "cpe:2.3:a:getbootstrap:bootstrap",
+      "html": ["bootstrap-?([\\d.]+)?(\\.min)?\\.css", "bootstrap/([\\d.]+)/"]
+    },
+    {
+      "name": "React",
+      "category": "Framework JavaScript",
+      "cpe": "cpe:2.3:a:facebook:react",
+      "html": ["data-reactroot", "react-dom", "_reactListening"]
+    },
+    {
+      "name": "Vue.js",
+      "category": "Framework JavaScript",
+      "cpe": "cpe:2.3:a:vuejs:vue",
+      "html": ["data-v-", "vue(\\.min)?\\.js", "__vue__"]
+    },
+    {
+      "name": "Angular",
+      "category": "Framework JavaScript",
+      "cpe": "cpe:2.3:a:angular:angular",
+      "html": ["ng-version=\"([\\d.]+)\"", "ng-app", "angular(\\.min)?\\.js"]
+    },
+
+    { "_section": "== CDN / WAF ==" },
+    {
+      "name": "Cloudflare",
+      "category": "CDN / WAF",
+      "headers": { "server": "cloudflare", "cf-ray": "" }
+    },
+    {
+      "name": "Fastly",
+      "category": "CDN",
+      "headers": { "x-served-by": "cache-", "x-fastly-request-id": "" }
+    },
+    {
+      "name": "Akamai",
+      "category": "CDN",
+      "headers": { "x-akamai-transformed": "", "server": "AkamaiGHost" }
+    },
+    {
+      "name": "Sucuri",
+      "category": "WAF",
+      "headers": { "x-sucuri-id": "", "server": "Sucuri" }
+    },
+    {
+      "name": "Varnish",
+      "category": "Cache",
+      "headers": { "x-varnish": "", "via": "varnish" }
+    },
+
+    { "_section": "== Hébergement / PaaS (typique des SaaS) ==" },
+    {
+      "name": "Vercel",
+      "category": "Hébergement / PaaS",
+      "headers": { "server": "Vercel", "x-vercel-id": "", "x-vercel-cache": "" }
+    },
+    {
+      "name": "Netlify",
+      "category": "Hébergement / PaaS",
+      "headers": { "server": "Netlify", "x-nf-request-id": "" }
+    },
+    {
+      "name": "Heroku",
+      "category": "Hébergement / PaaS",
+      "headers": { "via": "vegur", "server": "Cowboy" }
+    },
+    {
+      "name": "Amazon Web Services",
+      "category": "Hébergement / Cloud",
+      "headers": { "server": "AmazonS3", "x-amz-cf-id": "", "x-amz-request-id": "" }
+    },
+    {
+      "name": "Amazon CloudFront",
+      "category": "CDN / Cloud",
+      "headers": { "via": "CloudFront", "x-amz-cf-pop": "" }
+    },
+    {
+      "name": "Google Cloud / Firebase",
+      "category": "Hébergement / Cloud",
+      "headers": { "server": "Google Frontend", "x-cloud-trace-context": "", "x-firebase-": "" }
+    },
+    {
+      "name": "Microsoft Azure",
+      "category": "Hébergement / Cloud",
+      "headers": { "x-azure-ref": "", "x-msedge-ref": "" }
+    },
+    {
+      "name": "GitHub Pages",
+      "category": "Hébergement statique",
+      "headers": { "server": "GitHub.com", "x-github-request-id": "" }
+    },
+    {
+      "name": "Render",
+      "category": "Hébergement / PaaS",
+      "headers": { "x-render-origin-server": "" }
+    },
+    {
+      "name": "Fastly (SaaS edge)",
+      "category": "Hébergement / Edge",
+      "headers": { "x-timer": "", "fastly-io-info": "" }
+    },
+
+    { "_section": "== Briques SaaS tierces embarquées (pertinent RGPD / cookies) ==" },
+    {
+      "name": "Google Analytics / Tag Manager",
+      "category": "Analytics (tiers)",
+      "html": ["www.googletagmanager.com/gtag", "google-analytics.com/analytics.js", "gtag\\(", "GoogleAnalyticsObject"]
+    },
+    {
+      "name": "Google Ads / DoubleClick",
+      "category": "Publicité (tiers)",
+      "html": ["googleadservices.com", "doubleclick.net", "googlesyndication.com"]
+    },
+    {
+      "name": "Meta Pixel (Facebook)",
+      "category": "Publicité / Tracking (tiers)",
+      "html": ["connect.facebook.net", "fbq\\(", "facebook-jssdk"]
+    },
+    {
+      "name": "Stripe",
+      "category": "Paiement (tiers)",
+      "html": ["js.stripe.com", "Stripe\\("]
+    },
+    {
+      "name": "PayPal",
+      "category": "Paiement (tiers)",
+      "html": ["www.paypal.com/sdk", "paypalobjects.com"]
+    },
+    {
+      "name": "Intercom",
+      "category": "Support client (tiers)",
+      "html": ["widget.intercom.io", "intercomSettings", "intercomcdn.com"]
+    },
+    {
+      "name": "Zendesk",
+      "category": "Support client (tiers)",
+      "html": ["static.zdassets.com", "zendesk.com/embeddable"]
+    },
+    {
+      "name": "HubSpot",
+      "category": "Marketing / CRM (tiers)",
+      "html": ["js.hs-scripts.com", "js.hsforms.net", "hubspot"]
+    },
+    {
+      "name": "Salesforce",
+      "category": "CRM (tiers)",
+      "html": ["salesforce.com", "force.com", "pardot.com"]
+    },
+    {
+      "name": "Mailchimp",
+      "category": "Emailing (tiers)",
+      "html": ["chimpstatic.com", "list-manage.com"]
+    },
+    {
+      "name": "Segment",
+      "category": "Analytics / CDP (tiers)",
+      "html": ["cdn.segment.com", "analytics.load\\("]
+    },
+    {
+      "name": "Hotjar",
+      "category": "Analytics comportemental (tiers)",
+      "html": ["static.hotjar.com", "hj\\(", "_hjSettings"]
+    },
+    {
+      "name": "Sentry",
+      "category": "Monitoring d'erreurs (tiers)",
+      "html": ["browser.sentry-cdn.com", "js.sentry-cdn.com", "Sentry\\.init"]
+    },
+    {
+      "name": "Auth0",
+      "category": "Authentification (tiers)",
+      "html": ["cdn.auth0.com", "auth0.com/js"]
+    },
+    {
+      "name": "Google reCAPTCHA",
+      "category": "Anti-bot (tiers)",
+      "html": ["www.google.com/recaptcha", "grecaptcha"]
+    },
+    {
+      "name": "Cloudflare Turnstile",
+      "category": "Anti-bot (tiers)",
+      "html": ["challenges.cloudflare.com/turnstile"]
+    }
+  ]
+}

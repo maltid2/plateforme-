@@ -59,7 +59,7 @@ export function Reveal({
 export function SectionLabel({ children }: { children: ReactNode }) {
   return (
     <span className="inline-flex items-center gap-2 rounded-full border border-line bg-white/[0.03] px-3.5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-acc-cyan">
-      <span className="h-1.5 w-1.5 rounded-full bg-acc-cyan shadow-[0_0_10px_#C084FC]" />
+      <span className="h-1.5 w-1.5 rounded-full bg-acc-cyan shadow-[0_0_10px_#8D7CFF]" />
       {children}
     </span>
   );

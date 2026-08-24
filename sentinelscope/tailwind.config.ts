@@ -15,8 +15,8 @@ const config: Config = {
         muted: "#8B98A8",
         line: "rgba(255,255,255,0.08)",
         acc: {
-          green: "#A78BFA",
-          cyan: "#C084FC",
+          green: "#8D7CFF",
+          cyan: "#8D7CFF",
           violet: "#8D7CFF",
         },
         sev: {
@@ -45,8 +45,8 @@ const config: Config = {
       boxShadow: {
         soft: "0 20px 60px -30px rgba(0,0,0,0.8)",
         glow: "0 0 60px -12px rgba(141,124,255,0.45)",
-        "glow-green": "0 0 60px -14px rgba(167,139,250,0.4)",
-        "glow-cyan": "0 0 60px -14px rgba(192,132,252,0.4)",
+        "glow-green": "0 0 60px -14px rgba(141,124,255,0.4)",
+        "glow-cyan": "0 0 60px -14px rgba(141,124,255,0.4)",
       },
       backgroundImage: {
         grid: "linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px)",

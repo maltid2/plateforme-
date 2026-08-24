@@ -54,8 +54,8 @@ function normalize(input: string): string | null {
 }
 
 const gradeColor: Record<string, string> = {
-  A: "#A78BFA",
-  B: "#C084FC",
+  A: "#8D7CFF",
+  B: "#8D7CFF",
   C: "#F5C451",
   D: "#FF9715",
   F: "#F4576B",

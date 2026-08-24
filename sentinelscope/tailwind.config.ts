@@ -20,9 +20,9 @@ const config: Config = {
           violet: "#8D7CFF",
         },
         sev: {
-          critical: "#F4576B",
-          high: "#FF9715",
-          medium: "#F5C451",
+          critical: "#A855F7",
+          high: "#8B5CF6",
+          medium: "#A78BFA",
         },
       },
       fontFamily: {

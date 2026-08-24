@@ -66,7 +66,7 @@ const MODULES: Module[] = [
     id: "test",
     label: "Test",
     icon: FlaskConical,
-    accent: "#F5C451",
+    accent: "#A78BFA",
     headline: "Validez le risque réel par des tests continus et sans danger",
     cards: [
       { title: "Tests automatisés", body: "Lancez des simulations d'attaque sûres et reproductibles, à intervalle régulier." },

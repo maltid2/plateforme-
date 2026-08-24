@@ -34,9 +34,9 @@ const STEPS = [
 const gradeColor: Record<string, string> = {
   A: "#8D7CFF",
   B: "#8D7CFF",
-  C: "#F5C451",
-  D: "#FF9715",
-  F: "#F4576B",
+  C: "#A78BFA",
+  D: "#8B5CF6",
+  F: "#A855F7",
 };
 
 /** Ouvre le rapport HTML complet dans un nouvel onglet (Blob URL, sans serveur). */

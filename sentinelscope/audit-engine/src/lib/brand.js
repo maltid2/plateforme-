@@ -24,7 +24,7 @@ const USER = process.env.BRAND_USER || 'Aymerick';
 const C = {
   bg: '#07090D', bg2: '#0D1118', card: '#121821', ink: '#F5F7FA', muted: '#8B98A8',
   green: '#8D7CFF', cyan: '#8D7CFF', violet: '#8D7CFF',
-  critical: '#F4576B', high: '#FF9715', medium: '#F5C451',
+  critical: '#A855F7', high: '#8B5CF6', medium: '#A78BFA',
 };
 const GRADE = { A: C.green, B: C.cyan, C: C.medium, D: C.high, F: C.critical };
 const SEV = { high: C.critical, medium: C.high, low: C.medium, info: C.cyan };
@@ -163,14 +163,14 @@ const DESIGN = `
   .panel.glow{box-shadow:0 0 60px -12px rgba(141,124,255,.45),0 30px 80px -40px rgba(0,0,0,.9)}
   .panel-head{display:flex;align-items:center;justify-content:space-between;padding-bottom:14px;border-bottom:1px solid var(--line)}
   .panel-head .d{font-weight:600;font-family:ui-monospace,Menlo,monospace;font-size:13px}
-  .panel-head .s{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--green);background:rgba(167,243,107,.1);border-radius:999px;padding:5px 10px}
+  .panel-head .s{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--green);background:rgba(167,139,250,.1);border-radius:999px;padding:5px 10px}
   .panel-head .s .ld{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 1.4s infinite}
   @keyframes blink{50%{opacity:.35}}
   #scanList{margin-top:6px}
   .row{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--line);opacity:0;transform:translateX(-8px);transition:.35s}
   .row.in{opacity:1;transform:none}
   .row .mk{width:20px;height:20px;flex:0 0 auto;display:grid;place-items:center;border-radius:6px;font-weight:800;font-size:12px}
-  .mk.ok{color:var(--green);background:rgba(167,243,107,.14)}
+  .mk.ok{color:var(--green);background:rgba(167,139,250,.14)}
   .mk.warn{color:var(--high);background:rgba(255,151,21,.14)}
   .row .rl{flex:1;font-size:14px}
   .row .rs{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
@@ -532,7 +532,7 @@ function scanScript() {
   return `<script>
   var CATS=${JSON.stringify(CATS.map(function (c) { return { id: c.id, label: c.label, ok: c.ok, warn: c.warn }; }))};
   var CATMAP={};CATS.forEach(function(c){CATMAP[c.id]=c;});
-  function sColor(s){return s>=75?'var(--green)':s>=60?'var(--medium,#F5C451)':s>=45?'var(--high,#FF9715)':'var(--bad)';}
+  function sColor(s){return s>=75?'var(--green)':s>=60?'var(--medium,#A78BFA)':s>=45?'var(--high,#8B5CF6)':'var(--bad)';}
   function sMsg(s){return s>=90?['Votre site est très bien protégé.','Continuez comme ça.']:
     s>=75?['Votre site est plutôt bien protégé.','Quelques points peuvent encore être améliorés.']:
     s>=60?['Votre site est correctement protégé.','Plusieurs améliorations sont recommandées.']:

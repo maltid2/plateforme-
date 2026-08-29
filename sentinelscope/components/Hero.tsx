@@ -36,7 +36,7 @@ export default function Hero() {
           </motion.div>
 
           <h1 className="mt-6 text-[2.25rem] font-extrabold leading-[1.05] tracking-tight xs:text-[2.75rem] sm:text-[3.5rem] lg:text-[4.5rem]">
-            {["Voyez chaque", "actif exposé", "avant les attaquants."].map((line, i) => (
+            {["Voyez ce qui est", "exposé sur votre site", "avant les attaquants."].map((line, i) => (
               <motion.span
                 key={i}
                 initial={{ opacity: 0, y: 18 }}

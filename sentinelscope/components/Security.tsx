@@ -6,11 +6,11 @@ import { Container, Reveal, SectionLabel } from "./ui";
 import { viewport, ease } from "@/lib/motion";
 
 const BADGES = [
-  { icon: ShieldCheck, label: "Prêt pour SOC 2" },
-  { icon: Lock, label: "Aligné ISO 27001" },
-  { icon: ScanFace, label: "Accès en lecture seule" },
-  { icon: Timer, label: "Jetons éphémères" },
-  { icon: KeyRound, label: "Aucun partage de données client" },
+  { icon: ShieldCheck, label: "Audit non intrusif" },
+  { icon: ScanFace, label: "Analyse en lecture seule" },
+  { icon: KeyRound, label: "Sans compte ni installation" },
+  { icon: Lock, label: "Aucune donnée revendue" },
+  { icon: Timer, label: "Résultat en minutes" },
 ];
 
 export default function Security() {
@@ -73,14 +73,15 @@ export default function Security() {
 
         {/* copy */}
         <Reveal delay={0.1} className="order-1 lg:order-2">
-          <SectionLabel>Sécurité &amp; conformité</SectionLabel>
+          <SectionLabel>En toute confiance</SectionLabel>
           <h2 className="mt-5 text-3xl font-bold leading-[1.12] tracking-tight sm:text-[2.6rem] lg:text-[3.25rem]">
-            Sécurisé dès la conception.
+            Une analyse respectueuse de votre site.
           </h2>
           <p className="mt-5 max-w-lg text-lg leading-relaxed text-muted">
-            SentinelScope fonctionne avec un accès en lecture seule et le
-            moindre privilège, et ne stocke jamais vos données client. Chaque
-            analyse est cadrée, journalisée et entièrement sous votre contrôle.
+            SentinelScope observe uniquement la configuration publique de votre
+            site : aucune requête agressive, aucune installation, aucun compte à
+            créer et aucune donnée revendue. L&apos;analyse est passive et le
+            rapport arrive en quelques minutes.
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">

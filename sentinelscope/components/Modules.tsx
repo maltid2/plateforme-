@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  Cloud,
-  Code2,
-  FlaskConical,
+  FileText,
+  Gauge,
+  ListChecks,
   Radar,
   ShieldCheck,
   type LucideIcon,
@@ -24,8 +24,8 @@ type Module = {
 
 const MODULES: Module[] = [
   {
-    id: "attack",
-    label: "Attaque",
+    id: "analyse",
+    label: "Analyse",
     icon: Radar,
     accent: "#8D7CFF",
     headline: "Voyez votre site comme le ferait un attaquant",
@@ -37,55 +37,55 @@ const MODULES: Module[] = [
     ],
   },
   {
-    id: "code",
-    label: "Code",
-    icon: Code2,
+    id: "score",
+    label: "Score",
+    icon: Gauge,
     accent: "#8D7CFF",
-    headline: "Interceptez le code à risque avant sa mise en production",
+    headline: "Un score de sécurité clair, immédiatement",
     cards: [
-      { title: "Analyse statique du code", body: "Signalez les failles d'injection, d'authentification et de logique à chaque push." },
-      { title: "Dépendances", body: "Faites remonter les paquets vulnérables avec leur contexte d'exploitabilité réel." },
-      { title: "Détection de secrets", body: "Empêchez les clés et jetons codés en dur d'atteindre la production." },
-      { title: "Analyse IaC", body: "Détectez l'infrastructure-as-code non sécurisée avant son déploiement." },
+      { title: "Note de A à F", body: "Une note globale sur 100, facile à comprendre et à suivre dans le temps." },
+      { title: "Verdict en clair", body: "Un résumé en langage simple : ce qui va bien, ce qui est à améliorer." },
+      { title: "Points forts & faibles", body: "Chaque dimension (connexion, en-têtes, fichiers…) reçoit son propre statut." },
+      { title: "Rapport partageable", body: "Un lien à transmettre à votre équipe ou à votre prestataire." },
     ],
   },
   {
-    id: "cloud",
-    label: "Cloud",
-    icon: Cloud,
+    id: "rapport",
+    label: "Rapport",
+    icon: FileText,
     accent: "#8D7CFF",
-    headline: "Gardez chaque environnement cloud verrouillé",
+    headline: "Un rapport que tout le monde comprend",
     cards: [
-      { title: "Posture cloud", body: "Évaluez chaque compte par rapport à votre référentiel de sécurité." },
-      { title: "Images de conteneurs", body: "Analysez les images à la recherche de vulnérabilités avant leur exécution." },
-      { title: "Machines virtuelles", body: "Évaluez à grande échelle les hôtes exposés et leur niveau de correctifs." },
-      { title: "Recherche d'actifs cloud", body: "Interrogez toutes vos ressources, tous fournisseurs confondus, depuis un seul endroit." },
+      { title: "Résumé pour les dirigeants", body: "L'essentiel en langage clair, sans jargon technique." },
+      { title: "Détails pour les développeurs", body: "Le détail technique de chaque point, prêt à transmettre." },
+      { title: "Pourquoi le corriger", body: "Chaque point explique le risque concret pour votre site." },
+      { title: "Ce qu'il faut faire", body: "Une action précise pour chaque vulnérabilité détectée." },
     ],
   },
   {
-    id: "test",
-    label: "Test",
-    icon: FlaskConical,
+    id: "priorites",
+    label: "Priorités",
+    icon: ListChecks,
     accent: "#A78BFA",
-    headline: "Validez le risque réel par des tests continus et sans danger",
+    headline: "Les bonnes actions d'abord",
     cards: [
-      { title: "Tests automatisés", body: "Lancez des simulations d'attaque sûres et reproductibles, à intervalle régulier." },
-      { title: "Validation de sécurité", body: "Confirmez quelles vulnérabilités sont réellement atteignables." },
-      { title: "Vérification des vulnérabilités", body: "Prouvez l'exploitabilité avant que la vulnérabilité n'arrive dans votre file." },
-      { title: "Re-test continu", body: "Revérifiez automatiquement les problèmes corrigés pour confirmer leur clôture." },
+      { title: "Tri par gravité", body: "Les points classés du plus critique au moins urgent." },
+      { title: "À corriger en priorité", body: "Les problèmes qui exposent réellement votre site arrivent en tête." },
+      { title: "Recommandations concrètes", body: "Des correctifs actionnables, pas des alertes vagues." },
+      { title: "État des fichiers", body: "Pour chaque fichier sensible : accessible ou non depuis Internet." },
     ],
   },
   {
-    id: "defend",
-    label: "Défense",
+    id: "confiance",
+    label: "Confiance",
     icon: ShieldCheck,
     accent: "#8D7CFF",
-    headline: "Transformez les vulnérabilités en correctifs résolus et vérifiés",
+    headline: "Une analyse respectueuse de votre site",
     cards: [
-      { title: "Protection à l'exécution", body: "Détectez et bloquez les tentatives d'exploitation en production." },
-      { title: "Alertes", body: "Acheminez le bon signal vers la bonne équipe, sans bruit." },
-      { title: "Réponse à incident", body: "Passez de la détection au confinement grâce à des playbooks clairs." },
-      { title: "Flux de sécurité", body: "Automatisez le tri et la remédiation à travers vos outils." },
+      { title: "Sans installation", body: "Rien à installer : vous entrez simplement l'adresse de votre site." },
+      { title: "Sans compte", body: "Aucune inscription nécessaire pour lancer une analyse." },
+      { title: "Non intrusif", body: "Une analyse passive, sans requête agressive sur votre site." },
+      { title: "Aucune donnée revendue", body: "Vos résultats restent les vôtres." },
     ],
   },
 ];
@@ -99,14 +99,14 @@ export default function Modules() {
       <Container>
         <Reveal className="mx-auto max-w-2xl text-center">
           <div className="flex justify-center">
-            <SectionLabel>Modules</SectionLabel>
+            <SectionLabel>Ce que vous obtenez</SectionLabel>
           </div>
           <h2 className="mt-5 text-3xl font-bold leading-[1.12] tracking-tight sm:text-[2.6rem] lg:text-[3.25rem]">
-            Une couverture de sécurité qui grandit avec vous.
+            De l&apos;analyse au rapport, tout est clair.
           </h2>
           <p className="mt-4 text-lg text-muted">
-            Commencez avec ce dont vous avez besoin aujourd'hui et étendez votre
-            couverture sans ajouter un autre outil.
+            Un seul audit de votre site vous donne un score, un rapport lisible
+            et des priorités concrètes — sans jargon.
           </p>
         </Reveal>
 

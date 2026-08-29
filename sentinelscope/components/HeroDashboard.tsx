@@ -81,7 +81,7 @@ type View = {
 };
 
 const GLOBAL: View = {
-  label: "Vue globale",
+  label: "Score global",
   score: 86,
   delta: 12,
   path: "M0,50 C24,44 34,20 56,24 C80,28 92,52 116,44 C140,36 150,10 176,16 C198,21 210,30 220,26",
@@ -97,45 +97,45 @@ const ASSETS: (View & {
   {
     sev: "Critique",
     color: "#A855F7",
-    asset: "api.sentinelscope.dev",
-    tag: "Nouveau",
+    asset: "Fichiers exposés",
+    tag: "À corriger",
     tagCls: "bg-acc-violet/15 text-acc-violet",
-    label: "api.sentinelscope.dev",
-    score: 41,
+    label: "Fichiers exposés",
+    score: 45,
     delta: -18,
     path: "M0,20 C24,24 34,30 56,30 C80,30 92,26 116,34 C140,42 150,44 176,48 C198,51 210,54 220,56",
   },
   {
     sev: "Élevé",
     color: "#8B5CF6",
-    asset: "staging-app.dev",
-    tag: "En cours",
-    tagCls: "bg-white/[0.06] text-muted",
-    label: "staging-app.dev",
-    score: 63,
-    delta: -6,
-    path: "M0,34 C24,30 34,38 56,36 C80,34 92,30 116,34 C140,38 150,42 176,40 C198,39 210,44 220,42",
-  },
-  {
-    sev: "Élevé",
-    color: "#8B5CF6",
-    asset: "old-service.dev",
-    tag: "Nouveau",
+    asset: "En-têtes de sécurité",
+    tag: "À corriger",
     tagCls: "bg-acc-violet/15 text-acc-violet",
-    label: "old-service.dev",
+    label: "En-têtes de sécurité",
     score: 58,
-    delta: -9,
-    path: "M0,28 C24,30 34,34 56,34 C80,34 92,38 116,38 C140,38 150,44 176,44 C198,44 210,48 220,48",
+    delta: -10,
+    path: "M0,34 C24,30 34,38 56,36 C80,34 92,30 116,34 C140,38 150,42 176,40 C198,39 210,44 220,42",
   },
   {
     sev: "Moyen",
     color: "#A78BFA",
-    asset: "cdn.sentinelscope.dev",
-    tag: "Résolu",
+    asset: "Protection RGPD",
+    tag: "À voir",
+    tagCls: "bg-white/[0.06] text-muted",
+    label: "Protection RGPD",
+    score: 70,
+    delta: -4,
+    path: "M0,28 C24,30 34,34 56,34 C80,34 92,38 116,38 C140,38 150,44 176,44 C198,44 210,48 220,48",
+  },
+  {
+    sev: "Faible",
+    color: "#A78BFA",
+    asset: "Connexion SSL/TLS",
+    tag: "OK",
     tagCls: "bg-acc-violet/15 text-acc-violet",
-    label: "cdn.sentinelscope.dev",
-    score: 79,
-    delta: 4,
+    label: "Connexion SSL/TLS",
+    score: 96,
+    delta: 6,
     path: "M0,44 C24,42 34,36 56,38 C80,40 92,30 116,30 C140,30 150,24 176,26 C198,27 210,24 220,22",
   },
 ];
@@ -162,7 +162,7 @@ export default function HeroDashboard() {
               <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
               <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
             </span>
-            <span className="ml-2 font-medium">Vue de la surface d&apos;attaque</span>
+            <span className="ml-2 font-medium">Aperçu de votre audit</span>
           </div>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-acc-violet/10 px-2.5 py-1 text-[11px] font-semibold text-acc-violet">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-acc-violet" />
@@ -211,9 +211,9 @@ export default function HeroDashboard() {
         {/* stat chips */}
         <div className="mt-3 grid grid-cols-3 gap-3">
           {[
-            { n: <Counter to={1284} />, l: "Actifs découverts" },
-            { n: <Counter to={23} />, l: "Vulnérabilités critiques", accent: "text-sev-critical" },
-            { n: <Counter to={98.4} decimals={1} suffix="%" />, l: "Surveillé" },
+            { n: <Counter to={6} />, l: "Contrôles de sécurité" },
+            { n: <Counter to={3} />, l: "Points à corriger", accent: "text-sev-critical" },
+            { n: <Counter to={2} suffix=" min" />, l: "Durée de l'analyse" },
           ].map((s, i) => (
             <motion.div
               key={i}
@@ -232,7 +232,7 @@ export default function HeroDashboard() {
         {/* alerts — tactiles : sélectionne un actif pour voir son score */}
         <div className="mt-3 rounded-xl border border-line bg-bg2/40 p-1">
           <div className="px-3 pb-1 pt-2 text-[10px] uppercase tracking-wider text-muted/70">
-            Touchez un actif pour l&apos;inspecter
+Touchez un contrôle pour le détail
           </div>
           {ASSETS.map((a, i) => {
             const active = sel === i;
@@ -276,8 +276,8 @@ export default function HeroDashboard() {
         transition={{ duration: 0.6, delay: 1.1, ease }}
         className="absolute -right-3 -top-4 hidden rounded-xl border border-line bg-card/90 px-3 py-2 shadow-glow backdrop-blur-xl sm:block"
       >
-        <div className="text-[11px] text-muted">Nouvel actif exposé</div>
-        <div className="text-sm font-semibold text-acc-violet">admin-panel.dev</div>
+        <div className="text-[11px] text-muted">Point détecté</div>
+        <div className="text-sm font-semibold text-acc-violet">fichier .env exposé</div>
       </motion.div>
     </motion.div>
   );

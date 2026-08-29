@@ -7,36 +7,36 @@ import { Container, Reveal, SectionLabel } from "./ui";
 
 const FAQS = [
   {
-    q: "Qu'est-ce que la surveillance de la surface d'attaque ?",
-    a: "La surveillance de la surface d'attaque découvre et suit en continu chacun de vos actifs exposés sur Internet — domaines, sous-domaines, API, certificats et ressources cloud — pour que vous sachiez toujours ce qui est exposé, même lorsque cela change d'un jour à l'autre.",
+    q: "Qu'est-ce que SentinelScope analyse exactement ?",
+    a: "À partir de l'adresse de votre site, SentinelScope vérifie six dimensions clés : la connexion sécurisée (SSL/TLS), les en-têtes de sécurité HTTP, les fichiers sensibles exposés, la réputation en ligne, les failles connues (CVE) et la conformité RGPD/cookies. Vous obtenez un score global et un rapport détaillé.",
   },
   {
-    q: "Comment fonctionne le test dynamique de sécurité des applications ?",
-    a: "Le test dynamique interagit avec vos applications en fonctionnement comme le ferait un véritable attaquant, en envoyant des requêtes conçues pour révéler des failles telles que les injections, les contrôles d'accès défaillants et les mauvaises configurations — sans nécessiter l'accès à votre code source.",
+    q: "Est-ce un vrai audit ou une simulation ?",
+    a: "C'est un vrai audit. SentinelScope se connecte réellement à votre site et analyse sa configuration en direct : le score et les vulnérabilités affichés viennent de votre site réel, pas d'un exemple.",
   },
   {
-    q: "SentinelScope peut-il analyser des applications authentifiées ?",
-    a: "Oui. Grâce à l'analyse authentifiée, SentinelScope peut se connecter et tester les zones de votre application visibles uniquement par les utilisateurs connectés, là où se concentre souvent l'essentiel du risque réel.",
+    q: "L'analyse est-elle dangereuse pour mon site ?",
+    a: "Non. L'analyse est passive et non intrusive : elle observe la configuration publique de votre site sans envoyer de requêtes agressives ni tenter d'exploiter quoi que ce soit. Elle ne perturbe pas votre site.",
   },
   {
-    q: "Est-il sûr d'analyser un environnement de production ?",
-    a: "Chaque contrôle est conçu pour être non destructif et à débit limité. Vous maîtrisez le périmètre et la fréquence, et toute l'activité est journalisée : analyser la production reste sûr et prévisible.",
+    q: "En combien de temps ai-je le résultat ?",
+    a: "En quelques minutes. Vous entrez l'adresse de votre site, l'analyse se lance immédiatement et le rapport complet s'ouvre à la fin.",
   },
   {
-    q: "Prend-il en charge les API REST et GraphQL ?",
-    a: "Oui. SentinelScope cartographie les points d'accès REST comme GraphQL, comprend leurs schémas et les teste contre les vulnérabilités courantes telles que les autorisations défaillantes et l'exposition excessive de données.",
+    q: "Dois-je installer quelque chose ou créer un compte ?",
+    a: "Non. Aucune installation, aucune inscription : il suffit d'entrer l'adresse de votre site pour lancer l'analyse.",
   },
   {
-    q: "En combien de temps les analyses se terminent-elles ?",
-    a: "La plupart des analyses se terminent en quelques minutes à quelques heures selon la taille de votre surface. La découverte et la surveillance s'exécutent en continu en arrière-plan : vous êtes informé au fil des changements de votre environnement, sans attendre une fenêtre planifiée.",
+    q: "Que contient le rapport ?",
+    a: "Un score clair sur 100, un résumé en langage simple, puis, pour chaque point : ce que c'est, pourquoi le corriger et l'action à mener. Pour les fichiers sensibles, il indique s'ils sont accessibles ou non depuis Internet. Le rapport est partageable par lien.",
   },
   {
-    q: "S'intègre-t-il aux outils CI/CD ?",
-    a: "Oui. SentinelScope se connecte aux outils que votre équipe utilise déjà — dont GitHub, GitLab, Jira et Slack — pour que les résultats remontent directement dans vos pipelines et flux existants, avec tout le contexte.",
+    q: "Remplace-t-il un vrai test d'intrusion ?",
+    a: "Non, et il ne le prétend pas. SentinelScope est un premier niveau d'audit automatisé qui repère rapidement les faiblesses les plus courantes. Un test d'intrusion manuel apporte une analyse humaine approfondie ; les deux sont complémentaires.",
   },
   {
-    q: "Remplace-t-il un test d'intrusion manuel ?",
-    a: "Il le complète plutôt qu'il ne le remplace. SentinelScope assure une couverture automatisée et continue entre les missions, tandis qu'un test d'intrusion manuel apporte une analyse humaine approfondie — ensemble, ils offrent la vision la plus complète de votre risque.",
+    q: "Mes données sont-elles conservées ou revendues ?",
+    a: "Vos résultats restent les vôtres et ne sont pas revendus. Le rapport est fourni à titre informatif ; il ne constitue pas une garantie d'absence de vulnérabilité.",
   },
 ];
 

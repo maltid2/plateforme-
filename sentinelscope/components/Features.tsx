@@ -4,11 +4,11 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Container, Reveal, SectionLabel } from "./ui";
 import {
-  PictoKeyUser,
+  PictoAlertBell,
+  PictoAlertShield,
+  PictoCloudLock,
+  PictoCompliance,
   PictoMonitor,
-  PictoNodes,
-  PictoPriority,
-  PictoRadar,
   PictoScan,
 } from "./Pictograms";
 import { staggerParent, fadeUp, viewport } from "@/lib/motion";
@@ -23,46 +23,46 @@ type Feature = {
 
 const FEATURES: Feature[] = [
   {
-    Picto: PictoRadar,
-    category: "Découverte",
-    title: "Découverte de la surface d'attaque",
-    body: "Repérez les domaines, services et applications absents de votre inventaire.",
-    glow: "cyan",
+    Picto: PictoCloudLock,
+    category: "SSL / TLS",
+    title: "Connexion sécurisée",
+    body: "Vérifie votre HTTPS, la validité du certificat et la solidité du chiffrement.",
+    glow: "violet",
   },
   {
-    Picto: PictoMonitor,
-    category: "Surveillance",
-    title: "Surveillance continue",
-    body: "Suivez chaque jour les changements sur vos actifs exposés sur Internet.",
+    Picto: PictoAlertShield,
+    category: "En-têtes",
+    title: "Protection du site",
+    body: "Contrôle HSTS, CSP, X-Frame-Options et les protections contre les attaques courantes.",
     glow: "violet",
   },
   {
     Picto: PictoScan,
-    category: "AppSec",
-    title: "Test dynamique des applications",
-    body: "Détectez les failles de sécurité dans vos applications web en fonctionnement.",
-    glow: "green",
-  },
-  {
-    Picto: PictoNodes,
-    category: "API",
-    title: "Test de sécurité des API",
-    body: "Cartographiez vos points d'accès REST et GraphQL et testez-les contre les vulnérabilités courantes.",
+    category: "Fichiers",
+    title: "Fichiers sensibles exposés",
+    body: "Détecte les fichiers privés (.env, .git, sauvegardes) accessibles publiquement.",
     glow: "violet",
   },
   {
-    Picto: PictoKeyUser,
-    category: "Accès",
-    title: "Analyse authentifiée",
-    body: "Testez les zones de l'application accessibles uniquement aux utilisateurs connectés.",
-    glow: "cyan",
+    Picto: PictoMonitor,
+    category: "Réputation",
+    title: "Réputation en ligne",
+    body: "Vérifie si votre site est signalé sur des listes noires ou comme dangereux.",
+    glow: "violet",
   },
   {
-    Picto: PictoPriority,
-    category: "Priorisation",
-    title: "Priorisation actionnable",
-    body: "Concentrez votre équipe sur les vulnérabilités au risque réel le plus élevé.",
-    glow: "green",
+    Picto: PictoAlertBell,
+    category: "CVE",
+    title: "Failles connues",
+    body: "Repère les technologies obsolètes ou vulnérables exposées par votre site.",
+    glow: "violet",
+  },
+  {
+    Picto: PictoCompliance,
+    category: "RGPD",
+    title: "Protection des données",
+    body: "Analyse les cookies et le consentement pour votre conformité RGPD.",
+    glow: "violet",
   },
 ];
 
@@ -90,14 +90,14 @@ export default function Features() {
       <Container>
         <Reveal className="mx-auto max-w-2xl text-center">
           <div className="flex justify-center">
-            <SectionLabel>Plateforme</SectionLabel>
+            <SectionLabel>L&apos;audit</SectionLabel>
           </div>
           <h2 className="mt-5 text-3xl font-bold leading-[1.12] tracking-tight sm:text-[2.6rem] lg:text-[3.25rem]">
-            Une plateforme. Une visibilité externe totale.
+            Tout ce que nous vérifions sur votre site.
           </h2>
           <p className="mt-4 text-lg text-muted">
-            De la première découverte au correctif vérifié, SentinelScope offre à
-            votre équipe une vue continue de l'exposition et du risque.
+            Un seul audit passe votre site au crible sur six dimensions clés,
+            puis vous explique quoi corriger et pourquoi.
           </p>
         </Reveal>
 

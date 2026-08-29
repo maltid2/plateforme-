@@ -14,26 +14,29 @@ type Node = {
   y: number;
   label: string;
   kind: string;
+  check: string;
   risk: Risk;
 };
 
+// Les 6 dimensions réellement analysées par SentinelScope à partir de l'URL
+// saisie, disposées autour du site — c'est ce qui alimente le rapport.
 const NODES: Node[] = [
-  { id: "core", x: 50, y: 50, label: "sentinelscope.dev", kind: "Domaine principal", risk: "safe" },
-  { id: "api", x: 20, y: 22, label: "api.sentinelscope.dev", kind: "API", risk: "medium" },
-  { id: "staging", x: 82, y: 28, label: "staging-app.dev", kind: "Sous-domaine", risk: "high" },
-  { id: "cert", x: 15, y: 72, label: "*.sentinelscope.dev", kind: "Certificat TLS", risk: "safe" },
-  { id: "old", x: 85, y: 70, label: "old-service.dev", kind: "Application héritée", risk: "unknown" },
-  { id: "endpoint", x: 50, y: 13, label: "exposed endpoint", kind: "Route API publique", risk: "medium" },
-  { id: "admin", x: 50, y: 88, label: "admin-panel.dev", kind: "Interface d'administration", risk: "high" },
+  { id: "core", x: 50, y: 50, label: "votre-site.fr", kind: "Site analysé", check: "L'adresse que vous saisissez", risk: "safe" },
+  { id: "ssl", x: 20, y: 22, label: "SSL / TLS", kind: "Connexion sécurisée", check: "Certificat valide et chiffrement à jour", risk: "safe" },
+  { id: "headers", x: 82, y: 28, label: "En-têtes", kind: "Protection du site", check: "HSTS, CSP, X-Frame-Options…", risk: "medium" },
+  { id: "files", x: 15, y: 72, label: "Fichiers exposés", kind: "Fichiers privés", check: ".env, .git, sauvegardes accessibles", risk: "high" },
+  { id: "reputation", x: 85, y: 70, label: "Réputation", kind: "Réputation en ligne", check: "Listes noires et signalements", risk: "safe" },
+  { id: "cve", x: 50, y: 13, label: "Failles (CVE)", kind: "Vulnérabilités connues", check: "Technologies obsolètes ou vulnérables", risk: "medium" },
+  { id: "rgpd", x: 50, y: 88, label: "RGPD", kind: "Protection des données", check: "Cookies et consentement (RGPD)", risk: "medium" },
 ];
 
 const EDGES: [string, string][] = [
-  ["core", "api"],
-  ["core", "staging"],
-  ["core", "cert"],
-  ["core", "old"],
-  ["core", "endpoint"],
-  ["core", "admin"],
+  ["core", "ssl"],
+  ["core", "headers"],
+  ["core", "files"],
+  ["core", "reputation"],
+  ["core", "cve"],
+  ["core", "rgpd"],
 ];
 
 const RISK_META: Record<Risk, { color: string; label: string }> = {
@@ -59,9 +62,10 @@ export default function Problem() {
             <span className="text-gradient-violet">chaque jour.</span>
           </h2>
           <p className="mt-5 max-w-lg text-lg leading-relaxed text-muted">
-            De nouveaux domaines, API, certificats et actifs cloud apparaissent en
-            permanence. SentinelScope aide votre équipe à comprendre ce qui est
-            exposé avant que cela ne devienne un incident.
+            Entrez l&apos;adresse de votre site : SentinelScope analyse votre
+            connexion, vos en-têtes de sécurité, vos fichiers exposés, votre
+            réputation, les failles connues et le RGPD — puis vous remet un
+            rapport clair de ce qui est exposé.
           </p>
 
           <div className="mt-8 flex flex-wrap gap-4">
@@ -89,7 +93,7 @@ export default function Problem() {
           <div className="relative aspect-square w-full max-w-lg rounded-2xl border border-line bg-card/50 p-4 shadow-soft backdrop-blur-sm">
             <div className="absolute inset-0 rounded-2xl bg-grid-fade opacity-40" />
             <div className="absolute left-4 top-4 z-10 flex items-center gap-2 text-xs text-muted">
-              <Eye className="h-3.5 w-3.5 text-acc-cyan" /> Carte des actifs en direct
+              <Eye className="h-3.5 w-3.5 text-acc-violet" /> Analyse de votre site en direct
             </div>
 
             <svg viewBox="0 0 100 100" className="relative h-full w-full overflow-visible">
@@ -113,7 +117,7 @@ export default function Problem() {
                 );
               })}
               {NODES.map((n, i) => {
-                const solvedHere = solved && (n.id === "admin" || n.id === "staging");
+                const solvedHere = solved && n.id === "files";
                 const risk: Risk = solvedHere ? "safe" : n.risk;
                 const color = RISK_META[risk].color;
                 const pulse = (risk === "high" || risk === "medium") && !solvedHere;
@@ -184,17 +188,18 @@ export default function Problem() {
                 >
                   {(() => {
                     const n = NODES.find((x) => x.id === hovered)!;
-                    const solvedHere = solved && (n.id === "admin" || n.id === "staging");
+                    const solvedHere = solved && n.id === "files";
                     const risk = solvedHere ? "safe" : n.risk;
                     return (
                       <>
-                        <div className="font-mono text-[11px] text-ink">{n.label}</div>
-                        <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-muted">
+                        <div className="text-[11px] font-semibold text-ink">{n.kind}</div>
+                        <div className="mt-0.5 text-[10px] text-muted">{n.check}</div>
+                        <div className="mt-1 flex items-center gap-1.5 text-[10px] text-muted">
                           <span
                             className="h-1.5 w-1.5 rounded-full"
                             style={{ background: RISK_META[risk].color }}
                           />
-                          {n.kind} · {RISK_META[risk].label}
+                          {RISK_META[risk].label}
                         </div>
                       </>
                     );
@@ -219,10 +224,10 @@ export default function Problem() {
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-semibold text-ink">
-                        Nouveau problème de surface d'attaque
+                        Problème détecté dans votre rapport
                       </div>
                       <div className="mt-0.5 truncate font-mono text-xs text-muted">
-                        admin-panel.dev · connexion exposée
+                        fichier .env accessible publiquement
                       </div>
                     </div>
                   </div>

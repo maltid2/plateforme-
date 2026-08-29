@@ -28,12 +28,12 @@ const MODULES: Module[] = [
     label: "Attaque",
     icon: Radar,
     accent: "#8D7CFF",
-    headline: "Voyez votre organisation comme le ferait un attaquant",
+    headline: "Voyez votre site comme le ferait un attaquant",
     cards: [
-      { title: "Test dynamique des applications", body: "Sondez vos applications web en fonctionnement à la recherche de failles réellement exploitables." },
-      { title: "Analyse des API", body: "Découvrez et testez en continu vos points d'accès REST et GraphQL." },
-      { title: "Pentest assisté par IA", body: "Enchaînez les vulnérabilités en chemins d'attaque grâce à des tests automatisés et guidés." },
-      { title: "Surveillance de la surface", body: "Observez chaque changement de vos actifs exposés en quasi temps réel." },
+      { title: "Connexion & certificat (SSL/TLS)", body: "Vérifie votre HTTPS, la validité du certificat et la solidité du chiffrement." },
+      { title: "En-têtes de sécurité", body: "Contrôle HSTS, CSP, X-Frame-Options et les protections contre les attaques courantes." },
+      { title: "Fichiers sensibles exposés", body: "Détecte les fichiers privés (.env, .git, sauvegardes) accessibles publiquement." },
+      { title: "Réputation, failles & RGPD", body: "Vérifie les listes noires, les vulnérabilités connues et la conformité RGPD/cookies." },
     ],
   },
   {

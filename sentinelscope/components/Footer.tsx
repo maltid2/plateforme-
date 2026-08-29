@@ -7,7 +7,7 @@ import { Container } from "./ui";
 const COLUMNS = [
   {
     title: "Produit",
-    links: ["Surface d'attaque", "Sécurité du code", "Posture cloud", "Tests", "Tarifs"],
+    links: ["Analyse de sécurité", "Score & note", "Rapport détaillé", "Contrôles vérifiés", "Tarifs"],
   },
   {
     title: "Solutions",
@@ -49,8 +49,8 @@ export default function Footer() {
               Sentinel<span className="text-acc-cyan">Scope</span>
             </Link>
             <p className="mt-4 text-sm leading-relaxed text-muted">
-              Le renseignement continu sur la surface d&apos;attaque, pour les
-              équipes qui veulent voir chaque actif exposé avant les attaquants.
+              L&apos;audit de sécurité de votre site en quelques minutes : un
+              score clair, les vulnérabilités détectées et les actions à mener.
             </p>
             <div className="mt-6 flex items-center gap-3">
               {[

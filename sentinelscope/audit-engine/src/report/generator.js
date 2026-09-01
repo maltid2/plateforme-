@@ -128,7 +128,7 @@ function renderExposedFiles(modules) {
   const intro = nbExposed
     ? 'Nous avons trouvé <strong>' + nbExposed + ' fichier(s) sensible(s) accessible(s)</strong> à sécuriser.'
     : 'Aucun fichier sensible n\'est accessible publiquement.';
-  return `<h2 class="sec">Fichiers vérifiés</h2>
+  return `<span class="eyebrow"><span class="dot"></span>Fichiers</span><h2 class="sec">Fichiers vérifiés</h2>
     <div class="muted small">Pour chaque fichier sensible testé, nous indiquons s\'il est accessible ou non depuis Internet.</div>
     <div class="muted small" style="margin-top:6px">${intro}</div>
     <div class="panel reveal"><table class="ftable"><thead><tr><th>Fichier</th><th>Détail</th><th>État</th></tr></thead>
@@ -189,7 +189,7 @@ function buildHtml(report) {
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#07090D;--card:#11111A;--sub:#171724;--line:rgba(255,255,255,.08);
+    --bg:#07090D;--card:#121821;--sub:#0D1118;--line:rgba(255,255,255,.08);
     --v:#8B5CF6;--vl:#A78BFA;--vd:#5B21B6;
     --ink:#F4F4F5;--ink2:#A1A1AA;--ok:#A78BFA;--reco:#8B5CF6;--bad:#A855F7;
   }
@@ -199,11 +199,11 @@ function buildHtml(report) {
     background:var(--bg);-webkit-font-smoothing:antialiased;position:relative;overflow-x:hidden}
   /* Décor 3D très discret, toujours derrière le contenu */
   .bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
-  .bg .grid{position:absolute;left:50%;top:-10%;width:200%;height:70vh;transform:translateX(-50%) perspective(560px) rotateX(62deg);transform-origin:top center;
-    background-image:linear-gradient(rgba(139,92,246,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,.05) 1px,transparent 1px);
-    background-size:46px 46px;-webkit-mask-image:linear-gradient(to bottom,#000,transparent 78%);mask-image:linear-gradient(to bottom,#000,transparent 78%)}
-  .bg .rad{position:absolute;inset:0;background:radial-gradient(60% 40% at 50% 0%,rgba(91,33,182,.20),transparent 70%),radial-gradient(50% 40% at 85% 30%,rgba(139,92,246,.10),transparent 70%)}
-  .orb{position:absolute;border-radius:50%;filter:blur(46px);opacity:.5;will-change:transform}
+  .bg .grid{position:absolute;inset:0;
+    background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);
+    background-size:56px 56px;-webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 40%,transparent 100%);mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 40%,transparent 100%)}
+  .bg .rad{position:absolute;inset:0;background:radial-gradient(60% 40% at 50% 0%,rgba(91,33,182,.18),transparent 70%),radial-gradient(50% 40% at 85% 25%,rgba(139,92,246,.08),transparent 70%)}
+  .orb{position:absolute;border-radius:50%;filter:blur(70px);opacity:.26;will-change:transform}
   .orb.o1{width:340px;height:340px;left:-120px;top:120px;background:radial-gradient(circle at 35% 30%,rgba(139,92,246,.5),rgba(91,33,182,.18) 60%,transparent 72%)}
   .orb.o2{width:300px;height:300px;right:-110px;top:480px;background:radial-gradient(circle at 60% 40%,rgba(167,139,250,.4),transparent 68%)}
   .orb.o3{width:260px;height:260px;left:30%;bottom:-90px;background:radial-gradient(circle at 50% 50%,rgba(91,33,182,.4),transparent 70%)}
@@ -240,6 +240,9 @@ function buildHtml(report) {
   .scoretext .sub{color:var(--ink2);margin-top:5px;font-size:14.5px}
   .scoretext .cnt{color:var(--ink);margin-top:12px;font-size:14px}
   /* Titres */
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;margin-top:42px;border:1px solid var(--line);background:rgba(255,255,255,.03);border-radius:999px;padding:5px 13px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--vl)}
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--vl);box-shadow:0 0 10px var(--v)}
+  .eyebrow + h2.sec{margin-top:12px}
   h2.sec{font-size:20px;font-weight:800;margin:40px 0 6px;letter-spacing:-.01em}
   .muted{color:var(--ink2)}.small{font-size:13px}
   /* Résumé */
@@ -356,6 +359,7 @@ function buildHtml(report) {
   <div class="page">
   <header class="cover reveal">
     <div class="brand"><span class="blogo">${brand.picto ? brand.picto('radar', '#A78BFA') : ''}</span> <span>Sentinel<span class="b">Scope</span></span></div>
+    <span class="eyebrow" style="margin-top:20px"><span class="dot"></span>Rapport d'audit</span>
     <div class="t">Votre rapport de sécurité</div>
     <div class="target">${escapeHtml(target)}</div>
     <div class="date">Vérifié le ${escapeHtml(dateStr)}</div>
@@ -381,11 +385,11 @@ function buildHtml(report) {
     </div>
   </div>
 
-  <h2 class="sec">En résumé</h2>
+  <span class="eyebrow"><span class="dot"></span>Résumé</span><h2 class="sec">En résumé</h2>
   <div class="muted small">Ce que nous avons vérifié sur votre site, en clair.</div>
   <div class="pcats">${renderPlainCategories(modules)}</div>
 
-  <h2 class="sec">Vos priorités</h2>
+  <span class="eyebrow"><span class="dot"></span>Priorités</span><h2 class="sec">Vos priorités</h2>
   <div class="muted small">Pour chaque point : ce que c'est, pourquoi le changer, et ce qu'il faut faire.</div>
   ${renderPriorities(modules)}
 
@@ -393,7 +397,7 @@ function buildHtml(report) {
 
   <div class="tech">
     <div class="tech-sep"></div>
-    <h2 class="sec" style="margin-top:14px">Détails techniques</h2>
+    <span class="eyebrow"><span class="dot"></span>Technique</span><h2 class="sec">Détails techniques</h2>
     <div class="tech-note">Cette section s'adresse aux profils techniques (développeurs, prestataires informatiques). Vous pouvez la transmettre à la personne qui gère votre site.</div>
     ${modules.map(renderModuleCard).join('\n')}
   </div>

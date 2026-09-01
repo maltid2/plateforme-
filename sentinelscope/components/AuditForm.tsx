@@ -52,6 +52,56 @@ function openReport(html?: string) {
   }
 }
 
+/** Anneau de score circulaire, cohérent avec le dashboard et le rapport. */
+function ScoreRing({
+  score,
+  grade,
+  size = 74,
+}: {
+  score: number;
+  grade: string;
+  size?: number;
+}) {
+  const stroke = 7;
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const color = gradeColor[grade] || "#8B5CF6";
+  return (
+    <div className="relative flex-none" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          stroke="rgba(255,255,255,0.08)"
+          strokeWidth={stroke}
+          fill="none"
+        />
+        <motion.circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          stroke={color}
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          fill="none"
+          strokeDasharray={c}
+          initial={{ strokeDashoffset: c }}
+          animate={{ strokeDashoffset: c * (1 - Math.max(0, Math.min(100, score)) / 100) }}
+          transition={{ duration: 1, ease: [0.2, 0.7, 0.2, 1] }}
+          style={{ filter: `drop-shadow(0 0 6px ${color}66)` }}
+        />
+      </svg>
+      <div className="absolute inset-0 grid place-items-center leading-none">
+        <div className="text-center">
+          <div className="text-xl font-extrabold text-ink">{score}</div>
+          <div className="text-[9px] uppercase tracking-wider text-muted">/ 100</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AuditForm({
   id,
   align = "start",
@@ -232,24 +282,28 @@ export default function AuditForm({
               ) : result ? (
                 <div>
                   <div className="flex items-center gap-4">
-                    <div
-                      className="grid h-16 w-16 flex-none place-items-center rounded-2xl text-2xl font-extrabold"
-                      style={{
-                        background: `${gradeColor[result.grade] || "#8D7CFF"}1f`,
-                        color: gradeColor[result.grade] || "#8D7CFF",
-                        boxShadow: `0 0 30px -8px ${gradeColor[result.grade] || "#8D7CFF"}`,
-                      }}
-                    >
-                      {result.grade}
-                    </div>
+                    <ScoreRing score={result.score} grade={result.grade} />
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-2xl font-bold text-ink">
-                          {result.score}
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg font-bold text-ink">
+                          Note {result.grade}
                         </span>
-                        <span className="text-sm text-muted">/ 100</span>
+                        <span
+                          className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                          style={{
+                            background: `${gradeColor[result.grade] || "#8B5CF6"}22`,
+                            color: gradeColor[result.grade] || "#8B5CF6",
+                          }}
+                        >
+                          {result.score}/100
+                        </span>
                       </div>
-                      <div className="truncate font-mono text-xs text-muted">
+                      {result.meaning && (
+                        <div className="mt-1 text-sm text-ink/80">
+                          {result.meaning}
+                        </div>
+                      )}
+                      <div className="mt-1 truncate font-mono text-xs text-muted">
                         {result.host}
                       </div>
                     </div>

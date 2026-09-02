@@ -66,16 +66,17 @@ function renderPlainCategories(modules) {
   return brand.CATS.map((c) => {
     const mod = byId[c.id];
     const st = categoryStatus(mod);
-    const pill = st === 'ok'
-      ? '<span class="pill ok">Tout va bien</span>'
+    const badge = st === 'ok'
+      ? '<span class="dbadge ok">Conforme</span>'
       : st === 'warn'
-        ? '<span class="pill warn">À améliorer</span>'
-        : '<span class="pill unk">Non vérifié</span>';
+        ? '<span class="dbadge warn">À améliorer</span>'
+        : '<span class="dbadge unk">Non vérifié</span>';
     const text = st === 'warn' ? c.warn : st === 'ok' ? c.ok : 'Cette vérification n\'a pas pu être effectuée (source externe indisponible).';
-    const ico = brand.picto ? brand.picto(c.pic, '#C4B5FD') : '';
-    return `<div class="pcat reveal tilt">
-      <div class="pcat-h"><span class="pico">${ico}</span><strong>${escapeHtml(c.label)}</strong>${pill}</div>
-      <div class="pcat-t">${escapeHtml(text)}</div></div>`;
+    const ico = brand.picto ? brand.picto(c.pic, 'currentColor') : '';
+    return `<div class="drow">
+      <span class="dico">${ico}</span>
+      <div class="dmain"><div class="dtitle">${escapeHtml(c.label)}</div><div class="dtext">${escapeHtml(text)}</div></div>
+      ${badge}</div>`;
   }).join('');
 }
 
@@ -179,6 +180,27 @@ function buildHtml(report) {
   const dashTarget = (C * (1 - pct / 100)).toFixed(2);
   const Cf = C.toFixed(2);
 
+  // Barre de score segmentée (indicateur horizontal fin, pas de jauge ronde).
+  const SEGMENTS = 28;
+  const segFilled = Math.round((pct / 100) * SEGMENTS);
+  const segHtml = Array.from({ length: SEGMENTS }, (_, i) =>
+    i < segFilled ? '<i class="on"></i>' : '<i></i>'
+  ).join('');
+  const levelLabel =
+    scoring.score >= 90 ? 'Niveau excellent'
+    : scoring.score >= 75 ? 'Bon niveau'
+    : scoring.score >= 60 ? 'Niveau satisfaisant'
+    : scoring.score >= 45 ? 'Niveau à renforcer'
+    : 'Niveau critique';
+  const warnCats = brand.CATS
+    .filter((c) => categoryStatus(modules.find((m) => m && m.module === c.id)) === 'warn')
+    .map((c) => c.label);
+  const sideNote = warnCats.length
+    ? '<b>' + warnCats.slice(0, 2).map(escapeHtml).join('</b>, <b>') + '</b>'
+      + (warnCats.length > 2 ? ' et ' + (warnCats.length - 2) + (warnCats.length - 2 > 1 ? ' autres' : ' autre') : '')
+      + ' à renforcer.'
+    : 'Aucun point majeur à renforcer sur votre site.';
+
   return `<!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -220,46 +242,42 @@ function buildHtml(report) {
   .cover .t{font-size:27px;font-weight:800;margin:18px 0 6px;letter-spacing:-.02em}
   .cover .target{color:var(--ink2);word-break:break-all;font-family:ui-monospace,Menlo,monospace;font-size:13px}
   .cover .date{color:var(--ink2);font-size:13px;margin-top:4px}
-  /* Carte du score — élément visuel principal */
-  .scorecard{position:relative;display:flex;align-items:center;gap:26px;margin:24px 0 8px;padding:26px 28px;border:1px solid var(--line);border-radius:22px;
-    background:linear-gradient(180deg,rgba(23,23,36,.72),rgba(17,17,26,.72));backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-    box-shadow:0 30px 70px -34px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.05);overflow:hidden}
-  .scorecard .halo{position:absolute;left:22px;top:50%;width:190px;height:190px;transform:translateY(-50%);border-radius:50%;
-    background:radial-gradient(circle,rgba(139,92,246,.30),transparent 68%);filter:blur(22px);pointer-events:none}
-  .ringwrap{position:relative;width:150px;height:150px;flex:0 0 auto}
-  .ringwrap .sphere{position:absolute;inset:14px;border-radius:50%;
-    background:radial-gradient(circle at 34% 30%,rgba(139,92,246,.22),rgba(10,8,16,.9) 62%);
-    box-shadow:inset 0 6px 18px rgba(0,0,0,.7),inset 0 -3px 10px rgba(139,92,246,.18)}
-  .ringsvg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg);
-    filter:drop-shadow(-1px -1px 1px rgba(196,181,253,.45)) drop-shadow(2px 3px 5px rgba(0,0,0,.6))}
-  .ringsvg .prog{stroke-dasharray:${Cf};stroke-dashoffset:${dashTarget};transition:none}
-  .ringcenter{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-  .ringcenter .n{font-size:40px;font-weight:800;line-height:1;color:var(--ink)}
-  .ringcenter .o{color:var(--ink2);font-size:12px;margin-top:3px;letter-spacing:.04em}
-  .scoretext .msg{font-size:22px;font-weight:800;letter-spacing:-.01em}
-  .scoretext .sub{color:var(--ink2);margin-top:5px;font-size:14.5px}
-  .scoretext .cnt{color:var(--ink);margin-top:12px;font-size:14px}
+  /* Score — présentation éditoriale (pas de jauge circulaire) */
+  .scorepanel{display:grid;grid-template-columns:1.7fr 1fr;gap:1px;margin:22px 0 8px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--line)}
+  .score-main{background:linear-gradient(180deg,#11151d,#0c0f16);padding:28px 30px}
+  .score-side{background:linear-gradient(180deg,#0f131a,#0b0e14);padding:28px 24px;display:flex;flex-direction:column;justify-content:center}
+  .score-top{display:flex;align-items:baseline;gap:11px}
+  .score-num{font-size:68px;font-weight:800;line-height:.85;letter-spacing:-.04em;background:linear-gradient(125deg,#A78BFA,#8B5CF6);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .score-den{font-size:20px;font-weight:700;color:var(--ink2)}
+  .segbar{display:flex;gap:3px;margin:20px 0 14px;height:9px}
+  .segbar i{flex:1;border-radius:2px;background:rgba(255,255,255,.06)}
+  .segbar i.on{background:linear-gradient(180deg,#A78BFA,#7C3AED);box-shadow:0 0 6px rgba(139,92,246,.35)}
+  .score-level{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--vl);text-transform:uppercase;letter-spacing:.08em}
+  .score-level .lp{width:6px;height:6px;border-radius:50%;background:var(--vl);box-shadow:0 0 8px var(--v)}
+  .score-sub{margin-top:11px;font-size:13.5px;line-height:1.55;color:var(--ink2);max-width:40ch}
+  .side-num{font-size:42px;font-weight:800;line-height:1;color:var(--ink)}
+  .side-label{font-size:13px;color:var(--ink2);margin-top:3px}
+  .side-note{margin-top:15px;padding-top:15px;border-top:1px solid var(--line);font-size:12.5px;line-height:1.55;color:var(--ink2)}
+  .side-note b{color:var(--vl);font-weight:600}
   /* Titres */
   .eyebrow{display:inline-flex;align-items:center;gap:8px;margin-top:42px;border:1px solid var(--line);background:rgba(255,255,255,.03);border-radius:999px;padding:5px 13px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--vl)}
   .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--vl);box-shadow:0 0 10px var(--v)}
   .eyebrow + h2.sec{margin-top:12px}
   h2.sec{font-size:20px;font-weight:800;margin:40px 0 6px;letter-spacing:-.01em}
   .muted{color:var(--ink2)}.small{font-size:13px}
-  /* Résumé */
-  .pcats{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
-  .pcat{position:relative;border:1px solid var(--line);border-radius:16px;padding:18px;
-    background:linear-gradient(180deg,rgba(23,23,36,.66),rgba(17,17,26,.66));backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-    box-shadow:0 22px 46px -30px rgba(0,0,0,.8);transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;transform-style:preserve-3d}
-  .pcat:hover{border-color:rgba(167,139,250,.5)}
-  .pcat-h{display:flex;align-items:center;gap:11px;font-size:15px}
-  .pico{width:38px;height:38px;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;border-radius:11px;
-    background:linear-gradient(150deg,rgba(139,92,246,.20),rgba(139,92,246,.04));border:1px solid var(--line);color:var(--vl);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.07),inset 0 -3px 6px rgba(0,0,0,.45)}
-  .pico svg{width:19px;height:19px}
-  .pill{margin-left:auto;font-size:11px;font-weight:800;padding:4px 11px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
-  .pill.ok{background:rgba(167,139,250,.12);color:#A78BFA;border-color:rgba(167,139,250,.28)}
-  .pill.warn{background:rgba(139,92,246,.13);color:var(--reco);border-color:rgba(139,92,246,.30)}
-  .pill.unk{background:rgba(255,255,255,.05);color:var(--ink2);border-color:var(--line)}
+  /* Résumé — liste de diagnostic éditoriale */
+  .diag{margin-top:16px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:linear-gradient(180deg,#0f131a,#0b0e14)}
+  .drow{display:flex;align-items:flex-start;gap:15px;padding:17px 18px;border-top:1px solid var(--line)}
+  .drow:first-child{border-top:none}
+  .dico{flex:0 0 auto;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:9px;border:1px solid var(--line);background:rgba(139,92,246,.08);color:var(--vl)}
+  .dico svg{width:17px;height:17px}
+  .dmain{flex:1;min-width:0}
+  .dtitle{font-size:14.5px;font-weight:700;color:var(--ink)}
+  .dtext{margin-top:3px;font-size:13px;line-height:1.5;color:var(--ink2)}
+  .dbadge{flex:0 0 auto;margin-top:2px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:7px;white-space:nowrap;border:1px solid transparent}
+  .dbadge.ok{color:#5FD68A;background:rgba(34,197,94,.10);border-color:rgba(34,197,94,.24)}
+  .dbadge.warn{color:#F0A93B;background:rgba(245,158,11,.10);border-color:rgba(245,158,11,.24)}
+  .dbadge.unk{color:var(--ink2);background:rgba(255,255,255,.04);border-color:var(--line)}
   .pcat-t{color:#cfcfd6;font-size:13.5px;margin-top:10px;line-height:1.5}
   /* Priorités */
   .pgroup{margin-top:18px;border:1px solid var(--line);border-radius:16px;padding:16px 18px;
@@ -335,15 +353,14 @@ function buildHtml(report) {
   /* Responsive iPhone-first */
   @media(max-width:640px){
     .page{padding:34px 16px 48px}
-    .scorecard{flex-direction:column;text-align:center;gap:18px;padding:22px 18px}
-    .scorecard .halo{left:50%;top:96px;transform:translateX(-50%)}
-    .scoretext .cnt{margin-left:auto;margin-right:auto}
-    .pcats{grid-template-columns:1fr}
+    .scorepanel{grid-template-columns:1fr}
+    .score-num{font-size:58px}
+    .side-note{max-width:none}
     .bg .grid{display:none}.orb.o2{display:none}
     .cover .t{font-size:23px}
-    .pcat,.pgroup{padding:16px}
+    .pgroup{padding:16px}
+    .drow{padding:15px 15px;gap:12px}
   }
-  @media(min-width:641px){ .pcats{gap:14px} }
   @media(prefers-reduced-motion:reduce){
     *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
     .js .reveal,.reveal{opacity:1;transform:none}
@@ -365,29 +382,23 @@ function buildHtml(report) {
     <div class="date">Vérifié le ${escapeHtml(dateStr)}</div>
   </header>
 
-  <div class="scorecard reveal">
-    <div class="halo"></div>
-    <div class="ringwrap">
-      <div class="sphere"></div>
-      <svg class="ringsvg" viewBox="0 0 150 150" aria-hidden="true">
-        <defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#A78BFA"/><stop offset="1" stop-color="#5B21B6"/>
-        </linearGradient></defs>
-        <circle cx="75" cy="75" r="${R}" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="12"/>
-        <circle class="prog" cx="75" cy="75" r="${R}" fill="none" stroke="url(#rg)" stroke-width="12" stroke-linecap="round"/>
-      </svg>
-      <div class="ringcenter"><div class="n">${scoring.score}</div><div class="o">/ 100</div></div>
+  <div class="scorepanel reveal">
+    <div class="score-main">
+      <div class="score-top"><span class="score-num">${scoring.score}</span><span class="score-den">/ 100</span></div>
+      <div class="segbar" aria-hidden="true">${segHtml}</div>
+      <div class="score-level"><span class="lp"></span>${escapeHtml(levelLabel)}</div>
+      <div class="score-sub">${escapeHtml(ps.title)}. ${escapeHtml(ps.sub)}</div>
     </div>
-    <div class="scoretext">
-      <div class="msg" style="color:${ps.color}">${escapeHtml(ps.title)}</div>
-      <div class="sub">${escapeHtml(ps.sub)}</div>
-      <div class="cnt">${warnCount > 0 ? 'Nous avons trouvé <strong>' + warnCount + ' point(s)</strong> à améliorer.' : 'Aucun point majeur à améliorer.'}</div>
+    <div class="score-side">
+      <div class="side-num">${warnCount}</div>
+      <div class="side-label">${warnCount > 1 ? 'points à améliorer' : 'point à améliorer'}</div>
+      <div class="side-note">${sideNote}</div>
     </div>
   </div>
 
   <span class="eyebrow"><span class="dot"></span>Résumé</span><h2 class="sec">En résumé</h2>
   <div class="muted small">Ce que nous avons vérifié sur votre site, en clair.</div>
-  <div class="pcats">${renderPlainCategories(modules)}</div>
+  <div class="diag">${renderPlainCategories(modules)}</div>
 
   <span class="eyebrow"><span class="dot"></span>Priorités</span><h2 class="sec">Vos priorités</h2>
   <div class="muted small">Pour chaque point : ce que c'est, pourquoi le changer, et ce qu'il faut faire.</div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowRight,
@@ -94,7 +94,7 @@ function ScoreRing({
       </svg>
       <div className="absolute inset-0 grid place-items-center leading-none">
         <div className="text-center">
-          <div className="text-xl font-extrabold text-ink">{score}</div>
+          <div className="js-score-num text-xl font-extrabold text-ink">{score}</div>
           <div className="text-[9px] uppercase tracking-wider text-muted">/ 100</div>
         </div>
       </div>
@@ -117,6 +117,50 @@ export default function AuditForm({
   const [errMsg, setErrMsg] = useState("");
   const [result, setResult] = useState<Result | null>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const resultRef = useRef<HTMLDivElement | null>(null);
+
+  // Animation premium à l'apparition du résultat (anime.js) : le score monte
+  // de 0 à sa valeur et les lignes apparaissent en cascade. Repli sans effet
+  // si la librairie ne se charge pas.
+  useEffect(() => {
+    if (phase !== "done" || !result) return;
+    let stopped = false;
+    (async () => {
+      try {
+        const { animate, stagger } = await import("animejs");
+        if (stopped) return;
+        const root = resultRef.current;
+        if (!root) return;
+        const numEl = root.querySelector<HTMLElement>(".js-score-num");
+        if (numEl) {
+          const obj = { v: 0 };
+          animate(obj, {
+            v: result.score,
+            duration: 1000,
+            ease: "out(3)",
+            onUpdate: () => {
+              numEl.textContent = String(Math.round(obj.v));
+            },
+          });
+        }
+        const rows = root.querySelectorAll(".audit-finding");
+        if (rows.length) {
+          animate(rows, {
+            opacity: [0, 1],
+            translateY: [8, 0],
+            duration: 420,
+            delay: stagger(55),
+            ease: "out(2)",
+          });
+        }
+      } catch {
+        /* anime.js indisponible : le résultat s'affiche normalement */
+      }
+    })();
+    return () => {
+      stopped = true;
+    };
+  }, [phase, result]);
 
   const stopTimer = () => {
     if (timer.current) {
@@ -280,7 +324,7 @@ export default function AuditForm({
                   </button>
                 </div>
               ) : result ? (
-                <div>
+                <div ref={resultRef}>
                   <div className="flex items-center gap-4">
                     <ScoreRing score={result.score} grade={result.grade} />
                     <div className="min-w-0 flex-1">
@@ -311,7 +355,7 @@ export default function AuditForm({
 
                   <ul className="mt-4 space-y-2">
                     {result.findings.map((f, i) => (
-                      <li key={i} className="flex items-start gap-2.5 text-sm">
+                      <li key={i} className="audit-finding flex items-start gap-2.5 text-sm">
                         {f.ok ? (
                           <ShieldCheck className="mt-0.5 h-4 w-4 flex-none text-acc-violet" />
                         ) : (

@@ -3,22 +3,25 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { Menu, Radar, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Button } from "./ui";
 
 const LINKS = [
   { label: "Produit", href: "#features" },
   { label: "Solutions", href: "#modules" },
   { label: "Ressources", href: "#faq" },
-  { label: "Tarifs", href: "#cta" },
 ];
 
 export function Logo() {
   return (
     <Link href="#top" className="flex items-center gap-2.5 font-bold text-lg">
-      <span className="relative grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-acc-violet/30 to-acc-cyan/20 ring-1 ring-white/10">
-        <Radar className="h-4.5 w-4.5 text-acc-cyan" strokeWidth={2.2} />
-      </span>
+      <img
+        src="/logo-mark.png"
+        alt="SentinelScope"
+        width={34}
+        height={34}
+        className="h-[34px] w-[34px] rounded-lg"
+      />
       <span>
         Sentinel<span className="text-acc-cyan">Scope</span>
       </span>
@@ -61,12 +64,6 @@ export default function Navbar() {
         </div>
 
         <div className="hidden items-center gap-3 md:flex">
-          <Link
-            href="#"
-            className="text-sm font-medium text-muted transition-colors hover:text-ink"
-          >
-            Connexion
-          </Link>
           <Button href="#audit-hero" className="px-5 py-2.5">
             Analyser mon site
           </Button>
@@ -103,13 +100,6 @@ export default function Navbar() {
                 </Link>
               ))}
               <div className="mt-2 flex flex-col gap-2 border-t border-line pt-4">
-                <Link
-                  href="#"
-                  onClick={() => setOpen(false)}
-                  className="px-3 py-2 text-sm font-medium text-muted"
-                >
-                  Connexion
-                </Link>
                 <Button href="#audit-hero" className="w-full" onClick={() => setOpen(false)}>
                   Analyser mon site
                 </Button>

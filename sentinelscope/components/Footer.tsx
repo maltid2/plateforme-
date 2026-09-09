@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { Github, Linkedin, Radar } from "lucide-react";
+import { Github, Linkedin } from "lucide-react";
 import { Container } from "./ui";
 
 const COLUMNS = [
   {
     title: "Produit",
-    links: ["Analyse de sécurité", "Score & note", "Rapport détaillé", "Contrôles vérifiés", "Tarifs"],
+    links: ["Analyse de sécurité", "Score & note", "Rapport détaillé", "Contrôles vérifiés"],
   },
   {
     title: "Solutions",
@@ -43,9 +43,13 @@ export default function Footer() {
           {/* brand */}
           <div className="max-w-xs">
             <Link href="#top" className="flex items-center gap-2.5 text-lg font-bold">
-              <span className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-acc-violet/30 to-acc-cyan/20 ring-1 ring-white/10">
-                <Radar className="h-4.5 w-4.5 text-acc-cyan" strokeWidth={2.2} />
-              </span>
+              <img
+                src="/logo-mark.png"
+                alt="SentinelScope"
+                width={34}
+                height={34}
+                className="h-[34px] w-[34px] rounded-lg"
+              />
               Sentinel<span className="text-acc-cyan">Scope</span>
             </Link>
             <p className="mt-4 text-sm leading-relaxed text-muted">

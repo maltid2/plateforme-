@@ -14,17 +14,14 @@ const LINKS = [
 
 export function Logo() {
   return (
-    <Link href="#top" className="flex items-center gap-2.5 font-bold text-lg">
+    <Link href="#top" className="flex items-center" aria-label="SentinelScope">
       <img
-        src="/logo-mark.png"
-        alt="SentinelScope"
-        width={34}
-        height={34}
-        className="h-[34px] w-[34px] rounded-lg"
+        src="/logo-full.png"
+        alt="SentinelScope — Sécurité, Analyse, Surveillance"
+        width={1600}
+        height={288}
+        className="h-9 w-auto sm:h-10"
       />
-      <span>
-        Sentinel<span className="text-acc-cyan">Scope</span>
-      </span>
     </Link>
   );
 }

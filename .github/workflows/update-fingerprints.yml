@@ -1,0 +1,47 @@
+name: Mise à jour des signatures de sécurité
+
+# Régénère chaque jour la base de signatures technologiques du moteur d'audit
+# (source open-source : enthec/webappanalyzer). Ne committe que s'il y a un
+# changement — Vercel redéploie alors automatiquement.
+
+on:
+  schedule:
+    - cron: "0 3 * * *" # tous les jours à 03:00 UTC
+  workflow_dispatch: {} # déclenchement manuel possible
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-fingerprints
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Régénérer les signatures
+        working-directory: sentinelscope/audit-engine
+        run: node scripts/update-fingerprints.js
+
+      - name: Committer si changement
+        run: |
+          set -euo pipefail
+          FILE="sentinelscope/audit-engine/data/fingerprints.generated.json"
+          if git diff --quiet -- "$FILE"; then
+            echo "Aucun changement de signatures — rien à committer."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$FILE"
+          git commit -m "chore(audit): mise à jour quotidienne des signatures de sécurité"
+          git push

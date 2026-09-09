@@ -92,9 +92,6 @@ export default function FinalCTA() {
           <div className="mt-9">
             <AuditForm id="audit-cta" align="center" />
           </div>
-          <p className="mt-6 text-sm text-muted">
-            Paiement unique · Audits illimités · Sans abonnement
-          </p>
         </Reveal>
       </Container>
     </section>

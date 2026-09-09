@@ -5,7 +5,6 @@ import Features from "@/components/Features";
 import Product from "@/components/Product";
 import Modules from "@/components/Modules";
 import Security from "@/components/Security";
-import Testimonials from "@/components/Testimonials";
 import FAQ from "@/components/FAQ";
 import FinalCTA from "@/components/FinalCTA";
 import Footer from "@/components/Footer";
@@ -21,7 +20,6 @@ export default function Home() {
         <Product />
         <Modules />
         <Security />
-        <Testimonials />
         <FAQ />
         <FinalCTA />
       </main>

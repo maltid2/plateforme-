@@ -8,8 +8,8 @@ import { Button } from "./ui";
 
 const LINKS = [
   { label: "Produit", href: "#features" },
-  { label: "Solutions", href: "#modules" },
-  { label: "Ressources", href: "#faq" },
+  { label: "Sécurité", href: "#security" },
+  { label: "FAQ", href: "#faq" },
 ];
 
 export function Logo() {

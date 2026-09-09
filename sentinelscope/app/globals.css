@@ -126,6 +126,45 @@
   }
 }
 
+/* Typographie des pages légales */
+.legal h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #f5f7fa;
+  margin-top: 2.2rem;
+  margin-bottom: 0.6rem;
+}
+.legal h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #f5f7fa;
+  margin-top: 1.3rem;
+  margin-bottom: 0.4rem;
+}
+.legal p {
+  color: #8b98a8;
+  line-height: 1.7;
+  margin-bottom: 0.9rem;
+}
+.legal ul {
+  color: #8b98a8;
+  line-height: 1.7;
+  margin: 0 0 0.9rem 1.2rem;
+  list-style: disc;
+}
+.legal li {
+  margin-bottom: 0.35rem;
+}
+.legal a {
+  color: #8d7cff;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.legal strong {
+  color: #f5f7fa;
+  font-weight: 600;
+}
+
 /* Accessibilité clavier : focus visible cohérent (violet), sans gêner la souris */
 :focus-visible {
   outline: 2px solid #a78bfa;

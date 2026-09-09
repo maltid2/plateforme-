@@ -185,10 +185,12 @@ export default function AuditForm({
 
     // Fait avancer les étapes visuellement jusqu'à l'avant-dernière, en
     // attendant la vraie réponse du moteur.
+    const startedAt = Date.now();
+    const MIN_LOADER_MS = 5200; // durée minimale d'affichage du loader
     stopTimer();
     timer.current = setInterval(() => {
       setStep((s) => (s < STEPS.length - 1 ? s + 1 : s));
-    }, 650);
+    }, 900);
 
     try {
       const r = await fetch("/api/audit", {
@@ -197,12 +199,19 @@ export default function AuditForm({
         body: JSON.stringify({ url: raw }),
       });
       const j = await r.json();
-      stopTimer();
       if (!r.ok) {
+        stopTimer();
         setErrMsg(j?.error || "Une erreur est survenue pendant l'analyse.");
         setPhase("error");
         return;
       }
+      // Laisse le loader durer au moins MIN_LOADER_MS (les étapes continuent
+      // d'avancer pendant l'attente), même si le moteur répond très vite.
+      const elapsed = Date.now() - startedAt;
+      if (elapsed < MIN_LOADER_MS) {
+        await new Promise((res) => setTimeout(res, MIN_LOADER_MS - elapsed));
+      }
+      stopTimer();
       setResult(j as Result);
       setStep(STEPS.length);
       setPhase("done");

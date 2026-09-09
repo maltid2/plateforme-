@@ -21,15 +21,30 @@ const http = require('./http-client');
 const NVD_API = 'https://services.nvd.nist.gov/rest/json/cves/2.0';
 
 function loadFingerprints() {
+  const valid = (t) => t && typeof t.name === 'string';
+  let curated = [];
   try {
     // require() (au lieu de fs) pour que le bundler Vercel embarque le JSON.
     const data = require('../../data/fingerprints.json');
-    const list = (data && data.technologies) || [];
-    // On ignore les entrées de commentaire/section (sans nom réel).
-    return list.filter((t) => t && typeof t.name === 'string');
+    curated = ((data && data.technologies) || []).filter(valid);
   } catch (err) {
-    return [];
+    curated = [];
   }
+
+  // Signatures générées quotidiennement (scripts/update-fingerprints.js).
+  // Optionnelles : si le fichier n'existe pas, on fonctionne sur la base
+  // curée seule. La base curée reste prioritaire (dédup par nom).
+  let generated = [];
+  try {
+    const gen = require('../../data/fingerprints.generated.json');
+    generated = ((gen && gen.technologies) || []).filter(valid);
+  } catch (err) {
+    generated = [];
+  }
+
+  const seen = new Set(curated.map((t) => t.name.toLowerCase()));
+  const extra = generated.filter((t) => !seen.has(t.name.toLowerCase()));
+  return curated.concat(extra);
 }
 
 /**

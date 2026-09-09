@@ -1,0 +1,2905 @@
+{
+ "_comment": "Fichier GÉNÉRÉ automatiquement — ne pas éditer à la main. Source : enthec/webappanalyzer (GPL-3.0). Fusionné au runtime avec data/fingerprints.json (base curée prioritaire). Régénéré par scripts/update-fingerprints.js.",
+ "_source": "enthec/webappanalyzer",
+ "_generatedAt": "2026-09-09",
+ "technologies": [
+  {
+   "name": "Adminer",
+   "cpe": "cpe:2.3:a:adminer:adminer",
+   "category": "Database managers",
+   "headers": {
+    "composed-by": "adminer\\((\\d\\.)+\\)"
+   },
+   "html": [
+    "Adminer</a> <span class=\"version\">([\\d.]+)</span>",
+    "onclick=\"bodyClick\\(event\\);\" onload=\"verifyVersion\\('([\\d.]+)'\\);\">"
+   ],
+   "cookies": [
+    "adminer_key",
+    "adminer_sid"
+   ]
+  },
+  {
+   "name": "Adobe ColdFusion",
+   "cpe": "cpe:2.3:a:adobe:coldfusion",
+   "category": "Framework web",
+   "headers": {
+    "Cookie": "CFTOKEN="
+   },
+   "html": [
+    "<!-- START headerTags\\.cfm"
+   ],
+   "cookies": [
+    "CFID|CFTOKEN|CFMAGIC|CFGLOBALS"
+   ]
+  },
+  {
+   "name": "Adobe Experience Manager",
+   "cpe": "cpe:2.3:a:adobe:experience_manager",
+   "category": "CMS",
+   "html": [
+    "<div class=\"[^\"]*parbase",
+    "<div[^>]+data-component-path=\"[^\"+]jcr:",
+    "<div class=\"[^\"]*aem-Grid"
+   ]
+  },
+  {
+   "name": "Adobe GoLive",
+   "cpe": "cpe:2.3:a:adobe:golive",
+   "category": "Editors",
+   "meta": {
+    "generator": "Adobe GoLive(?:\\s([\\d.]+))?"
+   }
+  },
+  {
+   "name": "Adobe RoboHelp",
+   "cpe": "cpe:2.3:a:adobe:robohelp",
+   "category": "Documentation",
+   "meta": {
+    "generator": "^Adobe RoboHelp(?: ([\\d]+))?"
+   }
+  },
+  {
+   "name": "Akaunting",
+   "cpe": "cpe:2.3:a:akaunting:akaunting",
+   "category": "Accounting",
+   "headers": {
+    "X-Akaunting": "^Free Accounting Software$"
+   },
+   "html": [
+    "<link[^>]+akaunting-green\\.css",
+    "Powered By Akaunting: <a [^>]*href=\"https?://(?:www\\.)?akaunting\\.com[^>]+>"
+   ]
+  },
+  {
+   "name": "Akka HTTP",
+   "cpe": "cpe:2.3:a:lightbend:akka_http",
+   "category": "Framework web",
+   "headers": {
+    "Server": "akka-http(?:/([\\d.]+))?"
+   }
+  },
+  {
+   "name": "All in One SEO",
+   "cpe": "cpe:2.3:a:aioseo:all_in_one_seo",
+   "category": "SEO",
+   "meta": {
+    "generator": "^all in one seo \\(aioseo\\) ([\\d\\.]+)"
+   },
+   "html": [
+    "<!-- all in one seo ([\\d.]+) ",
+    "<!-- all in one seo pack ([\\d.]+) ",
+    "<!-- all in one seo pro ([\\d.]+) "
+   ]
+  },
+  {
+   "name": "All in One SEO Pack",
+   "cpe": "cpe:2.3:a:aioseo:all_in_one_seo",
+   "category": "SEO",
+   "meta": {
+    "generator": "^All in One SEO \\(AIOSEO\\)\\s([\\d.]+)$"
+   },
+   "html": [
+    "<!-- All in One SEO Pack ([\\d.]+) "
+   ]
+  },
+  {
+   "name": "Alpine Linux",
+   "cpe": "cpe:2.3:o:alpinelinux:alpine_linux",
+   "category": "Système d'exploitation",
+   "headers": {
+    "X-Powered-By": "Alpine"
+   }
+  },
+  {
+   "name": "Ametys",
+   "cpe": "cpe:2.3:a:ametys:ametys",
+   "category": "CMS",
+   "meta": {
+    "generator": "(?:Ametys|Anyware Technologies)"
+   }
+  },
+  {
+   "name": "AMP for WordPress",
+   "cpe": "cpe:2.3:a:ampforwp:accelerated_mobile_pages",
+   "category": "WordPress plugins",
+   "meta": {
+    "generator": "^AMP Plugin v(\\d+\\.\\d+.*)$"
+   }
+  },
+  {
+   "name": "AngularJS",
+   "cpe": "cpe:2.3:a:angularjs:angular.js",
+   "category": "Framework JavaScript",
+   "html": [
+    "<(?:div|html)[^>]+ng-app=",
+    "<ng-app"
+   ]
+  },
+  {
+   "name": "AOLserver",
+   "cpe": "cpe:2.3:a:aol:aolserver",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "AOLserver/?([\\d.]+)?"
+   }
+  },
+  {
+   "name": "Apache APISIX",
+   "cpe": "cpe:2.3:a:apache:apisix",
+   "category": "Serveur web",
+   "headers": {
+    "X-APISIX-Upstream-Status": "",
+    "server": "^APISIX(?:/([\\d\\.]+))?$"
+   }
+  },
+  {
+   "name": "Apache HTTP Server",
+   "cpe": "cpe:2.3:a:apache:http_server",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "(?:Apache(?:$|/([\\d.]+)|[^/-])|(?:^|\\b)HTTPD)"
+   }
+  },
+  {
+   "name": "Apache JSPWiki",
+   "cpe": "cpe:2.3:a:apache:jspwiki",
+   "category": "Wikis",
+   "html": [
+    "<html[^>]* xmlns:jspwiki="
+   ]
+  },
+  {
+   "name": "Apache Traffic Server",
+   "cpe": "cpe:2.3:a:apache:traffic_server",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "ATS/?([\\d.]+)?"
+   }
+  },
+  {
+   "name": "Arastta",
+   "cpe": "cpe:2.3:a:arastta:ecommerce",
+   "category": "E-commerce",
+   "headers": {
+    "Arastta": "^(.+)$",
+    "X-Arastta": "",
+    "x-arastta": ""
+   }
+  },
+  {
+   "name": "Artifactory",
+   "cpe": "cpe:2.3:a:jfrog:artifactory",
+   "category": "Development",
+   "html": [
+    "<span class=\"version\">Artifactory(?: Pro)?(?: Power Pack)?(?: ([\\d.]+))?"
+   ]
+  },
+  {
+   "name": "Artifactory Web Server",
+   "cpe": "cpe:2.3:a:jfrog:artifactory",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "Artifactory(?:/([\\d.]+))?"
+   }
+  },
+  {
+   "name": "Asciidoctor",
+   "cpe": "cpe:2.3:a:asciidoctor:asciidoctor",
+   "category": "Documentation",
+   "meta": {
+    "generator": "^Asciidoctor\\s([\\d\\.]+)$"
+   }
+  },
+  {
+   "name": "Atlassian Bitbucket",
+   "cpe": "cpe:2.3:a:atlassian:bitbucket",
+   "category": "Development",
+   "meta": {
+    "application-name": "Bitbucket"
+   },
+   "html": [
+    "<li>Atlassian Bitbucket <span title=\"[a-z0-9]+\" id=\"product-version\" data-commitid=\"[a-z0-9]+\" data-system-build-number=\"[a-z0-9]+\"> v([\\d.]+)<"
+   ]
+  },
+  {
+   "name": "Atlassian Confluence",
+   "cpe": "cpe:2.3:a:atlassian:confluence",
+   "category": "Wikis",
+   "headers": {
+    "X-Confluence-Request-Time": ""
+   },
+   "meta": {
+    "confluence-request-time": ""
+   }
+  },
+  {
+   "name": "Atlassian FishEye",
+   "cpe": "cpe:2.3:a:atlassian:fisheye",
+   "category": "Development",
+   "html": [
+    "<title>(?:Log in to )?FishEye (?:and Crucible )?([\\d.]+)?</title>"
+   ],
+   "cookies": [
+    "FESESSIONID"
+   ]
+  },
+  {
+   "name": "Atlassian Jira",
+   "cpe": "cpe:2.3:a:atlassian:jira",
+   "category": "Issue trackers",
+   "meta": {
+    "application-name": "JIRA",
+    "data-version": "([\\d.]+)"
+   }
+  },
+  {
+   "name": "AWStats",
+   "cpe": "cpe:2.3:a:laurent_destailleur:awstats",
+   "category": "Analytics",
+   "meta": {
+    "generator": "AWStats ([\\d.]+(?: \\(build [\\d.]+\\))?)"
+   }
+  },
+  {
+   "name": "Backdrop",
+   "cpe": "cpe:2.3:a:backdropcms:backdrop",
+   "category": "CMS",
+   "headers": {
+    "X-Backdrop-Cache": "",
+    "X-Generator": "^Backdrop CMS(?:\\s([\\d.]+))?"
+   },
+   "meta": {
+    "generator": "^Backdrop CMS(?:\\s([\\d.]+))?"
+   }
+  },
+  {
+   "name": "BIGACE",
+   "cpe": "cpe:2.3:a:bigace:bigace",
+   "category": "CMS",
+   "meta": {
+    "generator": "BIGACE ([\\d.]+)"
+   }
+  },
+  {
+   "name": "Bigware",
+   "cpe": "cpe:2.3:a:bigware:bigware_shop",
+   "category": "E-commerce",
+   "html": [
+    "(?:Diese <a href=[^>]+bigware\\.de|<a href=[^>]+/main_bigware_\\d+\\.php)"
+   ],
+   "cookies": [
+    "bigWAdminID",
+    "bigwareCsid"
+   ]
+  },
+  {
+   "name": "Bolt CMS",
+   "cpe": "cpe:2.3:a:bolt:bolt",
+   "category": "CMS",
+   "meta": {
+    "generator": "Bolt"
+   }
+  },
+  {
+   "name": "BookStack",
+   "cpe": "cpe:2.3:a:bookstackapp:bookstack",
+   "category": "Documentation",
+   "cookies": [
+    "bookstack_session"
+   ]
+  },
+  {
+   "name": "Bugzilla",
+   "cpe": "cpe:2.3:a:mozilla:bugzilla",
+   "category": "Issue trackers",
+   "meta": {
+    "generator": "Bugzilla ?([\\d.]+)?"
+   },
+   "html": [
+    "href=\"enter_bug\\.cgi\">",
+    "<main id=\"bugzilla-body\"",
+    "<a href=\"https?://www\\.bugzilla\\.org/docs/([0-9.]+)/[^>]+>Help<",
+    "<span id=\"information\" class=\"header_addl_info\">version ([\\d.]+)<"
+   ],
+   "cookies": [
+    "Bugzilla_login_request_cookie"
+   ]
+  },
+  {
+   "name": "CakePHP",
+   "cpe": "cpe:2.3:a:cakephp:cakephp",
+   "category": "Framework web",
+   "meta": {
+    "application-name": "CakePHP"
+   },
+   "cookies": [
+    "cakephp"
+   ]
+  },
+  {
+   "name": "Cecil",
+   "cpe": "cpe:2.3:a:cecil:cecil",
+   "category": "Générateur de site statique",
+   "meta": {
+    "generator": "^Cecil(?: ([0-9.]+))?$"
+   }
+  },
+  {
+   "name": "CentOS",
+   "cpe": "cpe:2.3:o:centos:centos",
+   "category": "Système d'exploitation",
+   "headers": {
+    "Server": "CentOS",
+    "X-Powered-By": "CentOS"
+   }
+  },
+  {
+   "name": "Chamilo",
+   "cpe": "cpe:2.3:a:chamilo:chamilo_lms",
+   "category": "Base de données",
+   "headers": {
+    "X-Powered-By": "Chamilo ([\\d.]+)"
+   },
+   "meta": {
+    "generator": "Chamilo ([\\d.]+)"
+   }
+  },
+  {
+   "name": "Cherokee",
+   "cpe": "cpe:2.3:a:cherokee-project:cherokee",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "^Cherokee(?:/([\\d.]+))?"
+   }
+  },
+  {
+   "name": "CherryPy",
+   "cpe": "cpe:2.3:a:cherrypy:cherrypy",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "CherryPy(?:/([\\d.]+))?"
+   }
+  },
+  {
+   "name": "Chevereto",
+   "cpe": "cpe:2.3:a:chevereto:chevereto",
+   "category": "Photo galleries",
+   "meta": {
+    "generator": "Chevereto\\s(?:[\\d\\.]+)"
+   }
+  },
+  {
+   "name": "CMS Made Simple",
+   "cpe": "cpe:2.3:a:cmsmadesimple:cms_made_simple",
+   "category": "CMS",
+   "meta": {
+    "generator": "CMS Made Simple"
+   },
+   "cookies": [
+    "CMSSESSID"
+   ]
+  },
+  {
+   "name": "CMSimple",
+   "cpe": "cpe:2.3:a:cmsimple:cmsimple",
+   "category": "CMS",
+   "meta": {
+    "generator": "CMSimple( [\\d.]+)?"
+   }
+  },
+  {
+   "name": "Coaster CMS",
+   "cpe": "cpe:2.3:a:web-feet:coaster_cms",
+   "category": "CMS",
+   "meta": {
+    "generator": "^Coaster CMS v([\\d.]+)$"
+   }
+  },
+  {
+   "name": "Commerce Server",
+   "cpe": "cpe:2.3:a:microsoft:commerce_server",
+   "category": "E-commerce",
+   "headers": {
+    "COMMERCE-SERVER-SOFTWARE": ""
+   }
+  },
+  {
+   "name": "Concrete CMS",
+   "cpe": "cpe:2.3:a:concrete5:concrete5",
+   "category": "CMS",
+   "meta": {
+    "generator": "^concrete5(?: - ([\\d.]+)$)?"
+   },
+   "cookies": [
+    "CONCRETE5"
+   ]
+  },
+  {
+   "name": "Contao",
+   "cpe": "cpe:2.3:a:contao:contao_cms",
+   "category": "CMS",
+   "meta": {
+    "generator": "^Contao Open Source CMS$"
+   }
+  },
+  {
+   "name": "Contenido",
+   "cpe": "cpe:2.3:a:contenido:contendio",
+   "category": "CMS",
+   "meta": {
+    "generator": "Contenido ([\\d.]+)"
+   }
+  },
+  {
+   "name": "Coppermine",
+   "cpe": "cpe:2.3:a:coppermine-gallery:coppermine_photo_gallery",
+   "category": "Photo galleries",
+   "html": [
+    "<!--Coppermine Photo Gallery ([\\d.]+)"
+   ]
+  },
+  {
+   "name": "Cosmoshop",
+   "cpe": "cpe:2.3:a:cosmoshop:cosmoshop",
+   "category": "E-commerce",
+   "meta": {
+    "cosmoshop.settings": ""
+   }
+  },
+  {
+   "name": "Cotonti",
+   "cpe": "cpe:2.3:a:cotonti:cotonti_siena",
+   "category": "CMS",
+   "meta": {
+    "generator": "Cotonti"
+   }
+  },
+  {
+   "name": "CouchDB",
+   "cpe": "cpe:2.3:a:apache:couchdb",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "CouchDB/([\\d.]+)"
+   }
+  },
+  {
+   "name": "cPanel",
+   "cpe": "cpe:2.3:a:cpanel:cpanel",
+   "category": "Hosting panels",
+   "headers": {
+    "Server": "cpsrvd/([\\d.]+)"
+   },
+   "html": [
+    "<!-- cPanel"
+   ],
+   "cookies": [
+    "cprelogin",
+    "cpsession"
+   ]
+  },
+  {
+   "name": "CppCMS",
+   "cpe": "cpe:2.3:a:cppcms:cppcms",
+   "category": "CMS",
+   "headers": {
+    "X-Powered-By": "^CppCMS/([\\d.]+)$"
+   }
+  },
+  {
+   "name": "Craft CMS",
+   "cpe": "cpe:2.3:a:craftcms:craft_cms",
+   "category": "CMS",
+   "headers": {
+    "X-Powered-By": "\\bCraft CMS\\b"
+   },
+   "cookies": [
+    "CRAFT_CSRF_TOKEN",
+    "CraftSessionId"
+   ]
+  },
+  {
+   "name": "CubeCart",
+   "cpe": "cpe:2.3:a:cubecart:cubecart",
+   "category": "E-commerce",
+   "meta": {
+    "generator": "cubecart"
+   }
+  },
+  {
+   "name": "Dancer",
+   "cpe": "cpe:2.3:a:dancer:dancer",
+   "category": "Framework web",
+   "headers": {
+    "Server": "Perl Dancer ([\\d.]+)",
+    "X-Powered-By": "Perl Dancer ([\\d.]+)"
+   }
+  },
+  {
+   "name": "DataLife Engine",
+   "cpe": "cpe:2.3:a:dleviet:datalife_engine",
+   "category": "CMS",
+   "meta": {
+    "generator": "DataLife Engine"
+   }
+  },
+  {
+   "name": "Debian",
+   "cpe": "cpe:2.3:o:debian:debian_linux",
+   "category": "Système d'exploitation",
+   "headers": {
+    "Server": "Debian",
+    "X-Powered-By": "(?:Debian|dotdeb|(potato|woody|sarge|etch|lenny|squeeze|wheezy|jessie|stretch|buster|sid))"
+   }
+  },
+  {
+   "name": "DeskPro",
+   "cpe": "cpe:2.3:a:deskpro:deskpro",
+   "category": "CMS",
+   "meta": {
+    "generator": "^DeskPRO.+$"
+   }
+  },
+  {
+   "name": "DirectAdmin",
+   "cpe": "cpe:2.3:a:directadmin:directadmin",
+   "category": "Hosting panels",
+   "headers": {
+    "Server": "DirectAdmin Daemon v([\\d.]+)"
+   },
+   "html": [
+    "<a[^>]+>DirectAdmin</a> Web Control Panel"
+   ]
+  },
+  {
+   "name": "Directus",
+   "cpe": "cpe:2.3:a:monospace:directus",
+   "category": "CMS",
+   "headers": {
+    "x-powered-by": "^Directus$"
+   }
+  },
+  {
+   "name": "Discourse",
+   "cpe": "cpe:2.3:a:discourse:discourse",
+   "category": "Forum",
+   "meta": {
+    "generator": "Discourse(?: ?/?([\\d.]+\\d))?"
+   }
+  },
+  {
+   "name": "DNN",
+   "cpe": "cpe:2.3:a:dnnsoftware:dotnetnuke",
+   "category": "CMS",
+   "headers": {
+    "Cookie": "dnn_IsMobile=",
+    "DNNOutputCache": "",
+    "X-Compressed-By": "DotNetNuke"
+   },
+   "meta": {
+    "generator": "DotNetNuke"
+   },
+   "html": [
+    "<!-- by DotNetNuke Corporation",
+    "<!-- DNN Platform"
+   ],
+   "cookies": [
+    "DotNetNukeAnonymous"
+   ]
+  },
+  {
+   "name": "Docker",
+   "cpe": "cpe:2.3:a:docker:engine",
+   "category": "Containers",
+   "html": [
+    "<!-- This comment is expected by the docker HEALTHCHECK  -->"
+   ]
+  },
+  {
+   "name": "Dokeos",
+   "cpe": "cpe:2.3:a:dokeos:dokeos",
+   "category": "Base de données",
+   "headers": {
+    "X-Powered-By": "Dokeos"
+   },
+   "meta": {
+    "generator": "Dokeos"
+   },
+   "html": [
+    "(?:Portal <a[^>]+>Dokeos|@import \"[^\"]+dokeos_blue)"
+   ]
+  },
+  {
+   "name": "DokuWiki",
+   "cpe": "cpe:2.3:a:dokuwiki:dokuwiki",
+   "category": "Wikis",
+   "meta": {
+    "generator": "^DokuWiki( Release [\\d-]+)?"
+   },
+   "cookies": [
+    "DokuWiki"
+   ]
+  },
+  {
+   "name": "Dotclear",
+   "cpe": "cpe:2.3:a:dotclear:dotclear",
+   "category": "Blog",
+   "headers": {
+    "X-Dotclear-Static-Cache": ""
+   }
+  },
+  {
+   "name": "Doxygen",
+   "cpe": "cpe:2.3:a:doxygen:doxygen",
+   "category": "Documentation",
+   "meta": {
+    "generator": "Doxygen ([\\d.]+)"
+   },
+   "html": [
+    "(?:<!-- Generated by Doxygen ([\\d.]+)|<link[^>]+doxygen\\.css)"
+   ]
+  },
+  {
+   "name": "DreamWeaver",
+   "cpe": "cpe:2.3:a:adobe:dreamweaver",
+   "category": "Editors",
+   "meta": {
+    "generator": "^Adobe dreamweaver$"
+   },
+   "html": [
+    "<!--[^>]*(?:InstanceBeginEditable|Dreamweaver([^>]+)target|DWLayoutDefaultTable)",
+    "<!-- #BeginTemplate\\s\"[\\d_\\w/]+\\.dwt"
+   ]
+  },
+  {
+   "name": "Drupal Commerce",
+   "cpe": "cpe:2.3:a:commerceguys:commerce",
+   "category": "E-commerce",
+   "html": [
+    "<[^>]+(?:id=\"block[_-]commerce[_-]cart[_-]cart|class=\"commerce[_-]product[_-]field)"
+   ]
+  },
+  {
+   "name": "e107",
+   "cpe": "cpe:2.3:a:e107:e107",
+   "category": "CMS",
+   "headers": {
+    "X-Powered-By": "e107"
+   },
+   "cookies": [
+    "e107_tz"
+   ]
+  },
+  {
+   "name": "ElasticPress",
+   "cpe": "cpe:2.3:a:10up:elasticpress",
+   "category": "WordPress plugins",
+   "headers": {
+    "x-elasticpress-query": ""
+   }
+  },
+  {
+   "name": "Eleanor CMS",
+   "cpe": "cpe:2.3:a:eleanor-cms:eleanor_cms",
+   "category": "CMS",
+   "meta": {
+    "generator": "Eleanor"
+   }
+  },
+  {
+   "name": "EmbedThis Appweb",
+   "cpe": "cpe:2.3:a:embedthis:appweb",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "Mbedthis-Appweb(?:/([\\d.]+))?"
+   }
+  },
+  {
+   "name": "Envoy",
+   "cpe": "cpe:2.3:a:envoyproxy:envoy",
+   "category": "Reverse proxy",
+   "headers": {
+    "Server": "^envoy$",
+    "x-envoy-upstream-service-time": ""
+   }
+  },
+  {
+   "name": "Erlang",
+   "cpe": "cpe:2.3:a:erlang:erlang\\/otp",
+   "category": "Langage",
+   "headers": {
+    "Server": "Erlang(?: OTP/([\\d.ABR-]+))?"
+   }
+  },
+  {
+   "name": "Etherpad",
+   "cpe": "cpe:2.3:a:etherpad:etherpad",
+   "category": "Rich text editors",
+   "headers": {
+    "Server": "^Etherpad"
+   }
+  },
+  {
+   "name": "experiencedCMS",
+   "cpe": "cpe:2.3:a:experiencedcms:experiencedcms",
+   "category": "CMS",
+   "meta": {
+    "generator": "^experiencedCMS$"
+   }
+  },
+  {
+   "name": "ExpressionEngine",
+   "cpe": "cpe:2.3:a:ellislab:expressionengine",
+   "category": "CMS",
+   "cookies": [
+    "exp_csrf_token",
+    "exp_last_activity",
+    "exp_tracker"
+   ]
+  },
+  {
+   "name": "eZ Publish",
+   "cpe": "cpe:2.3:a:ez:ez_publish",
+   "category": "CMS",
+   "headers": {
+    "X-Powered-By": "^eZ Publish"
+   },
+   "meta": {
+    "generator": "eZ Publish"
+   },
+   "cookies": [
+    "eZSESSID"
+   ]
+  },
+  {
+   "name": "F5 BigIP",
+   "cpe": "cpe:2.3:a:f5:big-ip",
+   "category": "Reverse proxy",
+   "headers": {
+    "server": "^big-?ip$"
+   },
+   "cookies": [
+    "F5_HT_shrinked",
+    "F5_ST",
+    "F5_fullWT",
+    "LastMRH_Session",
+    "MRHSHint",
+    "MRHSequence",
+    "MRHSession",
+    "TIN"
+   ]
+  },
+  {
+   "name": "Fat-Free Framework",
+   "cpe": "cpe:2.3:a:fatfreeframework:fat-free_framework",
+   "category": "Framework web",
+   "headers": {
+    "X-Powered-By": "^Fat-Free Framework$"
+   }
+  },
+  {
+   "name": "Fedora",
+   "cpe": "cpe:2.3:o:fedoraproject:fedora",
+   "category": "Système d'exploitation",
+   "headers": {
+    "Server": "Fedora"
+   }
+  },
+  {
+   "name": "Firebase",
+   "cpe": "cpe:2.3:a:google:firebase_cloud_messaging",
+   "category": "Base de données",
+   "headers": {
+    "vary": "x-fh-requested-host"
+   }
+  },
+  {
+   "name": "Flarum",
+   "cpe": "cpe:2.3:a:flarum:flarum",
+   "category": "Forum",
+   "html": [
+    "<div id=\"flarum-loading\""
+   ]
+  },
+  {
+   "name": "FlipBuilder",
+   "cpe": "cpe:2.3:a:flipbuilder:flip_pdf",
+   "category": "CMS",
+   "meta": {
+    "Generator": "Flip PDF Professional ([\\d\\.]+) at https?://www\\.flipbuilder\\.com"
+   }
+  },
+  {
+   "name": "Flutter",
+   "cpe": "cpe:2.3:a:flutter:flutter",
+   "category": "UI frameworks",
+   "meta": {
+    "id": "^flutterweb-theme$"
+   }
+  },
+  {
+   "name": "FluxBB",
+   "cpe": "cpe:2.3:a:fluxbb:fluxbb",
+   "category": "Forum",
+   "html": [
+    "<p id=\"poweredby\">[^<]+<a href=\"https?://fluxbb\\.org/\">"
+   ]
+  },
+  {
+   "name": "Fork CMS",
+   "cpe": "cpe:2.3:a:fork-cms:fork_cms",
+   "category": "CMS",
+   "meta": {
+    "generator": "^Fork CMS$"
+   }
+  },
+  {
+   "name": "Foswiki",
+   "cpe": "cpe:2.3:a:foswiki:foswiki",
+   "category": "Wikis",
+   "headers": {
+    "X-Foswikiaction": "",
+    "X-Foswikiuri": ""
+   },
+   "meta": {
+    "foswiki.SERVERTIME": "",
+    "foswiki.WIKINAME": ""
+   },
+   "html": [
+    "<div class=\"foswiki(?:Copyright|Page|Main)\">"
+   ],
+   "cookies": [
+    "FOSWIKISTRIKEONE",
+    "SFOSWIKISID"
+   ]
+  },
+  {
+   "name": "Frappe",
+   "cpe": "cpe:2.3:a:frappe:frappe",
+   "category": "Framework web",
+   "meta": {
+    "generator": "^frappe$"
+   }
+  },
+  {
+   "name": "FreeBSD",
+   "cpe": "cpe:2.3:o:freebsd:freebsd",
+   "category": "Système d'exploitation",
+   "headers": {
+    "Server": "FreeBSD(?: ([\\d.]+))?"
+   }
+  },
+  {
+   "name": "FreeTextBox",
+   "cpe": "cpe:2.3:a:freetextbox:freetextbox",
+   "category": "Rich text editors",
+   "html": [
+    "<!-- \\* FreeTextBox v\\d \\((\\d+\\.\\d+\\.\\d+)"
+   ]
+  },
+  {
+   "name": "FrontPage",
+   "cpe": "cpe:2.3:a:microsoft:frontpage",
+   "category": "Editors",
+   "meta": {
+    "ProgId": "^FrontPage\\.",
+    "generator": "Microsoft FrontPage(?:\\s((?:Express )?[\\d.]+))?"
+   }
+  },
+  {
+   "name": "Gatsby",
+   "cpe": "cpe:2.3:a:gatsbyjs:gatsby",
+   "category": "Générateur de site statique",
+   "meta": {
+    "generator": "^Gatsby(?: ([0-9.]+))?$"
+   }
+  },
+  {
+   "name": "Gentoo",
+   "cpe": "cpe:2.3:o:gentoo:linux",
+   "category": "Système d'exploitation",
+   "headers": {
+    "X-Powered-By": "gentoo"
+   }
+  },
+  {
+   "name": "GetSimple CMS",
+   "cpe": "cpe:2.3:a:get-simple:getsimple_cms",
+   "category": "CMS",
+   "meta": {
+    "generator": "GetSimple"
+   }
+  },
+  {
+   "name": "git",
+   "cpe": "cpe:2.3:a:git-scm:git",
+   "category": "Development",
+   "meta": {
+    "generator": "\\bgit/([\\d.]+\\d)"
+   }
+  },
+  {
+   "name": "GitBook",
+   "cpe": "cpe:2.3:a:gitbook:gitbook",
+   "category": "Documentation",
+   "meta": {
+    "generator": "GitBook ([\\d.]+)?"
+   }
+  },
+  {
+   "name": "Gitea",
+   "cpe": "cpe:2.3:a:gitea:gitea",
+   "category": "Development",
+   "meta": {
+    "keywords": "^go,git,self-hosted,gitea$"
+   },
+   "html": [
+    "<div class=\"ui left\">\\n\\s+© Gitea Version: ([\\d.]+)"
+   ],
+   "cookies": [
+    "i_like_gitea"
+   ]
+  },
+  {
+   "name": "GitLab",
+   "cpe": "cpe:2.3:a:gitlab:gitlab",
+   "category": "Issue trackers",
+   "meta": {
+    "og:site_name": "^GitLab$"
+   },
+   "html": [
+    "<meta content=\"https?://[^/]+/assets/gitlab_logo-",
+    "<header class=\"navbar navbar-fixed-top navbar-gitlab with-horizontal-nav\">"
+   ],
+   "cookies": [
+    "_gitlab_session"
+   ]
+  },
+  {
+   "name": "gitlist",
+   "cpe": "cpe:2.3:a:gitlist:gitlist",
+   "category": "Development",
+   "html": [
+    "<p>Powered by <a[^>]+>GitList ([\\d.]+)"
+   ]
+  },
+  {
+   "name": "GlassFish",
+   "cpe": "cpe:2.3:a:oracle:glassfish_server",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "GlassFish(?: Server)?(?: Open Source Edition)?(?: ?/?([\\d.]+))?"
+   }
+  },
+  {
+   "name": "GLPI",
+   "cpe": "cpe:2.3:a:glpi-project:glpi",
+   "category": "Framework web",
+   "meta": {
+    "glpi:csrf_token": ""
+   }
+  },
+  {
+   "name": "GoAhead",
+   "cpe": "cpe:2.3:a:embedthis:goahead",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "GoAhead"
+   }
+  },
+  {
+   "name": "Gogs",
+   "cpe": "cpe:2.3:a:gogs:gogs",
+   "category": "Development",
+   "meta": {
+    "keywords": "go, git, self-hosted, gogs"
+   },
+   "html": [
+    "<div class=\"ui left\">\\n\\s+© \\d{4} Gogs Version: ([\\d.]+) Page:",
+    "<button class=\"ui basic clone button\" id=\"repo-clone-ssh\" data-link=\"gogs@"
+   ],
+   "cookies": [
+    "i_like_gogits"
+   ]
+  },
+  {
+   "name": "Google Web Server",
+   "cpe": "cpe:2.3:a:google:web_server",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "gws"
+   }
+  },
+  {
+   "name": "Google Web Toolkit",
+   "cpe": "cpe:2.3:a:google:web_toolkit",
+   "category": "Framework web",
+   "meta": {
+    "gwt:property": ""
+   }
+  },
+  {
+   "name": "GraphQL",
+   "cpe": "cpe:2.3:a:graphql:graphql",
+   "category": "Langage",
+   "meta": {
+    "store-config": "graphqlMethod"
+   }
+  },
+  {
+   "name": "Grav",
+   "cpe": "cpe:2.3:a:getgrav:grav",
+   "category": "CMS",
+   "meta": {
+    "generator": "GravCMS(?:\\s([\\d.]+))?"
+   }
+  },
+  {
+   "name": "HCL Digital Experience",
+   "cpe": "cpe:2.3:a:ibm:websphere_portal",
+   "category": "CMS",
+   "headers": {
+    "IBM-Web2-Location": "",
+    "Itx-Generated-Timestamp": ""
+   }
+  },
+  {
+   "name": "HCL Domino",
+   "cpe": "cpe:2.3:a:ibm:lotus_domino",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "^Lotus-Domino$"
+   }
+  },
+  {
+   "name": "Hexo",
+   "cpe": "cpe:2.3:a:hexo:hexo",
+   "category": "Générateur de site statique",
+   "meta": {
+    "generator": "Hexo(?: v?([\\d.]+))?"
+   },
+   "html": [
+    "Powered by <a href=\"https?://hexo\\.io/?\"[^>]*>Hexo</"
+   ]
+  },
+  {
+   "name": "HHVM",
+   "cpe": "cpe:2.3:a:facebook:hhvm",
+   "category": "Serveur web",
+   "headers": {
+    "X-Powered-By": "HHVM/?([\\d.]+)?"
+   }
+  },
+  {
+   "name": "Highcharts",
+   "cpe": "cpe:2.3:a:highcharts:highcharts",
+   "category": "JavaScript graphics",
+   "html": [
+    "<svg[^>]*><desc>Created with Highcharts ([\\d.]*)"
+   ]
+  },
+  {
+   "name": "Hostinger",
+   "cpe": "cpe:2.3:a:hostinger:hostinger",
+   "category": "Hosting",
+   "headers": {
+    "platform": "hostinger"
+   }
+  },
+  {
+   "name": "HP iLO",
+   "cpe": "cpe:2.3:h:hp:integrated_lights-out",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "HP-iLO-Server(?:/([\\d.]+))?"
+   }
+  },
+  {
+   "name": "IBM DataPower",
+   "cpe": "cpe:2.3:a:ibm:datapower_gateway",
+   "category": "Reverse proxy",
+   "headers": {
+    "X-Backside-Transport": "",
+    "X-Global-Transaction-ID": ""
+   }
+  },
+  {
+   "name": "IBM HTTP Server",
+   "cpe": "cpe:2.3:a:ibm:http_server",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "IBM_HTTP_Server(?:/([\\d.]+))?"
+   }
+  },
+  {
+   "name": "IIS",
+   "cpe": "cpe:2.3:a:microsoft:internet_information_services",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "^(?:Microsoft-)?IIS(?:/([\\d.]+))?"
+   }
+  },
+  {
+   "name": "ikiwiki",
+   "cpe": "cpe:2.3:a:ikiwiki:ikiwiki",
+   "category": "Wikis",
+   "html": [
+    "<link rel=\"alternate\" type=\"application/x-wiki\" title=\"Edit this page\" href=\"[^\"]*/ikiwiki\\.cgi",
+    "<a href=\"/(?:cgi-bin/)?ikiwiki\\.cgi\\?do="
+   ]
+  },
+  {
+   "name": "ImpressCMS",
+   "cpe": "cpe:2.3:a:impresscms:impresscms",
+   "category": "CMS",
+   "meta": {
+    "generator": "ImpressCMS"
+   },
+   "cookies": [
+    "ICMSSession",
+    "ImpressCMS"
+   ]
+  },
+  {
+   "name": "ImpressPages",
+   "cpe": "cpe:2.3:a:impresspages:impresspages_cms",
+   "category": "CMS",
+   "meta": {
+    "generator": "ImpressPages(?: CMS)?( [\\d.]*)?"
+   }
+  },
+  {
+   "name": "Indexhibit",
+   "cpe": "cpe:2.3:a:indexhibit:indexhibit",
+   "category": "CMS",
+   "meta": {
+    "generator": "Indexhibit"
+   },
+   "html": [
+    "<(?:link|a href) [^>]+ndxz-studio"
+   ]
+  },
+  {
+   "name": "InstantCMS",
+   "cpe": "cpe:2.3:a:instantcms:instantcms",
+   "category": "CMS",
+   "meta": {
+    "generator": "InstantCMS"
+   },
+   "cookies": [
+    "InstantCMS[logdate]"
+   ]
+  },
+  {
+   "name": "Intel Active Management Technology",
+   "cpe": "cpe:2.3:a:intel:active_management_technology",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "Intel\\(R\\) Active Management Technology(?: ([\\d.]+))?"
+   }
+  },
+  {
+   "name": "Java",
+   "cpe": "cpe:2.3:a:oracle:jre",
+   "category": "Langage",
+   "cookies": [
+    "JSESSIONID"
+   ]
+  },
+  {
+   "name": "JBoss Application Server",
+   "cpe": "cpe:2.3:a:redhat:jboss_application_server",
+   "category": "Serveur web",
+   "headers": {
+    "X-Powered-By": "JBoss(?:-([\\d.]+))?"
+   }
+  },
+  {
+   "name": "JBoss Web",
+   "cpe": "cpe:2.3:a:redhat:jbossweb",
+   "category": "Serveur web",
+   "headers": {
+    "X-Powered-By": "JBossWeb(?:-([\\d.]+))?"
+   }
+  },
+  {
+   "name": "Jekyll",
+   "cpe": "cpe:2.3:a:jekyllrb:jekyll",
+   "category": "Générateur de site statique",
+   "meta": {
+    "generator": "Jekyll\\sv([\\d.]+)?"
+   },
+   "html": [
+    "Powered by <a href=\"https?://jekyllrb\\.com\"[^>]*>Jekyll</",
+    "<!-- Created with Jekyll Now -",
+    "<!-- Begin Jekyll SEO tag"
+   ]
+  },
+  {
+   "name": "Jenkins",
+   "cpe": "cpe:2.3:a:jenkins:jenkins",
+   "category": "CI",
+   "headers": {
+    "X-Jenkins": "([\\d.]+)"
+   },
+   "html": [
+    "<span class=\"jenkins_ver\"><a href=\"https://jenkins\\.io/\">Jenkins ver\\. ([\\d.]+)"
+   ]
+  },
+  {
+   "name": "Jetty",
+   "cpe": "cpe:2.3:a:eclipse:jetty",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "Jetty(?:\\(([\\d\\.]*\\d+))?"
+   }
+  },
+  {
+   "name": "Kentico CMS",
+   "cpe": "cpe:2.3:a:kentico:kentico_cms",
+   "category": "CMS",
+   "meta": {
+    "generator": "Kentico CMS ([\\d.R]+ \\(build [\\d.]+\\))"
+   },
+   "cookies": [
+    "CMSCookieLevel",
+    "CMSPreferredCulture"
+   ]
+  },
+  {
+   "name": "Kibana",
+   "cpe": "cpe:2.3:a:elasticsearch:kibana",
+   "category": "Search engines",
+   "headers": {
+    "kbn-name": "kibana",
+    "kbn-version": "^([\\d.]+)$"
+   },
+   "html": [
+    "<title>Kibana</title>"
+   ]
+  },
+  {
+   "name": "Kirby",
+   "cpe": "cpe:2.3:a:getkirby:kirby",
+   "category": "CMS",
+   "cookies": [
+    "kirby_session"
+   ]
+  },
+  {
+   "name": "Koa",
+   "cpe": "cpe:2.3:a:koajs:koa",
+   "category": "Framework web",
+   "headers": {
+    "X-Powered-By": "^koa$"
+   }
+  },
+  {
+   "name": "Koala Framework",
+   "cpe": "cpe:2.3:a:koala-framework:koala_framework",
+   "category": "CMS",
+   "meta": {
+    "generator": "^Koala Web Framework CMS"
+   },
+   "html": [
+    "<!--[^>]+This website is powered by Koala Web Framework CMS"
+   ]
+  },
+  {
+   "name": "Koha",
+   "cpe": "cpe:2.3:a:koha:koha",
+   "category": "DMS",
+   "meta": {
+    "generator": "^Koha ([\\d.]+)$"
+   },
+   "html": [
+    "<input name=\"koha_login_context\" value=\"intranet\" type=\"hidden\">",
+    "<a href=\"/cgi-bin/koha/"
+   ]
+  },
+  {
+   "name": "Kohana",
+   "cpe": "cpe:2.3:a:kohanaframework:kohana",
+   "category": "Framework web",
+   "headers": {
+    "X-Powered-By": "Kohana Framework ([\\d.]+)"
+   },
+   "cookies": [
+    "kohanasession"
+   ]
+  },
+  {
+   "name": "Kong",
+   "cpe": "cpe:2.3:a:konghq:kong",
+   "category": "Reverse proxy",
+   "headers": {
+    "via": "^kong/([\\d\\.]+)(?:.+)?$"
+   }
+  },
+  {
+   "name": "Kooboo CMS",
+   "cpe": "cpe:2.3:a:kooboo:kooboo_cms",
+   "category": "CMS",
+   "headers": {
+    "X-KoobooCMS-Version": "^(.+)$"
+   }
+  },
+  {
+   "name": "Ktor",
+   "cpe": "cpe:2.3:a:jetbrains:ktor",
+   "category": "Framework web",
+   "headers": {
+    "server": "^Ktor/debug$",
+    "x-engine": "^Ktor$"
+   }
+  },
+  {
+   "name": "LEPTON",
+   "cpe": "cpe:2.3:a:lepton-cms:lepton",
+   "category": "CMS",
+   "meta": {
+    "generator": "LEPTON"
+   }
+  },
+  {
+   "name": "Liferay",
+   "cpe": "cpe:2.3:a:liferay:liferay_portal",
+   "category": "CMS",
+   "headers": {
+    "Liferay-Portal": "[a-z\\s]+([\\d.]+)"
+   }
+  },
+  {
+   "name": "Lift",
+   "cpe": "cpe:2.3:a:liftweb:lift",
+   "category": "Framework web",
+   "headers": {
+    "X-Lift-Version": "(.+)"
+   }
+  },
+  {
+   "name": "lighttpd",
+   "cpe": "cpe:2.3:a:lighttpd:lighttpd",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "(?:L|l)ight(?:y)?(?:tpd)?(?:/([\\d\\.]+))?"
+   }
+  },
+  {
+   "name": "Lua",
+   "cpe": "cpe:2.3:a:lua:lua",
+   "category": "Langage",
+   "headers": {
+    "X-Powered-By": "\\bLua(?: ([\\d.]+))?"
+   }
+  },
+  {
+   "name": "Magnolia CMS",
+   "cpe": "cpe:2.3:a:magnolia-cms:magnolia_cms",
+   "category": "CMS",
+   "headers": {
+    "x-magnolia-registration": ""
+   }
+  },
+  {
+   "name": "Mastodon",
+   "cpe": "cpe:2.3:a:joinmastodon:mastodon",
+   "category": "Forum",
+   "headers": {
+    "Server": "^Mastodon$"
+   },
+   "cookies": [
+    "_mastodon_session"
+   ]
+  },
+  {
+   "name": "Matomo Analytics",
+   "cpe": "cpe:2.3:a:matomo:matomo",
+   "category": "Analytics",
+   "meta": {
+    "apple-itunes-app": "app-id=737216887",
+    "generator": "(?:Matomo|Piwik) - Open Source Web Analytics",
+    "google-play-app": "app-id=org\\.piwik\\.mobile2"
+   },
+   "cookies": [
+    "PIWIK_SESSID"
+   ]
+  },
+  {
+   "name": "Mattermost",
+   "cpe": "cpe:2.3:a:jenkins:mattermost",
+   "category": "Forum",
+   "meta": {
+    "application-name": "^Mattermost$"
+   },
+   "html": [
+    "<noscript> To use Mattermost, please enable JavaScript\\. </noscript>"
+   ]
+  },
+  {
+   "name": "MediaWiki",
+   "cpe": "cpe:2.3:a:mediawiki:mediawiki",
+   "category": "Wikis",
+   "meta": {
+    "generator": "^MediaWiki ?(.+)$"
+   },
+   "html": [
+    "<body[^>]+class=\"mediawiki\"",
+    "<(?:a|img)[^>]+>Powered by MediaWiki</a>",
+    "<a[^>]+/Special:WhatLinksHere/"
+   ],
+   "cookies": [
+    "wiki\\d+_session"
+   ]
+  },
+  {
+   "name": "Melis Platform",
+   "cpe": "cpe:2.3:a:melisplatform:melisplatform",
+   "category": "CMS",
+   "meta": {
+    "generator": "^Melis Platform\\.",
+    "powered-by": "^Melis CMS\\."
+   },
+   "html": [
+    "<!-- Rendered with Melis CMS V2",
+    "<!-- Rendered with Melis Platform"
+   ]
+  },
+  {
+   "name": "Microsoft ASP.NET",
+   "cpe": "cpe:2.3:a:microsoft:asp.net",
+   "category": "Framework web",
+   "headers": {
+    "X-AspNet-Version": "(.+)",
+    "X-Powered-By": "^ASP\\.NET",
+    "set-cookie": "\\.AspNetCore"
+   },
+   "html": [
+    "<input[^>]+name=\"__VIEWSTATE"
+   ],
+   "cookies": [
+    "ASPSESSION",
+    "ASP\\.NET_SessionId",
+    "\\.ASPXAUTH"
+   ]
+  },
+  {
+   "name": "Microsoft Excel",
+   "cpe": "cpe:2.3:a:microsoft:excel",
+   "category": "Editors",
+   "meta": {
+    "ProgId": "^Excel\\.",
+    "generator": "Microsoft Excel( [\\d.]+)?"
+   },
+   "html": [
+    "(?:<html [^>]*xmlns:w=\"urn:schemas-microsoft-com:office:excel\"|<!--\\s*(?:START|END) OF OUTPUT FROM EXCEL PUBLISH AS WEB PAGE WIZARD\\s*-->|<div [^>]*x:publishsource=\"?Excel\"?)"
+   ]
+  },
+  {
+   "name": "Microsoft PowerPoint",
+   "cpe": "cpe:2.3:a:microsoft:powerpoint",
+   "category": "Editors",
+   "meta": {
+    "ProgId": "^PowerPoint\\.",
+    "generator": "Microsoft PowerPoint ( [\\d.]+)?"
+   },
+   "html": [
+    "(?:<html [^>]*xmlns:w=\"urn:schemas-microsoft-com:office:powerpoint\"|<link rel=\"?Presentation-XML\"? href=\"?[^\"]+\\.xml\"?>|<o:PresentationFormat>[^<]+</o:PresentationFormat>[^!]+<o:Slides>\\d+</o:Slides>(?:[^!]+<o:Version>([\\d.]+)</o:Version>)?)"
+   ]
+  },
+  {
+   "name": "Microsoft Publisher",
+   "cpe": "cpe:2.3:a:microsoft:publisher",
+   "category": "Editors",
+   "meta": {
+    "ProgId": "^Publisher\\.",
+    "generator": "Microsoft Publisher( [\\d.]+)?"
+   },
+   "html": [
+    "(?:<html [^>]*xmlns:w=\"urn:schemas-microsoft-com:office:publisher\"|<!--[if pub]><xml>)"
+   ]
+  },
+  {
+   "name": "Microsoft SharePoint",
+   "cpe": "cpe:2.3:a:microsoft:sharepoint_server",
+   "category": "CMS",
+   "headers": {
+    "MicrosoftSharePointTeamServices": "^(.+)$",
+    "SPRequestGuid": "",
+    "SharePointHealthScore": "",
+    "X-SharePointHealthScore": ""
+   },
+   "meta": {
+    "generator": "Microsoft SharePoint"
+   }
+  },
+  {
+   "name": "Microsoft Word",
+   "cpe": "cpe:2.3:a:microsoft:word",
+   "category": "Editors",
+   "meta": {
+    "ProgId": "^Word\\.",
+    "generator": "Microsoft Word( [\\d.]+)?"
+   },
+   "html": [
+    "(?:<html [^>]*xmlns:w=\"urn:schemas-microsoft-com:office:word\"|<w:WordDocument>|<div [^>]*class=\"?WordSection1[\" >]|<style[^>]*>[^>]*@page WordSection1)"
+   ]
+  },
+  {
+   "name": "mini_httpd",
+   "cpe": "cpe:2.3:a:acme:mini_httpd",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "mini_httpd(?:/([\\d.]+))?"
+   }
+  },
+  {
+   "name": "Misskey",
+   "cpe": "cpe:2.3:a:misskey:misskey",
+   "category": "Forum",
+   "meta": {
+    "application-name": "Misskey"
+   },
+   "html": [
+    "<!-- Thank you for using Misskey! @syuilo -->"
+   ]
+  },
+  {
+   "name": "MochiWeb",
+   "cpe": "cpe:2.3:a:mochiweb_project:mochiweb",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "MochiWeb(?:/([\\d.]+))?"
+   }
+  },
+  {
+   "name": "mod_perl",
+   "cpe": "cpe:2.3:a:apache:mod_perl",
+   "category": "Serveur applicatif",
+   "headers": {
+    "Server": "mod_perl(?:/([\\d\\.]+))?"
+   }
+  },
+  {
+   "name": "mod_python",
+   "cpe": "cpe:2.3:a:apache:mod_python",
+   "category": "Serveur applicatif",
+   "headers": {
+    "Server": "mod_python(?:/([\\d.]+))?"
+   }
+  },
+  {
+   "name": "mod_ssl",
+   "cpe": "cpe:2.3:a:modssl:mod_ssl",
+   "category": "Serveur applicatif",
+   "headers": {
+    "Server": "mod_ssl(?:/([\\d.]+))?"
+   }
+  },
+  {
+   "name": "mod_wsgi",
+   "cpe": "cpe:2.3:a:modwsgi:mod_wsgi",
+   "category": "Serveur applicatif",
+   "headers": {
+    "Server": "mod_wsgi(?:/([\\d.]+))?",
+    "X-Powered-By": "mod_wsgi(?:/([\\d.]+))?"
+   }
+  },
+  {
+   "name": "Modified eCommerce",
+   "cpe": "cpe:2.3:a:modified-shop:modified_ecommerce_shopsoftware",
+   "category": "E-commerce",
+   "meta": {
+    "generator": "by modified eCommerce Shopsoftware"
+   }
+  },
+  {
+   "name": "MODX",
+   "cpe": "cpe:2.3:a:modx:modx_revolution",
+   "category": "CMS",
+   "headers": {
+    "X-Powered-By": "^MODX"
+   },
+   "meta": {
+    "generator": "MODX[^\\d.]*([\\d.]+)?"
+   },
+   "html": [
+    "<a[^>]+>Powered by MODX</a>",
+    "<!-- Modx process time debug info -->",
+    "<(?:link|script)[^>]+assets/snippets/",
+    "<form[^>]+id=\"ajaxSearch_form",
+    "<input[^>]+id=\"ajaxSearch_input"
+   ]
+  },
+  {
+   "name": "MoinMoin",
+   "cpe": "cpe:2.3:a:moinmo:moinmoin",
+   "category": "Wikis",
+   "cookies": [
+    "MOIN_SESSION"
+   ]
+  },
+  {
+   "name": "Mojolicious",
+   "cpe": "cpe:2.3:a:mojolicious:mojolicious",
+   "category": "Framework web",
+   "headers": {
+    "server": "^mojolicious",
+    "x-powered-by": "mojolicious"
+   }
+  },
+  {
+   "name": "Mollom",
+   "cpe": "cpe:2.3:a:acquia:mollom",
+   "category": "Security",
+   "html": [
+    "<img[^>]+\\.mollom\\.com"
+   ]
+  },
+  {
+   "name": "Mongrel",
+   "cpe": "cpe:2.3:a:zed_shaw:mongrel",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "Mongrel"
+   }
+  },
+  {
+   "name": "Mono",
+   "cpe": "cpe:2.3:a:mono:mono",
+   "category": "Framework web",
+   "headers": {
+    "X-Powered-By": "Mono"
+   }
+  },
+  {
+   "name": "Moodle",
+   "cpe": "cpe:2.3:a:moodle:moodle",
+   "category": "Base de données",
+   "meta": {
+    "keywords": "^moodle"
+   },
+   "html": [
+    "<img[^>]+moodlelogo"
+   ],
+   "cookies": [
+    "MOODLEID_",
+    "MoodleSession"
+   ]
+  },
+  {
+   "name": "MotoCMS",
+   "cpe": "cpe:2.3:a:motocms:motocms",
+   "category": "CMS",
+   "html": [
+    "<link [^>]*href=\"[^>]*\\/mt-content\\/[^>]*\\.css"
+   ]
+  },
+  {
+   "name": "Movable Type",
+   "cpe": "cpe:2.3:a:sixapart:movable_type",
+   "category": "CMS",
+   "meta": {
+    "generator": "Movable Type"
+   }
+  },
+  {
+   "name": "Mura CMS",
+   "cpe": "cpe:2.3:a:blueriver:muracms",
+   "category": "CMS",
+   "meta": {
+    "generator": "Mura\\sCMS\\s([\\d\\.]+)"
+   }
+  },
+  {
+   "name": "MyBB",
+   "cpe": "cpe:2.3:a:mybb:mybb",
+   "category": "Forum",
+   "cookies": [
+    "mybb[lastactive]",
+    "mybb[lastvisit]"
+   ]
+  },
+  {
+   "name": "Nelio Testing",
+   "cpe": "cpe:2.3:a:neliosoftware:nelio_ab_testing",
+   "category": "A/B Testing",
+   "cookies": [
+    "nabUniqueViews"
+   ]
+  },
+  {
+   "name": "Nextcloud",
+   "cpe": "cpe:2.3:a:nextcloud:nextcloud",
+   "category": "Digital asset management",
+   "cookies": [
+    " __Host-nc_sameSiteCookielax",
+    "__Host-nc_sameSiteCookiestrict"
+   ]
+  },
+  {
+   "name": "NextGEN Gallery",
+   "cpe": "cpe:2.3:a:imagely:nextgen_gallery",
+   "category": "Photo galleries",
+   "meta": {
+    "NextGEN": "^([\\d.]+)"
+   },
+   "html": [
+    "<!-- <meta name=\"NextGEN\" version=\"([\\d.]+)\" /> -->"
+   ]
+  },
+  {
+   "name": "NexusPHP",
+   "cpe": "cpe:2.3:a:nexusphp:nexusphp",
+   "category": "CMS",
+   "meta": {
+    "generator": "^NexusPHP$"
+   }
+  },
+  {
+   "name": "NodeBB",
+   "cpe": "cpe:2.3:a:nodebb:nodebb",
+   "category": "Forum",
+   "headers": {
+    "X-Powered-By": "^NodeBB$"
+   }
+  },
+  {
+   "name": "nopCommerce",
+   "cpe": "cpe:2.3:a:nopcommerce:nopcommerce",
+   "category": "E-commerce",
+   "meta": {
+    "generator": "^nopCommerce$"
+   },
+   "html": [
+    "(?:<!--Powered by nopCommerce|Powered by: <a[^>]+nopcommerce)"
+   ],
+   "cookies": [
+    "Nop.customer"
+   ]
+  },
+  {
+   "name": "Odoo",
+   "cpe": "cpe:2.3:a:odoo:odoo",
+   "category": "CMS",
+   "meta": {
+    "generator": "Odoo"
+   },
+   "html": [
+    "<link[^>]* href=[^>]+/web/css/(?:web\\.assets_common/|website\\.assets_frontend/)"
+   ]
+  },
+  {
+   "name": "Open Classifieds",
+   "cpe": "cpe:2.3:a:open-classifieds:open_classifieds",
+   "category": "E-commerce",
+   "meta": {
+    "author": "open-classifieds\\.com",
+    "copyright": "Open Classifieds ?([0-9.]+)?"
+   }
+  },
+  {
+   "name": "Open Journal Systems",
+   "cpe": "cpe:2.3:a:public_knowledge_project:open_journal_systems",
+   "category": "DMS",
+   "meta": {
+    "generator": "Open Journal Systems(?: ([\\d.]+))?"
+   },
+   "cookies": [
+    "OJSSID"
+   ]
+  },
+  {
+   "name": "Open Web Analytics",
+   "cpe": "cpe:2.3:a:openwebanalytics:open_web_analytics",
+   "category": "Analytics",
+   "html": [
+    "<!-- (?:Start|End) Open Web Analytics Tracker -->"
+   ]
+  },
+  {
+   "name": "OpenBSD httpd",
+   "cpe": "cpe:2.3:a:openbsd:openbsd",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "^OpenBSD httpd"
+   }
+  },
+  {
+   "name": "OpenCart",
+   "cpe": "cpe:2.3:a:opencart:opencart",
+   "category": "E-commerce",
+   "cookies": [
+    "OCSESSID"
+   ]
+  },
+  {
+   "name": "OpenCms",
+   "cpe": "cpe:2.3:a:alkacon:opencms",
+   "category": "CMS",
+   "headers": {
+    "Server": "OpenCms"
+   },
+   "html": [
+    "<link href=\"/opencms/"
+   ]
+  },
+  {
+   "name": "OpenResty",
+   "cpe": "cpe:2.3:a:openresty:openresty",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "openresty(?:/([\\d.]+))?"
+   }
+  },
+  {
+   "name": "OpenSSL",
+   "cpe": "cpe:2.3:a:openssl:openssl",
+   "category": "Serveur applicatif",
+   "headers": {
+    "Server": "OpenSSL(?:/([\\d.]+[a-z]?))?"
+   }
+  },
+  {
+   "name": "Optimizely Content Management",
+   "cpe": "cpe:2.3:a:episerver:episerver",
+   "category": "CMS",
+   "headers": {
+    "content-security-policy": "\\.episerver\\.net"
+   },
+   "meta": {
+    "generator": "EPiServer"
+   },
+   "cookies": [
+    "EPi:StateMarker",
+    "EPiServer",
+    "EPiSessionId",
+    "EPiTrace"
+   ]
+  },
+  {
+   "name": "Oracle Application Server",
+   "cpe": "cpe:2.3:a:oracle:application_server",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "Oracle[- ]Application[- ]Server(?: Containers for J2EE)?(?:[- ](\\d[\\da-z./]+))?"
+   }
+  },
+  {
+   "name": "Oracle Commerce",
+   "cpe": "cpe:2.3:a:oracle:commerce_platform",
+   "category": "E-commerce",
+   "headers": {
+    "X-ATG-Version": "(?:ATGPlatform/([\\d.]+))?"
+   }
+  },
+  {
+   "name": "Oracle HTTP Server",
+   "cpe": "cpe:2.3:a:oracle:http_server",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "Oracle-HTTP-Server(?:/([\\d.]+))?"
+   }
+  },
+  {
+   "name": "Oracle Web Cache",
+   "cpe": "cpe:2.3:a:oracle:web_cache",
+   "category": "Cache",
+   "headers": {
+    "Server": "Oracle(?:AS)?[- ]Web[- ]Cache(?:[- /]([\\da-z./]+))?"
+   }
+  },
+  {
+   "name": "Orchard Core",
+   "cpe": "cpe:2.3:a:orchardcore:orchard_core",
+   "category": "CMS",
+   "headers": {
+    "x-generator": "^Orchard$",
+    "x-powered-by": "OrchardCore"
+   },
+   "meta": {
+    "generator": "Orchard"
+   }
+  },
+  {
+   "name": "OroCommerce",
+   "cpe": "cpe:2.3:a:oroinc:orocommerce",
+   "category": "E-commerce",
+   "html": [
+    "<script [^>]+data-requiremodule=\"oro/",
+    "<script [^>]+data-requiremodule=\"oroui/"
+   ],
+   "cookies": [
+    "orosfid"
+   ]
+  },
+  {
+   "name": "osCommerce",
+   "cpe": "cpe:2.3:a:oscommerce:oscommerce",
+   "category": "E-commerce",
+   "html": [
+    "<br />Powered by <a href=\"https?://www\\.oscommerce\\.com",
+    "<(?:input|a)[^>]+name=\"osCsid\"",
+    "<(?:tr|td|table)class=\"[^\"]*infoBoxHeading"
+   ],
+   "cookies": [
+    "osCsid"
+   ]
+  },
+  {
+   "name": "osTicket",
+   "cpe": "cpe:2.3:a:enhancesoft:osticket",
+   "category": "Issue trackers",
+   "cookies": [
+    "OSTSESSID"
+   ]
+  },
+  {
+   "name": "otrs",
+   "cpe": "cpe:2.3:a:otrs:otrs",
+   "category": "Issue trackers",
+   "headers": {
+    "X-Powered-By": "OTRS ([\\d.]+)"
+   },
+   "html": [
+    "<!--\\s+OTRS: Copyright"
+   ]
+  },
+  {
+   "name": "Outlook Web App",
+   "cpe": "cpe:2.3:a:microsoft:outlook_web_access",
+   "category": "Webmail",
+   "headers": {
+    "X-OWA-Version": "([\\d\\.]+)?"
+   },
+   "html": [
+    "<link[^>]+/owa/auth/([\\d\\.]+)/themes/resources"
+   ]
+  },
+  {
+   "name": "ownCloud",
+   "cpe": "cpe:2.3:a:owncloud:owncloud",
+   "category": "Miscellaneous",
+   "meta": {
+    "apple-itunes-app": "app-id=543672169"
+   },
+   "html": [
+    "<a href=\"https://owncloud\\.com\" target=\"_blank\">ownCloud Inc\\.</a><br/>Your Cloud, Your Data, Your Way!"
+   ]
+  },
+  {
+   "name": "Pagekit",
+   "cpe": "cpe:2.3:a:pagekit:pagekit",
+   "category": "CMS",
+   "meta": {
+    "generator": "Pagekit"
+   }
+  },
+  {
+   "name": "Perl",
+   "cpe": "cpe:2.3:a:perl:perl",
+   "category": "Langage",
+   "headers": {
+    "Server": "\\bPerl\\b(?: ?/?v?([\\d.]+))?"
+   }
+  },
+  {
+   "name": "PHP-Nuke",
+   "cpe": "cpe:2.3:a:phpnuke:php-nuke",
+   "category": "CMS",
+   "meta": {
+    "generator": "PHP-Nuke"
+   },
+   "html": [
+    "<[^>]+Powered by PHP-Nuke"
+   ]
+  },
+  {
+   "name": "phpAlbum",
+   "cpe": "cpe:2.3:a:phpalbum:phpalbum",
+   "category": "Photo galleries",
+   "html": [
+    "<!--phpalbum ([.\\d\\s]+)-->"
+   ]
+  },
+  {
+   "name": "phpBB",
+   "cpe": "cpe:2.3:a:phpbb:phpbb",
+   "category": "Forum",
+   "meta": {
+    "copyright": "phpBB Group"
+   },
+   "html": [
+    "Powered by <a[^>]+phpBB",
+    "<div class=phpbb_copyright>",
+    "<[^>]+styles/(?:sub|pro)silver/theme",
+    "<img[^>]+i_icon_mini",
+    "<table class=\"[^\"]*forumline"
+   ],
+   "cookies": [
+    "phpbb"
+   ]
+  },
+  {
+   "name": "PHPFusion",
+   "cpe": "cpe:2.3:a:phpfusion:phpfusion",
+   "category": "CMS",
+   "headers": {
+    "X-PHPFusion": "(.+)$",
+    "X-Powered-By": "PHP(?:-)?Fusion (.+)$"
+   },
+   "html": [
+    "Powered by <a href=\"[^>]+phpfusion",
+    "Powered by <a href=\"[^>]+php-fusion"
+   ]
+  },
+  {
+   "name": "phpMyAdmin",
+   "cpe": "cpe:2.3:a:phpmyadmin:phpmyadmin",
+   "category": "Database managers",
+   "headers": {
+    "Set-Cookie": "phpMyAdmin_https"
+   },
+   "html": [
+    "!\\[CDATA\\[[^<]*PMA_VERSION:\\\"([\\d.]+)",
+    "(?: \\| phpMyAdmin ([\\d.]+)<\\/title>|PMA_sendHeaderLocation\\(|<link [^>]*href=\"[^\"]*phpmyadmin\\.css\\.php)"
+   ]
+  },
+  {
+   "name": "phpPgAdmin",
+   "cpe": "cpe:2.3:a:phppgadmin_project:phppgadmin",
+   "category": "Database managers",
+   "html": [
+    "(?:<title>phpPgAdmin</title>|<span class=\"appname\">phpPgAdmin)"
+   ]
+  },
+  {
+   "name": "phpSQLiteCMS",
+   "cpe": "cpe:2.3:a:phpsqlitecms:phpsqlitecms",
+   "category": "CMS",
+   "meta": {
+    "generator": "^phpSQLiteCMS(?: (.+))?$"
+   }
+  },
+  {
+   "name": "phpwind",
+   "cpe": "cpe:2.3:a:phpwind:phpwind",
+   "category": "CMS",
+   "meta": {
+    "generator": "^phpwind(?: v([0-9-]+))?"
+   },
+   "html": [
+    "(?:Powered|Code) by <a href=\"[^\"]+phpwind\\.net"
+   ]
+  },
+  {
+   "name": "Phusion Passenger",
+   "cpe": "cpe:2.3:a:phusionpassenger:phusion_passenger",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "Phusion Passenger ([\\d.]+)",
+    "X-Powered-By": "Phusion Passenger(?:\\(R\\))? ?([\\d.]+)?"
+   }
+  },
+  {
+   "name": "Pimcore",
+   "cpe": "cpe:2.3:a:pimcore:pimcore",
+   "category": "CMS",
+   "headers": {
+    "X-Powered-By": "^pimcore$"
+   }
+  },
+  {
+   "name": "Piwigo",
+   "cpe": "cpe:2.3:a:piwigo:piwigo",
+   "category": "Photo galleries",
+   "meta": {
+    "generator": "^Piwigo\\s"
+   }
+  },
+  {
+   "name": "Play",
+   "cpe": "cpe:2.3:a:playframework:play_framework",
+   "category": "Framework web",
+   "cookies": [
+    "PLAY_SESSION"
+   ]
+  },
+  {
+   "name": "Plesk",
+   "cpe": "cpe:2.3:a:parallels:parallels_plesk_panel",
+   "category": "Hosting panels",
+   "headers": {
+    "X-Powered-By": "^Plesk(?:L|W)in",
+    "X-Powered-By-Plesk": "^Plesk"
+   },
+   "meta": {
+    "plesk-build": ""
+   }
+  },
+  {
+   "name": "Pligg",
+   "cpe": "cpe:2.3:a:pligg:pligg_cms",
+   "category": "CMS",
+   "meta": {
+    "generator": "Pligg"
+   },
+   "html": [
+    "<span[^>]+id=\"xvotes-0"
+   ]
+  },
+  {
+   "name": "Plone",
+   "cpe": "cpe:2.3:a:plone:plone",
+   "category": "CMS",
+   "meta": {
+    "generator": "Plone"
+   }
+  },
+  {
+   "name": "ProcessWire",
+   "cpe": "cpe:2.3:a:processwire:processwire",
+   "category": "CMS",
+   "headers": {
+    "X-Powered-By": "ProcessWire CMS"
+   }
+  },
+  {
+   "name": "ProfilePress",
+   "cpe": "cpe:2.3:a:profilepress:profilepress",
+   "category": "WordPress plugins",
+   "cookies": [
+    "ppwp_wp_session"
+   ]
+  },
+  {
+   "name": "Progress Sitefinity",
+   "cpe": "cpe:2.3:a:progress:sitefinity",
+   "category": "CMS",
+   "meta": {
+    "generator": "^Sitefinity\\s([\\S]{3,9})"
+   }
+  },
+  {
+   "name": "Pulse Secure",
+   "cpe": "cpe:2.3:a:pulsesecure:pulse_connect_secure",
+   "category": "Remote access",
+   "cookies": [
+    "DSSIGNIN"
+   ]
+  },
+  {
+   "name": "Pygments",
+   "cpe": "cpe:2.3:a:pygments:pygments",
+   "category": "Miscellaneous",
+   "html": [
+    "<link[^>]+pygments\\.css[\"']"
+   ]
+  },
+  {
+   "name": "PyroCMS",
+   "cpe": "cpe:2.3:a:pyrocms:pyrocms",
+   "category": "CMS",
+   "headers": {
+    "X-Streams-Distribution": "PyroCMS"
+   },
+   "cookies": [
+    "pyrocms"
+   ]
+  },
+  {
+   "name": "PyScript",
+   "cpe": "cpe:2.3:a:pyscript:pyscript",
+   "category": "Miscellaneous",
+   "cookies": [
+    "_mkto_trk"
+   ]
+  },
+  {
+   "name": "Question2Answer",
+   "cpe": "cpe:2.3:a:question2answer:question2answer",
+   "category": "Comment systems",
+   "html": [
+    "<!-- Powered by Question2Answer"
+   ]
+  },
+  {
+   "name": "Quick.CMS",
+   "cpe": "cpe:2.3:a:opensolution:quick.cms",
+   "category": "CMS",
+   "meta": {
+    "generator": "Quick\\.CMS(?: v([\\d.]+))?"
+   },
+   "html": [
+    "<a href=\"[^>]+opensolution\\.org/\">CMS by"
+   ]
+  },
+  {
+   "name": "RDoc",
+   "cpe": "cpe:2.3:a:dave_thomas:rdoc",
+   "category": "Documentation",
+   "html": [
+    "<link[^>]+href=\"[^\"]*rdoc-style\\.css",
+    "Generated by <a[^>]+href=\"https?://rdoc\\.rubyforge\\.org[^>]+>RDoc</a> ([\\d.]*\\d)",
+    "Generated by <a href=\"https:\\/\\/ruby\\.github\\.io\\/rdoc\\/\">RDoc<\\/a> ([\\d.]*\\d)"
+   ]
+  },
+  {
+   "name": "Red Hat",
+   "cpe": "cpe:2.3:o:redhat:linux",
+   "category": "Système d'exploitation",
+   "headers": {
+    "Server": "Red Hat",
+    "X-Powered-By": "Red Hat"
+   }
+  },
+  {
+   "name": "Redmine",
+   "cpe": "cpe:2.3:a:redmine:redmine",
+   "category": "Issue trackers",
+   "meta": {
+    "description": "Redmine"
+   },
+   "html": [
+    "Powered by <a href=\"[^>]+Redmine"
+   ],
+   "cookies": [
+    "_redmine_session"
+   ]
+  },
+  {
+   "name": "Resin",
+   "cpe": "cpe:2.3:a:caucho:resin",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "^Resin(?:/(\\S*))?"
+   }
+  },
+  {
+   "name": "RiteCMS",
+   "cpe": "cpe:2.3:a:ritecms:ritecms",
+   "category": "CMS",
+   "meta": {
+    "generator": "^RiteCMS(?: (.+))?"
+   }
+  },
+  {
+   "name": "Rocket.Chat",
+   "cpe": "cpe:2.3:a:rocket.chat:rocket.chat",
+   "category": "Live chat",
+   "meta": {
+    "application-name": "^Rocket.Chat$"
+   }
+  },
+  {
+   "name": "RoundCube",
+   "cpe": "cpe:2.3:a:roundcube:webmail",
+   "category": "Webmail",
+   "html": [
+    "<title>RoundCube"
+   ]
+  },
+  {
+   "name": "Ruby",
+   "cpe": "cpe:2.3:a:ruby-lang:ruby",
+   "category": "Langage",
+   "headers": {
+    "Server": "(?:Mongrel|Ruby(?:/([\\d\\.]+))?)"
+   }
+  },
+  {
+   "name": "Sakai",
+   "cpe": "cpe:2.3:a:sakailms:sakai",
+   "category": "Base de données",
+   "cookies": [
+    "SAKAIID"
+   ]
+  },
+  {
+   "name": "SAP",
+   "cpe": "cpe:2.3:a:sap:netweaver_application_server",
+   "category": "CRM",
+   "headers": {
+    "Server": "SAP NetWeaver Application Server"
+   }
+  },
+  {
+   "name": "SAP Commerce Cloud",
+   "cpe": "cpe:2.3:a:sap:commerce_cloud",
+   "category": "E-commerce",
+   "headers": {
+    "X-Sap-Pad": ""
+   },
+   "html": [
+    "<[^>]+/(?:sys_master|hybr|_ui/(?:.*responsive/)?(?:desktop|common(?:/images|/img|/css|ico)?))/",
+    "<script[^>].*hybris.*.js"
+   ],
+   "cookies": [
+    "_hybris"
+   ]
+  },
+  {
+   "name": "Shiny",
+   "cpe": "cpe:2.3:a:rstudio:shiny_server",
+   "category": "Framework web",
+   "headers": {
+    "x-powered-by": "^Shiny Server$"
+   }
+  },
+  {
+   "name": "Shopware",
+   "cpe": "cpe:2.3:a:shopware:shopware",
+   "category": "E-commerce",
+   "headers": {
+    "sw-context-token": "^[\\w]{32}$",
+    "sw-invalidation-states": "",
+    "sw-language-id": "^[a-fA-F0-9]{32}$",
+    "sw-version-id": ""
+   },
+   "meta": {
+    "application-name": "Shopware"
+   },
+   "html": [
+    "<title>Shopware ([\\d\\.]+) [^<]+"
+   ]
+  },
+  {
+   "name": "Silverstripe",
+   "cpe": "cpe:2.3:a:silverstripe:silverstripe",
+   "category": "CMS",
+   "meta": {
+    "generator": "^SilverStripe"
+   },
+   "html": [
+    "Powered by <a href=\"[^>]+Silverstripe"
+   ]
+  },
+  {
+   "name": "SimpleSAMLphp",
+   "cpe": "cpe:2.3:a:simplesamlphp:simplesamlphp",
+   "category": "Authentication",
+   "cookies": [
+    "SimpleSAML",
+    "SimpleSAMLSessionID"
+   ]
+  },
+  {
+   "name": "Sitecore",
+   "cpe": "cpe:2.3:a:sitecore:*",
+   "category": "CMS",
+   "headers": {
+    "Content-Security-Policy": "\\.sitecore\\.com"
+   },
+   "cookies": [
+    "SC_ANALYTICS_GLOBAL_COOKIE",
+    "SC_OS_SessionId",
+    "sc_expview",
+    "sxa_site"
+   ]
+  },
+  {
+   "name": "Sitepark IES",
+   "cpe": "cpe:2.3:a:sitepark:information_enterprise_server",
+   "category": "CMS",
+   "meta": {
+    "generator": "^Sitepark\\sInformation\\sEnterprise\\sServer\\s-\\sIES\\sGenerator\\sv([\\d\\.]+)$"
+   }
+  },
+  {
+   "name": "Smartstore",
+   "cpe": "cpe:2.3:a:smartstore:smartstore",
+   "category": "E-commerce",
+   "meta": {
+    "generator": "^Smart[sS]tore(.NET)? (.+)$"
+   },
+   "html": [
+    "<!--Powered by Smart[sS]tore",
+    "<meta property=\"sm:pagedata\""
+   ],
+   "cookies": [
+    "SMARTSTORE.CUSTOMER",
+    "SMARTSTORE.VISITOR"
+   ]
+  },
+  {
+   "name": "SPIP",
+   "cpe": "cpe:2.3:a:spip:spip",
+   "category": "CMS",
+   "headers": {
+    "Composed-By": "SPIP ([\\d.]+) @",
+    "X-Spip-Cache": ""
+   },
+   "meta": {
+    "generator": "(?:^|\\s)SPIP(?:\\s([\\d.]+(?:\\s\\[\\d+\\])?))?"
+   }
+  },
+  {
+   "name": "Spree",
+   "cpe": "cpe:2.3:a:spreecommerce:spree",
+   "category": "E-commerce",
+   "html": [
+    "(?:<link[^>]*/assets/store/all-[a-z\\d]{32}\\.css[^>]+>|<script>\\s*Spree\\.(?:routes|translations|api_key))"
+   ]
+  },
+  {
+   "name": "SquirrelMail",
+   "cpe": "cpe:2.3:a:squirrelmail:squirrelmail",
+   "category": "Webmail",
+   "html": [
+    "<small>SquirrelMail version ([.\\d]+)[^<]*<br "
+   ]
+  },
+  {
+   "name": "Squiz Matrix",
+   "cpe": "cpe:2.3:a:squiz:matrix",
+   "category": "CMS",
+   "headers": {
+    "X-Powered-By": "Squiz Matrix"
+   },
+   "meta": {
+    "generator": "Squiz Matrix"
+   },
+   "html": [
+    "<!--\\s+Running (?:MySource|Squiz) Matrix"
+   ]
+  },
+  {
+   "name": "Statamic",
+   "cpe": "cpe:2.3:a:statamic:statamic",
+   "category": "CMS",
+   "headers": {
+    "x-powered-by": "^Statamic$"
+   }
+  },
+  {
+   "name": "Strapi",
+   "cpe": "cpe:2.3:a:strapi:strapi",
+   "category": "CMS",
+   "headers": {
+    "X-Powered-By": "^Strapi"
+   }
+  },
+  {
+   "name": "Strikingly",
+   "cpe": "cpe:2.3:a:strikingly:strikingly",
+   "category": "CMS",
+   "html": [
+    "<!-- Powered by Strikingly\\.com"
+   ]
+  },
+  {
+   "name": "Subversion",
+   "cpe": "cpe:2.3:a:apache:subversion",
+   "category": "Development",
+   "headers": {
+    "server": "\\sSVN/([\\d\\.]+)\\s"
+   }
+  },
+  {
+   "name": "Sulu",
+   "cpe": "cpe:2.3:a:sulu:sulu",
+   "category": "CMS",
+   "headers": {
+    "X-Generator": "Sulu/?(.+)?$"
+   }
+  },
+  {
+   "name": "SunOS",
+   "cpe": "cpe:2.3:o:oracle:sunos",
+   "category": "Système d'exploitation",
+   "headers": {
+    "Server": "SunOS( [\\d\\.]+)?",
+    "Servlet-engine": "SunOS( [\\d\\.]+)?"
+   }
+  },
+  {
+   "name": "SvelteKit",
+   "cpe": "cpe:2.3:a:svelte:sveltekit",
+   "category": "UI frameworks",
+   "meta": {
+    "generator": "SvelteKit"
+   }
+  },
+  {
+   "name": "Sympa",
+   "cpe": "cpe:2.3:a:sympa:sympa",
+   "category": "Webmail",
+   "meta": {
+    "generator": "^Sympa$"
+   },
+   "html": [
+    "<a href=\"https?://www\\.sympa\\.org\">\\s*Powered by Sympa\\s*</a>"
+   ]
+  },
+  {
+   "name": "Textpattern CMS",
+   "cpe": "cpe:2.3:a:textpattern:textpattern",
+   "category": "CMS",
+   "meta": {
+    "generator": "Textpattern"
+   }
+  },
+  {
+   "name": "ThinkPHP",
+   "cpe": "cpe:2.3:a:thinkphp:thinkphp",
+   "category": "Framework web",
+   "headers": {
+    "X-Powered-By": "ThinkPHP"
+   },
+   "cookies": [
+    "thinkphp_show_page_trace"
+   ]
+  },
+  {
+   "name": "thttpd",
+   "cpe": "cpe:2.3:a:acme:thttpd",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "\\bthttpd(?:/([\\d.]+))?"
+   }
+  },
+  {
+   "name": "TomatoCart",
+   "cpe": "cpe:2.3:a:tomatocart:tomatocart",
+   "category": "E-commerce",
+   "meta": {
+    "generator": "TomatoCart"
+   }
+  },
+  {
+   "name": "TWiki",
+   "cpe": "cpe:2.3:a:twiki:twiki",
+   "category": "Wikis",
+   "html": [
+    "<img [^>]*(?:title|alt)=\"This site is powered by the TWiki collaboration platform"
+   ],
+   "cookies": [
+    "TWIKISID"
+   ]
+  },
+  {
+   "name": "Typecho",
+   "cpe": "cpe:2.3:a:typecho:typecho",
+   "category": "Blog",
+   "meta": {
+    "generator": "Typecho( [\\d.]+)?"
+   }
+  },
+  {
+   "name": "TYPO3 CMS",
+   "cpe": "cpe:2.3:a:typo3:typo3",
+   "category": "CMS",
+   "meta": {
+    "generator": "TYPO3\\s+(?:CMS\\s+)?(?:[\\d.]+)?(?:\\s+CMS)?"
+   }
+  },
+  {
+   "name": "Ubuntu",
+   "cpe": "cpe:2.3:o:canonical:ubuntu_linux",
+   "category": "Système d'exploitation",
+   "headers": {
+    "Server": "Ubuntu",
+    "X-Powered-By": "Ubuntu"
+   }
+  },
+  {
+   "name": "Umbraco",
+   "cpe": "cpe:2.3:a:umbraco:umbraco",
+   "category": "CMS",
+   "headers": {
+    "X-Umbraco-Version": "^(.+)$"
+   },
+   "meta": {
+    "generator": "umbraco"
+   },
+   "cookies": [
+    "merchello"
+   ]
+  },
+  {
+   "name": "UNIX",
+   "cpe": "cpe:2.3:o:unix:unix",
+   "category": "Système d'exploitation",
+   "headers": {
+    "Server": "Unix"
+   }
+  },
+  {
+   "name": "Uvicorn",
+   "cpe": "cpe:2.3:a:encode:uvicorn",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "uvicorn"
+   }
+  },
+  {
+   "name": "vBulletin",
+   "cpe": "cpe:2.3:a:vbulletin:vbulletin",
+   "category": "Forum",
+   "meta": {
+    "generator": "vBulletin ?([\\d.]+)?"
+   },
+   "html": [
+    "<div id=\"copyright\">Powered by vBulletin"
+   ],
+   "cookies": [
+    "bblastactivity",
+    "bblastvisit",
+    "bbsessionhash"
+   ]
+  },
+  {
+   "name": "VirtueMart",
+   "cpe": "cpe:2.3:a:virtuemart:virtuemart",
+   "category": "E-commerce",
+   "html": [
+    "<div id=\"vmMainPage"
+   ]
+  },
+  {
+   "name": "Web2py",
+   "cpe": "cpe:2.3:a:web2py:web2py",
+   "category": "Framework web",
+   "headers": {
+    "X-Powered-By": "web2py"
+   },
+   "meta": {
+    "generator": "^Web2py"
+   }
+  },
+  {
+   "name": "WebAssembly",
+   "cpe": "cpe:2.3:a:webassembly:webassembly",
+   "category": "Langage",
+   "headers": {
+    "Content-Type": "application/wasm"
+   }
+  },
+  {
+   "name": "webEdition",
+   "cpe": "cpe:2.3:a:webedition:webedition_cms",
+   "category": "CMS",
+   "meta": {
+    "DC.title": "webEdition",
+    "generator": "webEdition"
+   }
+  },
+  {
+   "name": "Weblication",
+   "cpe": "cpe:2.3:a:weblication:cms_core_\\&_grid",
+   "category": "CMS",
+   "meta": {
+    "generator": "^Weblication® CMS$"
+   }
+  },
+  {
+   "name": "WEBrick",
+   "cpe": "cpe:2.3:a:ruby-lang:webrick",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "^WEBrick/([\\d\\.]+)"
+   }
+  },
+  {
+   "name": "WebsiteBaker",
+   "cpe": "cpe:2.3:a:websitebaker:websitebaker",
+   "category": "CMS",
+   "meta": {
+    "generator": "WebsiteBaker"
+   }
+  },
+  {
+   "name": "WebSphere",
+   "cpe": "cpe:2.3:a:ibm:websphere_application_server",
+   "category": "Serveur web",
+   "cookies": [
+    "ltpatoken"
+   ]
+  },
+  {
+   "name": "Welcart",
+   "cpe": "cpe:2.3:a:welcart:welcart",
+   "category": "E-commerce",
+   "html": [
+    "<link[^>]+?href=\"[^\"]+usces_default(?:\\.min)?\\.css",
+    "<!-- Welcart version : v([\\d.]+)"
+   ],
+   "cookies": [
+    "usces_cookie"
+   ]
+  },
+  {
+   "name": "WikkaWiki",
+   "cpe": "cpe:2.3:a:wikkawiki:wikkawiki",
+   "category": "Wikis",
+   "meta": {
+    "generator": "WikkaWiki"
+   },
+   "html": [
+    "Powered by <a href=\"[^>]+WikkaWiki"
+   ]
+  },
+  {
+   "name": "WooCommerce",
+   "cpe": "cpe:2.3:a:woocommerce:woocommerce",
+   "category": "E-commerce",
+   "meta": {
+    "generator": "WooCommerce ([\\d.]+)"
+   },
+   "cookies": [
+    "woocommerce_recently_viewed"
+   ]
+  },
+  {
+   "name": "WPML",
+   "cpe": "cpe:2.3:a:wpml:wpml",
+   "category": "WordPress plugins",
+   "meta": {
+    "generator": "^WPML\\sver\\:([\\d\\.]+)"
+   },
+   "cookies": [
+    "wp-wpml_current_language"
+   ]
+  },
+  {
+   "name": "XenForo",
+   "cpe": "cpe:2.3:a:xenforo:xenforo",
+   "category": "Forum",
+   "html": [
+    "(?:jQuery\\.extend\\(true, XenForo|<a[^>]+>Forum software by XenForo™|<!--XF:branding|<html[^>]+id=\"XenForo\")",
+    "<html id=\"XF\" "
+   ],
+   "cookies": [
+    "xf_csrf",
+    "xf_session"
+   ]
+  },
+  {
+   "name": "Xitami",
+   "cpe": "cpe:2.3:a:xitami:xitami",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "Xitami(?:/([\\d.]+))?"
+   }
+  },
+  {
+   "name": "Xiuno BBS",
+   "cpe": "cpe:2.3:a:xiuno:xiunobbs",
+   "category": "CMS",
+   "meta": {
+    "author": "XiunoBBS\\s([\\d\\.]+)"
+   }
+  },
+  {
+   "name": "XOOPS",
+   "cpe": "cpe:2.3:a:xoops:xoops",
+   "category": "CMS",
+   "meta": {
+    "generator": "XOOPS"
+   }
+  },
+  {
+   "name": "XpressEngine",
+   "cpe": "cpe:2.3:a:xpressengine:xpressengine",
+   "category": "CMS",
+   "meta": {
+    "generator": "XpressEngine"
+   }
+  },
+  {
+   "name": "XWiki",
+   "cpe": "cpe:2.3:a:xwiki:xwiki",
+   "category": "Wikis",
+   "meta": {
+    "wiki": "xwiki"
+   },
+   "html": [
+    "<html[^>]data-xwiki-[^>]>"
+   ]
+  },
+  {
+   "name": "YaBB",
+   "cpe": "cpe:2.3:a:yabb:yabb",
+   "category": "Forum",
+   "html": [
+    "Powered by <a href=\"[^>]+yabbforum"
+   ]
+  },
+  {
+   "name": "Yaws",
+   "cpe": "cpe:2.3:a:yaws:yaws",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "Yaws(?: ([\\d.]+))?"
+   }
+  },
+  {
+   "name": "Yclas",
+   "cpe": "cpe:2.3:a:open-classifieds:open_classifieds",
+   "category": "E-commerce",
+   "meta": {
+    "author": "open-classifieds\\.com",
+    "copyright": "(?:Open Classifieds|Yclas)\\s([0-9.]+)?"
+   }
+  },
+  {
+   "name": "Yii",
+   "cpe": "cpe:2.3:a:yiiframework:yii",
+   "category": "Framework web",
+   "html": [
+    "Powered by <a href=\"http://www\\.yiiframework\\.com/\" rel=\"external\">Yii Framework</a>",
+    "<input type=\"hidden\" value=\"[a-zA-Z0-9]{40}\" name=\"YII_CSRF_TOKEN\" \\/>",
+    "<!\\[CDATA\\[YII-BLOCK-(?:HEAD|BODY-BEGIN|BODY-END)\\]"
+   ],
+   "cookies": [
+    "YII_CSRF_TOKEN"
+   ]
+  },
+  {
+   "name": "Zabbix",
+   "cpe": "cpe:2.3:a:zabbix:zabbix",
+   "category": "Miscellaneous",
+   "meta": {
+    "Author": "ZABBIX SIA"
+   },
+   "html": [
+    "<body[^>]+zbxCallPostScripts"
+   ]
+  },
+  {
+   "name": "Zend",
+   "cpe": "cpe:2.3:a:zend:zend_server",
+   "category": "Serveur web",
+   "headers": {
+    "X-Powered-By": "Zend(?:Server)?(?:[\\s/]?([0-9.]+))?"
+   },
+   "cookies": [
+    "ZENDSERVERSESSID"
+   ]
+  },
+  {
+   "name": "Zeta Producer",
+   "cpe": "cpe:2.3:a:zeta-producer:zeta_producer",
+   "category": "Landing page",
+   "meta": {
+    "generator": "^Zeta Producer ([\\d\\.]+)"
+   }
+  },
+  {
+   "name": "Zimbra",
+   "cpe": "cpe:2.3:a:zimbra:zimbra",
+   "category": "Webmail",
+   "cookies": [
+    "ZM_TEST"
+   ]
+  },
+  {
+   "name": "Zope",
+   "cpe": "cpe:2.3:a:zope:zope",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "^Zope/"
+   }
+  }
+ ]
+}

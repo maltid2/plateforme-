@@ -15,6 +15,7 @@
 const WEIGHTS = {
   A1: 25, // SSL/TLS
   A2: 25, // Headers HTTP
+  A4: 12, // Sécurité front / navigateur
   A3: 20, // Fichiers sensibles
   B: 10, // Réputation
   C: 12, // Technologies + CVE

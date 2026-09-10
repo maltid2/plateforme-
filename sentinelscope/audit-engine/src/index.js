@@ -21,6 +21,7 @@ const { URL } = require('url');
 
 const ssl = require('./modules/ssl');
 const headers = require('./modules/headers');
+const frontend = require('./modules/frontend');
 const exposedFiles = require('./modules/exposed-files');
 const reputation = require('./modules/reputation');
 const techDetect = require('./modules/tech-detect');
@@ -48,6 +49,7 @@ function normalizeUrl(input) {
 const MODULE_CATALOG = [
   { id: 'A1', name: 'SSL/TLS', run: (u, o) => ssl.run(u, o), onError: (e) => ({ module: 'A1', name: 'SSL/TLS', findings: [], score: 0, error: e.message }) },
   { id: 'A2', name: 'Headers HTTP', run: (u, o) => headers.run(u, o), onError: (e) => ({ module: 'A2', name: 'Headers HTTP', findings: [], score: 0, error: e.message }) },
+  { id: 'A4', name: 'Sécurité front', run: (u, o) => frontend.run(u, o), onError: (e) => ({ module: 'A4', name: 'Sécurité front', findings: [], score: 100, degraded: true, error: e.message }) },
   { id: 'A3', name: 'Fichiers sensibles', run: (u, o) => exposedFiles.run(u, o), onError: (e) => ({ module: 'A3', name: 'Fichiers sensibles', findings: [], score: 0, error: e.message }) },
   { id: 'B', name: 'Réputation', run: (u, o) => reputation.run(u, o), onError: (e) => ({ module: 'B', name: 'Réputation', findings: [], score: 100, degraded: true, error: e.message }) },
   { id: 'C', name: 'Technologies + CVE', run: (u, o) => techDetect.run(u, o), onError: (e) => ({ module: 'C', name: 'Technologies + CVE', findings: [], score: 100, degraded: true, error: e.message }) },

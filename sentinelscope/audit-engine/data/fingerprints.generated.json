@@ -1,7 +1,7 @@
 {
  "_comment": "Fichier GÉNÉRÉ automatiquement — ne pas éditer à la main. Source : enthec/webappanalyzer (GPL-3.0). Fusionné au runtime avec data/fingerprints.json (base curée prioritaire). Régénéré par scripts/update-fingerprints.js.",
  "_source": "enthec/webappanalyzer",
- "_generatedAt": "2026-09-09",
+ "_generatedAt": "2026-09-10",
  "technologies": [
   {
    "name": "Adminer",

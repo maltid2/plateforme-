@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowRight,
@@ -9,10 +10,19 @@ import {
   Search,
   ShieldAlert,
   ShieldCheck,
+  X,
 } from "lucide-react";
 
 type Phase = "idle" | "scanning" | "done" | "error";
 
+type Sev = "high" | "medium" | "low" | "info";
+type SectionFinding = { severity: Sev; message: string };
+type Section = {
+  name: string;
+  status: "ok" | "warn" | "error";
+  findings: SectionFinding[];
+  more: number;
+};
 type Finding = { ok: boolean; label: string };
 type Result = {
   host: string;
@@ -20,6 +30,7 @@ type Result = {
   grade: string;
   meaning?: string;
   findings: Finding[];
+  sections?: Section[];
   reportHtml?: string;
 };
 
@@ -31,12 +42,32 @@ const STEPS = [
   "Génération du rapport",
 ];
 
+const CONSENT_KEY = "ss-audit-consent-v1";
+
 const gradeColor: Record<string, string> = {
   A: "#8D7CFF",
   B: "#8D7CFF",
   C: "#A78BFA",
   D: "#8B5CF6",
   F: "#A855F7",
+};
+
+// Gravité d'une alerte : libellé + couleur (rouge = vraiment grave).
+const SEV_META: Record<Sev, { label: string; color: string; bg: string }> = {
+  high: { label: "Élevé", color: "#F87171", bg: "rgba(248,113,113,0.14)" },
+  medium: { label: "Moyen", color: "#F0A93B", bg: "rgba(240,169,59,0.14)" },
+  low: { label: "Faible", color: "#A78BFA", bg: "rgba(167,139,250,0.16)" },
+  info: { label: "Info", color: "#8B98A8", bg: "rgba(139,152,168,0.14)" },
+};
+
+// Verdict d'une section.
+const STATUS_META: Record<
+  Section["status"],
+  { label: string; color: string; bg: string }
+> = {
+  ok: { label: "Conforme", color: "#5FD68A", bg: "rgba(95,214,138,0.14)" },
+  warn: { label: "À corriger", color: "#F0A93B", bg: "rgba(240,169,59,0.14)" },
+  error: { label: "Non vérifié", color: "#8B98A8", bg: "rgba(139,152,168,0.14)" },
 };
 
 /** Ouvre le rapport HTML complet dans un nouvel onglet (Blob URL, sans serveur). */
@@ -102,6 +133,18 @@ function ScoreRing({
   );
 }
 
+/** Pastille de gravité / statut. */
+function Badge({ label, color, bg }: { label: string; color: string; bg: string }) {
+  return (
+    <span
+      className="flex-none rounded-md px-2 py-0.5 text-[11px] font-semibold"
+      style={{ background: bg, color }}
+    >
+      {label}
+    </span>
+  );
+}
+
 export default function AuditForm({
   id,
   align = "start",
@@ -116,8 +159,10 @@ export default function AuditForm({
   const [inputError, setInputError] = useState(false);
   const [errMsg, setErrMsg] = useState("");
   const [result, setResult] = useState<Result | null>(null);
+  const [consentOpen, setConsentOpen] = useState(false);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const resultRef = useRef<HTMLDivElement | null>(null);
+  const pendingUrl = useRef<string | null>(null);
 
   // Animation premium à l'apparition du résultat (anime.js) : le score monte
   // de 0 à sa valeur et les lignes apparaissent en cascade. Repli sans effet
@@ -169,13 +214,8 @@ export default function AuditForm({
     }
   };
 
-  const run = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const raw = value.trim();
-    if (!raw || !raw.includes(".")) {
-      setInputError(true);
-      return;
-    }
+  /** Lance réellement l'analyse (après acceptation de la décharge). */
+  const doAudit = async (raw: string) => {
     setInputError(false);
     setErrMsg("");
     setResult(null);
@@ -183,8 +223,6 @@ export default function AuditForm({
     setPhase("scanning");
     setStep(0);
 
-    // Fait avancer les étapes visuellement jusqu'à l'avant-dernière, en
-    // attendant la vraie réponse du moteur.
     const startedAt = Date.now();
     const MIN_LOADER_MS = 5200; // durée minimale d'affichage du loader
     stopTimer();
@@ -205,8 +243,6 @@ export default function AuditForm({
         setPhase("error");
         return;
       }
-      // Laisse le loader durer au moins MIN_LOADER_MS (les étapes continuent
-      // d'avancer pendant l'attente), même si le moteur répond très vite.
       const elapsed = Date.now() - startedAt;
       if (elapsed < MIN_LOADER_MS) {
         await new Promise((res) => setTimeout(res, MIN_LOADER_MS - elapsed));
@@ -224,6 +260,47 @@ export default function AuditForm({
     }
   };
 
+  const hasConsent = () => {
+    try {
+      return localStorage.getItem(CONSENT_KEY) === "1";
+    } catch {
+      return false;
+    }
+  };
+
+  const run = (e: React.FormEvent) => {
+    e.preventDefault();
+    const raw = value.trim();
+    if (!raw || !raw.includes(".")) {
+      setInputError(true);
+      return;
+    }
+    // Décharge de responsabilité : à accepter avant toute analyse.
+    if (!hasConsent()) {
+      pendingUrl.current = raw;
+      setConsentOpen(true);
+      return;
+    }
+    doAudit(raw);
+  };
+
+  const acceptConsent = () => {
+    try {
+      localStorage.setItem(CONSENT_KEY, "1");
+    } catch {
+      /* ignore */
+    }
+    setConsentOpen(false);
+    const raw = pendingUrl.current;
+    pendingUrl.current = null;
+    if (raw) doAudit(raw);
+  };
+
+  const declineConsent = () => {
+    pendingUrl.current = null;
+    setConsentOpen(false);
+  };
+
   const reset = () => {
     stopTimer();
     setPhase("idle");
@@ -232,6 +309,8 @@ export default function AuditForm({
     setResult(null);
     setErrMsg("");
   };
+
+  const sections = result?.sections;
 
   return (
     <div
@@ -362,20 +441,60 @@ export default function AuditForm({
                     </div>
                   </div>
 
-                  <ul className="mt-4 space-y-2">
-                    {result.findings.map((f, i) => (
-                      <li key={i} className="audit-finding flex items-start gap-2.5 text-sm">
-                        {f.ok ? (
-                          <ShieldCheck className="mt-0.5 h-4 w-4 flex-none text-acc-violet" />
-                        ) : (
-                          <ShieldAlert className="mt-0.5 h-4 w-4 flex-none text-sev-high" />
-                        )}
-                        <span className={f.ok ? "text-ink/85" : "text-ink"}>
-                          {f.label}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+                  {/* Alertes classées par section, avec gravité */}
+                  {sections && sections.length > 0 ? (
+                    <div className="mt-4 space-y-2.5">
+                      {sections.map((sec, i) => {
+                        const st = STATUS_META[sec.status];
+                        return (
+                          <div
+                            key={i}
+                            className="audit-finding rounded-xl border border-line bg-white/[0.02] p-3.5"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-sm font-semibold text-ink">
+                                {sec.name}
+                              </span>
+                              <Badge label={st.label} color={st.color} bg={st.bg} />
+                            </div>
+                            {sec.findings.length > 0 && (
+                              <ul className="mt-2.5 space-y-1.5">
+                                {sec.findings.map((f, j) => {
+                                  const sv = SEV_META[f.severity] || SEV_META.info;
+                                  return (
+                                    <li key={j} className="flex items-start gap-2 text-sm">
+                                      <Badge label={sv.label} color={sv.color} bg={sv.bg} />
+                                      <span className="text-ink/85">{f.message}</span>
+                                    </li>
+                                  );
+                                })}
+                                {sec.more > 0 && (
+                                  <li className="text-xs text-muted">
+                                    +{sec.more} autre(s) — voir le rapport complet
+                                  </li>
+                                )}
+                              </ul>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <ul className="mt-4 space-y-2">
+                      {result.findings.map((f, i) => (
+                        <li key={i} className="audit-finding flex items-start gap-2.5 text-sm">
+                          {f.ok ? (
+                            <ShieldCheck className="mt-0.5 h-4 w-4 flex-none text-acc-violet" />
+                          ) : (
+                            <ShieldAlert className="mt-0.5 h-4 w-4 flex-none text-sev-high" />
+                          )}
+                          <span className={f.ok ? "text-ink/85" : "text-ink"}>
+                            {f.label}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
 
                   <div className="mt-5 flex flex-wrap items-center gap-3">
                     <button
@@ -404,6 +523,80 @@ export default function AuditForm({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Pop-up de décharge — à accepter avant toute analyse */}
+      {consentOpen &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Avant de lancer l'analyse"
+          >
+            <div
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+              onClick={declineConsent}
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 14, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.22, ease: [0.2, 0.7, 0.2, 1] }}
+              className="relative w-full max-w-lg rounded-2xl border border-line bg-card p-6 shadow-soft"
+            >
+              <button
+                onClick={declineConsent}
+                aria-label="Fermer"
+                className="absolute right-4 top-4 text-muted transition-colors hover:text-ink"
+              >
+                <X className="h-5 w-5" />
+              </button>
+
+              <div className="flex items-center gap-3">
+                <span className="grid h-10 w-10 flex-none place-items-center rounded-xl bg-acc-violet/15">
+                  <ShieldAlert className="h-5 w-5 text-acc-violet" />
+                </span>
+                <h3 className="text-lg font-bold text-ink">
+                  Avant de lancer l&apos;analyse
+                </h3>
+              </div>
+
+              <div className="mt-4 space-y-3 text-sm leading-relaxed text-muted">
+                <p>
+                  Vous devez être <strong className="text-ink">propriétaire</strong> du
+                  site analysé, ou disposer d&apos;une{" "}
+                  <strong className="text-ink">autorisation explicite</strong> pour
+                  l&apos;auditer.
+                </p>
+                <p>
+                  SentinelScope réalise un audit non intrusif, à titre informatif, et{" "}
+                  <strong className="text-ink">
+                    décline toute responsabilité
+                  </strong>{" "}
+                  quant à l&apos;usage des résultats ou à une analyse effectuée sans
+                  autorisation.
+                </p>
+              </div>
+
+              <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                <button
+                  onClick={declineConsent}
+                  className="rounded-full border border-line bg-white/[0.03] px-5 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-white/20"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={acceptConsent}
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-br from-acc-violet to-[#6b5cff] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_16px_40px_-16px_rgba(141,124,255,0.8)] transition-all hover:-translate-y-0.5"
+                >
+                  J&apos;accepte et je lance l&apos;analyse
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </div>
+            </motion.div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

@@ -56,6 +56,29 @@ function buildPreview(report) {
   return rows.slice(0, 6);
 }
 
+/**
+ * Regroupe les alertes par section (module), avec leur gravité, et classe
+ * chaque section : conforme / à corriger / non vérifié.
+ */
+function buildSections(report) {
+  const out = [];
+  for (const m of report.modules || []) {
+    const findings = (m.findings || [])
+      .map((f) => ({
+        severity: f.severity in SEV_RANK ? f.severity : "info",
+        message: f.message || f.id || "Point à corriger",
+      }))
+      .sort((a, b) => (SEV_RANK[b.severity] || 0) - (SEV_RANK[a.severity] || 0));
+    out.push({
+      name: m.name || "Contrôle",
+      status: m.error ? "error" : findings.length ? "warn" : "ok",
+      findings: findings.slice(0, 4),
+      more: Math.max(0, findings.length - 4),
+    });
+  }
+  return out;
+}
+
 export async function POST(req) {
  try {
   const dir = engineDir();
@@ -131,6 +154,7 @@ export async function POST(req) {
     meaning: report.scoring.meaning,
     findingsSummary: report.scoring.findingsSummary,
     findings: buildPreview(report),
+    sections: buildSections(report),
     reportHtml,
   });
  } catch (e) {

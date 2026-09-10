@@ -16,7 +16,7 @@ const COLUMNS = [
     title: "Mentions légales",
     links: [
       { label: "Mentions légales", href: "/mentions-legales" },
-      { label: "Confidentialité", href: "/confidentialite" },
+      { label: "Vie privée & RGPD", href: "/confidentialite" },
       { label: "Conditions d'utilisation", href: "/conditions" },
       { label: "Cookies", href: "/cookies" },
     ],

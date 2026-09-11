@@ -8,12 +8,12 @@ const config: Config = {
         xs: "400px",
       },
       colors: {
-        bg: "#FFFFFF",
-        bg2: "#FBF6F1",
+        bg: "#FAF6F0",
+        bg2: "#F2EBE0",
         card: "#FFFFFF",
-        ink: "#0B0B0C",
-        muted: "#5B5B60",
-        line: "rgba(0,0,0,0.10)",
+        ink: "#1C1A17",
+        muted: "#6B655C",
+        line: "rgba(28,26,23,0.10)",
         acc: {
           green: "#FF7A1A",
           cyan: "#FF7A1A",
@@ -35,6 +35,7 @@ const config: Config = {
           "Segoe UI",
           "sans-serif",
         ],
+        display: ["Space Grotesk", "Inter", "system-ui", "sans-serif"],
         mono: ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
       },
       borderRadius: {

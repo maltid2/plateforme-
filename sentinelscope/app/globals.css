@@ -3,34 +3,42 @@
 @tailwind utilities;
 
 :root {
-  --bg: #ffffff;
+  --bg: #faf6f0;
 }
 
 @layer base {
   * {
-    border-color: rgba(0, 0, 0, 0.1);
+    border-color: rgba(28, 26, 23, 0.1);
   }
   html {
     scroll-behavior: smooth;
   }
   body {
-    background-color: #ffffff;
-    color: #0b0b0c;
+    background-color: #faf6f0;
+    color: #1c1a17;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     overflow-x: hidden;
   }
+  /* Titres en Space Grotesk (identité typographique distinctive) */
+  h1,
+  h2,
+  h3,
+  .font-display {
+    font-family: "Space Grotesk", "Inter", system-ui, sans-serif;
+    letter-spacing: -0.02em;
+  }
   ::selection {
     background: rgba(255, 122, 26, 0.28);
-    color: #0b0b0c;
+    color: #1c1a17;
   }
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
   }
   ::-webkit-scrollbar-track {
-    background: #ffffff;
+    background: #faf6f0;
   }
   ::-webkit-scrollbar-thumb {
     background: #d8cfc6;
@@ -130,24 +138,24 @@
 .legal h2 {
   font-size: 1.15rem;
   font-weight: 700;
-  color: #0b0b0c;
+  color: #1c1a17;
   margin-top: 2.2rem;
   margin-bottom: 0.6rem;
 }
 .legal h3 {
   font-size: 1rem;
   font-weight: 600;
-  color: #0b0b0c;
+  color: #1c1a17;
   margin-top: 1.3rem;
   margin-bottom: 0.4rem;
 }
 .legal p {
-  color: #4a4a4e;
+  color: #4a4640;
   line-height: 1.7;
   margin-bottom: 0.9rem;
 }
 .legal ul {
-  color: #4a4a4e;
+  color: #4a4640;
   line-height: 1.7;
   margin: 0 0 0.9rem 1.2rem;
   list-style: disc;
@@ -161,7 +169,7 @@
   text-underline-offset: 2px;
 }
 .legal strong {
-  color: #0b0b0c;
+  color: #1c1a17;
   font-weight: 600;
 }
 

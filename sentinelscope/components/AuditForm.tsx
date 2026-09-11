@@ -45,11 +45,11 @@ const STEPS = [
 const CONSENT_KEY = "ss-audit-consent-v1";
 
 const gradeColor: Record<string, string> = {
-  A: "#7C5CFF",
-  B: "#7C5CFF",
+  A: "#8D7CFF",
+  B: "#8D7CFF",
   C: "#A78BFA",
-  D: "#6D28D9",
-  F: "#6D28D9",
+  D: "#8B5CF6",
+  F: "#A855F7",
 };
 
 // Gravité d'une alerte : libellé + couleur (rouge = vraiment grave).
@@ -96,7 +96,7 @@ function ScoreRing({
   const stroke = 7;
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
-  const color = gradeColor[grade] || "#6D28D9";
+  const color = gradeColor[grade] || "#8B5CF6";
   return (
     <div className="relative flex-none" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
@@ -104,7 +104,7 @@ function ScoreRing({
           cx={size / 2}
           cy={size / 2}
           r={r}
-          stroke="rgba(0,0,0,0.12)"
+          stroke="rgba(255,255,255,0.08)"
           strokeWidth={stroke}
           fill="none"
         />
@@ -332,15 +332,15 @@ export default function AuditForm({
             placeholder="votre-site.fr"
             aria-label="Adresse de votre site à auditer"
             aria-invalid={inputError}
-            className={`h-[52px] w-full rounded-full border bg-black/[0.03] py-3.5 pl-11 pr-4 text-[15px] text-ink placeholder:text-muted/70 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-acc-violet/60 ${
-              inputError ? "border-sev-critical/60" : "border-line focus:border-black/15"
+            className={`h-[52px] w-full rounded-full border bg-white/[0.03] py-3.5 pl-11 pr-4 text-[15px] text-ink placeholder:text-muted/70 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-acc-violet/60 ${
+              inputError ? "border-sev-critical/60" : "border-line focus:border-white/20"
             }`}
           />
         </div>
         <button
           type="submit"
           disabled={phase === "scanning"}
-          className="group inline-flex h-[52px] items-center justify-center gap-2 rounded-full bg-gradient-to-br from-acc-violet to-[#6D28D9] px-7 py-3.5 text-[15px] font-semibold text-white shadow-[0_16px_40px_-16px_rgba(124,92,255,0.8)] transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-acc-violet/60 disabled:opacity-70"
+          className="group inline-flex h-[52px] items-center justify-center gap-2 rounded-full bg-gradient-to-br from-acc-violet to-[#6b5cff] px-7 py-3.5 text-[15px] font-semibold text-white shadow-[0_16px_40px_-16px_rgba(141,124,255,0.8)] transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-acc-violet/60 disabled:opacity-70"
         >
           {phase === "scanning" ? (
             <>
@@ -423,8 +423,8 @@ export default function AuditForm({
                         <span
                           className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
                           style={{
-                            background: `${gradeColor[result.grade] || "#6D28D9"}22`,
-                            color: gradeColor[result.grade] || "#6D28D9",
+                            background: `${gradeColor[result.grade] || "#8B5CF6"}22`,
+                            color: gradeColor[result.grade] || "#8B5CF6",
                           }}
                         >
                           {result.score}/100
@@ -449,7 +449,7 @@ export default function AuditForm({
                         return (
                           <div
                             key={i}
-                            className="audit-finding rounded-xl border border-line bg-black/[0.02] p-3.5"
+                            className="audit-finding rounded-xl border border-line bg-white/[0.02] p-3.5"
                           >
                             <div className="flex items-center justify-between gap-2">
                               <span className="text-sm font-semibold text-ink">
@@ -581,13 +581,13 @@ export default function AuditForm({
               <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                 <button
                   onClick={declineConsent}
-                  className="rounded-full border border-line bg-black/[0.03] px-5 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-black/15"
+                  className="rounded-full border border-line bg-white/[0.03] px-5 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-white/20"
                 >
                   Annuler
                 </button>
                 <button
                   onClick={acceptConsent}
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-br from-acc-violet to-[#6D28D9] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_16px_40px_-16px_rgba(124,92,255,0.8)] transition-all hover:-translate-y-0.5"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-br from-acc-violet to-[#6b5cff] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_16px_40px_-16px_rgba(141,124,255,0.8)] transition-all hover:-translate-y-0.5"
                 >
                   J&apos;accepte et je lance l&apos;analyse
                   <ArrowRight className="h-4 w-4" />

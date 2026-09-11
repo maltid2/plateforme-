@@ -3,56 +3,41 @@
 @tailwind utilities;
 
 :root {
-  --bg: #faf6f0;
+  --bg: #07090d;
 }
 
 @layer base {
   * {
-    border-color: rgba(28, 26, 23, 0.1);
+    border-color: rgba(255, 255, 255, 0.08);
   }
   html {
     scroll-behavior: smooth;
   }
   body {
-    background-color: #faf6f0;
-    color: #1c1a17;
-    /* Texture « papier millimétré » : petits carrés violets très légers */
-    background-image: linear-gradient(
-        rgba(124, 92, 255, 0.06) 1px,
-        transparent 1px
-      ),
-      linear-gradient(90deg, rgba(124, 92, 255, 0.06) 1px, transparent 1px);
-    background-size: 22px 22px;
+    background-color: #07090d;
+    color: #f5f7fa;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     overflow-x: hidden;
   }
-  /* Titres en Space Grotesk (identité typographique distinctive) */
-  h1,
-  h2,
-  h3,
-  .font-display {
-    font-family: "Space Grotesk", "Inter", system-ui, sans-serif;
-    letter-spacing: -0.02em;
-  }
   ::selection {
-    background: rgba(124,92,255, 0.28);
-    color: #1c1a17;
+    background: rgba(141, 124, 255, 0.35);
+    color: #fff;
   }
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
   }
   ::-webkit-scrollbar-track {
-    background: #faf6f0;
+    background: #07090d;
   }
   ::-webkit-scrollbar-thumb {
-    background: #d8cfc6;
+    background: #1c2530;
     border-radius: 999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #c3b8ac;
+    background: #2a3542;
   }
 }
 
@@ -60,11 +45,11 @@
   /* Subtle background grid layer */
   .bg-grid-fade {
     background-image: linear-gradient(
-        rgba(124, 92, 255, 0.06) 1px,
+        rgba(255, 255, 255, 0.03) 1px,
         transparent 1px
       ),
-      linear-gradient(90deg, rgba(124, 92, 255, 0.06) 1px, transparent 1px);
-    background-size: 22px 22px;
+      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 56px 56px;
     -webkit-mask-image: radial-gradient(
       ellipse 80% 60% at 50% 0%,
       #000 40%,
@@ -80,22 +65,22 @@
   .glass {
     background: linear-gradient(
       180deg,
-      rgba(0, 0, 0, 0.035),
-      rgba(0, 0, 0, 0.015)
+      rgba(255, 255, 255, 0.05),
+      rgba(255, 255, 255, 0.02)
     );
-    border: 1px solid rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(14px);
   }
 
   .text-gradient {
-    background: linear-gradient(100deg, #7c5cff, #a78bfa);
+    background: linear-gradient(100deg, #8d7cff, #b7a6ff);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
 
   .text-gradient-violet {
-    background: linear-gradient(100deg, #7c5cff, #a78bfa);
+    background: linear-gradient(100deg, #8d7cff, #b7a6ff);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -105,7 +90,7 @@
     background: linear-gradient(
       90deg,
       transparent,
-      rgba(0, 0, 0, 0.12),
+      rgba(255, 255, 255, 0.12),
       transparent
     );
     height: 1px;
@@ -145,24 +130,24 @@
 .legal h2 {
   font-size: 1.15rem;
   font-weight: 700;
-  color: #1c1a17;
+  color: #f5f7fa;
   margin-top: 2.2rem;
   margin-bottom: 0.6rem;
 }
 .legal h3 {
   font-size: 1rem;
   font-weight: 600;
-  color: #1c1a17;
+  color: #f5f7fa;
   margin-top: 1.3rem;
   margin-bottom: 0.4rem;
 }
 .legal p {
-  color: #4a4640;
+  color: #8b98a8;
   line-height: 1.7;
   margin-bottom: 0.9rem;
 }
 .legal ul {
-  color: #4a4640;
+  color: #8b98a8;
   line-height: 1.7;
   margin: 0 0 0.9rem 1.2rem;
   list-style: disc;
@@ -171,18 +156,18 @@
   margin-bottom: 0.35rem;
 }
 .legal a {
-  color: #6d28d9;
+  color: #8d7cff;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 .legal strong {
-  color: #1c1a17;
+  color: #f5f7fa;
   font-weight: 600;
 }
 
-/* Accessibilité clavier : focus visible cohérent (orange), sans gêner la souris */
+/* Accessibilité clavier : focus visible cohérent (violet), sans gêner la souris */
 :focus-visible {
-  outline: 2px solid #7c5cff;
+  outline: 2px solid #a78bfa;
   outline-offset: 2px;
   border-radius: 4px;
 }

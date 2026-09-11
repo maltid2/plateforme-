@@ -39,7 +39,7 @@ function Constellation() {
           y1={POINTS[a].y}
           x2={POINTS[b].x}
           y2={POINTS[b].y}
-          stroke="rgba(124,92,255,0.14)"
+          stroke="rgba(141,124,255,0.14)"
           strokeWidth="0.15"
         />
       ))}
@@ -49,7 +49,7 @@ function Constellation() {
           cx={p.x}
           cy={p.y}
           r="0.5"
-          fill={i % 2 ? "#7C5CFF" : "#7C5CFF"}
+          fill={i % 2 ? "#8D7CFF" : "#8D7CFF"}
           animate={{ opacity: [0.2, 0.9, 0.2] }}
           transition={{
             duration: 4 + (i % 3),
@@ -73,7 +73,7 @@ export default function FinalCTA() {
           aria-hidden
           animate={{ opacity: [0.4, 0.7, 0.4], scale: [1, 1.08, 1] }}
           transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute left-1/2 top-1/2 h-[420px] w-[720px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(124,92,255,0.24),transparent_62%)] blur-3xl"
+          className="absolute left-1/2 top-1/2 h-[420px] w-[720px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(141,124,255,0.24),transparent_62%)] blur-3xl"
         />
         <Constellation />
       </div>

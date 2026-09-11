@@ -20,7 +20,7 @@ export default function Security() {
         {/* shield illustration */}
         <Reveal className="order-2 lg:order-1">
           <div className="relative mx-auto grid aspect-square w-full max-w-md place-items-center">
-            <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(124,92,255,0.14),transparent_65%)] blur-2xl" />
+            <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(141,124,255,0.14),transparent_65%)] blur-2xl" />
             {[0, 1, 2].map((i) => (
               <motion.div
                 key={i}
@@ -47,8 +47,8 @@ export default function Security() {
                   <span
                     className="absolute left-1/2 top-0 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full"
                     style={{
-                      background: i % 2 ? "#7C5CFF" : "#7C5CFF",
-                      boxShadow: `0 0 8px ${i % 2 ? "#7C5CFF" : "#7C5CFF"}`,
+                      background: i % 2 ? "#8D7CFF" : "#8D7CFF",
+                      boxShadow: `0 0 8px ${i % 2 ? "#8D7CFF" : "#8D7CFF"}`,
                     }}
                   />
                 </motion.div>
@@ -94,7 +94,7 @@ export default function Security() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={viewport}
                   transition={{ duration: 0.4, delay: i * 0.08 }}
-                  className="inline-flex items-center gap-2 rounded-full border border-line bg-black/[0.03] px-4 py-2 text-sm font-medium text-ink/90"
+                  className="inline-flex items-center gap-2 rounded-full border border-line bg-white/[0.03] px-4 py-2 text-sm font-medium text-ink/90"
                 >
                   <Icon className="h-4 w-4 text-acc-green" strokeWidth={1.9} />
                   {b.label}

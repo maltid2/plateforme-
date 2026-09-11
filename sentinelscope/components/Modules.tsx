@@ -27,7 +27,7 @@ const MODULES: Module[] = [
     id: "analyse",
     label: "Analyse",
     icon: Radar,
-    accent: "#7C5CFF",
+    accent: "#8D7CFF",
     headline: "Voyez votre site comme le ferait un attaquant",
     cards: [
       { title: "Connexion & certificat (SSL/TLS)", body: "Vérifie votre HTTPS, la validité du certificat et la solidité du chiffrement." },
@@ -40,7 +40,7 @@ const MODULES: Module[] = [
     id: "score",
     label: "Score",
     icon: Gauge,
-    accent: "#7C5CFF",
+    accent: "#8D7CFF",
     headline: "Un score de sécurité clair, immédiatement",
     cards: [
       { title: "Note de A à F", body: "Une note globale sur 100, facile à comprendre et à suivre dans le temps." },
@@ -53,7 +53,7 @@ const MODULES: Module[] = [
     id: "rapport",
     label: "Rapport",
     icon: FileText,
-    accent: "#7C5CFF",
+    accent: "#8D7CFF",
     headline: "Un rapport que tout le monde comprend",
     cards: [
       { title: "Résumé pour les dirigeants", body: "L'essentiel en langage clair, sans jargon technique." },
@@ -79,7 +79,7 @@ const MODULES: Module[] = [
     id: "confiance",
     label: "Confiance",
     icon: ShieldCheck,
-    accent: "#7C5CFF",
+    accent: "#8D7CFF",
     headline: "Une analyse respectueuse de votre site",
     cards: [
       { title: "Sans installation", body: "Rien à installer : vous entrez simplement l'adresse de votre site." },
@@ -123,7 +123,7 @@ export default function Modules() {
                 className={`inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-acc-violet/60 ${
                   on
                     ? "border-acc-violet/40 bg-acc-violet/15 text-ink"
-                    : "border-line bg-black/[0.02] text-muted hover:border-black/15 hover:text-ink"
+                    : "border-line bg-white/[0.02] text-muted hover:border-white/15 hover:text-ink"
                 }`}
               >
                 <Icon className="h-4 w-4" strokeWidth={1.8} />
@@ -161,7 +161,7 @@ export default function Modules() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: i * 0.08 }}
-                    className="rounded-xl border border-line bg-bg2/40 p-5 transition-colors hover:border-black/15"
+                    className="rounded-xl border border-line bg-bg2/40 p-5 transition-colors hover:border-white/15"
                   >
                     <span
                       className="mb-3 block h-1 w-8 rounded-full"

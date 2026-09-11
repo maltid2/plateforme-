@@ -33,7 +33,7 @@ export default function OpengraphImage() {
               justifyContent: "center",
               borderRadius: 20,
               marginRight: 22,
-              backgroundImage: "linear-gradient(150deg, #6D28D9, #5B21B6)",
+              backgroundImage: "linear-gradient(150deg, #8B5CF6, #5B21B6)",
               boxShadow: "0 0 60px rgba(139,92,246,0.6)",
             }}
           >

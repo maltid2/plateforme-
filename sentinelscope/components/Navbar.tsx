@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { Menu, Radar, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Button } from "./ui";
 
 const LINKS = [
@@ -14,15 +14,14 @@ const LINKS = [
 
 export function Logo() {
   return (
-    <Link
-      href="#top"
-      className="flex items-center gap-2.5 text-lg font-bold text-ink"
-      aria-label="SentinelScope"
-    >
-      <span className="grid h-8 w-8 place-items-center rounded-lg bg-acc-violet/12 ring-1 ring-acc-violet/25">
-        <Radar className="h-[18px] w-[18px] text-acc-violet" strokeWidth={2.2} />
-      </span>
-      Sentinel<span className="text-acc-violet">Scope</span>
+    <Link href="#top" className="flex items-center" aria-label="SentinelScope">
+      <img
+        src="/logo-full.png"
+        alt="SentinelScope — Sécurité, Analyse, Surveillance"
+        width={1600}
+        height={288}
+        className="h-9 w-auto sm:h-10"
+      />
     </Link>
   );
 }
@@ -71,7 +70,7 @@ export default function Navbar() {
           aria-label={open ? "Fermer le menu" : "Ouvrir le menu"}
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
-          className="grid h-10 w-10 place-items-center rounded-lg border border-line bg-black/[0.03] text-ink md:hidden"
+          className="grid h-10 w-10 place-items-center rounded-lg border border-line bg-white/[0.03] text-ink md:hidden"
         >
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
@@ -92,7 +91,7 @@ export default function Navbar() {
                   key={l.label}
                   href={l.href}
                   onClick={() => setOpen(false)}
-                  className="rounded-lg px-3 py-3 text-base font-medium text-muted hover:bg-black/[0.03] hover:text-ink"
+                  className="rounded-lg px-3 py-3 text-base font-medium text-muted hover:bg-white/[0.04] hover:text-ink"
                 >
                   {l.label}
                 </Link>

@@ -8,21 +8,21 @@ const config: Config = {
         xs: "400px",
       },
       colors: {
-        bg: "#FAF6F0",
-        bg2: "#F2EBE0",
-        card: "#FFFFFF",
-        ink: "#1C1A17",
-        muted: "#6B655C",
-        line: "rgba(28,26,23,0.10)",
+        bg: "#07090D",
+        bg2: "#0D1118",
+        card: "#121821",
+        ink: "#F5F7FA",
+        muted: "#8B98A8",
+        line: "rgba(255,255,255,0.08)",
         acc: {
-          green: "#7C5CFF",
-          cyan: "#7C5CFF",
-          violet: "#7C5CFF",
+          green: "#8D7CFF",
+          cyan: "#8D7CFF",
+          violet: "#8D7CFF",
         },
         sev: {
-          critical: "#DC2626",
-          high: "#EA580C",
-          medium: "#D97706",
+          critical: "#A855F7",
+          high: "#8B5CF6",
+          medium: "#A78BFA",
         },
       },
       fontFamily: {
@@ -35,7 +35,6 @@ const config: Config = {
           "Segoe UI",
           "sans-serif",
         ],
-        display: ["Space Grotesk", "Inter", "system-ui", "sans-serif"],
         mono: ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
       },
       borderRadius: {
@@ -44,15 +43,15 @@ const config: Config = {
         "3xl": "28px",
       },
       boxShadow: {
-        soft: "0 24px 50px -28px rgba(0,0,0,0.22)",
-        glow: "0 0 60px -12px rgba(124,92,255,0.35)",
-        "glow-green": "0 0 60px -14px rgba(124,92,255,0.3)",
-        "glow-cyan": "0 0 60px -14px rgba(124,92,255,0.3)",
+        soft: "0 20px 60px -30px rgba(0,0,0,0.8)",
+        glow: "0 0 60px -12px rgba(141,124,255,0.45)",
+        "glow-green": "0 0 60px -14px rgba(141,124,255,0.4)",
+        "glow-cyan": "0 0 60px -14px rgba(141,124,255,0.4)",
       },
       backgroundImage: {
-        grid: "linear-gradient(rgba(124,92,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(124,92,255,0.06) 1px, transparent 1px)",
+        grid: "linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px)",
         "radial-fade":
-          "radial-gradient(circle at center, rgba(0,0,0,0.05), transparent 70%)",
+          "radial-gradient(circle at center, rgba(255,255,255,0.06), transparent 70%)",
       },
       keyframes: {
         marquee: {

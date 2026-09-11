@@ -17,7 +17,7 @@ function RiskRing({ score, size = 108 }: { score: number; size?: number }) {
           cx={size / 2}
           cy={size / 2}
           r={r}
-          stroke="rgba(0,0,0,0.12)"
+          stroke="rgba(255,255,255,0.08)"
           strokeWidth={stroke}
           fill="none"
         />
@@ -25,7 +25,7 @@ function RiskRing({ score, size = 108 }: { score: number; size?: number }) {
           cx={size / 2}
           cy={size / 2}
           r={r}
-          stroke="#7C5CFF"
+          stroke="#8D7CFF"
           strokeWidth={stroke}
           strokeLinecap="round"
           fill="none"
@@ -54,14 +54,14 @@ function Sparkline({ path }: { path: string }) {
     <svg viewBox="0 0 220 64" className="h-16 w-full" preserveAspectRatio="none">
       <defs>
         <linearGradient id="spgf" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#7C5CFF" stopOpacity="0.22" />
-          <stop offset="1" stopColor="#7C5CFF" stopOpacity="0" />
+          <stop offset="0" stopColor="#8D7CFF" stopOpacity="0.22" />
+          <stop offset="1" stopColor="#8D7CFF" stopOpacity="0" />
         </linearGradient>
       </defs>
       <motion.path
         d={path}
         fill="none"
-        stroke="#7C5CFF"
+        stroke="#8D7CFF"
         strokeWidth="2.5"
         strokeLinecap="round"
         initial={{ pathLength: 0 }}
@@ -96,7 +96,7 @@ const ASSETS: (View & {
 })[] = [
   {
     sev: "Critique",
-    color: "#6D28D9",
+    color: "#A855F7",
     asset: "Fichiers exposés",
     tag: "À corriger",
     tagCls: "bg-acc-violet/15 text-acc-violet",
@@ -107,7 +107,7 @@ const ASSETS: (View & {
   },
   {
     sev: "Élevé",
-    color: "#6D28D9",
+    color: "#8B5CF6",
     asset: "En-têtes de sécurité",
     tag: "À corriger",
     tagCls: "bg-acc-violet/15 text-acc-violet",
@@ -121,7 +121,7 @@ const ASSETS: (View & {
     color: "#A78BFA",
     asset: "Protection RGPD",
     tag: "À voir",
-    tagCls: "bg-black/[0.04] text-muted",
+    tagCls: "bg-white/[0.06] text-muted",
     label: "Protection RGPD",
     score: 70,
     delta: -4,
@@ -158,9 +158,9 @@ export default function HeroDashboard() {
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-muted">
             <span className="flex gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-black/15" />
-              <span className="h-2.5 w-2.5 rounded-full bg-black/15" />
-              <span className="h-2.5 w-2.5 rounded-full bg-black/15" />
+              <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
+              <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
+              <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
             </span>
             <span className="ml-2 font-medium">Aperçu de votre audit</span>
           </div>
@@ -249,7 +249,7 @@ Touchez un contrôle pour le détail
                 className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors ${
                   active
                     ? "bg-acc-violet/12 ring-1 ring-acc-violet/40"
-                    : "hover:bg-black/[0.03]"
+                    : "hover:bg-white/[0.04]"
                 }`}
               >
                 <span

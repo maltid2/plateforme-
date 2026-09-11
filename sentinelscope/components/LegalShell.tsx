@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, Radar } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Container } from "./ui";
 import Footer from "./Footer";
 
@@ -17,11 +17,15 @@ export default function LegalShell({
     <>
       <header className="border-b border-line bg-bg/70 backdrop-blur-xl">
         <Container className="flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5 text-lg font-bold text-ink">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-acc-violet/12 ring-1 ring-acc-violet/25">
-              <Radar className="h-[18px] w-[18px] text-acc-violet" strokeWidth={2.2} />
-            </span>
-            Sentinel<span className="text-acc-violet">Scope</span>
+          <Link href="/" className="flex items-center gap-2.5 text-lg font-bold">
+            <img
+              src="/logo-mark.png"
+              alt="SentinelScope"
+              width={32}
+              height={32}
+              className="h-8 w-8 rounded-lg"
+            />
+            Sentinel<span className="text-acc-cyan">Scope</span>
           </Link>
           <Link
             href="/"

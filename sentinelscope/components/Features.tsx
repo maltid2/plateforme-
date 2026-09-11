@@ -120,11 +120,11 @@ export default function Features() {
                 {/* decorative animated glow blob */}
                 <span
                   aria-hidden
-                  className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-black/[0.03] opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100"
+                  className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-white/[0.04] opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100"
                 />
                 <div className="flex items-center justify-between">
                   <div
-                    className={`grid h-12 w-12 place-items-center rounded-xl ring-1 ring-inset ring-black/5 transition-all duration-300 group-hover:-translate-y-[3px] ${glowMap[f.glow]}`}
+                    className={`grid h-12 w-12 place-items-center rounded-xl ring-1 ring-inset ring-white/5 transition-all duration-300 group-hover:-translate-y-[3px] ${glowMap[f.glow]}`}
                   >
                     <Picto className="h-[26px] w-[26px] transition-transform duration-300 group-hover:scale-[1.06]" />
                   </div>

@@ -40,9 +40,9 @@ const EDGES: [string, string][] = [
 ];
 
 const RISK_META: Record<Risk, { color: string; label: string }> = {
-  safe: { color: "#7C5CFF", label: "Risque faible" },
+  safe: { color: "#8D7CFF", label: "Risque faible" },
   medium: { color: "#A78BFA", label: "Risque moyen" },
-  high: { color: "#6D28D9", label: "Risque élevé" },
+  high: { color: "#A855F7", label: "Risque élevé" },
   unknown: { color: "#8B98A8", label: "Non classé" },
 };
 
@@ -107,7 +107,7 @@ export default function Problem() {
                     y1={na.y}
                     x2={nb.x}
                     y2={nb.y}
-                    stroke="rgba(0,0,0,0.14)"
+                    stroke="rgba(255,255,255,0.1)"
                     strokeWidth="0.4"
                     initial={{ pathLength: 0, opacity: 0 }}
                     whileInView={{ pathLength: 1, opacity: 1 }}
@@ -240,7 +240,7 @@ export default function Problem() {
                     </button>
                     <button
                       onClick={() => setDismissed(true)}
-                      className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-black/[0.04] px-3 py-2 text-xs font-semibold text-muted transition-colors hover:bg-black/[0.06] hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-acc-violet/40"
+                      className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white/[0.05] px-3 py-2 text-xs font-semibold text-muted transition-colors hover:bg-white/[0.1] hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
                     >
                       <X className="h-3.5 w-3.5" /> Ignorer
                     </button>

@@ -71,7 +71,7 @@ function Item({
           <motion.span
             animate={{ rotate: open ? 180 : 0 }}
             transition={{ duration: 0.3 }}
-            className="grid h-8 w-8 flex-none place-items-center rounded-full border border-line bg-white/[0.03] text-muted"
+            className="grid h-8 w-8 flex-none place-items-center rounded-full border border-line bg-black/[0.03] text-muted"
           >
             <ChevronDown className="h-4 w-4" />
           </motion.span>

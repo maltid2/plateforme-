@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Radar } from "lucide-react";
 import { Container } from "./ui";
 
 const COLUMNS = [
@@ -30,15 +31,11 @@ export default function Footer() {
         <div className="grid gap-12 md:grid-cols-[1.6fr_1fr_1fr]">
           {/* brand */}
           <div className="max-w-xs">
-            <Link href="/#top" className="flex items-center gap-2.5 text-lg font-bold">
-              <img
-                src="/logo-mark.png"
-                alt="SentinelScope"
-                width={34}
-                height={34}
-                className="h-[34px] w-[34px] rounded-lg"
-              />
-              Sentinel<span className="text-acc-cyan">Scope</span>
+            <Link href="/#top" className="flex items-center gap-2.5 text-lg font-bold text-ink">
+              <span className="grid h-8 w-8 place-items-center rounded-lg bg-acc-violet/12 ring-1 ring-acc-violet/25">
+                <Radar className="h-[18px] w-[18px] text-acc-violet" strokeWidth={2.2} />
+              </span>
+              Sentinel<span className="text-acc-violet">Scope</span>
             </Link>
             <p className="mt-4 text-sm leading-relaxed text-muted">
               L&apos;audit de sécurité de votre site en quelques minutes : un
@@ -73,7 +70,7 @@ export default function Footer() {
             © 2026 SentinelScope. Tous droits réservés.
           </p>
           <div className="flex items-center gap-2 text-xs text-muted">
-            <span className="h-1.5 w-1.5 rounded-full bg-acc-green shadow-[0_0_8px_#8D7CFF]" />
+            <span className="h-1.5 w-1.5 rounded-full bg-acc-green shadow-[0_0_8px_#FF7A1A]" />
             Tous les systèmes opérationnels
           </div>
         </div>

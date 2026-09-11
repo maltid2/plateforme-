@@ -45,18 +45,18 @@ const STEPS = [
 const CONSENT_KEY = "ss-audit-consent-v1";
 
 const gradeColor: Record<string, string> = {
-  A: "#FF7A1A",
-  B: "#FF7A1A",
-  C: "#FFA05A",
-  D: "#EA580C",
-  F: "#EA580C",
+  A: "#7C5CFF",
+  B: "#7C5CFF",
+  C: "#A78BFA",
+  D: "#6D28D9",
+  F: "#6D28D9",
 };
 
 // Gravité d'une alerte : libellé + couleur (rouge = vraiment grave).
 const SEV_META: Record<Sev, { label: string; color: string; bg: string }> = {
   high: { label: "Élevé", color: "#F87171", bg: "rgba(248,113,113,0.14)" },
   medium: { label: "Moyen", color: "#F0A93B", bg: "rgba(240,169,59,0.14)" },
-  low: { label: "Faible", color: "#FFA05A", bg: "rgba(255,160,90,0.16)" },
+  low: { label: "Faible", color: "#A78BFA", bg: "rgba(167,139,250,0.16)" },
   info: { label: "Info", color: "#8B98A8", bg: "rgba(139,152,168,0.14)" },
 };
 
@@ -96,7 +96,7 @@ function ScoreRing({
   const stroke = 7;
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
-  const color = gradeColor[grade] || "#EA580C";
+  const color = gradeColor[grade] || "#6D28D9";
   return (
     <div className="relative flex-none" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
@@ -340,7 +340,7 @@ export default function AuditForm({
         <button
           type="submit"
           disabled={phase === "scanning"}
-          className="group inline-flex h-[52px] items-center justify-center gap-2 rounded-full bg-gradient-to-br from-acc-violet to-[#EA580C] px-7 py-3.5 text-[15px] font-semibold text-white shadow-[0_16px_40px_-16px_rgba(255,122,26,0.8)] transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-acc-violet/60 disabled:opacity-70"
+          className="group inline-flex h-[52px] items-center justify-center gap-2 rounded-full bg-gradient-to-br from-acc-violet to-[#6D28D9] px-7 py-3.5 text-[15px] font-semibold text-white shadow-[0_16px_40px_-16px_rgba(124,92,255,0.8)] transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-acc-violet/60 disabled:opacity-70"
         >
           {phase === "scanning" ? (
             <>
@@ -423,8 +423,8 @@ export default function AuditForm({
                         <span
                           className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
                           style={{
-                            background: `${gradeColor[result.grade] || "#EA580C"}22`,
-                            color: gradeColor[result.grade] || "#EA580C",
+                            background: `${gradeColor[result.grade] || "#6D28D9"}22`,
+                            color: gradeColor[result.grade] || "#6D28D9",
                           }}
                         >
                           {result.score}/100
@@ -587,7 +587,7 @@ export default function AuditForm({
                 </button>
                 <button
                   onClick={acceptConsent}
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-br from-acc-violet to-[#EA580C] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_16px_40px_-16px_rgba(255,122,26,0.8)] transition-all hover:-translate-y-0.5"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-br from-acc-violet to-[#6D28D9] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_16px_40px_-16px_rgba(124,92,255,0.8)] transition-all hover:-translate-y-0.5"
                 >
                   J&apos;accepte et je lance l&apos;analyse
                   <ArrowRight className="h-4 w-4" />

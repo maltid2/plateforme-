@@ -25,7 +25,7 @@ function RiskRing({ score, size = 108 }: { score: number; size?: number }) {
           cx={size / 2}
           cy={size / 2}
           r={r}
-          stroke="#FF7A1A"
+          stroke="#7C5CFF"
           strokeWidth={stroke}
           strokeLinecap="round"
           fill="none"
@@ -54,14 +54,14 @@ function Sparkline({ path }: { path: string }) {
     <svg viewBox="0 0 220 64" className="h-16 w-full" preserveAspectRatio="none">
       <defs>
         <linearGradient id="spgf" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#FF7A1A" stopOpacity="0.22" />
-          <stop offset="1" stopColor="#FF7A1A" stopOpacity="0" />
+          <stop offset="0" stopColor="#7C5CFF" stopOpacity="0.22" />
+          <stop offset="1" stopColor="#7C5CFF" stopOpacity="0" />
         </linearGradient>
       </defs>
       <motion.path
         d={path}
         fill="none"
-        stroke="#FF7A1A"
+        stroke="#7C5CFF"
         strokeWidth="2.5"
         strokeLinecap="round"
         initial={{ pathLength: 0 }}
@@ -96,7 +96,7 @@ const ASSETS: (View & {
 })[] = [
   {
     sev: "Critique",
-    color: "#EA580C",
+    color: "#6D28D9",
     asset: "Fichiers exposés",
     tag: "À corriger",
     tagCls: "bg-acc-violet/15 text-acc-violet",
@@ -107,7 +107,7 @@ const ASSETS: (View & {
   },
   {
     sev: "Élevé",
-    color: "#EA580C",
+    color: "#6D28D9",
     asset: "En-têtes de sécurité",
     tag: "À corriger",
     tagCls: "bg-acc-violet/15 text-acc-violet",
@@ -118,7 +118,7 @@ const ASSETS: (View & {
   },
   {
     sev: "Moyen",
-    color: "#FFA05A",
+    color: "#A78BFA",
     asset: "Protection RGPD",
     tag: "À voir",
     tagCls: "bg-black/[0.04] text-muted",
@@ -129,7 +129,7 @@ const ASSETS: (View & {
   },
   {
     sev: "Faible",
-    color: "#FFA05A",
+    color: "#A78BFA",
     asset: "Connexion SSL/TLS",
     tag: "OK",
     tagCls: "bg-acc-violet/15 text-acc-violet",

@@ -16,6 +16,13 @@
   body {
     background-color: #faf6f0;
     color: #1c1a17;
+    /* Texture « papier millimétré » : petits carrés violets très légers */
+    background-image: linear-gradient(
+        rgba(124, 92, 255, 0.06) 1px,
+        transparent 1px
+      ),
+      linear-gradient(90deg, rgba(124, 92, 255, 0.06) 1px, transparent 1px);
+    background-size: 22px 22px;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
@@ -30,7 +37,7 @@
     letter-spacing: -0.02em;
   }
   ::selection {
-    background: rgba(255, 122, 26, 0.28);
+    background: rgba(124,92,255, 0.28);
     color: #1c1a17;
   }
   ::-webkit-scrollbar {
@@ -53,11 +60,11 @@
   /* Subtle background grid layer */
   .bg-grid-fade {
     background-image: linear-gradient(
-        rgba(0, 0, 0, 0.045) 1px,
+        rgba(124, 92, 255, 0.06) 1px,
         transparent 1px
       ),
-      linear-gradient(90deg, rgba(0, 0, 0, 0.045) 1px, transparent 1px);
-    background-size: 56px 56px;
+      linear-gradient(90deg, rgba(124, 92, 255, 0.06) 1px, transparent 1px);
+    background-size: 22px 22px;
     -webkit-mask-image: radial-gradient(
       ellipse 80% 60% at 50% 0%,
       #000 40%,
@@ -81,14 +88,14 @@
   }
 
   .text-gradient {
-    background: linear-gradient(100deg, #ff7a1a, #ff9a4d);
+    background: linear-gradient(100deg, #7c5cff, #a78bfa);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
 
   .text-gradient-violet {
-    background: linear-gradient(100deg, #ff7a1a, #ff9a4d);
+    background: linear-gradient(100deg, #7c5cff, #a78bfa);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -164,7 +171,7 @@
   margin-bottom: 0.35rem;
 }
 .legal a {
-  color: #ea580c;
+  color: #6d28d9;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -175,7 +182,7 @@
 
 /* Accessibilité clavier : focus visible cohérent (orange), sans gêner la souris */
 :focus-visible {
-  outline: 2px solid #ff7a1a;
+  outline: 2px solid #7c5cff;
   outline-offset: 2px;
   border-radius: 4px;
 }

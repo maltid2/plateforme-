@@ -33,7 +33,7 @@ export default function OpengraphImage() {
               justifyContent: "center",
               borderRadius: 20,
               marginRight: 22,
-              backgroundImage: "linear-gradient(150deg, #8B5CF6, #5B21B6)",
+              backgroundImage: "linear-gradient(150deg, #EA580C, #C2410C)",
               boxShadow: "0 0 60px rgba(139,92,246,0.6)",
             }}
           >
@@ -49,7 +49,7 @@ export default function OpengraphImage() {
           </div>
           <div style={{ display: "flex", fontSize: 44, fontWeight: 800 }}>
             <span style={{ color: "#F4F4F5" }}>Sentinel</span>
-            <span style={{ color: "#A78BFA" }}>Scope</span>
+            <span style={{ color: "#FFA05A" }}>Scope</span>
           </div>
         </div>
 
@@ -66,7 +66,7 @@ export default function OpengraphImage() {
           }}
         >
           <span style={{ color: "#F4F4F5" }}>Voyez chaque actif exposé</span>
-          <span style={{ color: "#A78BFA" }}>avant les attaquants.</span>
+          <span style={{ color: "#FFA05A" }}>avant les attaquants.</span>
         </div>
 
         {/* Sous-titre (texte seul) */}

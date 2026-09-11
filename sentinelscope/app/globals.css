@@ -3,41 +3,41 @@
 @tailwind utilities;
 
 :root {
-  --bg: #07090d;
+  --bg: #ffffff;
 }
 
 @layer base {
   * {
-    border-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(0, 0, 0, 0.1);
   }
   html {
     scroll-behavior: smooth;
   }
   body {
-    background-color: #07090d;
-    color: #f5f7fa;
+    background-color: #ffffff;
+    color: #0b0b0c;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     overflow-x: hidden;
   }
   ::selection {
-    background: rgba(141, 124, 255, 0.35);
-    color: #fff;
+    background: rgba(255, 122, 26, 0.28);
+    color: #0b0b0c;
   }
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
   }
   ::-webkit-scrollbar-track {
-    background: #07090d;
+    background: #ffffff;
   }
   ::-webkit-scrollbar-thumb {
-    background: #1c2530;
+    background: #d8cfc6;
     border-radius: 999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #2a3542;
+    background: #c3b8ac;
   }
 }
 
@@ -45,10 +45,10 @@
   /* Subtle background grid layer */
   .bg-grid-fade {
     background-image: linear-gradient(
-        rgba(255, 255, 255, 0.03) 1px,
+        rgba(0, 0, 0, 0.045) 1px,
         transparent 1px
       ),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      linear-gradient(90deg, rgba(0, 0, 0, 0.045) 1px, transparent 1px);
     background-size: 56px 56px;
     -webkit-mask-image: radial-gradient(
       ellipse 80% 60% at 50% 0%,
@@ -65,22 +65,22 @@
   .glass {
     background: linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.05),
-      rgba(255, 255, 255, 0.02)
+      rgba(0, 0, 0, 0.035),
+      rgba(0, 0, 0, 0.015)
     );
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.08);
     backdrop-filter: blur(14px);
   }
 
   .text-gradient {
-    background: linear-gradient(100deg, #8d7cff, #b7a6ff);
+    background: linear-gradient(100deg, #ff7a1a, #ff9a4d);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
 
   .text-gradient-violet {
-    background: linear-gradient(100deg, #8d7cff, #b7a6ff);
+    background: linear-gradient(100deg, #ff7a1a, #ff9a4d);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -90,7 +90,7 @@
     background: linear-gradient(
       90deg,
       transparent,
-      rgba(255, 255, 255, 0.12),
+      rgba(0, 0, 0, 0.12),
       transparent
     );
     height: 1px;
@@ -130,24 +130,24 @@
 .legal h2 {
   font-size: 1.15rem;
   font-weight: 700;
-  color: #f5f7fa;
+  color: #0b0b0c;
   margin-top: 2.2rem;
   margin-bottom: 0.6rem;
 }
 .legal h3 {
   font-size: 1rem;
   font-weight: 600;
-  color: #f5f7fa;
+  color: #0b0b0c;
   margin-top: 1.3rem;
   margin-bottom: 0.4rem;
 }
 .legal p {
-  color: #8b98a8;
+  color: #4a4a4e;
   line-height: 1.7;
   margin-bottom: 0.9rem;
 }
 .legal ul {
-  color: #8b98a8;
+  color: #4a4a4e;
   line-height: 1.7;
   margin: 0 0 0.9rem 1.2rem;
   list-style: disc;
@@ -156,18 +156,18 @@
   margin-bottom: 0.35rem;
 }
 .legal a {
-  color: #8d7cff;
+  color: #ea580c;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 .legal strong {
-  color: #f5f7fa;
+  color: #0b0b0c;
   font-weight: 600;
 }
 
-/* Accessibilité clavier : focus visible cohérent (violet), sans gêner la souris */
+/* Accessibilité clavier : focus visible cohérent (orange), sans gêner la souris */
 :focus-visible {
-  outline: 2px solid #a78bfa;
+  outline: 2px solid #ff7a1a;
   outline-offset: 2px;
   border-radius: 4px;
 }

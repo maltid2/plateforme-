@@ -58,8 +58,8 @@ export function Reveal({
 
 export function SectionLabel({ children }: { children: ReactNode }) {
   return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-line bg-white/[0.03] px-3.5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-acc-cyan">
-      <span className="h-1.5 w-1.5 rounded-full bg-acc-cyan shadow-[0_0_10px_#8D7CFF]" />
+    <span className="inline-flex items-center gap-2 rounded-full border border-line bg-black/[0.03] px-3.5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-acc-cyan">
+      <span className="h-1.5 w-1.5 rounded-full bg-acc-cyan shadow-[0_0_10px_#FF7A1A]" />
       {children}
     </span>
   );
@@ -94,8 +94,8 @@ export function Button({
     "group inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-acc-violet/60";
   const styles =
     variant === "primary"
-      ? "bg-gradient-to-br from-acc-violet to-[#6b5cff] text-white shadow-[0_16px_40px_-16px_rgba(141,124,255,0.8)] hover:-translate-y-0.5 hover:shadow-[0_22px_50px_-16px_rgba(141,124,255,0.9)]"
-      : "border border-line bg-white/[0.03] text-ink hover:bg-white/[0.07] hover:border-white/20";
+      ? "bg-gradient-to-br from-acc-violet to-[#EA580C] text-white shadow-[0_16px_40px_-16px_rgba(255,122,26,0.8)] hover:-translate-y-0.5 hover:shadow-[0_22px_50px_-16px_rgba(255,122,26,0.9)]"
+      : "border border-line bg-black/[0.03] text-ink hover:bg-black/[0.05] hover:border-black/15";
   return (
     <Link href={href} onClick={onClick} className={`${base} ${styles} ${className}`}>
       {children}

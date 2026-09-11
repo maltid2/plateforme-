@@ -66,7 +66,7 @@ export default function Product() {
                     className="relative"
                   >
                     <span className="absolute -left-6 grid h-5 w-5 -translate-x-1/2 place-items-center rounded-full border border-line bg-bg2 ring-4 ring-bg2">
-                      <span className="h-2 w-2 rounded-full bg-acc-cyan shadow-[0_0_8px_#8D7CFF]" />
+                      <span className="h-2 w-2 rounded-full bg-acc-cyan shadow-[0_0_8px_#FF7A1A]" />
                     </span>
                     <div className="flex items-center gap-2.5">
                       <Icon className="h-5 w-5 text-acc-cyan" strokeWidth={1.8} />
@@ -95,7 +95,7 @@ export default function Product() {
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm font-medium text-muted">
-                <span className="h-2 w-2 rounded-full bg-sev-high shadow-[0_0_8px_#8B5CF6]" />
+                <span className="h-2 w-2 rounded-full bg-sev-high shadow-[0_0_8px_#EA580C]" />
                 Détail de la vulnérabilité
               </div>
               <span className="rounded-full bg-sev-high/15 px-2.5 py-1 text-[11px] font-semibold text-sev-high">

@@ -8,21 +8,21 @@ const config: Config = {
         xs: "400px",
       },
       colors: {
-        bg: "#07090D",
-        bg2: "#0D1118",
-        card: "#121821",
-        ink: "#F5F7FA",
-        muted: "#8B98A8",
-        line: "rgba(255,255,255,0.08)",
+        bg: "#FFFFFF",
+        bg2: "#FBF6F1",
+        card: "#FFFFFF",
+        ink: "#0B0B0C",
+        muted: "#5B5B60",
+        line: "rgba(0,0,0,0.10)",
         acc: {
-          green: "#8D7CFF",
-          cyan: "#8D7CFF",
-          violet: "#8D7CFF",
+          green: "#FF7A1A",
+          cyan: "#FF7A1A",
+          violet: "#FF7A1A",
         },
         sev: {
-          critical: "#A855F7",
-          high: "#8B5CF6",
-          medium: "#A78BFA",
+          critical: "#DC2626",
+          high: "#EA580C",
+          medium: "#D97706",
         },
       },
       fontFamily: {
@@ -43,15 +43,15 @@ const config: Config = {
         "3xl": "28px",
       },
       boxShadow: {
-        soft: "0 20px 60px -30px rgba(0,0,0,0.8)",
-        glow: "0 0 60px -12px rgba(141,124,255,0.45)",
-        "glow-green": "0 0 60px -14px rgba(141,124,255,0.4)",
-        "glow-cyan": "0 0 60px -14px rgba(141,124,255,0.4)",
+        soft: "0 24px 50px -28px rgba(0,0,0,0.22)",
+        glow: "0 0 60px -12px rgba(255,122,26,0.35)",
+        "glow-green": "0 0 60px -14px rgba(255,122,26,0.3)",
+        "glow-cyan": "0 0 60px -14px rgba(255,122,26,0.3)",
       },
       backgroundImage: {
-        grid: "linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px)",
+        grid: "linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px)",
         "radial-fade":
-          "radial-gradient(circle at center, rgba(255,255,255,0.06), transparent 70%)",
+          "radial-gradient(circle at center, rgba(0,0,0,0.05), transparent 70%)",
       },
       keyframes: {
         marquee: {

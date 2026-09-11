@@ -17,9 +17,9 @@ export default function Hero() {
           aria-hidden
           animate={{ opacity: [0.5, 0.8, 0.5], scale: [1, 1.06, 1] }}
           transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute left-1/2 top-[-12%] h-[560px] w-[820px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(141,124,255,0.22),transparent_60%)] blur-2xl"
+          className="absolute left-1/2 top-[-12%] h-[560px] w-[820px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(255,122,26,0.22),transparent_60%)] blur-2xl"
         />
-        <div className="absolute right-[6%] top-[30%] h-[380px] w-[380px] rounded-full bg-[radial-gradient(circle,rgba(141,124,255,0.12),transparent_65%)] blur-2xl" />
+        <div className="absolute right-[6%] top-[30%] h-[380px] w-[380px] rounded-full bg-[radial-gradient(circle,rgba(255,122,26,0.12),transparent_65%)] blur-2xl" />
       </div>
 
       <Container className="grid items-center gap-14 lg:grid-cols-[1.05fr_.95fr]">
@@ -29,7 +29,7 @@ export default function Hero() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease }}
-            className="inline-flex items-center gap-2 rounded-full border border-line bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-acc-cyan"
+            className="inline-flex items-center gap-2 rounded-full border border-line bg-black/[0.03] px-3.5 py-1.5 text-xs font-medium text-acc-cyan"
           >
             <Sparkles className="h-3.5 w-3.5" />
             Audit de sécurité web automatisé

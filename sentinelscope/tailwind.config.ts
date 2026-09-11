@@ -15,9 +15,9 @@ const config: Config = {
         muted: "#6B655C",
         line: "rgba(28,26,23,0.10)",
         acc: {
-          green: "#FF7A1A",
-          cyan: "#FF7A1A",
-          violet: "#FF7A1A",
+          green: "#7C5CFF",
+          cyan: "#7C5CFF",
+          violet: "#7C5CFF",
         },
         sev: {
           critical: "#DC2626",
@@ -45,12 +45,12 @@ const config: Config = {
       },
       boxShadow: {
         soft: "0 24px 50px -28px rgba(0,0,0,0.22)",
-        glow: "0 0 60px -12px rgba(255,122,26,0.35)",
-        "glow-green": "0 0 60px -14px rgba(255,122,26,0.3)",
-        "glow-cyan": "0 0 60px -14px rgba(255,122,26,0.3)",
+        glow: "0 0 60px -12px rgba(124,92,255,0.35)",
+        "glow-green": "0 0 60px -14px rgba(124,92,255,0.3)",
+        "glow-cyan": "0 0 60px -14px rgba(124,92,255,0.3)",
       },
       backgroundImage: {
-        grid: "linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px)",
+        grid: "linear-gradient(rgba(124,92,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(124,92,255,0.06) 1px, transparent 1px)",
         "radial-fade":
           "radial-gradient(circle at center, rgba(0,0,0,0.05), transparent 70%)",
       },

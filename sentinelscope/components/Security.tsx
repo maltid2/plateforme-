@@ -20,7 +20,7 @@ export default function Security() {
         {/* shield illustration */}
         <Reveal className="order-2 lg:order-1">
           <div className="relative mx-auto grid aspect-square w-full max-w-md place-items-center">
-            <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(255,122,26,0.14),transparent_65%)] blur-2xl" />
+            <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(124,92,255,0.14),transparent_65%)] blur-2xl" />
             {[0, 1, 2].map((i) => (
               <motion.div
                 key={i}
@@ -47,8 +47,8 @@ export default function Security() {
                   <span
                     className="absolute left-1/2 top-0 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full"
                     style={{
-                      background: i % 2 ? "#FF7A1A" : "#FF7A1A",
-                      boxShadow: `0 0 8px ${i % 2 ? "#FF7A1A" : "#FF7A1A"}`,
+                      background: i % 2 ? "#7C5CFF" : "#7C5CFF",
+                      boxShadow: `0 0 8px ${i % 2 ? "#7C5CFF" : "#7C5CFF"}`,
                     }}
                   />
                 </motion.div>

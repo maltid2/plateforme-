@@ -40,9 +40,9 @@ const EDGES: [string, string][] = [
 ];
 
 const RISK_META: Record<Risk, { color: string; label: string }> = {
-  safe: { color: "#FF7A1A", label: "Risque faible" },
-  medium: { color: "#FFA05A", label: "Risque moyen" },
-  high: { color: "#EA580C", label: "Risque élevé" },
+  safe: { color: "#7C5CFF", label: "Risque faible" },
+  medium: { color: "#A78BFA", label: "Risque moyen" },
+  high: { color: "#6D28D9", label: "Risque élevé" },
   unknown: { color: "#8B98A8", label: "Non classé" },
 };
 

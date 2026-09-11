@@ -27,7 +27,7 @@ const MODULES: Module[] = [
     id: "analyse",
     label: "Analyse",
     icon: Radar,
-    accent: "#FF7A1A",
+    accent: "#7C5CFF",
     headline: "Voyez votre site comme le ferait un attaquant",
     cards: [
       { title: "Connexion & certificat (SSL/TLS)", body: "Vérifie votre HTTPS, la validité du certificat et la solidité du chiffrement." },
@@ -40,7 +40,7 @@ const MODULES: Module[] = [
     id: "score",
     label: "Score",
     icon: Gauge,
-    accent: "#FF7A1A",
+    accent: "#7C5CFF",
     headline: "Un score de sécurité clair, immédiatement",
     cards: [
       { title: "Note de A à F", body: "Une note globale sur 100, facile à comprendre et à suivre dans le temps." },
@@ -53,7 +53,7 @@ const MODULES: Module[] = [
     id: "rapport",
     label: "Rapport",
     icon: FileText,
-    accent: "#FF7A1A",
+    accent: "#7C5CFF",
     headline: "Un rapport que tout le monde comprend",
     cards: [
       { title: "Résumé pour les dirigeants", body: "L'essentiel en langage clair, sans jargon technique." },
@@ -66,7 +66,7 @@ const MODULES: Module[] = [
     id: "priorites",
     label: "Priorités",
     icon: ListChecks,
-    accent: "#FFA05A",
+    accent: "#A78BFA",
     headline: "Les bonnes actions d'abord",
     cards: [
       { title: "Tri par gravité", body: "Les points classés du plus critique au moins urgent." },
@@ -79,7 +79,7 @@ const MODULES: Module[] = [
     id: "confiance",
     label: "Confiance",
     icon: ShieldCheck,
-    accent: "#FF7A1A",
+    accent: "#7C5CFF",
     headline: "Une analyse respectueuse de votre site",
     cards: [
       { title: "Sans installation", body: "Rien à installer : vous entrez simplement l'adresse de votre site." },

@@ -70,7 +70,7 @@ export default function Footer() {
             © 2026 SentinelScope. Tous droits réservés.
           </p>
           <div className="flex items-center gap-2 text-xs text-muted">
-            <span className="h-1.5 w-1.5 rounded-full bg-acc-green shadow-[0_0_8px_#FF7A1A]" />
+            <span className="h-1.5 w-1.5 rounded-full bg-acc-green shadow-[0_0_8px_#7C5CFF]" />
             Tous les systèmes opérationnels
           </div>
         </div>

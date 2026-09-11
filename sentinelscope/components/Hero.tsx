@@ -17,9 +17,9 @@ export default function Hero() {
           aria-hidden
           animate={{ opacity: [0.5, 0.8, 0.5], scale: [1, 1.06, 1] }}
           transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute left-1/2 top-[-12%] h-[560px] w-[820px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(255,122,26,0.22),transparent_60%)] blur-2xl"
+          className="absolute left-1/2 top-[-12%] h-[560px] w-[820px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(124,92,255,0.22),transparent_60%)] blur-2xl"
         />
-        <div className="absolute right-[6%] top-[30%] h-[380px] w-[380px] rounded-full bg-[radial-gradient(circle,rgba(255,122,26,0.12),transparent_65%)] blur-2xl" />
+        <div className="absolute right-[6%] top-[30%] h-[380px] w-[380px] rounded-full bg-[radial-gradient(circle,rgba(124,92,255,0.12),transparent_65%)] blur-2xl" />
       </div>
 
       <Container className="grid items-center gap-14 lg:grid-cols-[1.05fr_.95fr]">

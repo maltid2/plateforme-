@@ -233,10 +233,7 @@ function buildHtml(report) {
   a{color:inherit}
   /* Marque */
   .brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:19px}
-  .blogo{width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;border-radius:9px;
-    background:linear-gradient(150deg,rgba(139,92,246,.22),rgba(139,92,246,.05));border:1px solid var(--line);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.08),inset 0 -3px 6px rgba(0,0,0,.5)}
-  .blogo svg{width:18px;height:18px}
+  .blogo{width:30px;height:30px;border-radius:8px;display:block;object-fit:cover;border:1px solid var(--line)}
   .brand .b{background:linear-gradient(120deg,var(--vl),var(--v));-webkit-background-clip:text;background-clip:text;color:transparent}
   .cover{padding-bottom:8px}
   .cover .t{font-size:27px;font-weight:800;margin:18px 0 6px;letter-spacing:-.02em}
@@ -375,7 +372,7 @@ function buildHtml(report) {
   </div>
   <div class="page">
   <header class="cover reveal">
-    <div class="brand"><span class="blogo">${brand.picto ? brand.picto('radar', '#A78BFA') : ''}</span> <span>Sentinel<span class="b">Scope</span></span></div>
+    <div class="brand"><img class="blogo" src="${brand.LOGO_URI}" alt="SentinelScope" width="30" height="30" /> <span>Sentinel<span class="b">Scope</span></span></div>
     <span class="eyebrow" style="margin-top:20px"><span class="dot"></span>Rapport d'audit</span>
     <div class="t">Votre rapport de sécurité</div>
     <div class="target">${escapeHtml(target)}</div>

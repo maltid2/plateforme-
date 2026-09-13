@@ -240,7 +240,7 @@ function buildHtml(report) {
   .cover .target{color:var(--ink2);word-break:break-all;font-family:ui-monospace,Menlo,monospace;font-size:13px}
   .cover .date{color:var(--ink2);font-size:13px;margin-top:4px}
   /* Score — présentation éditoriale (pas de jauge circulaire) */
-  .scorepanel{display:grid;grid-template-columns:1.7fr 1fr;gap:1px;margin:22px 0 8px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--line)}
+  .scorepanel{display:grid;grid-template-columns:1.7fr 1fr;gap:1px;margin:22px 0 8px;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:var(--line);box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 34px 70px -46px rgba(141,124,255,.35)}
   .score-main{background:linear-gradient(180deg,#11151d,#0c0f16);padding:28px 30px}
   .score-side{background:linear-gradient(180deg,#0f131a,#0b0e14);padding:28px 24px;display:flex;flex-direction:column;justify-content:center}
   .score-top{display:flex;align-items:baseline;gap:11px}
@@ -263,7 +263,7 @@ function buildHtml(report) {
   h2.sec{font-size:20px;font-weight:800;margin:40px 0 6px;letter-spacing:-.01em}
   .muted{color:var(--ink2)}.small{font-size:13px}
   /* Résumé — liste de diagnostic éditoriale */
-  .diag{margin-top:16px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:linear-gradient(180deg,#0f131a,#0b0e14)}
+  .diag{margin-top:16px;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:linear-gradient(180deg,#0f131a,#0b0e14);box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
   .drow{display:flex;align-items:flex-start;gap:15px;padding:17px 18px;border-top:1px solid var(--line)}
   .drow:first-child{border-top:none}
   .dico{flex:0 0 auto;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:9px;border:1px solid var(--line);background:rgba(139,92,246,.08);color:var(--vl)}

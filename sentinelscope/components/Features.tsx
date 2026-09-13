@@ -115,7 +115,7 @@ export default function Features() {
                 href="#modules"
                 key={f.title}
                 variants={fadeUp}
-                className={`group relative flex flex-col overflow-hidden rounded-2xl border border-line bg-card/60 p-6 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-acc-violet/60 ${borderHover[f.glow]}`}
+                className={`group relative flex flex-col overflow-hidden rounded-[20px] border border-white/[0.07] bg-card/60 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-sm transition-all duration-[450ms] ease-[cubic-bezier(.32,.72,0,1)] hover:-translate-y-1.5 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_30px_60px_-30px_rgba(141,124,255,0.4)] focus:outline-none focus-visible:ring-2 focus-visible:ring-acc-violet/60 ${borderHover[f.glow]}`}
               >
                 {/* decorative animated glow blob */}
                 <span

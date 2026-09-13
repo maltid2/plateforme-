@@ -90,7 +90,7 @@ export default function Problem() {
 
         {/* interactive asset map */}
         <Reveal delay={0.15}>
-          <div className="relative aspect-square w-full max-w-lg rounded-2xl border border-line bg-card/50 p-4 shadow-soft backdrop-blur-sm">
+          <div className="relative aspect-square w-full max-w-lg rounded-[20px] border border-white/[0.07] bg-card/50 p-4 shadow-soft backdrop-blur-sm">
             <div className="absolute inset-0 rounded-2xl bg-grid-fade opacity-40" />
             <div className="absolute left-4 top-4 z-10 flex items-center gap-2 text-xs text-muted">
               <Eye className="h-3.5 w-3.5 text-acc-violet" /> Analyse de votre site en direct

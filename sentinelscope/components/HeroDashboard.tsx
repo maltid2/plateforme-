@@ -153,7 +153,7 @@ export default function HeroDashboard() {
       style={{ perspective: 1200 }}
       className="relative"
     >
-      <div className="animate-float rounded-2xl border border-line bg-card/80 p-4 shadow-soft backdrop-blur-xl sm:p-5">
+      <div className="animate-float rounded-[22px] border border-white/[0.07] bg-card/80 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_40px_90px_-45px_rgba(0,0,0,0.95),0_0_70px_-24px_rgba(141,124,255,0.45)] backdrop-blur-xl sm:p-5">
         {/* window bar */}
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-muted">

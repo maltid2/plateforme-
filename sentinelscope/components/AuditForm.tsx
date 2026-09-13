@@ -340,16 +340,18 @@ export default function AuditForm({
         <button
           type="submit"
           disabled={phase === "scanning"}
-          className="group inline-flex h-[52px] items-center justify-center gap-2 rounded-full bg-gradient-to-br from-acc-violet to-[#6b5cff] px-7 py-3.5 text-[15px] font-semibold text-white shadow-[0_16px_40px_-16px_rgba(141,124,255,0.8)] transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-acc-violet/60 disabled:opacity-70"
+          className="group inline-flex h-[52px] items-center justify-center gap-2.5 rounded-full bg-gradient-to-b from-[#9a8cff] to-[#6b5cff] pl-7 pr-2 text-[15px] font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_18px_44px_-18px_rgba(141,124,255,0.9)] transition-all duration-[450ms] ease-[cubic-bezier(.32,.72,0,1)] hover:-translate-y-0.5 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-acc-violet/60 disabled:opacity-70"
         >
           {phase === "scanning" ? (
-            <>
+            <span className="inline-flex items-center gap-2 pr-3">
               <Loader2 className="h-4 w-4 animate-spin" /> Analyse…
-            </>
+            </span>
           ) : (
             <>
-              Analyser mon site
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              <span>Analyser mon site</span>
+              <span className="grid h-9 w-9 flex-none place-items-center rounded-full bg-white/20 transition-transform duration-[450ms] ease-[cubic-bezier(.32,.72,0,1)] group-hover:translate-x-0.5 group-hover:-translate-y-px">
+                <ArrowRight className="h-4 w-4" />
+              </span>
             </>
           )}
         </button>
@@ -374,7 +376,7 @@ export default function AuditForm({
             transition={{ duration: 0.35 }}
             className="mt-5 overflow-hidden"
           >
-            <div className="rounded-2xl border border-line bg-card/70 p-5 text-left shadow-soft backdrop-blur-xl">
+            <div className="rounded-[20px] border border-white/[0.07] bg-card/70 p-5 text-left shadow-soft backdrop-blur-xl">
               {phase === "scanning" ? (
                 <div>
                   <div className="mb-4 flex items-center gap-2 text-sm text-muted">
@@ -542,7 +544,7 @@ export default function AuditForm({
               initial={{ opacity: 0, y: 14, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ duration: 0.22, ease: [0.2, 0.7, 0.2, 1] }}
-              className="relative w-full max-w-lg rounded-2xl border border-line bg-card p-6 shadow-soft"
+              className="relative w-full max-w-lg rounded-[20px] border border-white/[0.07] bg-card p-6 shadow-soft"
             >
               <button
                 onClick={declineConsent}

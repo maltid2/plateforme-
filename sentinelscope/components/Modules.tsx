@@ -134,7 +134,7 @@ export default function Modules() {
         </div>
 
         {/* panel */}
-        <div className="mt-10 overflow-hidden rounded-2xl border border-line bg-card/50 p-6 backdrop-blur-sm sm:p-8">
+        <div className="mt-10 overflow-hidden rounded-[20px] border border-white/[0.07] bg-card/50 p-6 backdrop-blur-sm sm:p-8">
           <AnimatePresence mode="wait">
             <motion.div
               key={current.id}

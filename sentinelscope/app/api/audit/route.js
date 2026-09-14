@@ -67,6 +67,7 @@ function buildSections(report) {
       .map((f) => ({
         severity: f.severity in SEV_RANK ? f.severity : "info",
         message: f.message || f.id || "Point à corriger",
+        recommendation: f.recommendation || null,
       }))
       .sort((a, b) => (SEV_RANK[b.severity] || 0) - (SEV_RANK[a.severity] || 0));
     out.push({

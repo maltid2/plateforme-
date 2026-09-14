@@ -138,8 +138,10 @@ async function run(targetUrl, options = {}) {
         id: 'legal-missing-' + p.key,
         severity: 'low',
         message: 'Élément légal non détecté sur la page d\'accueil : ' + p.label + '.',
+        why:
+          'La loi (RGPD, LCEN) impose d\'informer les visiteurs sur l\'usage de leurs données et l\'identité de l\'éditeur. L\'absence de ces mentions expose à des sanctions et nuit à la confiance.',
         recommendation:
-          'Ajouter un lien visible vers ' + p.label + ' (obligation RGPD / conformité).',
+          'Ajouter un lien visible (souvent en pied de page) vers ' + p.label + ', conformément aux obligations RGPD et LCEN.',
       });
     }
   }
@@ -151,8 +153,10 @@ async function run(targetUrl, options = {}) {
       id: 'no-cookie-banner',
       severity: 'low',
       message: 'Aucun bandeau de consentement cookies détecté.',
+      why:
+        'Le RGPD et la directive ePrivacy exigent le consentement de l\'utilisateur AVANT de déposer des cookies non essentiels (analytics, publicité). Sans bandeau, ce consentement n\'est pas recueilli.',
       recommendation:
-        'Mettre en place un bandeau de consentement conforme (RGPD/ePrivacy) si des cookies non essentiels sont déposés.',
+        'Mettre en place un bandeau de consentement conforme (ex. Axeptio, Tarteaucitron, OneTrust) qui bloque les cookies non essentiels tant que l\'utilisateur n\'a pas accepté.',
     });
   }
 
@@ -168,10 +172,10 @@ async function run(targetUrl, options = {}) {
         ' service(s) tiers de suivi détecté(s) sans bandeau de consentement : ' +
         result.trackers.join(', ') +
         '.',
+      why:
+        'Ces services déposent des cookies de suivi dès le chargement de la page, avant tout consentement — une non-conformité RGPD/ePrivacy directement sanctionnable par la CNIL.',
       recommendation:
-        'Ces services déposent généralement des cookies non essentiels. Bloquer leur ' +
-        'chargement tant que l\'utilisateur n\'a pas consenti (RGPD/ePrivacy) et les ' +
-        'documenter dans la politique de confidentialité.',
+        'Bloquer le chargement de ces scripts tant que l\'utilisateur n\'a pas consenti (RGPD/ePrivacy) et les documenter dans la politique de confidentialité.',
     });
   } else if (result.trackers.length) {
     result.findings.push({
@@ -181,8 +185,10 @@ async function run(targetUrl, options = {}) {
         'Service(s) tiers de suivi détecté(s) : ' +
         result.trackers.join(', ') +
         '. Vérifier qu\'ils sont bien conditionnés au consentement.',
+      why:
+        'Même avec un bandeau, ces traceurs ne doivent se charger qu\'après acceptation explicite ; beaucoup de bandeaux mal configurés les chargent malgré tout, ce qui reste non conforme.',
       recommendation:
-        'S\'assurer que le bandeau de consentement bloque réellement ces scripts avant acceptation.',
+        'S\'assurer que le bandeau de consentement bloque réellement ces scripts avant acceptation (mode « opt-in »), et non après coup.',
     });
   }
 
@@ -194,8 +200,10 @@ async function run(targetUrl, options = {}) {
       id: 'no-https-redirect',
       severity: 'medium',
       message: 'Le port 80 (HTTP) ne redirige pas automatiquement vers HTTPS.',
+      why:
+        'Sans redirection automatique, un visiteur qui tape l\'adresse sans « https:// » reste en HTTP non chiffré et expose ses données à l\'interception.',
       recommendation:
-        'Configurer une redirection 301 de http:// vers https:// pour tout le trafic.',
+        'Configurer une redirection 301 permanente de http:// vers https:// pour tout le trafic, puis activer HSTS.',
     });
   }
 
@@ -209,8 +217,10 @@ async function run(targetUrl, options = {}) {
         message:
           result.mixedContent.length +
           ' ressource(s) HTTP chargée(s) sur une page HTTPS (mixed content).',
+        why:
+          'Une page HTTPS qui charge des ressources en HTTP casse la garantie de sécurité : ces ressources peuvent être interceptées ou modifiées, et les navigateurs affichent un avertissement « non sécurisé ».',
         recommendation:
-          'Servir toutes les ressources en HTTPS pour éviter les avertissements et interceptions.',
+          'Servir toutes les ressources (images, scripts, styles) en https:// ou en URL relative pour éviter avertissements et interceptions.',
       });
     }
   }

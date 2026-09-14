@@ -261,10 +261,12 @@ async function run(targetUrl, options = {}) {
           cves.slice(0, 3).map((c) => c.id).join(', ') +
           (cves.length > 3 ? ', ...' : '') +
           ').',
+        why:
+          'Une version connue et vulnérable est une cible facile : les failles publiées (CVE) sont documentées publiquement et souvent exploitées automatiquement par des robots dans les jours qui suivent leur divulgation.',
         recommendation:
           'Mettre à jour ' +
           tech.name +
-          ' vers une version corrigée et suivre les avis de sécurité.',
+          ' vers une version corrigée, s\'abonner à ses avis de sécurité et appliquer les correctifs sans délai.',
       });
     }
   }
@@ -277,8 +279,10 @@ async function run(targetUrl, options = {}) {
         severity: 'low',
         message:
           'Version exposée : ' + tech.name + ' ' + tech.version + '.',
+        why:
+          'Afficher le numéro de version exact permet à un attaquant de rechercher immédiatement les failles connues correspondantes et d\'automatiser son attaque, sans même avoir à sonder le site.',
         recommendation:
-          'Masquer les numéros de version pour compliquer le ciblage automatisé.',
+          'Masquer les numéros de version dans les en-têtes et balises (meta generator, commentaires) pour compliquer le ciblage automatisé.',
       });
     }
   }

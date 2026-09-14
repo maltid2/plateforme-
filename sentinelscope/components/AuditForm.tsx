@@ -10,13 +10,18 @@ import {
   Search,
   ShieldAlert,
   ShieldCheck,
+  Wrench,
   X,
 } from "lucide-react";
 
 type Phase = "idle" | "scanning" | "done" | "error";
 
 type Sev = "high" | "medium" | "low" | "info";
-type SectionFinding = { severity: Sev; message: string };
+type SectionFinding = {
+  severity: Sev;
+  message: string;
+  recommendation?: string | null;
+};
 type Section = {
   name: string;
   status: "ok" | "warn" | "error";
@@ -466,7 +471,15 @@ export default function AuditForm({
                                   return (
                                     <li key={j} className="flex items-start gap-2 text-sm">
                                       <Badge label={sv.label} color={sv.color} bg={sv.bg} />
-                                      <span className="text-ink/85">{f.message}</span>
+                                      <div className="min-w-0">
+                                        <span className="text-ink/85">{f.message}</span>
+                                        {f.recommendation && (
+                                          <p className="mt-1 flex items-start gap-1.5 text-xs text-muted">
+                                            <Wrench className="mt-0.5 h-3 w-3 flex-none text-acc-violet" />
+                                            <span>{f.recommendation}</span>
+                                          </p>
+                                        )}
+                                      </div>
                                     </li>
                                   );
                                 })}

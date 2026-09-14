@@ -3,7 +3,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL || "https://sentinelscope-pied.vercel.app";
+  process.env.NEXT_PUBLIC_SITE_URL || "https://sentrylescope.fr";
 
 const DESCRIPTION =
   "SentinelScope réalise un audit de sécurité web réel en quelques minutes : entrez l'adresse de votre site et obtenez un score clair, les vulnérabilités détectées (SSL/TLS, en-têtes, fichiers exposés, RGPD) et les actions à mener — sans installation.";

@@ -10,7 +10,6 @@ import {
   Search,
   ShieldAlert,
   ShieldCheck,
-  Wrench,
   X,
 } from "lucide-react";
 
@@ -135,18 +134,6 @@ function ScoreRing({
         </div>
       </div>
     </div>
-  );
-}
-
-/** Pastille de gravité / statut. */
-function Badge({ label, color, bg }: { label: string; color: string; bg: string }) {
-  return (
-    <span
-      className="flex-none rounded-md px-2 py-0.5 text-[11px] font-semibold"
-      style={{ background: bg, color }}
-    >
-      {label}
-    </span>
   );
 }
 
@@ -450,33 +437,38 @@ export default function AuditForm({
 
                   {/* Alertes classées par section, avec gravité */}
                   {sections && sections.length > 0 ? (
-                    <div className="mt-4 space-y-2.5">
+                    <div className="mt-5 divide-y divide-line rounded-2xl border border-line bg-white/[0.015]">
                       {sections.map((sec, i) => {
                         const st = STATUS_META[sec.status];
                         return (
-                          <div
-                            key={i}
-                            className="audit-finding rounded-xl border border-line bg-white/[0.02] p-3.5"
-                          >
-                            <div className="flex items-center justify-between gap-2">
+                          <div key={i} className="audit-finding p-4 sm:px-5">
+                            <div className="flex items-center justify-between gap-3">
                               <span className="text-sm font-semibold text-ink">
                                 {sec.name}
                               </span>
-                              <Badge label={st.label} color={st.color} bg={st.bg} />
+                              <span
+                                className="flex-none text-xs font-semibold"
+                                style={{ color: st.color }}
+                              >
+                                {st.label}
+                              </span>
                             </div>
                             {sec.findings.length > 0 && (
-                              <ul className="mt-2.5 space-y-1.5">
+                              <ul className="mt-3 space-y-3">
                                 {sec.findings.map((f, j) => {
                                   const sv = SEV_META[f.severity] || SEV_META.info;
                                   return (
-                                    <li key={j} className="flex items-start gap-2 text-sm">
-                                      <Badge label={sv.label} color={sv.color} bg={sv.bg} />
-                                      <div className="min-w-0">
-                                        <span className="text-ink/85">{f.message}</span>
+                                    <li key={j} className="flex items-start gap-3">
+                                      <span
+                                        className="mt-[7px] h-1.5 w-1.5 flex-none rounded-full"
+                                        style={{ background: sv.color }}
+                                        title={sv.label}
+                                      />
+                                      <div className="min-w-0 flex-1">
+                                        <p className="text-sm text-ink/90">{f.message}</p>
                                         {f.recommendation && (
-                                          <p className="mt-1 flex items-start gap-1.5 text-xs text-muted">
-                                            <Wrench className="mt-0.5 h-3 w-3 flex-none text-acc-violet" />
-                                            <span>{f.recommendation}</span>
+                                          <p className="mt-1 text-xs leading-relaxed text-muted">
+                                            {f.recommendation}
                                           </p>
                                         )}
                                       </div>
@@ -484,7 +476,7 @@ export default function AuditForm({
                                   );
                                 })}
                                 {sec.more > 0 && (
-                                  <li className="text-xs text-muted">
+                                  <li className="pl-[18px] text-xs text-muted">
                                     +{sec.more} autre(s) — voir le rapport complet
                                   </li>
                                 )}

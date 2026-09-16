@@ -1,7 +1,7 @@
 {
  "_comment": "Fichier GÉNÉRÉ automatiquement — ne pas éditer à la main. Source : enthec/webappanalyzer (GPL-3.0). Fusionné au runtime avec data/fingerprints.json (base curée prioritaire). Régénéré par scripts/update-fingerprints.js.",
  "_source": "enthec/webappanalyzer",
- "_generatedAt": "2026-09-15",
+ "_generatedAt": "2026-09-16",
  "technologies": [
   {
    "name": "Adminer",
@@ -585,6 +585,14 @@
    "category": "Forum",
    "meta": {
     "generator": "Discourse(?: ?/?([\\d.]+\\d))?"
+   }
+  },
+  {
+   "name": "Divi",
+   "cpe": "cpe:2.3:a:elegantthemes:divi",
+   "category": "Landing page",
+   "meta": {
+    "generator": "Divi(?:\\sv\\.([\\d\\.]+))?"
    }
   },
   {
@@ -1256,7 +1264,7 @@
   },
   {
    "name": "Kentico CMS",
-   "cpe": "cpe:2.3:a:kentico:kentico_cms",
+   "cpe": "cpe:2.3:a:kentico:xperience",
    "category": "CMS",
    "meta": {
     "generator": "Kentico CMS ([\\d.R]+ \\(build [\\d.]+\\))"
@@ -2127,7 +2135,7 @@
   },
   {
    "name": "Plesk",
-   "cpe": "cpe:2.3:a:parallels:parallels_plesk_panel",
+   "cpe": "cpe:2.3:a:plesk:plesk",
    "category": "Hosting panels",
    "headers": {
     "X-Powered-By": "^Plesk(?:L|W)in",
@@ -2166,11 +2174,23 @@
   },
   {
    "name": "ProfilePress",
-   "cpe": "cpe:2.3:a:profilepress:profilepress",
+   "cpe": "cpe:2.3:a:properfraction:profilepress",
    "category": "WordPress plugins",
    "cookies": [
     "ppwp_wp_session"
    ]
+  },
+  {
+   "name": "Progress MOVEit",
+   "cpe": "cpe:2.3:a:progress:moveit_transfer",
+   "category": "Miscellaneous",
+   "headers": {
+    "X-Moveitisapi-Version": "^(.+)$"
+   },
+   "meta": {
+    "apple-itunes-app": "app-id=1500056420",
+    "google-play-app": "app-id=com\\.progress\\.moveit\\.transfer\\.dev\\.appid"
+   }
   },
   {
    "name": "Progress Sitefinity",
@@ -2690,6 +2710,14 @@
    "category": "CMS",
    "meta": {
     "generator": "^Weblication® CMS$"
+   }
+  },
+  {
+   "name": "Weblogic Server",
+   "cpe": "cpe:2.3:a:oracle:weblogic_server",
+   "category": "Serveur web",
+   "headers": {
+    "Server": "^WebLogic\\sServer\\s([\\d\\.]+)?"
    }
   },
   {

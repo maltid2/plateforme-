@@ -80,6 +80,68 @@ function buildSections(report) {
   return out;
 }
 
+/**
+ * Alerte email à chaque audit lancé (lead + suivi d'activité).
+ * Envoi via Resend (REST). Totalement optionnel : sans RESEND_API_KEY et
+ * ALERT_EMAIL_TO configurés dans Vercel, la fonction ne fait rien et
+ * n'impacte jamais la réponse de l'audit.
+ */
+async function sendAuditAlert({ host, url, ip, report }) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const to = process.env.ALERT_EMAIL_TO;
+  if (!apiKey || !to) return; // notifications désactivées
+  const from =
+    process.env.ALERT_EMAIL_FROM || "SentinelScope <onboarding@resend.dev>";
+
+  const score = report?.scoring?.score;
+  const grade = report?.scoring?.letter;
+  const nbWarn = (report?.modules || []).reduce(
+    (n, m) => n + ((m && m.findings ? m.findings.length : 0)),
+    0
+  );
+  const when = new Date().toLocaleString("fr-FR");
+  const esc = (s) =>
+    String(s == null ? "" : s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+
+  const html =
+    '<div style="font-family:system-ui,Arial,sans-serif;font-size:14px;color:#111">' +
+    '<h2 style="margin:0 0 12px">Nouvel audit lancé sur SentinelScope</h2>' +
+    '<table cellpadding="6" style="border-collapse:collapse">' +
+    '<tr><td><b>Site audité</b></td><td>' + esc(host) + '</td></tr>' +
+    '<tr><td><b>URL</b></td><td>' + esc(url) + '</td></tr>' +
+    '<tr><td><b>Score</b></td><td>' + esc(score) + '/100 (note ' + esc(grade) + ')</td></tr>' +
+    '<tr><td><b>Points détectés</b></td><td>' + esc(nbWarn) + '</td></tr>' +
+    '<tr><td><b>IP visiteur</b></td><td>' + esc(ip) + '</td></tr>' +
+    '<tr><td><b>Date</b></td><td>' + esc(when) + '</td></tr>' +
+    '</table>' +
+    '<p style="color:#666;margin-top:16px">Un visiteur a consulté votre site et lancé un audit. Recontactez-le si besoin.</p>' +
+    '</div>';
+
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), 4000);
+  try {
+    await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + apiKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from,
+        to: [to],
+        subject: "Audit lancé — " + host + " (" + score + "/100)",
+        html,
+      }),
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 export async function POST(req) {
  try {
   const dir = engineDir();
@@ -147,6 +209,13 @@ export async function POST(req) {
   try {
     host = new URL(url).hostname.replace(/^www\./, "");
   } catch {}
+
+  // Alerte email (optionnelle) — n'échoue jamais l'audit.
+  try {
+    await sendAuditAlert({ host, url, ip, report });
+  } catch (e) {
+    console.error("[audit] alerte email non envoyée:", e && e.message ? e.message : e);
+  }
 
   return NextResponse.json({
     host,

@@ -32,6 +32,11 @@ export const metadata: Metadata = {
   publisher: "SentinelScope",
   category: "technology",
   alternates: { canonical: "/" },
+  // Vérification Google Search Console : définir GOOGLE_SITE_VERIFICATION
+  // dans Vercel avec le code fourni par Search Console (méthode balise HTML).
+  ...(process.env.GOOGLE_SITE_VERIFICATION
+    ? { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } }
+    : {}),
   formatDetection: { telephone: false, email: false, address: false },
   openGraph: {
     type: "website",

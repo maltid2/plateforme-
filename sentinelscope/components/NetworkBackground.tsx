@@ -13,7 +13,7 @@ import { useEffect, useRef } from "react";
  */
 export default function NetworkBackground({
   className = "",
-  density = 0.00008,
+  density = 0.00013,
 }: {
   className?: string;
   /** Nœuds par pixel² (plus haut = plus dense). */
@@ -33,7 +33,7 @@ export default function NetworkBackground({
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     const ACC = "141,124,255"; // #8D7CFF
-    const LINK_DIST = 132;
+    const LINK_DIST = 150;
     let w = 0;
     let h = 0;
     let dpr = 1;
@@ -59,15 +59,15 @@ export default function NetworkBackground({
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       const count = Math.max(
-        24,
-        Math.min(120, Math.round(w * h * density))
+        30,
+        Math.min(170, Math.round(w * h * density))
       );
       nodes = Array.from({ length: count }, () => ({
         x: Math.random() * w,
         y: Math.random() * h,
         vx: (Math.random() - 0.5) * 0.22,
         vy: (Math.random() - 0.5) * 0.22,
-        r: Math.random() * 1.6 + 0.8,
+        r: Math.random() * 1.7 + 1,
       }));
     };
 
@@ -79,8 +79,8 @@ export default function NetworkBackground({
 
       const c = core();
       // Halo du cœur
-      const glow = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, 220);
-      glow.addColorStop(0, `rgba(${ACC},0.20)`);
+      const glow = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, 300);
+      glow.addColorStop(0, `rgba(${ACC},0.30)`);
       glow.addColorStop(1, `rgba(${ACC},0)`);
       ctx.fillStyle = glow;
       ctx.fillRect(0, 0, w, h);
@@ -94,21 +94,21 @@ export default function NetworkBackground({
           const dy = a.y - b.y;
           const d = Math.hypot(dx, dy);
           if (d < LINK_DIST) {
-            const o = (1 - d / LINK_DIST) * 0.5;
+            const o = (1 - d / LINK_DIST) * 0.85;
             ctx.strokeStyle = `rgba(${ACC},${o.toFixed(3)})`;
-            ctx.lineWidth = 0.7;
+            ctx.lineWidth = 0.9;
             ctx.beginPath();
             ctx.moveTo(a.x, a.y);
             ctx.lineTo(b.x, b.y);
             ctx.stroke();
           }
         }
-        // Lien discret vers le cœur pour les nœuds proches
+        // Lien vers le cœur pour les nœuds proches
         const cd = Math.hypot(a.x - c.x, a.y - c.y);
-        if (cd < 190) {
-          const o = (1 - cd / 190) * 0.28;
+        if (cd < 260) {
+          const o = (1 - cd / 260) * 0.5;
           ctx.strokeStyle = `rgba(${ACC},${o.toFixed(3)})`;
-          ctx.lineWidth = 0.6;
+          ctx.lineWidth = 0.8;
           ctx.beginPath();
           ctx.moveTo(a.x, a.y);
           ctx.lineTo(c.x, c.y);
@@ -116,20 +116,23 @@ export default function NetworkBackground({
         }
       }
 
-      // Nœuds
+      // Nœuds (avec léger halo pour la luminosité)
+      ctx.shadowColor = `rgba(${ACC},0.9)`;
+      ctx.shadowBlur = 6;
       for (const n of nodes) {
-        ctx.fillStyle = `rgba(${ACC},0.85)`;
+        ctx.fillStyle = `rgba(${ACC},0.95)`;
         ctx.beginPath();
         ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
         ctx.fill();
       }
+      ctx.shadowBlur = 0;
 
       // Cœur
-      ctx.fillStyle = `rgba(${ACC},0.95)`;
-      ctx.shadowColor = `rgba(${ACC},0.9)`;
-      ctx.shadowBlur = 18;
+      ctx.fillStyle = `rgba(${ACC},1)`;
+      ctx.shadowColor = `rgba(${ACC},1)`;
+      ctx.shadowBlur = 28;
       ctx.beginPath();
-      ctx.arc(c.x, c.y, 3.4, 0, Math.PI * 2);
+      ctx.arc(c.x, c.y, 4.4, 0, Math.PI * 2);
       ctx.fill();
       ctx.shadowBlur = 0;
     };

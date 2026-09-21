@@ -15,8 +15,8 @@ export default function Hero() {
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-grid-fade opacity-70" />
         {/* Réseau d'intelligence de sécurité (constellation animée) */}
-        <div className="absolute inset-0 [mask-image:radial-gradient(120%_100%_at_70%_35%,#000_38%,transparent_78%)] [-webkit-mask-image:radial-gradient(120%_100%_at_70%_35%,#000_38%,transparent_78%)]">
-          <NetworkBackground className="h-full w-full opacity-90" />
+        <div className="absolute inset-0 [mask-image:radial-gradient(130%_110%_at_68%_38%,#000_50%,transparent_85%)] [-webkit-mask-image:radial-gradient(130%_110%_at_68%_38%,#000_50%,transparent_85%)]">
+          <NetworkBackground className="h-full w-full opacity-100" density={0.00018} />
         </div>
         <motion.div
           aria-hidden

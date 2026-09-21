@@ -32,7 +32,19 @@ export default function NetworkBackground({
       window.matchMedia &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    const ACC = "141,124,255"; // #8D7CFF
+    const ACC = "141,124,255"; // #8D7CFF — violet dominant (lignes + cœur)
+    // Palette des nœuds, calquée sur la maquette : violet majoritaire, avec
+    // quelques accents ambre / rose / turquoise / bleu.
+    const NODE_COLORS = [
+      "141,124,255", // violet
+      "141,124,255", // violet
+      "141,124,255", // violet
+      "141,124,255", // violet
+      "245,169,59", // ambre
+      "232,121,201", // rose
+      "79,209,197", // turquoise
+      "120,150,255", // bleu
+    ];
     const LINK_DIST = 150;
     let w = 0;
     let h = 0;
@@ -43,6 +55,7 @@ export default function NetworkBackground({
       vx: number;
       vy: number;
       r: number;
+      c: string;
     }[] = [];
     let mouse = { x: -9999, y: -9999 };
     let raf = 0;
@@ -68,6 +81,7 @@ export default function NetworkBackground({
         vx: (Math.random() - 0.5) * 0.22,
         vy: (Math.random() - 0.5) * 0.22,
         r: Math.random() * 1.7 + 1,
+        c: NODE_COLORS[(Math.random() * NODE_COLORS.length) | 0],
       }));
     };
 
@@ -94,9 +108,9 @@ export default function NetworkBackground({
           const dy = a.y - b.y;
           const d = Math.hypot(dx, dy);
           if (d < LINK_DIST) {
-            const o = (1 - d / LINK_DIST) * 0.85;
+            const o = (1 - d / LINK_DIST) * 0.55;
             ctx.strokeStyle = `rgba(${ACC},${o.toFixed(3)})`;
-            ctx.lineWidth = 0.9;
+            ctx.lineWidth = 0.8;
             ctx.beginPath();
             ctx.moveTo(a.x, a.y);
             ctx.lineTo(b.x, b.y);
@@ -116,11 +130,11 @@ export default function NetworkBackground({
         }
       }
 
-      // Nœuds (avec léger halo pour la luminosité)
-      ctx.shadowColor = `rgba(${ACC},0.9)`;
-      ctx.shadowBlur = 6;
+      // Nœuds — chacun dans sa couleur, avec un léger halo assorti
+      ctx.shadowBlur = 7;
       for (const n of nodes) {
-        ctx.fillStyle = `rgba(${ACC},0.95)`;
+        ctx.shadowColor = `rgba(${n.c},0.9)`;
+        ctx.fillStyle = `rgba(${n.c},0.95)`;
         ctx.beginPath();
         ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
         ctx.fill();

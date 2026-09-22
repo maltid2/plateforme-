@@ -7,6 +7,7 @@ import {
   ArrowRight,
   CheckCircle2,
   Loader2,
+  Mail,
   Search,
   ShieldAlert,
   ShieldCheck,
@@ -16,7 +17,11 @@ import {
 type Phase = "idle" | "scanning" | "done" | "error";
 
 type Sev = "high" | "medium" | "low" | "info";
-type SectionFinding = { severity: Sev; message: string };
+type SectionFinding = {
+  severity: Sev;
+  message: string;
+  recommendation?: string | null;
+};
 type Section = {
   name: string;
   status: "ok" | "warn" | "error";
@@ -43,6 +48,11 @@ const STEPS = [
 ];
 
 const CONSENT_KEY = "ss-audit-consent-v1";
+
+// Adresse de contact affichée dans le pop-up « Aller plus loin ».
+// Surchargée par NEXT_PUBLIC_CONTACT_EMAIL si définie dans Vercel.
+const CONTACT_EMAIL =
+  process.env.NEXT_PUBLIC_CONTACT_EMAIL || "contact@sentrylescope.fr";
 
 const gradeColor: Record<string, string> = {
   A: "#8D7CFF",
@@ -133,18 +143,6 @@ function ScoreRing({
   );
 }
 
-/** Pastille de gravité / statut. */
-function Badge({ label, color, bg }: { label: string; color: string; bg: string }) {
-  return (
-    <span
-      className="flex-none rounded-md px-2 py-0.5 text-[11px] font-semibold"
-      style={{ background: bg, color }}
-    >
-      {label}
-    </span>
-  );
-}
-
 export default function AuditForm({
   id,
   align = "start",
@@ -160,9 +158,22 @@ export default function AuditForm({
   const [errMsg, setErrMsg] = useState("");
   const [result, setResult] = useState<Result | null>(null);
   const [consentOpen, setConsentOpen] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const resultRef = useRef<HTMLDivElement | null>(null);
   const pendingUrl = useRef<string | null>(null);
+  const contactShown = useRef(false);
+
+  // Ouvre automatiquement le pop-up de contact une seule fois, quelques
+  // secondes après l'affichage du résultat (moment où l'intérêt est maximal).
+  useEffect(() => {
+    if (phase !== "done" || !result || contactShown.current) return;
+    const t = setTimeout(() => {
+      contactShown.current = true;
+      setContactOpen(true);
+    }, 2600);
+    return () => clearTimeout(t);
+  }, [phase, result]);
 
   // Animation premium à l'apparition du résultat (anime.js) : le score monte
   // de 0 à sa valeur et les lignes apparaissent en cascade. Repli sans effet
@@ -308,9 +319,35 @@ export default function AuditForm({
     setStep(0);
     setResult(null);
     setErrMsg("");
+    setContactOpen(false);
+    contactShown.current = false;
   };
 
   const sections = result?.sections;
+
+  // Lien mailto pré-rempli avec le site audité et son score, pour transformer
+  // le résultat en prise de contact (objectif : vendre la prestation).
+  const contactHref = (() => {
+    const subject = host
+      ? `Audit de sécurité — ${host}`
+      : "Audit de sécurité de mon site";
+    const scoreLine =
+      result && host
+        ? `J'ai réalisé l'audit de ${host} sur SentinelScope (score ${result.score}/100, note ${result.grade}).`
+        : "J'ai réalisé un audit sur SentinelScope.";
+    const body = [
+      "Bonjour,",
+      "",
+      scoreLine,
+      "",
+      "Je souhaite aller plus loin pour corriger les points détectés et sécuriser mon infrastructure. Pouvez-vous me recontacter ?",
+      "",
+      "Merci.",
+    ].join("\n");
+    return `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(
+      subject
+    )}&body=${encodeURIComponent(body)}`;
+  })();
 
   return (
     <div
@@ -445,33 +482,46 @@ export default function AuditForm({
 
                   {/* Alertes classées par section, avec gravité */}
                   {sections && sections.length > 0 ? (
-                    <div className="mt-4 space-y-2.5">
+                    <div className="mt-5 divide-y divide-line rounded-2xl border border-line bg-white/[0.015]">
                       {sections.map((sec, i) => {
                         const st = STATUS_META[sec.status];
                         return (
-                          <div
-                            key={i}
-                            className="audit-finding rounded-xl border border-line bg-white/[0.02] p-3.5"
-                          >
-                            <div className="flex items-center justify-between gap-2">
+                          <div key={i} className="audit-finding p-4 sm:px-5">
+                            <div className="flex items-center justify-between gap-3">
                               <span className="text-sm font-semibold text-ink">
                                 {sec.name}
                               </span>
-                              <Badge label={st.label} color={st.color} bg={st.bg} />
+                              <span
+                                className="flex-none text-xs font-semibold"
+                                style={{ color: st.color }}
+                              >
+                                {st.label}
+                              </span>
                             </div>
                             {sec.findings.length > 0 && (
-                              <ul className="mt-2.5 space-y-1.5">
+                              <ul className="mt-3 space-y-3">
                                 {sec.findings.map((f, j) => {
                                   const sv = SEV_META[f.severity] || SEV_META.info;
                                   return (
-                                    <li key={j} className="flex items-start gap-2 text-sm">
-                                      <Badge label={sv.label} color={sv.color} bg={sv.bg} />
-                                      <span className="text-ink/85">{f.message}</span>
+                                    <li key={j} className="flex items-start gap-3">
+                                      <span
+                                        className="mt-[7px] h-1.5 w-1.5 flex-none rounded-full"
+                                        style={{ background: sv.color }}
+                                        title={sv.label}
+                                      />
+                                      <div className="min-w-0 flex-1">
+                                        <p className="text-sm text-ink/90">{f.message}</p>
+                                        {f.recommendation && (
+                                          <p className="mt-1 text-xs leading-relaxed text-muted">
+                                            {f.recommendation}
+                                          </p>
+                                        )}
+                                      </div>
                                     </li>
                                   );
                                 })}
                                 {sec.more > 0 && (
-                                  <li className="text-xs text-muted">
+                                  <li className="pl-[18px] text-xs text-muted">
                                     +{sec.more} autre(s) — voir le rapport complet
                                   </li>
                                 )}
@@ -506,6 +556,12 @@ export default function AuditForm({
                     >
                       Voir le rapport complet
                       <ArrowRight className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => setContactOpen(true)}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white/[0.03] px-4 py-2 text-sm font-semibold text-ink transition-colors hover:border-white/20"
+                    >
+                      Aller plus loin
                     </button>
                     <button
                       onClick={reset}
@@ -595,6 +651,98 @@ export default function AuditForm({
                   <ArrowRight className="h-4 w-4" />
                 </button>
               </div>
+            </motion.div>
+          </div>,
+          document.body
+        )}
+
+      {/* Pop-up « Aller plus loin » — prise de contact après le résultat */}
+      {contactOpen &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Aller plus loin avec un expert"
+          >
+            <div
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+              onClick={() => setContactOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 14, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.22, ease: [0.2, 0.7, 0.2, 1] }}
+              className="relative w-full max-w-lg rounded-[20px] border border-white/[0.07] bg-card p-6 shadow-soft"
+            >
+              <button
+                onClick={() => setContactOpen(false)}
+                aria-label="Fermer"
+                className="absolute right-4 top-4 text-muted transition-colors hover:text-ink"
+              >
+                <X className="h-5 w-5" />
+              </button>
+
+              <div className="flex items-center gap-3">
+                <span className="grid h-10 w-10 flex-none place-items-center rounded-xl bg-acc-violet/15">
+                  <ShieldCheck className="h-5 w-5 text-acc-violet" />
+                </span>
+                <h3 className="text-lg font-bold text-ink">
+                  Passez à l&apos;action
+                </h3>
+              </div>
+
+              <div className="mt-4 space-y-3 text-sm leading-relaxed text-muted">
+                <p>
+                  Cet audit vous a montré <strong className="text-ink">où</strong>{" "}
+                  votre site est exposé.{" "}
+                  {host ? (
+                    <>
+                      L&apos;étape suivante&nbsp;: <strong className="text-ink">corriger</strong>{" "}
+                      les points détectés sur{" "}
+                      <span className="font-mono text-ink">{host}</span> et sécuriser
+                      votre infrastructure durablement.
+                    </>
+                  ) : (
+                    <>
+                      L&apos;étape suivante&nbsp;: <strong className="text-ink">corriger</strong>{" "}
+                      les points détectés et sécuriser votre infrastructure durablement.
+                    </>
+                  )}
+                </p>
+                <p>
+                  Décrivez votre besoin en un message&nbsp;: je vous recontacte pour
+                  poursuivre l&apos;audit et mettre en place les correctifs.
+                </p>
+              </div>
+
+              <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                <button
+                  onClick={() => setContactOpen(false)}
+                  className="rounded-full border border-line bg-white/[0.03] px-5 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-white/20"
+                >
+                  Plus tard
+                </button>
+                <a
+                  href={contactHref}
+                  onClick={() => setContactOpen(false)}
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-br from-acc-violet to-[#6b5cff] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_16px_40px_-16px_rgba(141,124,255,0.8)] transition-all hover:-translate-y-0.5"
+                >
+                  <Mail className="h-4 w-4" />
+                  Me faire recontacter
+                </a>
+              </div>
+
+              <p className="mt-4 text-center text-xs text-muted">
+                Ou écrivez directement à{" "}
+                <a
+                  href={contactHref}
+                  className="font-medium text-acc-violet hover:text-ink"
+                >
+                  {CONTACT_EMAIL}
+                </a>
+              </p>
             </motion.div>
           </div>,
           document.body

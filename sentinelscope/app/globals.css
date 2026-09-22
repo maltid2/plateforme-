@@ -45,19 +45,19 @@
   /* Subtle background grid layer */
   .bg-grid-fade {
     background-image: linear-gradient(
-        rgba(255, 255, 255, 0.03) 1px,
+        rgba(255, 255, 255, 0.07) 1px,
         transparent 1px
       ),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
     background-size: 56px 56px;
     -webkit-mask-image: radial-gradient(
-      ellipse 80% 60% at 50% 0%,
-      #000 40%,
+      ellipse 85% 70% at 50% 0%,
+      #000 55%,
       transparent 100%
     );
     mask-image: radial-gradient(
-      ellipse 80% 60% at 50% 0%,
-      #000 40%,
+      ellipse 85% 70% at 50% 0%,
+      #000 55%,
       transparent 100%
     );
   }

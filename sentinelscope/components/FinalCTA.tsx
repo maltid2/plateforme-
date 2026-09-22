@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Container, Reveal } from "./ui";
 import AuditForm from "./AuditForm";
+import NetworkBackground from "./NetworkBackground";
 
 const POINTS = [
   { x: 12, y: 30 },
@@ -68,7 +69,10 @@ export default function FinalCTA() {
     <section id="cta" className="relative overflow-hidden py-24 sm:py-32">
       {/* background */}
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-grid-fade" />
+        <div className="absolute inset-0 bg-grid-fade opacity-70" />
+        <div className="absolute inset-0 [mask-image:radial-gradient(90%_90%_at_50%_50%,#000_30%,transparent_72%)] [-webkit-mask-image:radial-gradient(90%_90%_at_50%_50%,#000_30%,transparent_72%)]">
+          <NetworkBackground className="h-full w-full opacity-85" density={0.0001} />
+        </div>
         <motion.div
           aria-hidden
           animate={{ opacity: [0.4, 0.7, 0.4], scale: [1, 1.08, 1] }}

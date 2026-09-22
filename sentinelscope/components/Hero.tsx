@@ -5,6 +5,7 @@ import { Sparkles } from "lucide-react";
 import { Container } from "./ui";
 import HeroDashboard from "./HeroDashboard";
 import AuditForm from "./AuditForm";
+import NetworkBackground from "./NetworkBackground";
 import { ease } from "@/lib/motion";
 
 export default function Hero() {
@@ -12,7 +13,11 @@ export default function Hero() {
     <section id="top" className="relative overflow-hidden pt-32 pb-20 sm:pt-40 sm:pb-28">
       {/* background */}
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-grid-fade" />
+        <div className="absolute inset-0 bg-grid-fade opacity-70" />
+        {/* Réseau d'intelligence de sécurité (constellation animée) */}
+        <div className="absolute inset-0 [mask-image:radial-gradient(130%_110%_at_68%_38%,#000_50%,transparent_85%)] [-webkit-mask-image:radial-gradient(130%_110%_at_68%_38%,#000_50%,transparent_85%)]">
+          <NetworkBackground className="h-full w-full opacity-100" density={0.00018} />
+        </div>
         <motion.div
           aria-hidden
           animate={{ opacity: [0.5, 0.8, 0.5], scale: [1, 1.06, 1] }}

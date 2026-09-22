@@ -201,6 +201,24 @@ function buildHtml(report) {
       + ' à renforcer.'
     : 'Aucun point majeur à renforcer sur votre site.';
 
+  // Bloc « Aller plus loin » : transforme le rapport en prise de contact.
+  let cleanHost = target;
+  try { cleanHost = new (require('url').URL)(target).hostname; } catch (e) { /* garde target */ }
+  const mailSubject = 'Audit de sécurité — ' + cleanHost;
+  const mailBody = [
+    'Bonjour,',
+    '',
+    'J\'ai réalisé l\'audit de ' + cleanHost + ' (score ' + scoring.score + '/100).',
+    '',
+    'Je souhaite aller plus loin pour corriger les points détectés et sécuriser mon infrastructure. Pouvez-vous me recontacter ?',
+    '',
+    'Merci.',
+  ].join('\n');
+  const contactMailto =
+    'mailto:' + brand.CONTACT +
+    '?subject=' + encodeURIComponent(mailSubject) +
+    '&body=' + encodeURIComponent(mailBody);
+
   return `<!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -339,6 +357,12 @@ function buildHtml(report) {
   .reco.act{border-left-color:rgba(167,139,250,.55);color:#A78BFA;background:rgba(167,139,250,.08)}
   .reco strong{color:var(--ink)}
   .ok{color:#A78BFA;font-size:14px}
+  .cta{margin-top:44px;border-radius:18px;border:1px solid rgba(141,124,255,.28);background:linear-gradient(135deg,rgba(141,124,255,.14),rgba(91,33,182,.08));box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 30px 70px -40px rgba(141,124,255,.6);padding:28px 26px;text-align:center}
+  .cta h2{font-size:21px;margin:0 0 8px;color:var(--ink)}
+  .cta p{margin:0 auto 18px;max-width:520px;font-size:14px;line-height:1.65;color:var(--ink2)}
+  .cta a.btn{display:inline-flex;align-items:center;gap:8px;padding:13px 26px;border-radius:999px;background:linear-gradient(180deg,#9a8cff,#6b5cff);color:#fff;font-weight:700;font-size:14px;text-decoration:none;box-shadow:0 16px 40px -16px rgba(141,124,255,.9)}
+  .cta .mail{display:block;margin-top:14px;font-size:12.5px;color:var(--ink2)}
+  .cta .mail a{color:#A78BFA;text-decoration:none}
   footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--line);font-size:12px;color:var(--ink2);text-align:center;line-height:1.7}
   /* Révélation au scroll — masquée uniquement si le JS est actif (progressif) */
   .reveal{transition:opacity .25s ease,transform .25s ease}
@@ -408,6 +432,13 @@ function buildHtml(report) {
     <span class="eyebrow"><span class="dot"></span>Technique</span><h2 class="sec">Détails techniques</h2>
     <div class="tech-note">Cette section s'adresse aux profils techniques (développeurs, prestataires informatiques). Vous pouvez la transmettre à la personne qui gère votre site.</div>
     ${modules.map(renderModuleCard).join('\n')}
+  </div>
+
+  <div class="cta reveal">
+    <h2>Passez à l'action</h2>
+    <p>Ce rapport montre <b>où</b> votre site est exposé. L'étape suivante : corriger ces points et sécuriser votre infrastructure durablement. Décrivez votre besoin, je vous recontacte pour poursuivre l'audit et mettre en place les correctifs.</p>
+    <a class="btn" href="${contactMailto}">Me faire recontacter</a>
+    <span class="mail">Ou écrivez directement à <a href="${contactMailto}">${escapeHtml(brand.CONTACT)}</a></span>
   </div>
 
   <footer>Vérification passive et non intrusive — aucune requête agressive n'a été effectuée sur votre site.<br>

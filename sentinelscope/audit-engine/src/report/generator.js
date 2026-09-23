@@ -247,6 +247,7 @@ function buildHtml(report) {
   .orb.o1{width:340px;height:340px;left:-120px;top:120px;background:radial-gradient(circle at 35% 30%,rgba(139,92,246,.5),rgba(91,33,182,.18) 60%,transparent 72%)}
   .orb.o2{width:300px;height:300px;right:-110px;top:480px;background:radial-gradient(circle at 60% 40%,rgba(167,139,250,.4),transparent 68%)}
   .orb.o3{width:260px;height:260px;left:30%;bottom:-90px;background:radial-gradient(circle at 50% 50%,rgba(91,33,182,.4),transparent 70%)}
+  .netcanvas{position:absolute;inset:0;width:100%;height:100%;opacity:.55;-webkit-mask-image:radial-gradient(120% 90% at 60% 12%,#000 30%,transparent 80%);mask-image:radial-gradient(120% 90% at 60% 12%,#000 30%,transparent 80%)}
   .page{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:44px 24px 60px}
   a{color:inherit}
   /* Marque */
@@ -392,6 +393,7 @@ function buildHtml(report) {
 <body>
   <div class="bg" aria-hidden="true">
     <div class="rad"></div><div class="grid"></div>
+    <canvas class="netcanvas"></canvas>
     <div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
   </div>
   <div class="page">
@@ -448,6 +450,63 @@ function buildHtml(report) {
 (function(){
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var fine = window.matchMedia && window.matchMedia('(pointer: fine)').matches;
+
+  // Fond « constellation » (canvas) — cohérent avec le site.
+  (function(){
+    var canvas = document.querySelector('.netcanvas');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    var COLORS = ['141,124,255','141,124,255','141,124,255','141,124,255','245,169,59','232,121,201','79,209,197','120,150,255'];
+    var ACC = '141,124,255', LINK = 150, w=0, h=0, dpr=1, nodes=[], mouse={x:-9999,y:-9999}, raf=0;
+    function build(){
+      w = window.innerWidth; h = window.innerHeight;
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      canvas.width = Math.floor(w*dpr); canvas.height = Math.floor(h*dpr);
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+      var count = Math.max(24, Math.min(150, Math.round(w*h*0.00011)));
+      nodes = [];
+      for (var i=0;i<count;i++) nodes.push({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-.5)*.22,vy:(Math.random()-.5)*.22,r:Math.random()*1.6+1,c:COLORS[(Math.random()*COLORS.length)|0],tw:Math.random()*Math.PI*2,ts:0.6+Math.random()*1.8});
+    }
+    function core(){ return {x:w*0.6,y:h*0.18}; }
+    function draw(){
+      ctx.clearRect(0,0,w,h);
+      var c = core();
+      var g = ctx.createRadialGradient(c.x,c.y,0,c.x,c.y,300);
+      g.addColorStop(0,'rgba('+ACC+',0.22)'); g.addColorStop(1,'rgba('+ACC+',0)');
+      ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+      for (var i=0;i<nodes.length;i++){ var a=nodes[i];
+        for (var j=i+1;j<nodes.length;j++){ var b=nodes[j];
+          var dx=a.x-b.x, dy=a.y-b.y, d=Math.sqrt(dx*dx+dy*dy);
+          if (d<LINK){ var o=(1-d/LINK)*0.5; ctx.strokeStyle='rgba('+ACC+','+o.toFixed(3)+')'; ctx.lineWidth=0.8; ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); }
+        }
+        var cd=Math.sqrt((a.x-c.x)*(a.x-c.x)+(a.y-c.y)*(a.y-c.y));
+        if (cd<250){ var oc=(1-cd/250)*0.45; ctx.strokeStyle='rgba('+ACC+','+oc.toFixed(3)+')'; ctx.lineWidth=0.7; ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(c.x,c.y); ctx.stroke(); }
+      }
+      var now = (typeof performance!=='undefined'?performance.now():Date.now());
+      for (var k=0;k<nodes.length;k++){ var n=nodes[k];
+        var al=0.5+0.45*Math.sin(now*0.001*n.ts+n.tw);
+        ctx.shadowBlur=4+al*7; ctx.shadowColor='rgba('+n.c+','+(0.45+al*0.5).toFixed(3)+')';
+        ctx.fillStyle='rgba('+n.c+','+(0.3+al*0.65).toFixed(3)+')';
+        ctx.beginPath(); ctx.arc(n.x,n.y,n.r*(0.8+al*0.4),0,Math.PI*2); ctx.fill();
+      }
+      ctx.shadowBlur=0;
+      ctx.fillStyle='rgba('+ACC+',1)'; ctx.shadowColor='rgba('+ACC+',1)'; ctx.shadowBlur=26; ctx.beginPath(); ctx.arc(c.x,c.y,4,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
+    }
+    function step(){
+      for (var i=0;i<nodes.length;i++){ var n=nodes[i]; n.x+=n.vx; n.y+=n.vy;
+        if (n.x<0||n.x>w) n.vx*=-1; if (n.y<0||n.y>h) n.vy*=-1;
+        var dx=n.x-mouse.x, dy=n.y-mouse.y, d=Math.sqrt(dx*dx+dy*dy);
+        if (d<90 && d>0.01){ n.x+=(dx/d)*0.5; n.y+=(dy/d)*0.5; }
+      }
+      draw(); raf=requestAnimationFrame(step);
+    }
+    build();
+    if (reduce) draw(); else raf=requestAnimationFrame(step);
+    window.addEventListener('resize', function(){ cancelAnimationFrame(raf); build(); if (reduce) draw(); else raf=requestAnimationFrame(step); }, {passive:true});
+    if (!reduce && fine){ window.addEventListener('mousemove', function(e){ mouse.x=e.clientX; mouse.y=e.clientY; }, {passive:true}); }
+  })();
+
   // Anneau : animation unique au chargement
   var prog = document.querySelector('.ringsvg .prog');
   if (prog && !reduce) { requestAnimationFrame(function(){ prog.classList.add('animate'); }); }

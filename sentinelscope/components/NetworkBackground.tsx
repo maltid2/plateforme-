@@ -56,6 +56,8 @@ export default function NetworkBackground({
       vy: number;
       r: number;
       c: string;
+      tw: number;
+      ts: number;
     }[] = [];
     let mouse = { x: -9999, y: -9999 };
     let raf = 0;
@@ -82,6 +84,8 @@ export default function NetworkBackground({
         vy: (Math.random() - 0.5) * 0.22,
         r: Math.random() * 1.7 + 1,
         c: NODE_COLORS[(Math.random() * NODE_COLORS.length) | 0],
+        tw: Math.random() * Math.PI * 2, // phase de scintillement
+        ts: 0.6 + Math.random() * 1.8, // vitesse de scintillement
       }));
     };
 
@@ -130,13 +134,16 @@ export default function NetworkBackground({
         }
       }
 
-      // Nœuds — chacun dans sa couleur, avec un léger halo assorti
-      ctx.shadowBlur = 7;
+      // Nœuds — chacun scintille (luminosité + taille pulsent)
+      const now =
+        typeof performance !== "undefined" ? performance.now() : Date.now();
       for (const n of nodes) {
-        ctx.shadowColor = `rgba(${n.c},0.9)`;
-        ctx.fillStyle = `rgba(${n.c},0.95)`;
+        const a = 0.5 + 0.45 * Math.sin(now * 0.001 * n.ts + n.tw); // 0.05..0.95
+        ctx.shadowBlur = 4 + a * 7;
+        ctx.shadowColor = `rgba(${n.c},${(0.45 + a * 0.5).toFixed(3)})`;
+        ctx.fillStyle = `rgba(${n.c},${(0.3 + a * 0.65).toFixed(3)})`;
         ctx.beginPath();
-        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+        ctx.arc(n.x, n.y, n.r * (0.8 + a * 0.4), 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.shadowBlur = 0;

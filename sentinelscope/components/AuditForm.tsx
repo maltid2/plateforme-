@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   X,
 } from "lucide-react";
+import NetworkBackground from "./NetworkBackground";
 
 type Phase = "idle" | "scanning" | "done" | "error";
 
@@ -413,7 +414,11 @@ export default function AuditForm({
             transition={{ duration: 0.35 }}
             className="mt-5 overflow-hidden"
           >
-            <div className="rounded-[20px] border border-white/[0.07] bg-card/70 p-5 text-left shadow-soft backdrop-blur-xl">
+            <div className="relative overflow-hidden rounded-[20px] border border-white/[0.07] bg-card/70 p-5 text-left shadow-soft backdrop-blur-xl">
+              <div className="pointer-events-none absolute inset-0 [mask-image:radial-gradient(130%_120%_at_85%_0%,#000_18%,transparent_72%)] [-webkit-mask-image:radial-gradient(130%_120%_at_85%_0%,#000_18%,transparent_72%)]">
+                <NetworkBackground className="h-full w-full opacity-30" density={0.00012} />
+              </div>
+              <div className="relative">
               {phase === "scanning" ? (
                 <div>
                   <div className="mb-4 flex items-center gap-2 text-sm text-muted">
@@ -577,6 +582,7 @@ export default function AuditForm({
                   </p>
                 </div>
               ) : null}
+              </div>
             </div>
           </motion.div>
         )}

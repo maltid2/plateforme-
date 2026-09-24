@@ -14,10 +14,13 @@ import { useEffect, useRef } from "react";
 export default function NetworkBackground({
   className = "",
   density = 0.00013,
+  staticRender = false,
 }: {
   className?: string;
   /** Nœuds par pixel² (plus haut = plus dense). */
   density?: number;
+  /** Rendu figé (aucune boucle d'animation) — pour zéro coût CPU. */
+  staticRender?: boolean;
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -27,10 +30,16 @@ export default function NetworkBackground({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const reduce =
-      typeof window !== "undefined" &&
-      window.matchMedia &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const mm =
+      typeof window !== "undefined" && window.matchMedia
+        ? window.matchMedia.bind(window)
+        : null;
+    const reduce = !!mm && mm("(prefers-reduced-motion: reduce)").matches;
+    const fine = !!mm && mm("(pointer: fine)").matches;
+    // On n'anime que sur desktop (pointeur fin) et hors reduced-motion.
+    // Sur mobile / tactile ou si staticRender : rendu statique (aucune boucle)
+    // = zéro latence au scroll et pendant la génération de l'audit.
+    const animate = !reduce && fine && !staticRender;
 
     const ACC = "141,124,255"; // #8D7CFF — violet dominant (lignes + cœur)
     // Palette des nœuds, calquée sur la maquette : violet majoritaire, avec
@@ -73,9 +82,11 @@ export default function NetworkBackground({
       canvas.style.height = h + "px";
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
+      // Plafond bas : le calcul des liens est en O(n²), on limite fort pour
+      // garantir zéro latence (scroll, génération d'audit) même sur mobile.
       const count = Math.max(
-        30,
-        Math.min(170, Math.round(w * h * density))
+        22,
+        Math.min(72, Math.round(w * h * density))
       );
       nodes = Array.from({ length: count }, () => ({
         x: Math.random() * w,
@@ -134,19 +145,17 @@ export default function NetworkBackground({
         }
       }
 
-      // Nœuds — chacun scintille (luminosité + taille pulsent)
+      // Nœuds — scintillement via opacité + taille (pas de shadowBlur par
+      // nœud : trop coûteux). Le halo n'est appliqué qu'au cœur (1 seul).
       const now =
         typeof performance !== "undefined" ? performance.now() : Date.now();
       for (const n of nodes) {
         const a = 0.5 + 0.45 * Math.sin(now * 0.001 * n.ts + n.tw); // 0.05..0.95
-        ctx.shadowBlur = 4 + a * 7;
-        ctx.shadowColor = `rgba(${n.c},${(0.45 + a * 0.5).toFixed(3)})`;
-        ctx.fillStyle = `rgba(${n.c},${(0.3 + a * 0.65).toFixed(3)})`;
+        ctx.fillStyle = `rgba(${n.c},${(0.3 + a * 0.6).toFixed(3)})`;
         ctx.beginPath();
         ctx.arc(n.x, n.y, n.r * (0.8 + a * 0.4), 0, Math.PI * 2);
         ctx.fill();
       }
-      ctx.shadowBlur = 0;
 
       // Cœur
       ctx.fillStyle = `rgba(${ACC},1)`;
@@ -158,40 +167,88 @@ export default function NetworkBackground({
       ctx.shadowBlur = 0;
     };
 
-    const step = () => {
-      for (const n of nodes) {
-        n.x += n.vx;
-        n.y += n.vy;
-        if (n.x < 0 || n.x > w) n.vx *= -1;
-        if (n.y < 0 || n.y > h) n.vy *= -1;
-        // Légère réaction à la souris (effet « vivant »)
-        const dx = n.x - mouse.x;
-        const dy = n.y - mouse.y;
-        const d = Math.hypot(dx, dy);
-        if (d < 90 && d > 0.01) {
-          n.x += (dx / d) * 0.5;
-          n.y += (dy / d) * 0.5;
+    let running = false;
+    let onScreen = true;
+    let lastDraw = 0;
+    const FRAME_MS = 1000 / 30; // ~30 fps suffit pour ce fond
+
+    const step = (t: number) => {
+      if (t - lastDraw >= FRAME_MS) {
+        lastDraw = t;
+        for (const n of nodes) {
+          n.x += n.vx;
+          n.y += n.vy;
+          if (n.x < 0 || n.x > w) n.vx *= -1;
+          if (n.y < 0 || n.y > h) n.vy *= -1;
+          // Légère réaction à la souris (effet « vivant »)
+          const dx = n.x - mouse.x;
+          const dy = n.y - mouse.y;
+          const d = Math.hypot(dx, dy);
+          if (d < 90 && d > 0.01) {
+            n.x += (dx / d) * 0.5;
+            n.y += (dy / d) * 0.5;
+          }
         }
+        draw();
       }
-      draw();
       raf = requestAnimationFrame(step);
+    };
+
+    let scrolling = false;
+    const start = () => {
+      if (running || !animate || !onScreen || scrolling || document.hidden)
+        return;
+      running = true;
+      raf = requestAnimationFrame(step);
+    };
+    const stop = () => {
+      running = false;
+      cancelAnimationFrame(raf);
     };
 
     build();
-    if (reduce) {
-      draw();
-    } else {
-      raf = requestAnimationFrame(step);
-    }
+    if (!animate) draw();
+    else start();
 
     const onResize = () => {
-      cancelAnimationFrame(raf);
       build();
-      if (reduce) draw();
-      else raf = requestAnimationFrame(step);
+      if (!animate) draw();
     };
     const ro = new ResizeObserver(onResize);
     if (canvas.parentElement) ro.observe(canvas.parentElement);
+
+    // N'anime que si le fond est visible à l'écran ET l'onglet actif (perf).
+    const io = new IntersectionObserver(
+      (entries) => {
+        onScreen = entries.some((e) => e.isIntersecting);
+        if (onScreen) start();
+        else stop();
+      },
+      { threshold: 0 }
+    );
+    if (canvas.parentElement) io.observe(canvas.parentElement);
+
+    const onVis = () => {
+      if (document.hidden) stop();
+      else start();
+    };
+    document.addEventListener("visibilitychange", onVis);
+
+    // Pause pendant le scroll actif → zéro concurrence avec le défilement.
+    // L'animation reprend 220 ms après l'arrêt du scroll.
+    let scrollTimer: ReturnType<typeof setTimeout> | null = null;
+    const onScroll = () => {
+      if (!animate) return;
+      scrolling = true;
+      stop();
+      if (scrollTimer) clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(() => {
+        scrolling = false;
+        start();
+      }, 220);
+    };
+    if (animate)
+      window.addEventListener("scroll", onScroll, { passive: true });
 
     const onMove = (e: MouseEvent) => {
       const rect = canvas.getBoundingClientRect();
@@ -202,18 +259,22 @@ export default function NetworkBackground({
       mouse.x = -9999;
       mouse.y = -9999;
     };
-    if (!reduce) {
+    if (animate) {
       window.addEventListener("mousemove", onMove, { passive: true });
       window.addEventListener("mouseleave", onLeave);
     }
 
     return () => {
-      cancelAnimationFrame(raf);
+      stop();
+      if (scrollTimer) clearTimeout(scrollTimer);
       ro.disconnect();
+      io.disconnect();
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("scroll", onScroll);
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseleave", onLeave);
     };
-  }, [density]);
+  }, [density, staticRender]);
 
   return (
     <canvas

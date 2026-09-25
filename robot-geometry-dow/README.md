@@ -172,6 +172,18 @@ Les réglages avaient été choisis sur février–mai 2026 : sur les 13 autres 
   pas d'entrée 60 min avant → 120 min après). Le backtest utilise une liste NFP / CPI / Fed
   reconstituée à la main (`backtest/src/news-calendar.js`), donc approximative.
 
+**Dow Jones (US30), le marché d'origine du PDF** : test sur 6 mois de vrais cours (23/03 → 23/09/2026,
+1 minute regroupée en M5, source : [getdata-finance/us30-1m-ohlcv-index-historical-data](https://github.com/getdata-finance/us30-1m-ohlcv-index-historical-data)),
+sans aucun réglage sur ces données : **perdant aussi** dans toutes les versions testées.
+
+| Version (Dow) | Trades | Gagnants | Résultat | 280 $ → |
+|---|---|---|---|---|
+| PDF tel quel (SL 5/20/30 pts, target sur zone) | 11 | 27 % | −5,7 R | 264,56 $ |
+| PDF « achat/vente rapide » (SL 5 / TP 30) | 23 | 22 % | −4,9 R | 265,51 $ |
+| PDF + tendance D1 + annonces | 5 | 0 % | −5,2 R | 266,49 $ |
+| Stops ×1,5 | 22 | 32 % | −10,1 R | 255,24 $ |
+| Stops ×1,5 + tendance + annonces | 9 | 11 % | −6,4 R | 263,77 $ |
+
 **Ne pas utiliser ce robot avec de l'argent réel en l'état.** Il reste utile en démo pour étudier
 la méthode (check-list, tableau de bord, journal).
 

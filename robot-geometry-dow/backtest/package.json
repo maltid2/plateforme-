@@ -1,0 +1,12 @@
+{
+  "name": "robot-geometry-dow-backtest",
+  "version": "1.0.0",
+  "description": "Backtester de la méthode Geometry Market Mastery (Dow Jones, M15/M5) — même logique que l'EA MetaTrader 5.",
+  "main": "src/backtest.js",
+  "scripts": {
+    "backtest": "node src/index.js",
+    "test": "node test/strategy.test.js"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}

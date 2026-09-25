@@ -1,0 +1,248 @@
+'use strict';
+
+// Tests sans framework (module natif assert), comme le reste du dépôt.
+const assert = require('assert');
+const cfg = require('../src/config');
+const S = require('../src/strategy');
+const { run, RiskGuard, trail } = require('../src/backtest');
+const { parseCsv } = require('../src/csv');
+
+let passed = 0;
+function test(name, fn) {
+  try {
+    fn();
+    passed++;
+    console.log(`  ✓ ${name}`);
+  } catch (e) {
+    console.error(`  ✗ ${name}\n    ${e.stack}`);
+    process.exitCode = 1;
+  }
+}
+
+const DAY = Date.UTC(2024, 0, 2); // mardi 2 janvier 2024, 00:00 serveur
+
+// Découpe une bougie M15 en 3 bougies M5 cohérentes (extrême opposé d'abord).
+function expand(b, t, vol = [100, 100, 100]) {
+  const bull = b.c >= b.o;
+  const first = bull ? b.l : b.h;
+  const last = bull ? b.h : b.l;
+  const p1 = first + (b.c - first) * 0.3;
+  const p2 = first + (b.c - first) * 0.65;
+  const mk = (o, c, k, ext) => ({
+    t: t + k * S.M5,
+    o,
+    c,
+    h: Math.max(o, c, k === 0 && !bull ? b.h : -Infinity, k === 2 && bull ? last : -Infinity),
+    l: Math.min(o, c, k === 0 && bull ? b.l : Infinity, k === 2 && !bull ? last : Infinity),
+    v: vol[k],
+  });
+  return [mk(b.o, p1, 0), mk(p1, p2, 1), mk(p2, b.c, 2)];
+}
+
+// Scénario d'achat : range, zone de demand, retour dans la zone avec mèche basse M15,
+// puis 2 bougies M5 vertes avec volume acheteur pendant la session de 10 h (Paris).
+function buyScenario() {
+  const m15 = [];
+  let p = 38000;
+  // 24 h de range calme autour de 38000 (amplitude ~±60)
+  for (let k = 0; k < 40; k++) {
+    const o = p;
+    const c = 38000 + 60 * Math.sin(k / 3);
+    m15.push({ o, c, h: Math.max(o, c) + 3, l: Math.min(o, c) - 3 });
+    p = c;
+  }
+  const path = [
+    // chute vers la demand
+    [p, 37960], [37960, 37930], [37930, 37912],
+    // pivot bas (mèche basse) = zone de demand 37900-37912
+    [37912, 37918, 37900], [37918, 37935], [37935, 37960], [37960, 37985],
+    // pivot haut C -> future supply
+    [37985, 38010, null, 38020], [38010, 37990], [37990, 37960], [37960, 37935], [37935, 37918],
+  ];
+  for (const [o, c, l, h] of path) {
+    m15.push({ o, c, h: h ?? Math.max(o, c) + 2, l: l ?? Math.min(o, c) - 2 });
+  }
+  // Bougie M15 de rejet : verte avec grande mèche basse dans la zone
+  m15.push({ o: 37912, c: 37918, h: 37920, l: 37901 });
+
+  // Place la bougie de rejet pour qu'elle clôture à 10:30 Paris (11:30 serveur).
+  const rejectEnd = DAY + (11 * 60 + 30) * 60000;
+  const start = rejectEnd - m15.length * S.M15 + 24 * 3600000;
+  const bars = [];
+  m15.forEach((b, k) => bars.push(...expand(b, start + k * S.M15)));
+  const t0 = start + m15.length * S.M15;
+  // 2 bougies M5 vertes, volume acheteur (> moyenne)
+  bars.push({ t: t0, o: 37918, h: 37923, l: 37916, c: 37922, v: 250 });
+  bars.push({ t: t0 + S.M5, o: 37922, h: 37928, l: 37920, c: 37927, v: 300 });
+  // suite : le prix monte vers la supply
+  let q = 37927;
+  for (let k = 2; k < 30; k++) {
+    const o = q;
+    q += 3;
+    bars.push({ t: t0 + k * S.M5, o, c: q, h: q + 1, l: o - 1, v: 120 });
+  }
+  return bars;
+}
+
+// Marche aléatoire déterministe pour les tests d'invariants.
+function randomWalk(n, seed = 42) {
+  let s = seed;
+  const rnd = () => ((s = (s * 1103515245 + 12345) % 2147483648) / 2147483648);
+  const bars = [];
+  let p = 38000;
+  for (let i = 0; i < n; i++) {
+    const o = p;
+    const c = o + (rnd() - 0.5) * 16;
+    bars.push({ t: DAY + i * S.M5, o, c, h: Math.max(o, c) + rnd() * 6, l: Math.min(o, c) - rnd() * 6, v: 50 + Math.floor(rnd() * 150) });
+    p = c;
+  }
+  return bars;
+}
+
+console.log('Horaires');
+test('heure de Paris avec décalage serveur +1', () => {
+  const t = DAY + 11 * 3600000; // 11:00 serveur
+  assert.strictEqual(S.parisMinutes(t, cfg), 10 * 60);
+  assert.ok(S.inSession(t, cfg));
+  assert.ok(!S.inSession(DAY + 15 * 3600000, cfg)); // 14:00 Paris : hors créneaux
+  assert.ok(S.inSession(DAY + (22 * 60 + 45) * 60000, cfg)); // 21:45 Paris
+});
+
+console.log('Bougies');
+test('agrégation M5 -> M15', () => {
+  const m5 = [
+    { t: DAY, o: 1, h: 3, l: 0, c: 2, v: 1 },
+    { t: DAY + S.M5, o: 2, h: 5, l: 1, c: 4, v: 2 },
+    { t: DAY + 2 * S.M5, o: 4, h: 4, l: -1, c: 3, v: 3 },
+    { t: DAY + 3 * S.M5, o: 3, h: 3, l: 3, c: 3, v: 1 },
+  ];
+  const m15 = S.aggregateM15(m5);
+  assert.strictEqual(m15.length, 2);
+  assert.deepStrictEqual(m15[0], { t: DAY, o: 1, h: 5, l: -1, c: 3, v: 6 });
+});
+
+test('lecture CSV export MetaTrader 5', () => {
+  const bars = parseCsv('<DATE>\t<TIME>\t<OPEN>\t<HIGH>\t<LOW>\t<CLOSE>\t<TICKVOL>\n2024.01.02\t11:05:00\t38000\t38010\t37990\t38005\t120\n');
+  assert.strictEqual(bars.length, 1);
+  assert.strictEqual(bars[0].t, DAY + (11 * 60 + 5) * 60000);
+  assert.strictEqual(bars[0].v, 120);
+});
+
+console.log('Check-list');
+test('étape 1 : range vs impulsion', () => {
+  const flat = Array.from({ length: 30 }, (_, k) => ({ o: 0, c: k % 2 ? 10 : 0, h: 12, l: -2 }));
+  assert.strictEqual(S.detectRegime(flat, 29, cfg).type, 'range');
+  assert.strictEqual(S.detectRegime(flat, 29, cfg).minSL, cfg.rangeMinSL);
+  const trend = Array.from({ length: 30 }, (_, k) => ({ o: k * 10, c: k * 10 + 10, h: k * 10 + 12, l: k * 10 - 2 }));
+  const r = S.detectRegime(trend, 29, cfg);
+  assert.strictEqual(r.type, 'impulsion');
+  assert.strictEqual(r.minSL, cfg.impulseMinSL);
+});
+
+test('étape 2 : une clôture sous la zone la casse, pas une mèche', () => {
+  const m15 = [
+    { o: 50, c: 45, h: 52, l: 44 }, { o: 45, c: 40, h: 46, l: 38 }, { o: 40, c: 30, h: 41, l: 29 },
+    { o: 30, c: 32, h: 33, l: 20 }, // pivot bas -> demand 20-30
+    { o: 32, c: 40, h: 41, l: 31 }, { o: 40, c: 45, h: 46, l: 39 },
+    { o: 45, c: 30, h: 46, l: 15 }, // mèche sous la zone (stop hunt) mais clôture dedans
+  ];
+  let zones = S.buildZones(m15, 6, S.findPivots(m15, 6, cfg), cfg);
+  assert.ok(zones.some((z) => z.side === 'demand' && z.bottom === 20));
+  m15.push({ o: 30, c: 10, h: 31, l: 9 }); // clôture franche sous la zone
+  zones = S.buildZones(m15, 7, S.findPivots(m15, 7, cfg), cfg);
+  assert.ok(!zones.some((z) => z.side === 'demand' && z.bottom === 20));
+});
+
+test('étape 3 : AB=CD complété', () => {
+  const zz = [
+    { idx: 1, kind: 'high', price: 100 },
+    { idx: 5, kind: 'low', price: 60 },
+    { idx: 9, kind: 'high', price: 90 },
+  ];
+  const g = S.geometry(zz, 'buy', 50, 12, cfg); // CD = 40 = AB
+  assert.ok(g.complete);
+  assert.strictEqual(g.ratio, 1);
+  assert.ok(!S.geometry(zz, 'buy', 80, 12, cfg).complete); // CD = 10 : pas complété
+});
+
+test('étape 4 : mèche basse sur bougie verte + exception avalement', () => {
+  const zone = { side: 'demand', bottom: 100, top: 110, pivotIdx: 0 };
+  const base = [{}, {}, {}];
+  const wick = [...base, { o: 108, c: 112, h: 113, l: 101 }];
+  assert.strictEqual(S.rejection(wick, 3, zone, 'buy', cfg).count, 1);
+  const redNoEngulf = [...base, { o: 112, c: 109, h: 113, l: 101 }];
+  assert.strictEqual(S.rejection(redNoEngulf, 3, zone, 'buy', cfg), null);
+  const engulf = [...base, { o: 112, c: 109, h: 113, l: 101 }, { o: 109, c: 115, h: 116, l: 108 }];
+  const r = S.rejection(engulf, 4, zone, 'buy', cfg);
+  assert.ok(r && r.engulfing);
+  const hunt = [...base, { o: 104, c: 108, h: 109, l: 95 }];
+  assert.ok(S.rejection(hunt, 3, zone, 'buy', cfg).stopHunt);
+});
+
+test('étape 5 : 2 bougies vertes avec volume acheteur', () => {
+  const m5 = Array.from({ length: 25 }, (_, k) => ({ o: 10, c: 9, h: 11, l: 8, v: 100, t: k }));
+  m5.push({ o: 9, c: 12, h: 12, l: 8.5, v: 150 }, { o: 12, c: 14, h: 15, l: 11, v: 160 });
+  assert.ok(S.confirmM5(m5, 26, 'buy', cfg));
+  m5[26].v = 40; // volume trop faible
+  assert.strictEqual(S.confirmM5(m5, 26, 'buy', cfg), null);
+});
+
+console.log('Scénario complet');
+test('le robot achète sur la demand et vise la supply', () => {
+  const { trades } = run(buyScenario(), cfg);
+  assert.strictEqual(trades.length, 1, `trades: ${JSON.stringify(trades.map((t) => t.reason))}`);
+  const t = trades[0];
+  assert.strictEqual(t.side, 'buy');
+  assert.ok(t.initialSL < 37901, `SL sous les mèches (${t.initialSL})`);
+  assert.ok(t.tp > t.entry + (t.entry - t.initialSL) * cfg.minRR - 1e-9, 'R:R minimum respecté');
+  assert.ok(S.inSession(t.entryTime, cfg));
+});
+
+test('mode rapide : SL 5 / TP 30', () => {
+  const { trades } = run(buyScenario(), { ...cfg, quickMode: true });
+  assert.strictEqual(trades.length, 1);
+  assert.ok(Math.abs(trades[0].tp - trades[0].initialSL - 35) < 1e-9);
+});
+
+console.log('Garde-fous');
+test('stop suiveur : ne s\'éloigne jamais', () => {
+  const pos = { side: 'buy', entry: 100, sl: 90, risk: 10 };
+  assert.strictEqual(trail(pos, { c: 105 }, cfg), 90);
+  assert.strictEqual(trail(pos, { c: 111 }, cfg), 101);
+  const moved = { ...pos, sl: 110 };
+  assert.strictEqual(trail(moved, { c: 112 }, cfg), 110); // jamais reculé
+});
+
+test('pause de 2 h après une perte, max pertes/jour', () => {
+  const g = new RiskGuard(cfg);
+  const t = DAY + 11 * 3600000;
+  assert.strictEqual(g.canTrade(t), null);
+  g.onOpen(t);
+  g.onClose(t + 600000, -1);
+  assert.strictEqual(g.canTrade(t + 30 * 60000), 'pause après perte');
+  assert.strictEqual(g.canTrade(t + 125 * 60000), '2 h de trading écoulées');
+  const g2 = new RiskGuard({ ...cfg, maxMinutesAfterFirstTrade: 1e9, pauseAfterLossMinutes: 0 });
+  g2.onOpen(t); g2.onClose(t, -1); g2.onOpen(t); g2.onClose(t, -1);
+  assert.strictEqual(g2.canTrade(t + 1), 'max pertes/jour');
+  assert.strictEqual(g2.canTrade(t + 24 * 3600000), null); // nouveau jour
+});
+
+test('invariants sur 60 jours aléatoires', () => {
+  const bars = randomWalk(288 * 60);
+  const { trades, stats } = run(bars, cfg);
+  let prevExit = -Infinity;
+  const perDay = {};
+  for (const t of trades) {
+    assert.ok(t.entryTime > prevExit, 'une seule position à la fois');
+    prevExit = t.exitTime;
+    assert.ok(S.inSession(t.entryTime, cfg), 'entrée hors session');
+    const d = S.parisDay(t.entryTime, cfg);
+    perDay[d] = (perDay[d] || 0) + 1;
+    assert.ok(perDay[d] <= cfg.maxTradesPerDay);
+    assert.ok(t.r >= -1 - cfg.spread / t.risk - 1e-9, 'perte > 1R : stop élargi ?');
+  }
+  assert.ok(Number.isFinite(stats.finalBalance));
+  console.log(`    (${stats.trades} trades simulés sur données aléatoires)`);
+});
+
+console.log(`\n${passed} test(s) OK`);

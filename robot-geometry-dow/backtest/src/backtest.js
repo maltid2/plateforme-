@@ -161,6 +161,7 @@ function run(m5, cfg) {
     if (pos || i + 1 >= m5.length) continue;
     const nextOpen = bar.t + S.M5;
     if (realMoney && balance <= 0) break; // compte vidé
+    if (cfg.startTime && nextOpen < cfg.startTime) continue; // période de chauffe : historique seulement
     if (!S.canEnter(nextOpen, cfg) || guard.canTrade(nextOpen)) continue;
     const sig = S.evaluate(m5, i, m15, analysis, cfg);
     if (sig) pending = sig;

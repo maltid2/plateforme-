@@ -85,6 +85,7 @@ const base = {
   maxRiskPercentMinLot: 5,   // petit compte : lot minimum accepté si la perte au stop <= 5 %
 
   // --- Backtest ------------------------------------------------------------
+  startTime: 0,              // heure serveur (ms) avant laquelle on n'entre pas (chauffe)
   spread: 2,
   initialBalance: 10000,
 };

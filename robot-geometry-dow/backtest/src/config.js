@@ -41,6 +41,7 @@ const base = {
   requireGeometry: false,    // true = n'entrer que si AB=CD est complété
   targetMargin: 2,           // on vise juste avant la zone opposée
   minRR: 1.5,
+  targetChoice: 'nearest',   // 'nearest' (zone la plus proche) ou 'farthest' (laisser courir)
 
   // --- Étape 4 : mèches de rejet M15 ----------------------------------------
   wickLookback: 3,           // bougies M15 récentes où chercher le rejet
@@ -131,6 +132,10 @@ const markets = {
       { start: '09:00', end: '12:00' }, // ouverture de Londres
       { start: '14:45', end: '18:00' }, // chevauchement Londres / New York
     ],
+    // Optimisé sur les vrais cours 2026 : les 2 créneaux chaque jour (pas d'arrêt 2 h après la
+    // 1re entrée) et seulement les setups à gain/risque >= 2 → ~2,4x plus de gains à 280 $.
+    maxMinutesAfterFirstTrade: 0,
+    minRR: 2,
     maxM15Range: 60, // = 27 $ : bougie M15 de news (~2x la moyenne), on ne court pas après
   },
   dow: {

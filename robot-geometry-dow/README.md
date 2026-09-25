@@ -183,7 +183,14 @@ Chaque semaine repart du capital de départ. Stop normal (0,40 $) contre stop pl
 | 200 $ | normal | 3 (3) | 21 | +45,96 $ | 0 $ | +16,68 $ |
 | 200 $ | plus long | 3 (3) | 25 | +45,56 $ | 0 $ | +16,68 $ |
 | 280 $ | normal | 14 (8) | 4 | +15,07 $ | −24,38 $ | +28,91 $ |
-| 280 $ | plus long | 14 (10) | 10 | **+38,50 $** | **−13,78 $** | +25,61 $ |
+| 280 $ | plus long | 14 (10) | 10 | +38,50 $ | −13,78 $ | +25,61 $ |
+| 280 $ | plus long + 2 créneaux + gain/risque ≥ 2 (**défaut**) | 14 (10) | — | **+47,44 $** | **−13,78 $** | **+30,08 $** |
+
+**Optimisation des gains (défaut actuel pour l'or)** : sur les 3 mois en continu à 280 $, autoriser
+les deux créneaux chaque jour (au lieu de s'arrêter 2 h après la première entrée) et ne garder que
+les setups à gain/risque ≥ 2 fait passer le résultat de **+28,93 $ à +69,77 $** (19 trades, 68 % de
+gagnants), sans que le compte descende plus bas (≈ 249 $ au pire). Viser la zone la plus lointaine
+(`targetChoice: 'farthest'`, backtest seulement) a aussi été testé : moins régulier, non retenu.
 
 ## Backtest en Node.js
 

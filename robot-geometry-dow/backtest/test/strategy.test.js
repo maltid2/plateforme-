@@ -246,7 +246,8 @@ console.log('Mode H24 & petit compte');
 test('or : horaires du PDF par défaut, jamais de position le week-end', () => {
   assert.strictEqual(gold.mode, 'methode');
   assert.strictEqual(cfg.mode, 'methode');
-  assert.strictEqual(gold.maxMinutesAfterFirstTrade, 120);
+  assert.strictEqual(gold.maxMinutesAfterFirstTrade, 0); // les 2 créneaux chaque jour
+  assert.strictEqual(gold.minRR, 2);
   const at = (day, h, m) => Date.UTC(2024, 0, day, h + 1, m);
   assert.ok(!S.canEnter(at(2, 3, 0), gold));   // mardi 03:00 : hors créneaux
   assert.ok(S.canEnter(at(2, 9, 30), gold));   // mardi 09:30 : Londres

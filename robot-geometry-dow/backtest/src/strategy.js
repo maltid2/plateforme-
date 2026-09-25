@@ -318,7 +318,8 @@ function evaluate(m5, i, m15, analysis, cfg) {
           .filter((p) => ((p - price) * dir) / dist >= cfg.minRR)
           .sort((a, b) => (a - b) * dir);
         if (!valid.length) continue;
-        tp = valid[0]; // la target valide la plus proche : la plus probable
+        // 'nearest' : la target valide la plus proche (la plus probable) ; 'farthest' : laisser courir
+        tp = cfg.targetChoice === 'farthest' ? valid[valid.length - 1] : valid[0];
       }
 
       return {

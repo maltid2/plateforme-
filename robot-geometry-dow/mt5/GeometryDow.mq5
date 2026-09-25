@@ -46,7 +46,7 @@ input int    InpServerMinusParisHours = 1;       // Heure serveur - heure de Par
 input string InpSession1              = "auto";  // « auto » : H24 01:00-22:45 ; méthode or 09:00-12:00 / 14:45-18:00
 input string InpSession2              = "auto";  // méthode Dow : 10:00-13:30, 18:00-20:00, 21:30-23:00
 input string InpSession3              = "auto";
-input int    InpMaxMinutesAfterFirst  = -1;      // Minutes de trading après la 1re entrée (-1 = auto : H24 illimité, méthode 120)
+input int    InpMaxMinutesAfterFirst  = -1;      // Minutes de trading après la 1re entrée (-1 = auto : or ou H24 illimité, Dow méthode 120)
 input string InpFridayLastEntry       = "auto";  // Vendredi : plus d'entrée après (auto : or ou H24 21:00 ; vide = off)
 input string InpFridayClose           = "auto";  // Vendredi : clôture avant le week-end (auto : or ou H24 22:30 ; vide = off)
 
@@ -71,7 +71,7 @@ input double InpABCDMin               = 0.75;
 input double InpABCDMax               = 1.3;
 input bool   InpRequireGeometry       = false;   // N'entrer que si AB=CD complété
 input double InpTargetMargin          = 2;
-input double InpMinRR                 = 1.5;
+input double InpMinRR                 = -1;      // Gain/risque mini (-1 = auto : or 2, Dow 1.5)
 
 input group "4. Mèches de rejet M15"
 input int    InpWickLookback          = 3;
@@ -127,6 +127,7 @@ string   g_sessStr[3];
 double   g_pt;
 double   g_maxM15Range;   // en prix (0 = filtre désactivé)
 int      g_maxTrades, g_maxMinutes;
+double   g_minRR;
 double   g_maxDailyLoss;
 int      g_fridayLastEntry = -1, g_fridayClose = -1;   // minutes Paris (-1 = off)
 
@@ -164,7 +165,8 @@ int OnInit()
         }
      }
    g_maxTrades    = InpMaxTradesPerDay >= 0 ? InpMaxTradesPerDay : (h24 ? 6 : 3);
-   g_maxMinutes   = InpMaxMinutesAfterFirst >= 0 ? InpMaxMinutesAfterFirst : (h24 ? 0 : 120);
+   g_maxMinutes   = InpMaxMinutesAfterFirst >= 0 ? InpMaxMinutesAfterFirst : (h24 || gold ? 0 : 120);
+   g_minRR        = InpMinRR > 0 ? InpMinRR : (gold ? 2.0 : 1.5);
    g_maxDailyLoss = InpMaxDailyLossPercent >= 0 ? InpMaxDailyLossPercent : (h24 ? 10 : 3);
    string fe = InpFridayLastEntry == "auto" ? (h24 || gold ? "21:00" : "") : InpFridayLastEntry;
    string fc = InpFridayClose == "auto" ? (h24 || gold ? "22:30" : "") : InpFridayClose;
@@ -771,7 +773,7 @@ void OnTick()
                else if(g.found)     cand = price + dir * g.cd;
                else continue;
                double gain = (cand - price) * dir;
-               if(gain <= 0 || gain / dist < InpMinRR) continue;
+               if(gain <= 0 || gain / dist < g_minRR) continue;
                if(gain < best) { best = gain; tp = cand; }
               }
             if(tp == 0) continue;

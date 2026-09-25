@@ -38,7 +38,7 @@ enum ENUM_GD_MARKET
 input group "Marché"
 input ENUM_GD_MARKET InpMarket        = GD_GOLD; // Marché tradé
 input double InpPointScale            = 0;       // Prix d'1 point méthode (0 = auto : or 0.40 $, Dow 1.0)
-input ENUM_GD_MODE InpMode            = GD_H24;  // Mode de trading
+input ENUM_GD_MODE InpMode            = GD_METHODE; // Mode de trading (méthode : meilleur résultat sur les vrais cours)
 input long   InpMagic                 = 25092026;
 
 input group "Horaires (heure de Paris)"
@@ -47,8 +47,8 @@ input string InpSession1              = "auto";  // « auto » : H24 01:00-22:45
 input string InpSession2              = "auto";  // méthode Dow : 10:00-13:30, 18:00-20:00, 21:30-23:00
 input string InpSession3              = "auto";
 input int    InpMaxMinutesAfterFirst  = -1;      // Minutes de trading après la 1re entrée (-1 = auto : H24 illimité, méthode 120)
-input string InpFridayLastEntry       = "auto";  // Vendredi : plus d'entrée après (auto : H24 21:00 ; vide = off)
-input string InpFridayClose           = "auto";  // Vendredi : clôture avant le week-end (auto : H24 22:30 ; vide = off)
+input string InpFridayLastEntry       = "auto";  // Vendredi : plus d'entrée après (auto : or ou H24 21:00 ; vide = off)
+input string InpFridayClose           = "auto";  // Vendredi : clôture avant le week-end (auto : or ou H24 22:30 ; vide = off)
 
 input group "1. Type de trade"
 input int    InpRegimeLookback        = 24;      // Bougies M15 analysées
@@ -166,8 +166,8 @@ int OnInit()
    g_maxTrades    = InpMaxTradesPerDay >= 0 ? InpMaxTradesPerDay : (h24 ? 6 : 3);
    g_maxMinutes   = InpMaxMinutesAfterFirst >= 0 ? InpMaxMinutesAfterFirst : (h24 ? 0 : 120);
    g_maxDailyLoss = InpMaxDailyLossPercent >= 0 ? InpMaxDailyLossPercent : (h24 ? 10 : 3);
-   string fe = InpFridayLastEntry == "auto" ? (h24 ? "21:00" : "") : InpFridayLastEntry;
-   string fc = InpFridayClose == "auto" ? (h24 ? "22:30" : "") : InpFridayClose;
+   string fe = InpFridayLastEntry == "auto" ? (h24 || gold ? "21:00" : "") : InpFridayLastEntry;
+   string fc = InpFridayClose == "auto" ? (h24 || gold ? "22:30" : "") : InpFridayClose;
    g_fridayLastEntry = fe == "" ? -1 : ParseHM(fe);
    g_fridayClose     = fc == "" ? -1 : ParseHM(fc);
    if((fe != "" && g_fridayLastEntry < 0) || (fc != "" && g_fridayClose < 0))

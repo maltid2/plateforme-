@@ -6,8 +6,8 @@ Petit serveur Node.js **sans dépendance** qui lit les fichiers écrits par l'EA
 - **En direct** : capital, résultat du jour, zones supply/demand M15 sur les bougies,
   la **check-list** (achat et vente) étape par étape, la position en cours, la courbe de capital,
   les derniers trades avec leur setup.
-- **Rapports quotidiens** : chaque soir après la dernière session — **23:15** en mode H24
-  et pour le Dow, **18:30** pour l'or en mode méthode (heure de Paris) — du lundi au vendredi,
+- **Rapports quotidiens** : chaque soir après la dernière session — **18:30** pour l'or
+  (horaires du PDF), **23:15** en mode H24 et pour le Dow (heure de Paris) — du lundi au vendredi,
   un bilan automatique est généré :
   - trades du jour, résultat en argent / points / R, capital ;
   - **audit des règles de la méthode** : stop jamais élargi, une seule position à la fois,

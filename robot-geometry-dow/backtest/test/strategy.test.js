@@ -243,19 +243,28 @@ test('or : filtre anti-news sur une bougie M15 géante', () => {
 });
 
 console.log('Mode H24 & petit compte');
-test('or en H24 par défaut : toute la journée sauf le rollover', () => {
-  assert.strictEqual(gold.mode, 'h24');
-  assert.strictEqual(cfg.mode, 'methode'); // le Dow garde la méthode du PDF
+test('or : horaires du PDF par défaut, jamais de position le week-end', () => {
+  assert.strictEqual(gold.mode, 'methode');
+  assert.strictEqual(cfg.mode, 'methode');
+  assert.strictEqual(gold.maxMinutesAfterFirstTrade, 120);
+  const at = (day, h, m) => Date.UTC(2024, 0, day, h + 1, m);
+  assert.ok(!S.canEnter(at(2, 3, 0), gold));   // mardi 03:00 : hors créneaux
+  assert.ok(S.canEnter(at(2, 9, 30), gold));   // mardi 09:30 : Londres
+  assert.ok(S.weekendClose(at(5, 22, 35), gold)); // vendredi 22:35 : clôture
+});
+
+test('mode H24 (option) : toute la journée sauf le rollover', () => {
+  const h24 = config.forMarket('gold', { mode: 'h24' });
   const at = (day, h, m) => Date.UTC(2024, 0, day, h + 1, m); // heure serveur = Paris + 1
-  assert.ok(S.canEnter(at(2, 3, 0), gold));    // mardi 03:00
-  assert.ok(S.canEnter(at(2, 15, 0), gold));   // mardi 15:00
-  assert.ok(!S.canEnter(at(2, 23, 30), gold)); // rollover
-  assert.strictEqual(gold.maxMinutesAfterFirstTrade, 0); // pas de limite de 2 h
-  assert.ok(S.canEnter(at(5, 20, 0), gold));   // vendredi 20:00
-  assert.ok(!S.canEnter(at(5, 21, 30), gold)); // vendredi après 21:00 : plus d'entrée
-  assert.ok(!S.weekendClose(at(5, 22, 0), gold));
-  assert.ok(S.weekendClose(at(5, 22, 35), gold)); // clôture avant le week-end
-  const g = new RiskGuard(gold);
+  assert.ok(S.canEnter(at(2, 3, 0), h24));    // mardi 03:00
+  assert.ok(S.canEnter(at(2, 15, 0), h24));   // mardi 15:00
+  assert.ok(!S.canEnter(at(2, 23, 30), h24)); // rollover
+  assert.strictEqual(h24.maxMinutesAfterFirstTrade, 0); // pas de limite de 2 h
+  assert.ok(S.canEnter(at(5, 20, 0), h24));   // vendredi 20:00
+  assert.ok(!S.canEnter(at(5, 21, 30), h24)); // vendredi après 21:00 : plus d'entrée
+  assert.ok(!S.weekendClose(at(5, 22, 0), h24));
+  assert.ok(S.weekendClose(at(5, 22, 35), h24)); // clôture avant le week-end
+  const g = new RiskGuard(h24);
   g.onOpen(at(2, 3, 0));
   assert.strictEqual(g.canTrade(at(2, 15, 0)), null); // plus de coupure « 2 h »
 });

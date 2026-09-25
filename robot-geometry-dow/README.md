@@ -46,17 +46,18 @@ Si ton broker ou la période est plus calme ou plus agitée, ajuste `InpPointSca
 | Distance max à la zone pour entrer | 15 pts | 6 $ |
 | Filtre anti-news (amplitude M15 max) | désactivé | 24 $ |
 
-### Horaires : mode H24 (défaut pour l'or) ou mode méthode
+### Horaires : mode méthode (défaut) ou H24
 
 | Mode | Créneaux (heure de Paris) | Limites par jour |
 |---|---|---|
-| **H24** (défaut or) | **01:00–22:45**, tous les jours de la semaine (le rollover 22:45–01:00 est évité : spreads très larges). Vendredi : plus d'entrée après 21:00, **clôture à 22:30** pour ne rien garder le week-end. | 6 trades, 2 pertes, −10 % |
-| Méthode (défaut Dow) | Or : 09:00–12:00 · 14:45–18:00 — Dow : 10:00–13:30 · 18:00–20:00 · 21:30–23:00 (ceux du PDF). Arrêt **2 h** après la première entrée (« prendre ce qu'on a à prendre pendant max deux heures »). | 3 trades, 2 pertes, −3 % |
+| **Méthode du PDF** (défaut) | Or : **09:00–12:00** (ouverture de Londres) · **14:45–18:00** (Londres + New York, après les stats de 14:30) — Dow : 10:00–13:30 · 18:00–20:00 · 21:30–23:00. Arrêt **2 h** après la première entrée (« prendre ce qu'on a à prendre pendant max deux heures »). | 3 trades, 2 pertes, −3 % |
+| H24 (option `InpMode`) | 01:00–22:45, hors rollover (22:45–01:00 : spreads très larges). | 6 trades, 2 pertes, −10 % |
 
-Dans les deux modes, la pause de 2 h après une perte, le filtre anti-news, le stop jamais élargi et
-une seule position à la fois restent actifs. Le mode H24 s'éloigne du PDF, qui conseille de ne
-trader que peu de temps par jour : il y aura plus de trades, y compris dans des heures plus calmes
-(nuit asiatique) où les setups sont souvent moins nets.
+Les horaires du PDF sont le réglage par défaut parce que c'est celui qui a donné le meilleur
+résultat sur les vrais cours de l'or (voir « Résultats sur de vrais cours XAUUSD ») ; le mode H24
+y perdait. Sur l'or, le vendredi, plus d'entrée après 21:00 et **clôture à 22:30** : jamais de
+position pendant le week-end. Dans les deux modes, la pause de 2 h après une perte, le filtre
+anti-news, le stop jamais élargi et une seule position à la fois restent actifs.
 
 ### Petit compte (80–100 $)
 
@@ -115,7 +116,7 @@ Les distances ci-dessous sont en points méthode (voir le tableau de conversion)
 
 Paramètres à vérifier absolument :
 
-- **`InpMode`** : *H24* par défaut (voir plus haut) ou *Méthode du PDF*.
+- **`InpMode`** : *Méthode du PDF* par défaut (horaires ci-dessus) ou *H24*.
 - **`InpMaxRiskPercentMinLot`** : perte maximale acceptée au lot minimum sur un petit compte (5 %).
 - **`InpMarket`** : *Or (XAUUSD)* par défaut. L'onglet *Experts* affiche un avertissement si le
   graphique ne correspond pas au marché choisi.
@@ -123,7 +124,7 @@ Paramètres à vérifier absolument :
   brokers sont en UTC+2/+3 → **1**. Comparez l'heure de la fenêtre *Market Watch* avec l'heure de Paris.
 - **`InpPointScale`** : `0` = automatique (or 0,40 $, Dow 1,0). À ajuster après backtest.
 - **`InpSession1..3`** : `auto` = créneaux du mode et du marché choisis ; ou `HH:MM-HH:MM` ; vide = désactivé.
-- **`InpFridayLastEntry` / `InpFridayClose`** : `auto` = 21:00 / 22:30 en H24 ; vide = désactivé.
+- **`InpFridayLastEntry` / `InpFridayClose`** : `auto` = 21:00 / 22:30 sur l'or (et en H24) ; vide = désactivé.
 - **`InpMaxM15Range`** : `-1` = automatique (or 60 points méthode = 12 $, Dow désactivé) ; `0` = désactivé.
 - **`InpRiskPercent`** : risque par trade (1 % par défaut). Le lot est calculé à partir de la
   distance du stop et de la valeur du tick du symbole : il s'adapte à l'or automatiquement.
@@ -179,9 +180,9 @@ Aucune installation : Node.js ≥ 18 suffit.
 ```bash
 cd robot-geometry-dow/backtest
 npm test                                                # tests de la logique
-node src/index.js historique_XAUUSD_M5.csv              # or (défaut), H24, résultats en R
+node src/index.js historique_XAUUSD_M5.csv              # or (défaut), horaires du PDF, résultats en R
 node src/index.js historique_XAUUSD_M5.csv --capital=90  # simulation en dollars avec 90 $ (lots réels)
-node src/index.js historique_XAUUSD_M5.csv --mode=methode  # créneaux du PDF, 2 h max
+node src/index.js historique_XAUUSD_M5.csv --mode=h24  # toute la journée
 node src/index.js historique_XAUUSD_M5.csv --quick      # achat/vente rapide (SL 2 $ / TP 12 $)
 node src/index.js historique_US30_M5.csv --market=dow   # Dow Jones
 node src/index.js data.csv --offset=1 --risk=1 --spread=0.3 --journal=journal.csv

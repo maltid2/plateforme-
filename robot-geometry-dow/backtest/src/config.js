@@ -121,7 +121,10 @@ const markets = {
     pointScale: 0.4,
     spread: 0.3, // en $, déjà en prix (non converti)
     contractSize: 100, // 1 lot = 100 onces : 0,01 lot = 1 $ par dollar de mouvement
-    defaultMode: 'h24',
+    defaultMode: 'methode', // horaires du PDF : meilleur résultat sur les vrais cours 2026 (voir README)
+    // Jamais de position le week-end, quel que soit le mode.
+    fridayLastEntry: '21:00',
+    fridayClose: '22:30',
     // Or : Londres puis New York, en évitant le pic des stats US de 14:30.
     sessions: [
       { start: '09:00', end: '12:00' }, // ouverture de Londres

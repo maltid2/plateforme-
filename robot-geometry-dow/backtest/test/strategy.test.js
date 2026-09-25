@@ -2,7 +2,9 @@
 
 // Tests sans framework (module natif assert), comme le reste du dépôt.
 const assert = require('assert');
-const cfg = require('../src/config');
+const config = require('../src/config');
+const cfg = config.forMarket('dow'); // scénarios écrits en prix du Dow
+const gold = config.forMarket('gold');
 const S = require('../src/strategy');
 const { run, RiskGuard, trail } = require('../src/backtest');
 const { parseCsv } = require('../src/csv');
@@ -202,6 +204,40 @@ test('mode rapide : SL 5 / TP 30', () => {
   const { trades } = run(buyScenario(), { ...cfg, quickMode: true });
   assert.strictEqual(trades.length, 1);
   assert.ok(Math.abs(trades[0].tp - trades[0].initialSL - 35) < 1e-9);
+});
+
+console.log('Or (XAUUSD)');
+test('or par défaut : distances converties en dollars', () => {
+  assert.strictEqual(config.market, 'gold');
+  assert.strictEqual(gold.unit, '$');
+  assert.ok(Math.abs(gold.impulseMinSL - 4) < 1e-9);   // 20 pts méthode = 4 $
+  assert.ok(Math.abs(gold.quickTP - 6) < 1e-9);        // 30 pts méthode = 6 $
+  assert.ok(Math.abs(gold.maxM15Range - 12) < 1e-9);
+  assert.strictEqual(cfg.impulseMinSL, 20);            // Dow inchangé
+  assert.ok(S.inSession(DAY + (10 * 60 + 30) * 60000, gold));   // 09:30 Paris : Londres
+  assert.ok(!S.inSession(DAY + (15 * 60 + 35) * 60000, gold));  // 14:35 Paris : stats US, évité
+});
+
+// Même scénario ramené à l'échelle de l'or : 38000 -> 3800 $, écarts x0,2.
+function goldScenario() {
+  return buyScenario().map((b) => {
+    const g = (p) => 3800 + (p - 38000) * 0.2;
+    return { ...b, o: g(b.o), h: g(b.h), l: g(b.l), c: g(b.c) };
+  });
+}
+
+test('or : le même setup déclenche le même achat', () => {
+  const { trades } = run(goldScenario(), gold);
+  assert.strictEqual(trades.length, 1);
+  const t = trades[0];
+  assert.strictEqual(t.side, 'buy');
+  assert.ok(t.initialSL < 3780.2, `SL sous les mèches (${t.initialSL})`);
+  assert.ok((t.tp - t.entry) / (t.entry - t.initialSL) >= gold.minRR - 1e-9);
+});
+
+test('or : filtre anti-news sur une bougie M15 géante', () => {
+  const { trades } = run(goldScenario(), { ...gold, maxM15Range: 1 });
+  assert.strictEqual(trades.length, 0);
 });
 
 console.log('Garde-fous');

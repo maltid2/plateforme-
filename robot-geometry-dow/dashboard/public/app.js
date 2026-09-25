@@ -35,6 +35,11 @@ const sideFr = (side) => (side === 'buy' ? 'Achat' : 'Vente');
 
 let data = null;
 let offset = 1;
+// Unité de prix du marché : « $ » pour l'or (2 décimales), « pts » pour le Dow (1 décimale).
+const unitOf = () => (data && data.state && data.state.params && data.state.params.unit) || 'pts';
+const priceFmt = () => (unitOf() === '$' ? nf2 : nf1);
+const pf = (v) => priceFmt().format(v);
+const moveLabel = (v) => `${signed(v, priceFmt())} ${unitOf() === '$' ? '$' : 'points'}`;
 const toParis = (t) => (t - offset * 3600) * 1000;
 
 // ---------------------------------------------------------------------------
@@ -89,7 +94,7 @@ function renderKpis() {
     kpi('Capital', st.balance !== undefined ? nf2.format(st.balance) : '—', st.equity !== undefined && st.equity !== st.balance ? `Équité ${nf2.format(st.equity)}` : null),
     kpi("Aujourd'hui", signed(td.profit), `${td.trades} / ${max} trades · ${signed(td.r)} R`, cls(td.profit)),
     kpi('Taux de réussite', tot.trades ? `${Math.round(tot.winRate * 100)} %` : '—', `${tot.wins} gagnants / ${tot.trades} trades`),
-    kpi('Total', `${signed(tot.r)} R`, `${signed(tot.points, nf1)} points`, cls(tot.r)),
+    kpi('Total', `${signed(tot.r)} R`, moveLabel(tot.points), cls(tot.r)),
   );
 }
 
@@ -133,7 +138,7 @@ function renderChart() {
   for (const v of niceTicks(lo, hi)) {
     svg.append(s('line', { class: 'gridline', x1: L, x2: L + pw, y1: y(v), y2: y(v) }));
     const nearLevel = [st.price, ...(pos ? [pos.sl, pos.tp, pos.entry] : [])].some((p) => Number.isFinite(p) && Math.abs(y(p) - y(v)) < 14);
-    if (!nearLevel) svg.append(s('text', { x: L + pw + 6, y: y(v) + 4 }, nf1.format(v)));
+    if (!nearLevel) svg.append(s('text', { x: L + pw + 6, y: y(v) + 4 }, pf(v)));
   }
   const every = Math.max(1, Math.round(bars.length / 6));
   bars.forEach((b, k) => {
@@ -177,18 +182,18 @@ function renderChart() {
     svg.append(g);
   };
   if (pos) {
-    level(pos.tp, 'var(--good)', `TP ${nf1.format(pos.tp)}`, '4 3');
-    level(pos.sl, 'var(--critical)', `SL ${nf1.format(pos.sl)}`, '4 3');
-    level(pos.entry, 'var(--text-secondary)', nf1.format(pos.entry), '2 2');
+    level(pos.tp, 'var(--good)', `TP ${pf(pos.tp)}`, '4 3');
+    level(pos.sl, 'var(--critical)', `SL ${pf(pos.sl)}`, '4 3');
+    level(pos.entry, 'var(--text-secondary)', pf(pos.entry), '2 2');
   }
-  if (Number.isFinite(st.price)) level(st.price, 'var(--series-1)', nf1.format(st.price));
+  if (Number.isFinite(st.price)) level(st.price, 'var(--series-1)', pf(st.price));
 
   // Zones de survol (plus larges que les bougies)
   bars.forEach((b, k) => {
     const hit = s('rect', { x: L + k * step, y: T, width: step, height: ph, fill: 'transparent' });
     hit.addEventListener('mousemove', (e) => showTip(e, [
       ['', `${dateFr(toParis(b.t))} ${clock(toParis(b.t))} (Paris)`],
-      ['O', nf1.format(b.o)], ['H', nf1.format(b.h)], ['B', nf1.format(b.l)], ['C', nf1.format(b.c)],
+      ['O', pf(b.o)], ['H', pf(b.h)], ['B', pf(b.l)], ['C', pf(b.c)],
     ]));
     hit.addEventListener('mouseleave', hideTip);
     svg.append(hit);
@@ -196,7 +201,7 @@ function renderChart() {
   box.replaceChildren(svg);
 
   const rg = st.regime;
-  $('#regime').textContent = rg ? `${rg.type === 'range' ? 'Range' : 'Impulsion'} · efficacité ${nf2.format(rg.efficiency)} · SL mini ${nf1.format(rg.minSL)} pts` : '';
+  $('#regime').textContent = rg ? `${rg.type === 'range' ? 'Range' : 'Impulsion'} · efficacité ${nf2.format(rg.efficiency)} · SL mini ${pf(rg.minSL)} ${unitOf()}` : '';
 }
 
 // ---------------------------------------------------------------------------
@@ -221,7 +226,7 @@ function renderChecklist() {
     return h('div', { class: 'side' },
       h('h3', {}, side === 'buy' ? 'Achat' : 'Vente', d.ready ? h('span', { class: 'ready' }, 'Setup prêt') : null),
       h('ol', {},
-        step('ok', '1. Type de trade', `${rg.type === 'range' ? 'Range' : 'Impulsion'} → SL mini ${nf1.format(rg.minSL || 0)} pts`),
+        step('ok', '1. Type de trade', `${rg.type === 'range' ? 'Range' : 'Impulsion'} → SL mini ${pf(rg.minSL || 0)} ${unitOf()}`),
         step(d.zoneOk ? 'ok' : 'no', '2. Prix dans une zone clé', d.zone || 'aucune zone'),
         step(d.geoComplete ? 'ok' : 'info', '3. Géométrie', d.geometry && d.geometry !== 'n/a' ? `${d.geometry}${d.geoComplete ? ' — complétée' : ' — en cours'}` : 'pas encore lisible'),
         step(d.wicks > 0 ? 'ok' : 'no', '4. Mèches de rejet M15', d.wicks > 0 ? `${d.wicks} mèche(s)${d.stopHunt ? ' + stop hunt' : ''}` : 'aucune'),
@@ -233,8 +238,8 @@ function renderChecklist() {
   $('#session').textContent = sess.length ? sess.map((x) => `${x.start}–${x.end}`).join(' · ') : '';
   const p = st.position;
   $('#position').replaceChildren(p
-    ? h('div', { class: 'position' }, h('b', {}, `${sideFr(p.side)} ${p.lots} lot(s) @ ${nf1.format(p.entry)}`),
-      h('div', {}, `SL ${nf1.format(p.sl)} · TP ${nf1.format(p.tp)} · `, h('span', { class: cls(p.profit) }, `${signed(p.profit)} en cours`)))
+    ? h('div', { class: 'position' }, h('b', {}, `${sideFr(p.side)} ${p.lots} lot(s) @ ${pf(p.entry)}`),
+      h('div', {}, `SL ${pf(p.sl)} · TP ${pf(p.tp)} · `, h('span', { class: cls(p.profit) }, `${signed(p.profit)} en cours`)))
     : h('div', { class: 'position muted' }, 'Aucune position ouverte.'));
 }
 
@@ -289,8 +294,8 @@ function renderEquity() {
 // Tableaux de trades
 // ---------------------------------------------------------------------------
 function tradesTable(rows, withDate) {
-  const head = h('tr', {}, ...[withDate ? 'Date' : null, 'Ouverture', 'Sens', 'Entrée', 'SL', 'TP', 'Sortie', 'Raison', 'Points', 'R', 'Résultat', 'Setup']
-    .filter(Boolean).map((c) => h('th', { class: ['Entrée', 'SL', 'TP', 'Sortie', 'Points', 'R', 'Résultat'].includes(c) ? 'r' : '' }, c)));
+  const head = h('tr', {}, ...[withDate ? 'Date' : null, 'Ouverture', 'Sens', 'Entrée', 'SL', 'TP', 'Sortie', 'Raison', unitOf() === '$' ? 'Écart $' : 'Points', 'R', 'Résultat', 'Setup']
+    .filter(Boolean).map((c) => h('th', { class: ['Entrée', 'SL', 'TP', 'Sortie', 'Points', 'Écart $', 'R', 'Résultat'].includes(c) ? 'r' : '' }, c)));
   const body = rows.map((t) => {
     const ck = t.checklist || {};
     const setup = [ck.type, ck.zone, ck.wicks ? `${ck.wicks} mèche(s)` : null, ck.stopHunt ? 'stop hunt' : null].filter(Boolean).join(' · ');
@@ -298,12 +303,12 @@ function tradesTable(rows, withDate) {
       withDate ? h('td', {}, dateFr(t.openParis)) : null,
       h('td', {}, t.open || clock(t.openParis)),
       h('td', {}, sideFr(t.side)),
-      h('td', { class: 'r' }, nf1.format(t.entry)),
-      h('td', { class: 'r' }, nf1.format(t.sl)),
-      h('td', { class: 'r' }, nf1.format(t.tp)),
-      h('td', { class: 'r' }, nf1.format(t.exit)),
+      h('td', { class: 'r' }, pf(t.entry)),
+      h('td', { class: 'r' }, pf(t.sl)),
+      h('td', { class: 'r' }, pf(t.tp)),
+      h('td', { class: 'r' }, pf(t.exit)),
       h('td', {}, t.reason),
-      h('td', { class: `r ${cls(t.points)}` }, signed(t.points, nf1)),
+      h('td', { class: `r ${cls(t.points)}` }, signed(t.points, priceFmt())),
       h('td', { class: `r ${cls(t.r)}` }, signed(t.r)),
       h('td', { class: `r ${cls(t.profit)}` }, signed(t.profit)),
       h('td', { class: 'muted' }, setup));
@@ -363,7 +368,7 @@ function renderReport(r) {
   $('#report').replaceChildren(h('div', { class: 'report' },
     h('div', { class: 'card-head' }, h('h2', {}, `Rapport du ${r.day.split('-').reverse().join('/')}`), h('span', { class: 'muted' }, `généré à ${r.generatedAt.slice(11, 16)} UTC`)),
     h('div', { class: 'kpis' },
-      kpi('Résultat', signed(s0.profit), `${signed(s0.points, nf1)} points`, cls(s0.profit)),
+      kpi('Résultat', signed(s0.profit), moveLabel(s0.points), cls(s0.profit)),
       kpi('Trades', String(s0.trades), `${s0.wins} gagnant(s) · ${s0.losses} perdant(s)`),
       kpi('R du jour', `${signed(s0.r)} R`, null, cls(s0.r)),
       kpi('Capital', r.balanceEnd !== null ? nf2.format(r.balanceEnd) : '—', r.balanceStart !== null ? `début ${nf2.format(r.balanceStart)}` : null)),

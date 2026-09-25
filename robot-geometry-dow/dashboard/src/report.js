@@ -31,8 +31,8 @@ function auditRules(dayTrades, params) {
       if ((tr.sl - sl) * dir < -1e-9) widened.push(t.pos);
       sl = tr.sl;
     }
-    // Sortie nettement au-delà du stop initial (plus de 5 pts) : stop retiré ou élargi
-    if ((t.exit - t.sl) * dir < -5) widened.push(t.pos);
+    // Sortie nettement au-delà du stop initial (plus d'un quart du risque) : stop retiré ou élargi
+    if ((t.exit - t.sl) * dir < -0.25 * Math.abs(t.entry - t.sl)) widened.push(t.pos);
   }
   add('Stop jamais élargi', widened.length === 0,
     widened.length ? `positions ${[...new Set(widened)].join(', ')}` : 'stop seulement resserré');
@@ -109,6 +109,8 @@ function buildReport(events, dayKey, { offset = 1, params = {}, note = '' } = {}
 
   return {
     day: dayKey,
+    market: params.market || 'dow',
+    unit: params.unit || 'pts',
     generatedAt: new Date().toISOString(),
     summary: day,
     balanceStart: first ? first.balanceBefore : (all.length ? all[all.length - 1].balance : null),
@@ -143,15 +145,16 @@ const money = (x) => `${x >= 0 ? '+' : ''}${x.toFixed(2)}`;
 // Version texte (notification Telegram, fichier .txt)
 function reportText(r) {
   const s = r.summary;
+  const unit = r.unit || 'pts';
   const lines = [
-    `📊 Geometry Dow — rapport du ${r.day}`,
+    `📊 Geometry ${r.market === 'gold' ? 'Or' : 'Dow'} — rapport du ${r.day}`,
     '',
     `Trades : ${s.trades} (${s.wins} gagnant(s), ${s.losses} perdant(s))`,
-    `Résultat : ${money(s.profit)} | ${s.points >= 0 ? '+' : ''}${s.points.toFixed(1)} pts | ${s.r >= 0 ? '+' : ''}${s.r.toFixed(2)} R`,
+    `Résultat : ${money(s.profit)} | ${s.points >= 0 ? '+' : ''}${s.points.toFixed(unit === '$' ? 2 : 1)} ${unit} | ${s.r >= 0 ? '+' : ''}${s.r.toFixed(2)} R`,
   ];
   if (r.balanceEnd !== null) lines.push(`Capital : ${r.balanceEnd.toFixed(2)}`);
   for (const t of r.trades) {
-    lines.push(`  ${t.open} ${t.side === 'buy' ? 'ACHAT' : 'VENTE'} ${t.entry.toFixed(1)} → ${t.exit.toFixed(1)} (${t.reason}) ${t.r >= 0 ? '+' : ''}${t.r.toFixed(2)}R`);
+    lines.push(`  ${t.open} ${t.side === 'buy' ? 'ACHAT' : 'VENTE'} ${t.entry.toFixed(unit === '$' ? 2 : 1)} → ${t.exit.toFixed(unit === '$' ? 2 : 1)} (${t.reason}) ${t.r >= 0 ? '+' : ''}${t.r.toFixed(2)}R`);
   }
   lines.push('', 'Règles :');
   for (const c of r.rules) lines.push(`  ${c.ok ? '✅' : '❌'} ${c.rule} — ${c.detail}`);

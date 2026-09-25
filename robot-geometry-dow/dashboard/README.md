@@ -1,4 +1,4 @@
-# Tableau de bord & rapport quotidien — Geometry Dow
+# Tableau de bord & rapport quotidien — Geometry Market Mastery
 
 Petit serveur Node.js **sans dépendance** qui lit les fichiers écrits par l'EA
 `GeometryDow.mq5` et affiche :
@@ -6,7 +6,8 @@ Petit serveur Node.js **sans dépendance** qui lit les fichiers écrits par l'EA
 - **En direct** : capital, résultat du jour, zones supply/demand M15 sur les bougies,
   la **check-list** (achat et vente) étape par étape, la position en cours, la courbe de capital,
   les derniers trades avec leur setup.
-- **Rapports quotidiens** : chaque soir à **23:15 (heure de Paris)**, du lundi au vendredi,
+- **Rapports quotidiens** : chaque soir après la dernière session — **18:30** pour l'or,
+  **23:15** pour le Dow (heure de Paris) — du lundi au vendredi,
   un bilan automatique est généré :
   - trades du jour, résultat en argent / points / R, capital ;
   - **audit des règles de la méthode** : stop jamais élargi, une seule position à la fois,
@@ -25,8 +26,8 @@ cd robot-geometry-dow/dashboard
 npm run demo          # = node src/server.js --demo
 ```
 
-Ouvre <http://127.0.0.1:8787>. Le mode démo fait tourner le backtester sur 6 semaines de
-**cours simulés au hasard** (les résultats affichés ne disent rien de la méthode) et écrit
+Ouvre <http://127.0.0.1:8787>. Le mode démo fait tourner le backtester (réglages or) sur 6 semaines de
+**cours de l'or simulés au hasard** (les résultats affichés ne disent rien de la méthode) et écrit
 les fichiers exactement comme l'EA.
 
 ## Utilisation réelle
@@ -50,7 +51,7 @@ les fichiers exactement comme l'EA.
 | `GD_PORT` | port HTTP | `8787` |
 | `GD_HOST` | interface d'écoute | `127.0.0.1` (la machine seulement) |
 | `GD_PASSWORD` | mot de passe (identifiant libre) | aucun — **obligatoire** si `GD_HOST` ≠ local |
-| `GD_REPORT_TIME` | heure de Paris du rapport | `23:15` |
+| `GD_REPORT_TIME` | heure de Paris du rapport | or `18:30`, Dow `23:15` |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | envoi du rapport sur Telegram | désactivé |
 
 Les rapports sont enregistrés dans `GeometryDow\reports\AAAA-MM-JJ.json` et `.txt`,

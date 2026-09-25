@@ -1,7 +1,8 @@
 //+------------------------------------------------------------------+
 //|                                                  GeometryDow.mq5 |
 //|  Robot de trading — méthode « Geometry Market Mastery »          |
-//|  Dow Jones (US30), zones M15 + confirmation M5.                  |
+//|  Or (XAUUSD) par défaut, ou Dow Jones (US30).                    |
+//|  Zones M15 + confirmation M5.                                    |
 //|                                                                  |
 //|  Check-list appliquée à chaque clôture de bougie M5 :            |
 //|   1. Type de trade : range ou impulsion  -> taille du stop       |
@@ -15,21 +16,29 @@
 //|  Même logique que le backtester Node.js (../backtest).           |
 //+------------------------------------------------------------------+
 #property copyright "plateforme-"
-#property version   "1.00"
-#property description "Geometry Market Mastery — Dow Jones M15/M5"
+#property version   "1.10"
+#property description "Geometry Market Mastery — Or (XAUUSD) / Dow Jones, M15/M5"
 
 #include <Trade\Trade.mqh>
 
-//--- Toutes les distances sont en POINTS D'INDICE (1 point Dow = InpIndexPoint en prix)
-input group "Instrument"
-input double InpIndexPoint            = 1.0;     // Valeur d'1 point d'indice en prix
+enum ENUM_GD_MARKET
+  {
+   GD_GOLD = 0, // Or (XAUUSD)
+   GD_DOW  = 1  // Dow Jones (US30)
+  };
+
+//--- Toutes les distances sont en POINTS MÉTHODE : les valeurs du PDF (écrites pour le Dow),
+//--- converties en prix par l'échelle du marché : Dow 1 point = 1.0 ; or 1 point = 0.20 $.
+input group "Marché"
+input ENUM_GD_MARKET InpMarket        = GD_GOLD; // Marché tradé
+input double InpPointScale            = 0;       // Prix d'1 point méthode (0 = auto : or 0.20 $, Dow 1.0)
 input long   InpMagic                 = 25092026;
 
 input group "Horaires (heure de Paris)"
 input int    InpServerMinusParisHours = 1;       // Heure serveur - heure de Paris
-input string InpSession1              = "10:00-13:30";
-input string InpSession2              = "18:00-20:00";
-input string InpSession3              = "21:30-23:00";
+input string InpSession1              = "auto";  // « auto » = créneaux du marché choisi
+input string InpSession2              = "auto";  // Or : 09:00-12:00 et 14:45-18:00
+input string InpSession3              = "auto";  // Dow : 10:00-13:30, 18:00-20:00, 21:30-23:00
 input int    InpMaxMinutesAfterFirst  = 120;     // Trader max 2 h puis arrêter
 
 input group "1. Type de trade"
@@ -84,6 +93,9 @@ input int    InpMaxLossesPerDay       = 2;
 input int    InpPauseAfterLossMinutes = 120;
 input double InpMaxDailyLossPercent   = 3;
 
+input group "Filtre anti-news"
+input double InpMaxM15Range           = -1;      // Amplitude M15 max en points méthode (-1 = auto : or 60 = 12 $, Dow off ; 0 = off)
+
 input group "Affichage"
 input bool   InpDrawZones             = true;
 input bool   InpExportDashboard       = true;    // Fichiers du tableau de bord (Common\Files\GeometryDow)
@@ -101,7 +113,9 @@ datetime g_lastBar = 0;
 string   g_lastBlock = "";
 string   g_stateCore = "";   // partie « marché » de state.json, recalculée à chaque bougie M5
 int      g_sessStart[3], g_sessEnd[3];
+string   g_sessStr[3];
 double   g_pt;
+double   g_maxM15Range;   // en prix (0 = filtre désactivé)
 
 //+------------------------------------------------------------------+
 int ParseHM(string s)
@@ -121,14 +135,30 @@ bool ParseSession(string s, int &a, int &b)
 
 int OnInit()
   {
-   if(!ParseSession(InpSession1, g_sessStart[0], g_sessEnd[0]) ||
-      !ParseSession(InpSession2, g_sessStart[1], g_sessEnd[1]) ||
-      !ParseSession(InpSession3, g_sessStart[2], g_sessEnd[2]))
+   bool gold = InpMarket == GD_GOLD;
+   string presetGold[3] = {"09:00-12:00", "14:45-18:00", ""};
+   string presetDow[3]  = {"10:00-13:30", "18:00-20:00", "21:30-23:00"};
+   g_sessStr[0] = InpSession1; g_sessStr[1] = InpSession2; g_sessStr[2] = InpSession3;
+   for(int k = 0; k < 3; k++)
      {
-      Print("Session invalide : format attendu HH:MM-HH:MM");
-      return INIT_PARAMETERS_INCORRECT;
+      if(g_sessStr[k] == "auto") g_sessStr[k] = gold ? presetGold[k] : presetDow[k];
+      if(!ParseSession(g_sessStr[k], g_sessStart[k], g_sessEnd[k]))
+        {
+         Print("Session invalide : format attendu HH:MM-HH:MM (ou « auto », ou vide)");
+         return INIT_PARAMETERS_INCORRECT;
+        }
      }
-   g_pt = InpIndexPoint;
+   g_pt = InpPointScale > 0 ? InpPointScale : (gold ? 0.2 : 1.0);
+   double maxRangePts = InpMaxM15Range >= 0 ? InpMaxM15Range : (gold ? 60 : 0);
+   g_maxM15Range = maxRangePts * g_pt;
+
+   string sym = _Symbol;
+   StringToUpper(sym);
+   bool looksGold = StringFind(sym, "XAU") >= 0 || StringFind(sym, "GOLD") >= 0;
+   if(gold != looksGold)
+      PrintFormat("ATTENTION : marché « %s » choisi mais le graphique est %s. Vérifie le paramètre InpMarket.", gold ? "Or" : "Dow", _Symbol);
+   PrintFormat("Geometry %s : 1 point méthode = %.2f en prix | SL mini impulsion %.2f | créneaux %s %s %s",
+               gold ? "Or" : "Dow", g_pt, InpImpulseMinSL * g_pt, g_sessStr[0], g_sessStr[1], g_sessStr[2]);
    trade.SetExpertMagicNumber(InpMagic);
    trade.SetTypeFillingBySymbol(_Symbol);
    trade.SetDeviationInPoints(30);
@@ -488,14 +518,14 @@ void WriteState()
                          J(PositionGetDouble(POSITION_TP)), J(PositionGetDouble(POSITION_PROFIT)), (long)PositionGetInteger(POSITION_TIME));
    string sessions = "";
    string list[3];
-   list[0] = InpSession1; list[1] = InpSession2; list[2] = InpSession3;
+   list[0] = g_sessStr[0]; list[1] = g_sessStr[1]; list[2] = g_sessStr[2];
    for(int k = 0; k < 3; k++)
      {
       string js = SessionJson(list[k]);
       if(js != "") sessions += (sessions == "" ? "" : ",") + js;
      }
-   string params = StringFormat("{\"riskPercent\":%s,\"maxTradesPerDay\":%d,\"maxLossesPerDay\":%d,\"pauseAfterLossMinutes\":%d,\"quickMode\":%s,\"sessions\":[%s]}",
-                                J(InpRiskPercent), InpMaxTradesPerDay, InpMaxLossesPerDay, InpPauseAfterLossMinutes, JB(InpQuickMode), sessions);
+   string params = StringFormat("{\"market\":%s,\"unit\":%s,\"riskPercent\":%s,\"maxTradesPerDay\":%d,\"maxLossesPerDay\":%d,\"pauseAfterLossMinutes\":%d,\"quickMode\":%s,\"sessions\":[%s]}",
+                                JS(InpMarket == GD_GOLD ? "gold" : "dow"), JS(InpMarket == GD_GOLD ? "$" : "pts"), J(InpRiskPercent), InpMaxTradesPerDay, InpMaxLossesPerDay, InpPauseAfterLossMinutes, JB(InpQuickMode), sessions);
    string json = StringFormat("{\"version\":1,\"t\":%I64d,\"offset\":%d,\"symbol\":%s,\"balance\":%s,\"equity\":%s,%s,\"position\":%s,\"params\":%s}",
                               (long)TimeCurrent(), InpServerMinusParisHours, JS(_Symbol), J(AccountInfoDouble(ACCOUNT_BALANCE)),
                               J(AccountInfoDouble(ACCOUNT_EQUITY)), g_stateCore, pos, params);
@@ -521,7 +551,7 @@ void Diagnose(const MqlRates &m5[], int i, const MqlRates &m15[], int last, cons
      }
    if(zi < 0) return;
    Zone z = zones[zi];
-   d.zone = StringFormat("%s %.1f-%.1f", dir > 0 ? "demand" : "supply", z.bottom, z.top);
+   d.zone = StringFormat("%s %.2f-%.2f", dir > 0 ? "demand" : "supply", z.bottom, z.top);
    double edge = dir > 0 ? z.top : z.bottom;
    d.zoneOk = (price - edge) * dir <= InpMaxEntryDistance * g_pt && (dir > 0 ? price >= z.bottom : price <= z.top);
    Reject rj;
@@ -560,7 +590,7 @@ void OnTradeTransaction(const MqlTradeTransaction &trans, const MqlTradeRequest 
    double move = (exitPx - entryPx) * dir;
    AppendEvent(StringFormat("{\"type\":\"close\",\"t\":%I64d,\"pos\":%I64d,\"side\":%s,\"exit\":%s,\"profit\":%s,\"points\":%s,\"r\":%s,\"reason\":%s,\"balance\":%s}",
                             (long)HistoryDealGetInteger(trans.deal, DEAL_TIME), pos, JS(dir > 0 ? "buy" : "sell"), J(exitPx), J(profit),
-                            J(move / g_pt, 1), J(risk > 0 ? move / risk : 0), JS(reason), J(AccountInfoDouble(ACCOUNT_BALANCE))));
+                            J(move), J(risk > 0 ? move / risk : 0), JS(reason), J(AccountInfoDouble(ACCOUNT_BALANCE))));
    GlobalVariableDel("GDE_" + id); GlobalVariableDel("GDR_" + id); GlobalVariableDel("GDTR_" + id);
    WriteState();
   }
@@ -594,6 +624,9 @@ void OnTick()
 
    bool inSession = InSession(bar0);
    string block = GuardBlock(TimeCurrent());
+   // Filtre anti-news : bougie M15 anormalement grande = accélération, pas un setup
+   if(block == "" && g_maxM15Range > 0 && m15[last].high - m15[last].low > g_maxM15Range)
+      block = "bougie de news (filtre volatilité)";
    if(inSession && block != "" && block != g_lastBlock)
       AppendEvent(StringFormat("{\"type\":\"block\",\"t\":%I64d,\"reason\":%s}", (long)TimeCurrent(), JS(block)));
    g_lastBlock = block;
@@ -611,12 +644,12 @@ void OnTick()
       Diagnose(m5, i, m15, last, zones, zz, reg, -1, ds);
       g_stateCore = StringFormat("\"regime\":{\"type\":%s,\"efficiency\":%s,\"high\":%s,\"low\":%s,\"minSL\":%s},\"zones\":[%s],\"m15\":[%s],"
                                  "\"checklist\":{\"buy\":%s,\"sell\":%s},\"price\":%s,\"inSession\":%s,\"block\":%s",
-                                 JS(reg.isRange ? "range" : "impulsion"), J(reg.efficiency, 3), J(reg.high), J(reg.low), J(reg.minSL / g_pt, 1),
+                                 JS(reg.isRange ? "range" : "impulsion"), J(reg.efficiency, 3), J(reg.high), J(reg.low), J(reg.minSL),
                                  zj, mj, DiagJson(db), DiagJson(ds), J(m5[i].close), JB(inSession), JS(block));
       WriteState();
      }
 
-   string status = StringFormat("Geometry Dow | %s (eff. %.2f) | %d zones", reg.isRange ? "RANGE" : "IMPULSION", reg.efficiency, ArraySize(zones));
+   string status = StringFormat("Geometry %s | %s (eff. %.2f) | %d zones", InpMarket == GD_GOLD ? "Or" : "Dow", reg.isRange ? "RANGE" : "IMPULSION", reg.efficiency, ArraySize(zones));
    if(SelectOwnPosition())          { Comment(status, "\nPosition en cours — pas de renfort"); return; }
    if(!inSession)                   { Comment(status, "\nHors créneau horaire"); return; }
    if(block != "")                  { Comment(status, "\nPause : ", block); return; }
@@ -713,11 +746,11 @@ void OnTick()
                                      "\"checklist\":{\"type\":%s,\"zone\":%s,\"wicks\":%d,\"stopHunt\":%s,\"engulfing\":%s,\"geometry\":%s}}",
                                      (long)TimeCurrent(), id, JS(dir > 0 ? "buy" : "sell"), J(lots), J(fill), J(sl), J(tp), J(rsk),
                                      J(AccountInfoDouble(ACCOUNT_BALANCE)), JS(reg.isRange ? "range" : "impulsion"),
-                                     JS(StringFormat("%s %.1f-%.1f", dir > 0 ? "demand" : "supply", z.bottom, z.top)), rj.count,
+                                     JS(StringFormat("%s %.2f-%.2f", dir > 0 ? "demand" : "supply", z.bottom, z.top)), rj.count,
                                      JB(rj.stopHunt), JB(rj.engulf), JS(g.found ? StringFormat("%s AB=CD x%.2f%s", reg.isRange ? "U" : "N", g.ratio, g.complete ? " ✓" : "") : "n/a")));
             WriteState();
            }
-         PrintFormat("%s %s %.2f lots @%.1f SL %.1f TP %.1f | %s | zone %.1f-%.1f | %d mèche(s)%s%s | AB=CD x%.2f%s",
+         PrintFormat("%s %s %.2f lots @%.2f SL %.2f TP %.2f | %s | zone %.2f-%.2f | %d mèche(s)%s%s | AB=CD x%.2f%s",
                      ok ? "OUVERT" : "ÉCHEC", dir > 0 ? "BUY" : "SELL", lots, px, sl, tp,
                      reg.isRange ? "range (U)" : "impulsion (N)", z.bottom, z.top, rj.count,
                      rj.stopHunt ? " + stop hunt" : "", rj.engulf ? " + avalement" : "",

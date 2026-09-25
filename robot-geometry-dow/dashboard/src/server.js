@@ -12,7 +12,7 @@
 //   GD_PORT            port HTTP (défaut 8787)
 //   GD_HOST            interface d'écoute (défaut 127.0.0.1 = accessible seulement depuis la machine)
 //   GD_PASSWORD        mot de passe du tableau de bord (obligatoire si GD_HOST n'est pas local)
-//   GD_REPORT_TIME     heure de Paris du rapport quotidien (défaut 23:15, après la dernière session)
+//   GD_REPORT_TIME     heure de Paris du rapport quotidien (défaut : or 18:30, Dow 23:15 — après la dernière session)
 //   TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID   facultatif : envoi du rapport sur Telegram
 
 const http = require('http');
@@ -42,7 +42,12 @@ const NOTES = path.join(DATA, 'notes.json');
 const PORT = Number(env.GD_PORT || 8787);
 const HOST = env.GD_HOST || '127.0.0.1';
 const PASSWORD = env.GD_PASSWORD || '';
-const REPORT_TIME = env.GD_REPORT_TIME || '23:15';
+// Heure du rapport : après la dernière session du marché tradé (lu dans state.json).
+function reportTime() {
+  if (env.GD_REPORT_TIME) return env.GD_REPORT_TIME;
+  const st = readJson(path.join(DATA, 'state.json'));
+  return st && st.params && st.params.market === 'dow' ? '23:15' : '18:30';
+}
 
 if (!['127.0.0.1', 'localhost', '::1'].includes(HOST) && !PASSWORD) {
   console.error('GD_HOST expose le tableau de bord sur le réseau : définissez GD_PASSWORD.');
@@ -126,7 +131,7 @@ function dashboardPayload() {
       closeParis: parisMs(t.closeT, offset),
       trails: undefined,
     })),
-    reportTime: REPORT_TIME,
+    reportTime: reportTime(),
   };
 }
 
@@ -167,7 +172,7 @@ function sendTelegram(text) {
 async function scheduler() {
   const now = parisNow();
   if (now.weekday === 'Sat' || now.weekday === 'Sun') return;
-  if (now.time < REPORT_TIME) return;
+  if (now.time < reportTime()) return;
   if (fs.existsSync(path.join(REPORTS, `${now.day}.json`))) return;
   const report = generateReport(now.day);
   const sent = await sendTelegram(reportText(report));
@@ -275,7 +280,7 @@ if (require.main === module) {
   server.listen(PORT, HOST, () => {
     console.log(`Tableau de bord Geometry Dow : http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`);
     console.log(`Données lues dans : ${DATA}`);
-    console.log(`Rapport quotidien : ${REPORT_TIME} (heure de Paris), du lundi au vendredi${env.TELEGRAM_BOT_TOKEN ? ', envoi Telegram activé' : ''}`);
+    console.log(`Rapport quotidien : ${reportTime()} (heure de Paris), du lundi au vendredi${env.TELEGRAM_BOT_TOKEN ? ', envoi Telegram activé' : ''}`);
   });
   scheduler();
   setInterval(() => scheduler().catch(console.error), 60000);

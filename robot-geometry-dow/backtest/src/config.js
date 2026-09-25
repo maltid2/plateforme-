@@ -1,10 +1,12 @@
 'use strict';
 
 // Paramètres par défaut du robot « Geometry Market Mastery ».
-// Toutes les distances sont en POINTS D'INDICE du Dow Jones (1 point = 1.0 de prix).
-// Les mêmes noms (préfixés « Inp ») existent dans l'EA MetaTrader 5.
+// Les distances ci-dessous sont en « POINTS MÉTHODE » : les valeurs du PDF, écrites pour le
+// Dow Jones (SL 5 / 20 / 30 pts, TP 30 pts...). Chaque marché les convertit en prix avec
+// son échelle (pointScale) : Dow 1 point = 1.0 ; or 1 point = 0,20 $ (volatilité M15 ~5x plus
+// petite en dollars qu'en points Dow). Les mêmes noms (préfixés « Inp ») existent dans l'EA.
 
-module.exports = {
+const base = {
   // --- Horaires (heure de Paris) -------------------------------------------
   // Décalage heure serveur du broker - heure de Paris (souvent +1 : serveur UTC+2/+3).
   serverMinusParisHours: 1,
@@ -68,7 +70,52 @@ module.exports = {
   pauseAfterLossMinutes: 120, // « prends 2 h de pause »
   maxDailyLossPercent: 3,
 
+  // --- Filtre anti-news : pas d'entrée si la dernière M15 dépasse cette amplitude
+  maxM15Range: 0,            // 0 = désactivé
+
   // --- Backtest ------------------------------------------------------------
   spread: 2,
   initialBalance: 10000,
 };
+
+// Distances converties en prix selon le marché.
+const DISTANCES = [
+  'rangeMinSL', 'wideRangeSize', 'wideRangeMinSL', 'impulseMinSL', 'maxSL', 'slBuffer',
+  'minZoneHeight', 'zoneTolerance', 'targetMargin', 'maxEntryDistance', 'quickSL', 'quickTP',
+  'breakEvenLock', 'maxM15Range',
+];
+
+const markets = {
+  gold: {
+    label: 'Or (XAUUSD)',
+    unit: '$',
+    pointScale: 0.2,
+    spread: 0.3, // en $, déjà en prix (non converti)
+    // Or : Londres puis New York, en évitant le pic des stats US de 14:30.
+    sessions: [
+      { start: '09:00', end: '12:00' }, // ouverture de Londres
+      { start: '14:45', end: '18:00' }, // chevauchement Londres / New York
+    ],
+    maxM15Range: 60, // = 12 $ : bougie M15 de news, on ne court pas après
+  },
+  dow: {
+    label: 'Dow Jones (US30)',
+    unit: 'pts',
+    pointScale: 1,
+    spread: 2,
+    sessions: base.sessions,
+  },
+};
+
+function forMarket(name = 'gold', overrides = {}) {
+  const m = markets[name];
+  if (!m) throw new Error(`Marché inconnu : ${name} (disponibles : ${Object.keys(markets).join(', ')})`);
+  const { pointScale, spread, label, unit, ...rest } = m;
+  const cfg = { ...base, ...rest, market: name, marketLabel: label, unit, pointScale };
+  for (const k of DISTANCES) cfg[k] = cfg[k] * pointScale;
+  cfg.spread = spread;
+  return { ...cfg, ...overrides };
+}
+
+// Par défaut : l'or.
+module.exports = Object.assign(forMarket('gold'), { forMarket, markets, base, DISTANCES });

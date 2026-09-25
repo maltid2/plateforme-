@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 'use strict';
 
-// Usage : node src/index.js historique_US30_M5.csv [--quick] [--offset=1] [--risk=1] [--journal=journal.csv]
+// Usage : node src/index.js historique_XAUUSD_M5.csv [--market=gold|dow] [--quick] [--offset=1] [--risk=1] [--journal=journal.csv]
 
 const fs = require('fs');
-const defaults = require('./config');
+const { forMarket } = require('./config');
 const { loadCsv } = require('./csv');
 const { run } = require('./backtest');
 
@@ -15,14 +15,14 @@ function fmt(t) {
 function main(argv) {
   const file = argv.find((a) => !a.startsWith('--'));
   if (!file) {
-    console.error('Usage : node src/index.js <historique_M5.csv> [--quick] [--offset=1] [--risk=1] [--journal=fichier.csv]');
+    console.error('Usage : node src/index.js <historique_M5.csv> [--market=gold|dow] [--quick] [--offset=1] [--risk=1] [--spread=0.3] [--journal=fichier.csv]');
     process.exit(1);
   }
   const opt = (name) => {
     const a = argv.find((x) => x.startsWith(`--${name}=`));
     return a ? a.split('=')[1] : undefined;
   };
-  const cfg = { ...defaults };
+  const cfg = forMarket(opt('market') || 'gold');
   if (argv.includes('--quick')) cfg.quickMode = true;
   if (opt('offset') !== undefined) cfg.serverMinusParisHours = Number(opt('offset'));
   if (opt('risk') !== undefined) cfg.riskPercent = Number(opt('risk'));
@@ -35,19 +35,21 @@ function main(argv) {
   }
   const { trades, stats } = run(bars, cfg);
 
-  console.log(`\nGeometry Market Mastery — backtest ${fmt(bars[0].t)} → ${fmt(bars[bars.length - 1].t)}`);
-  console.log(`Mode : ${cfg.quickMode ? 'rapide (SL 5 / TP 30)' : 'complet (SL logique / TP zone)'}\n`);
+  const u = cfg.unit;
+  console.log(`\nGeometry Market Mastery — ${cfg.marketLabel} — backtest ${fmt(bars[0].t)} → ${fmt(bars[bars.length - 1].t)}`);
+  console.log(`Mode : ${cfg.quickMode ? `rapide (SL ${cfg.quickSL} ${u} / TP ${cfg.quickTP} ${u})` : 'complet (SL logique / TP zone)'}`);
+  console.log(`Créneaux (Paris) : ${cfg.sessions.map((x) => `${x.start}-${x.end}`).join(', ')} · spread ${cfg.spread} ${u}\n`);
   for (const t of trades) {
     console.log(
       `${fmt(t.entryTime)}  ${t.side.toUpperCase().padEnd(4)} @${t.entry.toFixed(1)}  SL ${t.initialSL.toFixed(1)}  TP ${t.tp.toFixed(1)}`
-      + `  → ${t.reason.padEnd(10)} ${t.points >= 0 ? '+' : ''}${t.points.toFixed(1)} pts (${t.r.toFixed(2)}R)`
+      + `  → ${t.reason.padEnd(10)} ${t.points >= 0 ? '+' : ''}${t.points.toFixed(cfg.unit === '$' ? 2 : 1)} ${cfg.unit} (${t.r.toFixed(2)}R)`
       + `  [${t.checklist.type}, ${t.checklist.zone}, ${t.checklist.wicks} mèche(s)${t.checklist.stopHunt ? ', stop hunt' : ''}, ${t.checklist.geometry}]`,
     );
   }
   console.log('\n--- Résultats ---');
   console.log(`Trades           : ${stats.trades}`);
   console.log(`Taux de réussite : ${(stats.winRate * 100).toFixed(1)} %`);
-  console.log(`Points nets      : ${stats.points.toFixed(1)}`);
+  console.log(`Gain net (prix)  : ${stats.points.toFixed(2)} ${cfg.unit}`);
   console.log(`Profit factor    : ${Number.isFinite(stats.profitFactor) ? stats.profitFactor.toFixed(2) : '∞'}`);
   console.log(`R moyen          : ${stats.avgR.toFixed(2)}`);
   console.log(`Rendement        : ${stats.returnPercent.toFixed(2)} % (risque ${cfg.riskPercent} %/trade)`);

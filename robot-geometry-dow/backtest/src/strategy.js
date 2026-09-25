@@ -248,6 +248,8 @@ function confirmM5(m5, i, side, cfg) {
 
 function evaluate(m5, i, m15, analysis, cfg) {
   if (!analysis) return null;
+  // Filtre anti-news : bougie M15 anormalement grande = accélération, pas un setup.
+  if (cfg.maxM15Range > 0 && range(m15[analysis.last]) > cfg.maxM15Range) return null;
   const price = m5[i].c;
   for (const side of ['buy', 'sell']) {
     const conf = confirmM5(m5, i, side, cfg);
@@ -309,7 +311,7 @@ function evaluate(m5, i, m15, analysis, cfg) {
         tp,
         checklist: {
           type: analysis.regime.type,
-          zone: `${zone.side} ${zone.bottom.toFixed(1)}-${zone.top.toFixed(1)}`,
+          zone: `${zone.side} ${zone.bottom.toFixed(2)}-${zone.top.toFixed(2)}`,
           geometry: geo ? `${analysis.regime.type === 'range' ? 'U' : 'N'} AB=CD x${geo.ratio.toFixed(2)}${geo.complete ? ' ✓' : ''}` : 'n/a',
           wicks: rej.count,
           engulfing: rej.engulfing,

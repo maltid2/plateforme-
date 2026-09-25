@@ -1,12 +1,12 @@
 'use strict';
 
-// Données de démonstration : fait tourner le backtester sur 6 semaines de cours simulés
+// Données de démonstration (or, XAUUSD) : fait tourner le backtester sur 6 semaines de cours simulés
 // (jours ouvrés, jusqu'à maintenant) et écrit les fichiers exactement comme l'EA.
 // Permet de voir le tableau de bord et les rapports avant d'installer MetaTrader 5.
 
 const fs = require('fs');
 const path = require('path');
-const cfg = require('../../backtest/src/config');
+const cfg = require('../../backtest/src/config').forMarket('gold');
 const S = require('../../backtest/src/strategy');
 const { run } = require('../../backtest/src/backtest');
 const { buildReport, reportText } = require('./report');
@@ -28,16 +28,17 @@ function simulateBars(days = 42, seed = 20240925) {
   const endServer = Math.floor((parisNowMs() + OFFSET * 3600000) / S.M5) * S.M5 - S.M5;
   const start = endServer - days * 86400000;
   const bars = [];
-  let p = 42000;
+  const BASE = 3800; // niveau arbitraire : les cours sont simulés
+  let p = BASE;
   let drift = 0;
   for (let t = start; t <= endServer; t += S.M5) {
     const wd = new Date(t - OFFSET * 3600000).getUTCDay();
     if (wd === 0 || wd === 6) continue; // marché fermé le week-end
-    if (rnd() < 0.02) drift = (rnd() - 0.5) * 3; // alternance range / impulsion
+    if (rnd() < 0.02) drift = (rnd() - 0.5) * 0.6; // alternance range / impulsion
     const o = p;
-    const c = o + drift + (rnd() - 0.5) * 18 - (p - 42000) * 0.002;
+    const c = o + drift + (rnd() - 0.5) * 3.6 - (p - BASE) * 0.002;
     const v = 60 + Math.floor(rnd() * 180);
-    bars.push({ t, o, c, h: Math.max(o, c) + rnd() * 7, l: Math.min(o, c) - rnd() * 7, v });
+    bars.push({ t, o, c, h: Math.max(o, c) + rnd() * 1.4, l: Math.min(o, c) - rnd() * 1.4, v });
     p = c;
   }
   return bars;
@@ -55,7 +56,7 @@ function diagnose(m5, m15, analysis, i) {
     const zone = own[0];
     const d = { zone: '', zoneOk: false, wicks: 0, stopHunt: false, geometry: 'n/a', geoComplete: false, m5: !!S.confirmM5(m5, i, side, cfg), ready: false };
     if (zone) {
-      d.zone = `${zone.side} ${zone.bottom.toFixed(1)}-${zone.top.toFixed(1)}`;
+      d.zone = `${zone.side} ${zone.bottom.toFixed(2)}-${zone.top.toFixed(2)}`;
       const edge = dir > 0 ? zone.top : zone.bottom;
       d.zoneOk = (price - edge) * dir <= cfg.maxEntryDistance && (dir > 0 ? price >= zone.bottom : price <= zone.top);
       const rej = S.rejection(m15, analysis.last, zone, side, cfg);
@@ -117,7 +118,7 @@ function generate(dir) {
     version: 1,
     t: sec(bars[i].t + S.M5),
     offset: OFFSET,
-    symbol: 'US30 (démo)',
+    symbol: 'XAUUSD (démo)',
     demo: true,
     balance: Math.round(balance * 100) / 100,
     equity: Math.round(balance * 100) / 100,
@@ -133,7 +134,7 @@ function generate(dir) {
     checklist: diagnose(bars, m15, analysis, i),
     position: null,
     params: {
-      riskPercent: cfg.riskPercent, maxTradesPerDay: cfg.maxTradesPerDay, maxLossesPerDay: cfg.maxLossesPerDay,
+      market: cfg.market, unit: cfg.unit, riskPercent: cfg.riskPercent, maxTradesPerDay: cfg.maxTradesPerDay, maxLossesPerDay: cfg.maxLossesPerDay,
       pauseAfterLossMinutes: cfg.pauseAfterLossMinutes, quickMode: cfg.quickMode, sessions: cfg.sessions,
     },
   };

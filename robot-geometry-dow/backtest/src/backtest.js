@@ -2,6 +2,7 @@
 
 const S = require('./strategy');
 const F = require('./filters');
+const { createLiquidity } = require('./liquidity');
 
 // Garde-fous psychologiques du PDF (« Note d'un trader ») traduits en règles :
 //  - pas de trade pour « se venger » : pause après une perte
@@ -88,6 +89,7 @@ function sizeLots(balance, risk, cfg) {
 function run(m5, cfg) {
   const m15 = S.aggregateM15(m5);
   const trendAt = cfg.trendFilter ? F.trendTracker(m5, cfg) : null;
+  const liq = cfg.strategy === 'liquidity' ? createLiquidity(m5, cfg) : null;
   const guard = new RiskGuard(cfg);
   const trades = [];
   const realMoney = cfg.capital > 0;
@@ -150,6 +152,19 @@ function run(m5, cfg) {
       if (buy ? bar.l <= pos.sl : bar.h >= pos.sl) close(bar, pos.sl, pos.sl === pos.initialSL ? 'SL' : 'SL suiveur');
       else if (buy ? bar.h >= pos.tp : bar.l <= pos.tp) close(bar, pos.tp, 'TP');
       else pos.sl = trail(pos, bar, cfg);
+    }
+
+    // Stratégie liquidité : suivie à chaque bougie (niveaux, sweeps), indépendamment des M15.
+    if (liq) {
+      if (i + 1 >= m5.length) break;
+      const nextOpen = bar.t + S.M5;
+      let allow = { buy: true, sell: true };
+      if (trendAt) { const tr = trendAt(nextOpen); allow = { buy: tr > 0, sell: tr < 0 }; }
+      const window = !pos && !(cfg.startTime && nextOpen < cfg.startTime) && S.canEnter(nextOpen, cfg)
+        && !guard.canTrade(nextOpen) && !(cfg.newsFilter && F.newsBlocked(nextOpen, cfg)) && !(realMoney && balance <= 0);
+      const sig = liq(i, allow, window);
+      if (sig && window) pending = sig;
+      continue;
     }
 
     // Dernière bougie M15 clôturée à la fin de cette bougie M5.

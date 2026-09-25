@@ -75,6 +75,27 @@ const base = {
   // --- Filtre anti-news : pas d'entrée si la dernière M15 dépasse cette amplitude
   maxM15Range: 0,            // 0 = désactivé
 
+  // --- Stratégie : 'geometry' (méthode du PDF) ou 'liquidity' (chasse aux stops)
+  strategy: 'geometry',
+  liqPools: ['asia', 'pdhl'],  // haut/bas de l'Asie, haut/bas de la veille
+  liqAsiaStart: '01:00',
+  liqAsiaEnd: '08:00',
+  liqSwingBars: 6,           // creux/sommet de référence : 6 bougies M5 avant le sweep
+  liqMaxWaitBars: 12,        // changement de structure dans l'heure qui suit
+  liqMaxSweepDepth: 40,      // au-delà (points méthode), c'est une cassure, pas un sweep
+  liqEntry: 'mss',           // 'mss' (changement de structure) ou 'reclaim' (retour sous/au-dessus du niveau)
+  liqTarget: 'fixed',        // 'fixed' (liqTargetR x risque) ou 'opposite' (liquidité d'en face)
+  liqTargetR: 2,
+  // Distances proportionnelles à la volatilité (bougie M15 médiane des N derniers jours).
+  // Multiples = réglages en dollars choisis sur l'or 2025 (bougie M15 médiane 5 $) :
+  // cassure > 18 $ = 3,6x ; stop 2,25-18 $ = 0,45x-3,6x ; marge 0,90 $ = 0,18x.
+  liqVolMode: false,
+  liqVolDays: 20,
+  liqDepthVol: 3.6,
+  liqMinSLVol: 0.45,
+  liqMaxSLVol: 3.6,
+  liqBufferVol: 0.18,
+
   // --- Tendance de fond : n'acheter qu'en tendance haussière, ne vendre qu'en baissière
   trendFilter: false,
   trendTimeframe: 'H4',      // 'H1', 'H4' ou 'D1'
@@ -127,7 +148,7 @@ const modes = {
 const DISTANCES = [
   'rangeMinSL', 'wideRangeSize', 'wideRangeMinSL', 'impulseMinSL', 'maxSL', 'slBuffer',
   'minZoneHeight', 'zoneTolerance', 'targetMargin', 'maxEntryDistance', 'quickSL', 'quickTP',
-  'breakEvenLock', 'maxM15Range',
+  'breakEvenLock', 'maxM15Range', 'liqMaxSweepDepth',
 ];
 
 const markets = {
@@ -150,9 +171,19 @@ const markets = {
     // 1re entrée) et seulement les setups à gain/risque >= 2 → ~2,4x plus de gains à 280 $.
     maxMinutesAfterFirstTrade: 0,
     minRR: 2,
-    // Choisis sur 2025 uniquement, vérifiés sur 2026 : tendance journalière (EMA 50) + annonces US.
+    // Stratégie par défaut sur l'or : la liquidité (sweep + changement de structure), réglée sur
+    // 2025 et positive sur 2026 jamais vu (13 trades, PF 1,70, +5,6 R). Voir README.
+    strategy: 'liquidity',
+    liqVolMode: true,
+    liqSwingBars: 6,
+    liqMaxWaitBars: 24,
+    liqTarget: 'fixed',
+    liqTargetR: 3,
+    trailing: false,
+    breakEvenAtR: 99,
+    // Méthode du PDF (strategy: 'geometry') : tendance journalière (EMA 50) + annonces US.
     // Sur 17 mois à 280 $ : 228,88 $ au lieu de 160,19 $ — moins de pertes, mais toujours perdant.
-    trendFilter: true,
+    trendFilter: false,        // à activer avec strategy 'geometry' (réglage choisi sur 2025)
     trendTimeframe: 'D1',
     trendEmaPeriod: 50,
     newsFilter: true,

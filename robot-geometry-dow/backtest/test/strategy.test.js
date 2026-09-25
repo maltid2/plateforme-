@@ -5,7 +5,7 @@ const assert = require('assert');
 const config = require('../src/config');
 const cfg = config.forMarket('dow'); // scénarios écrits en prix du Dow
 // Les scénarios synthétiques n'ont que quelques jours d'historique : tendance et annonces coupées.
-const gold = config.forMarket('gold', { trendFilter: false, newsFilter: false });
+const gold = config.forMarket('gold', { strategy: 'geometry', trendFilter: false, newsFilter: false, trailing: true, breakEvenAtR: 1 });
 const F = require('../src/filters');
 const { US_NEWS } = require('../src/news-calendar');
 const S = require('../src/strategy');
@@ -295,10 +295,48 @@ test('petit compte : stop trop large refusé à 90 $, accepté à 300 $', () => 
 });
 
 console.log('Tendance & fondamental');
-test('or : tendance journalière et annonces US activées par défaut', () => {
-  assert.strictEqual(config.trendFilter, true);
-  assert.strictEqual(config.trendTimeframe, 'D1');
+test('or : stratégie liquidité par défaut, annonces US filtrées', () => {
+  assert.strictEqual(config.strategy, 'liquidity');
+  assert.strictEqual(config.liqVolMode, true);
   assert.strictEqual(config.newsFilter, true);
+  assert.strictEqual(config.trendFilter, false);
+});
+
+// Journée construite : Asie 01:00-08:00 entre 3000 et 3010, puis à 09:30 le prix dépasse le haut
+// de l'Asie (sweep), et casse le dernier creux → vente attendue, stop au-dessus de la mèche.
+function sweepDay() {
+  const bars = [];
+  const day = Date.UTC(2024, 0, 3); // mercredi, heure serveur = Paris + 1
+  let p = 3005;
+  // 30 jours d'historique calme pour la volatilité (bougies M5 de ~2 $)
+  for (let t = day - 30 * 86400000; t < day; t += S.M5) {
+    const wd = new Date(t - 3600000).getUTCDay();
+    if (wd === 0 || wd === 6) continue;
+    const o = p; p = 3005 + Math.sin(t / 3.6e6) * 4;
+    bars.push({ t, o, c: p, h: Math.max(o, p) + 1, l: Math.min(o, p) - 1, v: 100 });
+  }
+  const at = (h, m) => day + ((h + 1) * 60 + m) * 60000;
+  for (let t = at(0, 0); t < at(9, 0); t += S.M5) { const o = p; p = 3005 + Math.sin(t / 1.2e6) * 4.5; bars.push({ t, o, c: p, h: Math.min(3010, Math.max(o, p) + 0.5), l: Math.max(3000, Math.min(o, p) - 0.5), v: 100 }); }
+  const seq = [ // [o, h, l, c] à partir de 09:00
+    [3006, 3007, 3005, 3006.5], [3006.5, 3008, 3006, 3007.5], [3007.5, 3009, 3007, 3008.5], [3008.5, 3009.5, 3007.5, 3008],
+    [3008, 3009, 3007, 3007.5], [3007.5, 3009.8, 3007.2, 3009], [3009, 3013, 3008.5, 3009.2], // sweep du haut Asie (3010)
+    [3009.2, 3009.5, 3006.5, 3006.8], [3006.8, 3007, 3004, 3004.5], // cassure du creux (~3007) → MSS
+    [3004.5, 3005, 3000, 3000.5], [3000.5, 3001, 2996, 2996.5], [2996.5, 2997, 2990, 2990.5], [2990.5, 2991, 2985, 2985.5],
+  ];
+  seq.forEach(([o, h, l, c], k) => bars.push({ t: at(9, 0) + k * S.M5, o, h, l, c, v: 150 }));
+  return bars;
+}
+
+test('liquidité : sweep du haut asiatique puis cassure de structure = vente', () => {
+  // on ne trade que la journée construite (l'historique sert à la volatilité)
+  const c = config.forMarket('gold', { newsFilter: false, startTime: Date.UTC(2024, 0, 3) + 3600000 });
+  const { trades } = run(sweepDay(), c);
+  assert.strictEqual(trades.length, 1, JSON.stringify(trades));
+  const t = trades[0];
+  assert.strictEqual(t.side, 'sell');
+  assert.ok(t.initialSL > 3013, `stop au-dessus de la mèche du sweep (${t.initialSL})`);
+  assert.ok(Math.abs((t.price - t.tp) - c.liqTargetR * (t.initialSL - t.price)) < 1e-6, 'target à 3R du prix de signal');
+  assert.ok(t.checklist.zone.includes('haut Asie'));
 });
 
 test('tendance : EMA qui monte = achats seulement, qui baisse = ventes seulement', () => {

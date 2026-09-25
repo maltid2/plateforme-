@@ -31,20 +31,21 @@ permet des stops courts et une entrée précise sur le setup. L'or bouge plus qu
 ### Conversion des distances
 
 Tous les réglages sont écrits en **points méthode** (les valeurs du PDF pour le Dow) et convertis
-en prix : **Dow 1 point = 1,0 · or 1 point = 0,40 $**. Ce ratio a été **calibré sur de vrais cours
+en prix : **Dow 1 point = 1,0 · or 1 point = 0,45 $**. Ce ratio a été **calibré sur de vrais cours
 XAUUSD M5** (février–mai 2026, voir plus bas) : une bougie M15 de l'or y fait en médiane **10 $**
-(16 $ pendant New York). Une première estimation à 0,20 $ donnait des stops trop serrés.
+(16 $ pendant New York). Une première estimation à 0,20 $ donnait des stops trop serrés ; entre
+0,40 $ (stop normal) et 0,45 $ (stop un peu plus long), le second a mieux fait semaine par semaine.
 Si ton broker ou la période est plus calme ou plus agitée, ajuste `InpPointScale`.
 
 | Réglage du PDF | Dow | Or |
 |---|---|---|
-| SL mini en range serré | 5 pts | 2 $ |
-| SL mini en impulsion | 20 pts | 8 $ |
-| SL mini en range large / seuil de range large | 30 / 100 pts | 12 / 40 $ |
-| SL maximum (au-delà : pas de trade) | 40 pts | 16 $ |
-| Achat / vente rapide (SL / TP) | 5 / 30 pts | 2 / 12 $ |
-| Distance max à la zone pour entrer | 15 pts | 6 $ |
-| Filtre anti-news (amplitude M15 max) | désactivé | 24 $ |
+| SL mini en range serré | 5 pts | 2,25 $ |
+| SL mini en impulsion | 20 pts | 9 $ |
+| SL mini en range large / seuil de range large | 30 / 100 pts | 13,50 / 45 $ |
+| SL maximum (au-delà : pas de trade) | 40 pts | 18 $ |
+| Achat / vente rapide (SL / TP) | 5 / 30 pts | 2,25 / 13,50 $ |
+| Distance max à la zone pour entrer | 15 pts | 6,75 $ |
+| Filtre anti-news (amplitude M15 max) | désactivé | 27 $ |
 
 ### Horaires : mode méthode (défaut) ou H24
 
@@ -70,10 +71,9 @@ Il fonctionne donc ainsi :
   ≤ `InpMaxRiskPercentMinLot` (5 %)**, soit un stop de 4,50 $ max avec 90 $ ;
 - sinon, **il ne prend pas le trade** (message dans l'onglet *Experts*).
 
-**Sur les vrais cours de 2026, ça ne suffit pas** : les stops logiques font 8 à 16 $ (médiane 12 $),
-donc avec 90 $ le robot a refusé **34 setups sur 34** en 3 mois. Il faut environ **250 à 350 $**
-pour que 0,01 lot reste sous 5 % de risque — et chaque perte coûte alors encore 4 à 5 % du compte
-(drawdown de 22 % à 300 $ sur la période testée).
+**Sur les vrais cours de 2026, ça ne suffit pas** : les stops logiques font 9 à 18 $ (médiane ~12,60 $),
+donc avec 90 $ le robot refuse tout. Avec **200 $**, il n'a pris que 3 trades en 12 semaines ; avec
+**280 $**, 14 trades (voir le tableau par semaine plus bas). Chaque perte coûte alors 4 à 5 % du compte.
 
 > Le plus adapté à ce capital est un **compte cent** (proposé par beaucoup de brokers) :
 > 90 $ y deviennent 9 000 cents et 0,01 lot ne vaut plus que 1 cent par dollar de mouvement.
@@ -122,7 +122,7 @@ Paramètres à vérifier absolument :
   graphique ne correspond pas au marché choisi.
 - **`InpServerMinusParisHours`** : heure du serveur MT5 moins heure de Paris. La plupart des
   brokers sont en UTC+2/+3 → **1**. Comparez l'heure de la fenêtre *Market Watch* avec l'heure de Paris.
-- **`InpPointScale`** : `0` = automatique (or 0,40 $, Dow 1,0). À ajuster après backtest.
+- **`InpPointScale`** : `0` = automatique (or 0,45 $, Dow 1,0). À ajuster après backtest.
 - **`InpSession1..3`** : `auto` = créneaux du mode et du marché choisis ; ou `HH:MM-HH:MM` ; vide = désactivé.
 - **`InpFridayLastEntry` / `InpFridayClose`** : `auto` = 21:00 / 22:30 sur l'or (et en H24) ; vide = désactivé.
 - **`InpMaxM15Range`** : `-1` = automatique (or 60 points méthode = 12 $, Dow désactivé) ; `0` = désactivé.
@@ -159,7 +159,8 @@ le backtest ajoute 0,30 $ de spread). Période particulière : l'or est passé d
 |---|---|---|---|---|---|
 | **H24**, 1 pt = 0,20 $ (ancien réglage) | 13 | 23 % | 0,46 | −5,1 R | 6,4 % |
 | **H24**, 1 pt = 0,40 $ | 57 | 37 % | 0,86 | −5,3 R | 14,2 % |
-| **Méthode du PDF** (créneaux), 1 pt = 0,40 $ | 21 | 52 % | 1,45 | **+5,4 R** | 4,9 % |
+| **Méthode du PDF** (créneaux), 1 pt = 0,40 $ (stop normal) | 21 | 52 % | 1,45 | +5,4 R | 4,9 % |
+| **Méthode du PDF** (créneaux), 1 pt = 0,45 $ (stop plus long, **défaut**) | 24 | 58 % | 1,41 | **+6,7 R** | 3,0 % |
 | Méthode, mode rapide (SL 2 $ / TP 12 $) | 27 | 22 % | 0,54 | −10,4 R | — |
 | H24, mode rapide | 80 | 25 % | 0,62 | −24,3 R | — |
 
@@ -172,6 +173,17 @@ Ce qu'on peut en dire :
 - **Le mode rapide perd nettement** : sur l'or, un stop de 2 $ est touché presque à chaque fois.
 - Il faudrait refaire le test sur **au moins un an** de données, idéalement celles de ton broker
   (export MT5, avec son vrai spread).
+
+### Semaine par semaine, en dollars (méthode, 0,01 lot)
+
+Chaque semaine repart du capital de départ. Stop normal (0,40 $) contre stop plus long (0,45 $) :
+
+| Capital | Stop | Trades (gagnants) | Setups refusés | Total 12 semaines | Pire semaine | Meilleure semaine |
+|---|---|---|---|---|---|---|
+| 200 $ | normal | 3 (3) | 21 | +45,96 $ | 0 $ | +16,68 $ |
+| 200 $ | plus long | 3 (3) | 25 | +45,56 $ | 0 $ | +16,68 $ |
+| 280 $ | normal | 14 (8) | 4 | +15,07 $ | −24,38 $ | +28,91 $ |
+| 280 $ | plus long | 14 (10) | 10 | **+38,50 $** | **−13,78 $** | +25,61 $ |
 
 ## Backtest en Node.js
 

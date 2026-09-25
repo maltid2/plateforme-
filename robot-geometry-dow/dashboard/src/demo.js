@@ -7,7 +7,8 @@
 const fs = require('fs');
 const path = require('path');
 // Petit compte de 90 $ en mode H24, comme dans la vraie utilisation prévue.
-const cfg = require('../../backtest/src/config').forMarket('gold', { capital: 90 });
+// Tendance journalière et annonces coupées : 6 semaines de cours aléatoires ne suffisent pas à l'EMA 50 jours.
+const cfg = require('../../backtest/src/config').forMarket('gold', { capital: 90, trendFilter: false, newsFilter: false });
 const S = require('../../backtest/src/strategy');
 const { run } = require('../../backtest/src/backtest');
 const { buildReport, reportText } = require('./report');

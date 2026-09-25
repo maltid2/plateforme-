@@ -4,7 +4,10 @@
 const assert = require('assert');
 const config = require('../src/config');
 const cfg = config.forMarket('dow'); // scénarios écrits en prix du Dow
-const gold = config.forMarket('gold');
+// Les scénarios synthétiques n'ont que quelques jours d'historique : tendance et annonces coupées.
+const gold = config.forMarket('gold', { trendFilter: false, newsFilter: false });
+const F = require('../src/filters');
+const { US_NEWS } = require('../src/news-calendar');
 const S = require('../src/strategy');
 const { run, RiskGuard, trail, sizeLots } = require('../src/backtest');
 const { parseCsv } = require('../src/csv');
@@ -289,6 +292,34 @@ test('petit compte : stop trop large refusé à 90 $, accepté à 300 $', () => 
   assert.ok(Math.abs(t.pnl - t.points * 0.01 * 100) < 1e-9);
   const total = at150.trades.reduce((x, k) => x + k.pnl, 0);
   assert.ok(Math.abs(at150.stats.finalBalance - (300 + total)) < 1e-9);
+});
+
+console.log('Tendance & fondamental');
+test('or : tendance journalière et annonces US activées par défaut', () => {
+  assert.strictEqual(config.trendFilter, true);
+  assert.strictEqual(config.trendTimeframe, 'D1');
+  assert.strictEqual(config.newsFilter, true);
+});
+
+test('tendance : EMA qui monte = achats seulement, qui baisse = ventes seulement', () => {
+  const mk = (slope) => Array.from({ length: 288 * 80 }, (_, i) => {
+    const p = 3000 + slope * i / 288; return { t: DAY + i * S.M5, o: p, h: p + 1, l: p - 1, c: p + slope * 0.001, v: 100 };
+  });
+  const c = { ...config.forMarket('gold'), trendTimeframe: 'D1', trendEmaPeriod: 20 };
+  const up = F.trendTracker(mk(5), c); const down = F.trendTracker(mk(-5), c);
+  const end = DAY + 288 * 80 * S.M5;
+  assert.strictEqual(up(end), 1);
+  assert.strictEqual(down(end), -1);
+  assert.strictEqual(F.trendTracker(mk(5), c)(DAY + 5 * 86400000), 0); // pas assez d'historique : neutre
+});
+
+test('fondamental : entrées bloquées autour du NFP', () => {
+  const nfp = US_NEWS.find((n) => n.name === 'NFP');
+  const c = config.forMarket('gold');
+  const server = (parisMs) => parisMs + c.serverMinusParisHours * 3600000;
+  assert.ok(F.newsBlocked(server(nfp.t - 30 * 60000), c));   // 30 min avant
+  assert.ok(F.newsBlocked(server(nfp.t + 90 * 60000), c));   // 1 h 30 après
+  assert.ok(!F.newsBlocked(server(nfp.t + 5 * 3600000), c)); // 5 h après : libre
 });
 
 console.log('Garde-fous');

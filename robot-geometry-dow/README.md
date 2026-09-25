@@ -104,7 +104,7 @@ Les distances ci-dessous sont en points méthode (voir le tableau de conversion)
 | « N'ajoute pas de position à une position perdante » | Une seule position à la fois. |
 | « Prends 2 h de pause » / pas de *Hail-Mary trade* | Pause de 120 min après chaque perte. |
 | « Un trade reste un trade » | Risque fixe par trade (1 % du capital), max 2 pertes et −3 % par jour, max 3 trades/jour. |
-| « Ne prends pas position sur une simple accélération du prix » | Pas d'entrée loin de la zone ; filtre anti-news sur l'or. |
+| « Ne prends pas position sur une simple accélération du prix » | Pas d'entrée loin de la zone ; filtre anti-news sur l'or ; pas d'entrée autour des annonces US (calendrier MT5). |
 | « Tiens un journal de trading » | Le backtest exporte un journal CSV ; l'EA journalise chaque trade (check-list incluse) pour le tableau de bord, qui produit un rapport chaque soir avec un champ de notes. |
 
 ## Installation dans MetaTrader 5
@@ -125,6 +125,8 @@ Paramètres à vérifier absolument :
 - **`InpPointScale`** : `0` = automatique (or 0,45 $, Dow 1,0). À ajuster après backtest.
 - **`InpSession1..3`** : `auto` = créneaux du mode et du marché choisis ; ou `HH:MM-HH:MM` ; vide = désactivé.
 - **`InpFridayLastEntry` / `InpFridayClose`** : `auto` = 21:00 / 22:30 sur l'or (et en H24) ; vide = désactivé.
+- **`InpTrendFilter` / `InpTrendTF` / `InpTrendEma`** : tendance de fond, activée (journalier, EMA 50) : achats seulement en tendance haussière, ventes seulement en baissière, rien en tendance neutre.
+- **`InpNewsFilter`** : pas d'entrée de 60 min avant à 120 min après une annonce USD à fort impact (calendrier MT5 ; inactif dans le testeur de stratégie).
 - **`InpMaxM15Range`** : `-1` = automatique (or 60 points méthode = 12 $, Dow désactivé) ; `0` = désactivé.
 - **`InpRiskPercent`** : risque par trade (1 % par défaut). Le lot est calculé à partir de la
   distance du stop et de la valeur du tick du symbole : il s'adapte à l'or automatiquement.
@@ -149,7 +151,31 @@ partir d'un certain volume ; sinon comptez 10-30 €/mois).
 
 Aperçu immédiat, sans MetaTrader : `cd dashboard && npm run demo`.
 
-## Résultats sur de vrais cours XAUUSD
+## ⚠️ Résultat sur 17 mois : le robot n'est pas rentable
+
+Test sur **101 023 bougies M5 réelles du 07/04/2025 au 17/09/2026** (export MetaTrader 5 avec
+spread réel, source : [dineshelumalai007/xauusd-5m](https://github.com/dineshelumalai007/xauusd-5m)).
+Les réglages avaient été choisis sur février–mai 2026 : sur les 13 autres mois, **le robot perd**.
+
+| Version | 2025 | 2026 (jamais vu au réglage) | 280 $ sur 17 mois | Pire baisse du compte |
+|---|---|---|---|---|
+| Sans filtre de tendance | −19,0 R | −8,9 R | **160 $** (−43 %) | −55 % |
+| **+ tendance journalière (EMA 50) + annonces US** (défaut) | +4,6 R | −5,5 R | **229 $** (−18 %) | −32 % |
+
+- Le robot perdait surtout **à contre-tendance** (ventes en 2025 pendant la hausse, achats en 2026
+  pendant la baisse). Le filtre de tendance, choisi sur 2025 puis vérifié sur 2026, **réduit les
+  pertes de moitié, mais ne rend pas la méthode gagnante**.
+- Confirmations price action supplémentaires testées sur 2025 (cassure de la bougie de rejet, stop
+  hunt obligatoire, 2 mèches mini, AB=CD complété) : aucune n'améliore le résultat, non retenues
+  (`paBreak` reste disponible en option dans le backtest).
+- Filtre fondamental : l'EA lit le **vrai calendrier économique de MT5** (annonces USD à fort impact,
+  pas d'entrée 60 min avant → 120 min après). Le backtest utilise une liste NFP / CPI / Fed
+  reconstituée à la main (`backtest/src/news-calendar.js`), donc approximative.
+
+**Ne pas utiliser ce robot avec de l'argent réel en l'état.** Il reste utile en démo pour étudier
+la méthode (check-list, tableau de bord, journal).
+
+## Résultats sur de vrais cours XAUUSD (février–mai 2026, période de réglage)
 
 Test sur **17 371 bougies M5 réelles, du 25/02 au 26/05/2026** (67 jours de marché), source :
 [Sai310421/xauusd-data](https://github.com/Sai310421/xauusd-data) (prix milieu, sans spread :

@@ -75,6 +75,20 @@ const base = {
   // --- Filtre anti-news : pas d'entrée si la dernière M15 dépasse cette amplitude
   maxM15Range: 0,            // 0 = désactivé
 
+  // --- Tendance de fond : n'acheter qu'en tendance haussière, ne vendre qu'en baissière
+  trendFilter: false,
+  trendTimeframe: 'H4',      // 'H1', 'H4' ou 'D1'
+  trendEmaPeriod: 50,
+  trendSlopeBars: 3,         // l'EMA doit monter (descendre) sur ces dernières bougies
+
+  // --- Price action : la M15 doit casser le haut/bas de la bougie de rejet
+  paBreak: false,
+
+  // --- Fondamental : pas d'entrée autour des annonces US (NFP, CPI, Fed)
+  newsFilter: false,
+  newsBeforeMinutes: 60,
+  newsAfterMinutes: 120,
+
   // --- Vendredi soir (heure de Paris) : '' = désactivé
   fridayLastEntry: '',       // plus de nouvelle entrée après cette heure
   fridayClose: '',           // clôture forcée avant le week-end
@@ -136,6 +150,12 @@ const markets = {
     // 1re entrée) et seulement les setups à gain/risque >= 2 → ~2,4x plus de gains à 280 $.
     maxMinutesAfterFirstTrade: 0,
     minRR: 2,
+    // Choisis sur 2025 uniquement, vérifiés sur 2026 : tendance journalière (EMA 50) + annonces US.
+    // Sur 17 mois à 280 $ : 228,88 $ au lieu de 160,19 $ — moins de pertes, mais toujours perdant.
+    trendFilter: true,
+    trendTimeframe: 'D1',
+    trendEmaPeriod: 50,
+    newsFilter: true,
     maxM15Range: 60, // = 27 $ : bougie M15 de news (~2x la moyenne), on ne court pas après
   },
   dow: {

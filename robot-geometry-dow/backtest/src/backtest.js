@@ -1,6 +1,7 @@
 'use strict';
 
 const S = require('./strategy');
+const F = require('./filters');
 
 // Garde-fous psychologiques du PDF (« Note d'un trader ») traduits en règles :
 //  - pas de trade pour « se venger » : pause après une perte
@@ -86,6 +87,7 @@ function sizeLots(balance, risk, cfg) {
 
 function run(m5, cfg) {
   const m15 = S.aggregateM15(m5);
+  const trendAt = cfg.trendFilter ? F.trendTracker(m5, cfg) : null;
   const guard = new RiskGuard(cfg);
   const trades = [];
   const realMoney = cfg.capital > 0;
@@ -163,7 +165,13 @@ function run(m5, cfg) {
     if (realMoney && balance <= 0) break; // compte vidé
     if (cfg.startTime && nextOpen < cfg.startTime) continue; // période de chauffe : historique seulement
     if (!S.canEnter(nextOpen, cfg) || guard.canTrade(nextOpen)) continue;
-    const sig = S.evaluate(m5, i, m15, analysis, cfg);
+    if (cfg.newsFilter && F.newsBlocked(nextOpen, cfg)) continue; // fondamental : annonce US
+    let allow = { buy: true, sell: true };
+    if (trendAt) {
+      const tr = trendAt(nextOpen);
+      allow = { buy: tr > 0, sell: tr < 0 }; // tendance neutre : pas de trade
+    }
+    const sig = S.evaluate(m5, i, m15, analysis, cfg, allow);
     if (sig) pending = sig;
   }
   if (pos) close(m5[m5.length - 1], m5[m5.length - 1].c, 'fin des données');

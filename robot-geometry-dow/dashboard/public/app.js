@@ -201,7 +201,8 @@ function renderChart() {
   box.replaceChildren(svg);
 
   const rg = st.regime;
-  $('#regime').textContent = rg ? `${rg.type === 'range' ? 'Range' : 'Impulsion'} · efficacité ${nf2.format(rg.efficiency)} · SL mini ${pf(rg.minSL)} ${unitOf()}` : '';
+  const trendTxt = { 1: ' · tendance haussière (achats)', '-1': ' · tendance baissière (ventes)', 0: ' · tendance neutre (pas de trade)' }[st.trend] || '';
+  $('#regime').textContent = rg ? `${rg.type === 'range' ? 'Range' : 'Impulsion'} · efficacité ${nf2.format(rg.efficiency)} · SL mini ${pf(rg.minSL)} ${unitOf()}${trendTxt}` : '';
 }
 
 // ---------------------------------------------------------------------------

@@ -230,7 +230,7 @@ function rejection(m15, last, zone, side, cfg) {
     : Math.max(...wicks.map((w) => w.extreme));
   // Stop hunt : la zone a été transpercée par une mèche puis réintégrée.
   const stopHunt = side === 'buy' ? extreme < zone.bottom : extreme > zone.top;
-  return { count: wicks.length, extreme, stopHunt, engulfing: wicks.some((w) => w.engulf), firstIdx: wicks[0].idx };
+  return { count: wicks.length, extreme, stopHunt, engulfing: wicks.some((w) => w.engulf), firstIdx: wicks[0].idx, lastIdx: wicks[wicks.length - 1].idx };
 }
 
 // ---------------------------------------------------------------------------
@@ -264,12 +264,14 @@ function confirmM5(m5, i, side, cfg) {
 // Assemblage : signal complet
 // ---------------------------------------------------------------------------
 
-function evaluate(m5, i, m15, analysis, cfg) {
+// allow : sens autorisés par le filtre de tendance ({ buy, sell }).
+function evaluate(m5, i, m15, analysis, cfg, allow = { buy: true, sell: true }) {
   if (!analysis) return null;
   // Filtre anti-news : bougie M15 anormalement grande = accélération, pas un setup.
   if (cfg.maxM15Range > 0 && range(m15[analysis.last]) > cfg.maxM15Range) return null;
   const price = m5[i].c;
   for (const side of ['buy', 'sell']) {
+    if (!allow[side]) continue;
     const conf = confirmM5(m5, i, side, cfg);
     if (!conf) continue;
     const dir = side === 'buy' ? 1 : -1;
@@ -288,6 +290,14 @@ function evaluate(m5, i, m15, analysis, cfg) {
       const rej = rejection(m15, analysis.last, zone, side, cfg);
       if (!rej) continue;
       if (cfg.requireStopHunt && !rej.stopHunt) continue;
+      // Price action : la dernière M15 clôture au-delà du haut (achat) / bas (vente) de la
+      // bougie de rejet → le rejet est confirmé, les acheteurs (vendeurs) ont repris la main.
+      if (cfg.paBreak) {
+        const rb = m15[rej.lastIdx];
+        const lastBar = m15[analysis.last];
+        if (rej.lastIdx >= analysis.last) continue;
+        if (side === 'buy' ? lastBar.c <= rb.h : lastBar.c >= rb.l) continue;
+      }
 
       const geo = geometry(analysis.zz, side, rej.extreme, rej.firstIdx, cfg);
       if (cfg.requireGeometry && !(geo && geo.complete)) continue;

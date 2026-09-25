@@ -106,6 +106,18 @@ input double InpMaxDailyLossPercent   = -1;      // -1 = auto : H24 10 %, métho
 input group "Filtre anti-news"
 input double InpMaxM15Range           = -1;      // Amplitude M15 max en points méthode (-1 = auto : or 60 = 27 $, Dow off ; 0 = off)
 
+input group "Tendance de fond"
+input bool   InpTrendFilter           = true;      // N'acheter qu'en tendance haussière, ne vendre qu'en baissière
+input ENUM_TIMEFRAMES InpTrendTF      = PERIOD_D1; // Unité de temps de la tendance
+input int    InpTrendEma              = 50;        // Période de l'EMA de tendance
+input int    InpTrendSlopeBars        = 3;         // L'EMA doit monter / descendre sur ces bougies
+
+input group "Fondamental (calendrier économique MT5)"
+input bool   InpNewsFilter            = true;      // Pas d'entrée autour des annonces à fort impact
+input string InpNewsCurrency          = "USD";     // Devise surveillée (NFP, CPI, Fed...)
+input int    InpNewsBeforeMinutes     = 60;
+input int    InpNewsAfterMinutes      = 120;
+
 input group "Affichage"
 input bool   InpDrawZones             = true;
 input bool   InpExportDashboard       = true;    // Fichiers du tableau de bord (Common\Files\GeometryDow)
@@ -126,6 +138,10 @@ int      g_sessStart[3], g_sessEnd[3];
 string   g_sessStr[3];
 double   g_pt;
 double   g_maxM15Range;   // en prix (0 = filtre désactivé)
+int      g_emaHandle = INVALID_HANDLE;
+datetime g_newsCheckedAt = 0;
+string   g_newsReason = "";
+bool     g_newsWarned = false;
 int      g_maxTrades, g_maxMinutes;
 double   g_minRR;
 double   g_maxDailyLoss;
@@ -191,12 +207,18 @@ int OnInit()
    trade.SetExpertMagicNumber(InpMagic);
    trade.SetTypeFillingBySymbol(_Symbol);
    trade.SetDeviationInPoints(30);
+   if(InpTrendFilter)
+     {
+      g_emaHandle = iMA(_Symbol, InpTrendTF, InpTrendEma, 0, MODE_EMA, PRICE_CLOSE);
+      if(g_emaHandle == INVALID_HANDLE) { Print("Impossible de créer l'EMA de tendance"); return INIT_FAILED; }
+     }
    AppendEvent(StringFormat("{\"type\":\"start\",\"t\":%I64d,\"symbol\":%s}", (long)TimeCurrent(), JS(_Symbol)));
    return INIT_SUCCEEDED;
   }
 
 void OnDeinit(const int reason)
   {
+   if(g_emaHandle != INVALID_HANDLE) IndicatorRelease(g_emaHandle);
    ObjectsDeleteAll(0, "GDZ_");
    Comment("");
   }
@@ -648,6 +670,49 @@ void OnTradeTransaction(const MqlTradeTransaction &trans, const MqlTradeRequest 
   }
 
 //+------------------------------------------------------------------+
+//| Tendance de fond : +1 haussière, -1 baissière, 0 neutre (pas de trade)
+//+------------------------------------------------------------------+
+int TrendDir()
+  {
+   if(!InpTrendFilter) return 2;   // filtre coupé : les deux sens autorisés
+   double e[];
+   ArraySetAsSeries(e, true);
+   if(CopyBuffer(g_emaHandle, 0, 1, InpTrendSlopeBars + 1, e) < InpTrendSlopeBars + 1) return 0;
+   double c = iClose(_Symbol, InpTrendTF, 1);   // dernière bougie de tendance clôturée
+   if(c > e[0] && e[0] > e[InpTrendSlopeBars]) return 1;
+   if(c < e[0] && e[0] < e[InpTrendSlopeBars]) return -1;
+   return 0;
+  }
+
+bool SideAllowed(int trend, int dir) { return trend == 2 || trend == dir; }
+
+//+------------------------------------------------------------------+
+//| Fondamental : annonce à fort impact proche (calendrier MT5)       |
+//+------------------------------------------------------------------+
+string NewsBlock(datetime now)
+  {
+   if(!InpNewsFilter) return "";
+   if(now - g_newsCheckedAt < 300) return g_newsReason;   // recalcul toutes les 5 minutes
+   g_newsCheckedAt = now;
+   g_newsReason = "";
+   MqlCalendarValue values[];
+   datetime from = now - InpNewsAfterMinutes * 60, to = now + InpNewsBeforeMinutes * 60;
+   if(!CalendarValueHistory(values, from, to, NULL, InpNewsCurrency))
+     {
+      if(!g_newsWarned) { Print("Calendrier économique indisponible (normal dans le testeur de stratégie) : filtre des annonces inactif"); g_newsWarned = true; }
+      return "";
+     }
+   for(int k = 0; k < ArraySize(values); k++)
+     {
+      MqlCalendarEvent ev;
+      if(!CalendarEventById(values[k].event_id, ev) || ev.importance != CALENDAR_IMPORTANCE_HIGH) continue;
+      g_newsReason = "annonce " + InpNewsCurrency + " : " + ev.name + " (" + TimeToString(values[k].time, TIME_MINUTES) + ")";
+      break;
+     }
+   return g_newsReason;
+  }
+
+//+------------------------------------------------------------------+
 //| Évaluation de la check-list et prise de position                 |
 //+------------------------------------------------------------------+
 void OnTick()
@@ -685,6 +750,8 @@ void OnTick()
    // Filtre anti-news : bougie M15 anormalement grande = accélération, pas un setup
    if(block == "" && g_maxM15Range > 0 && m15[last].high - m15[last].low > g_maxM15Range)
       block = "bougie de news (filtre volatilité)";
+   if(block == "") block = NewsBlock(TimeCurrent());
+   int trend = TrendDir();
    if(inSession && block != "" && block != g_lastBlock)
       AppendEvent(StringFormat("{\"type\":\"block\",\"t\":%I64d,\"reason\":%s}", (long)TimeCurrent(), JS(block)));
    g_lastBlock = block;
@@ -700,14 +767,17 @@ void OnTick()
       Diag db, ds;
       Diagnose(m5, i, m15, last, zones, zz, reg, 1, db);
       Diagnose(m5, i, m15, last, zones, zz, reg, -1, ds);
+      db.ready = db.ready && SideAllowed(trend, 1);
+      ds.ready = ds.ready && SideAllowed(trend, -1);
       g_stateCore = StringFormat("\"regime\":{\"type\":%s,\"efficiency\":%s,\"high\":%s,\"low\":%s,\"minSL\":%s},\"zones\":[%s],\"m15\":[%s],"
-                                 "\"checklist\":{\"buy\":%s,\"sell\":%s},\"price\":%s,\"inSession\":%s,\"block\":%s",
+                                 "\"checklist\":{\"buy\":%s,\"sell\":%s},\"price\":%s,\"inSession\":%s,\"block\":%s,\"trend\":%d",
                                  JS(reg.isRange ? "range" : "impulsion"), J(reg.efficiency, 3), J(reg.high), J(reg.low), J(reg.minSL),
-                                 zj, mj, DiagJson(db), DiagJson(ds), J(m5[i].close), JB(inSession), JS(block));
+                                 zj, mj, DiagJson(db), DiagJson(ds), J(m5[i].close), JB(inSession), JS(block), trend);
       WriteState();
      }
 
-   string status = StringFormat("Geometry %s | %s (eff. %.2f) | %d zones", InpMarket == GD_GOLD ? "Or" : "Dow", reg.isRange ? "RANGE" : "IMPULSION", reg.efficiency, ArraySize(zones));
+   string status = StringFormat("Geometry %s | %s (eff. %.2f) | %d zones | tendance %s", InpMarket == GD_GOLD ? "Or" : "Dow", reg.isRange ? "RANGE" : "IMPULSION", reg.efficiency, ArraySize(zones),
+                                trend == 2 ? "non filtrée" : trend > 0 ? "haussière (achats seulement)" : trend < 0 ? "baissière (ventes seulement)" : "neutre (pas de trade)");
    if(SelectOwnPosition())          { Comment(status, "\nPosition en cours — pas de renfort"); return; }
    if(!inSession)                   { Comment(status, "\nHors créneau horaire"); return; }
    if(block != "")                  { Comment(status, "\nPause : ", block); return; }
@@ -717,6 +787,7 @@ void OnTick()
    for(int dir = 1; dir >= -1; dir -= 2)
      {
       double cLo, cHi;
+      if(!SideAllowed(trend, dir)) continue;   // contre la tendance de fond : pas de trade
       if(!ConfirmM5(m5, i, dir, cLo, cHi)) continue;
 
       // Zones du bon côté, triées de la plus proche à la plus éloignée

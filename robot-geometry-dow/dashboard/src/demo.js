@@ -78,6 +78,32 @@ function diagnose(m5, m15, analysis, i) {
   return out;
 }
 
+// Niveaux de liquidité du dernier jour, comme l'EA les écrit dans state.json.
+function liquidityState(bars, i) {
+  const day = S.parisDay(bars[i].t, cfg);
+  const inDay = (d) => bars.filter((b, k) => k <= i && S.parisDay(b.t, cfg) === d);
+  const today = inDay(day);
+  let prev = [];
+  for (let d = day - 1; d > day - 6 && !prev.length; d--) prev = inDay(d);
+  const asia = today.filter((b) => { const m = S.parisMinutes(b.t, cfg); return m >= 60 && m < 480; });
+  const pools = [];
+  if (asia.length) {
+    pools.push({ name: 'haut Asie', price: Math.max(...asia.map((b) => b.h)), kind: 'high' });
+    pools.push({ name: 'bas Asie', price: Math.min(...asia.map((b) => b.l)), kind: 'low' });
+  }
+  if (prev.length) {
+    pools.push({ name: 'haut de la veille', price: Math.max(...prev.map((b) => b.h)), kind: 'high' });
+    pools.push({ name: 'bas de la veille', price: Math.min(...prev.map((b) => b.l)), kind: 'low' });
+  }
+  // pris = dépassé après la fin de l'Asie (pour les niveaux de la veille : n'importe quand aujourd'hui)
+  for (const p of pools) {
+    const after = p.name.includes('Asie') ? today.filter((b) => S.parisMinutes(b.t, cfg) >= 480) : today;
+    p.used = after.some((b) => (p.kind === 'high' ? b.h > p.price : b.l < p.price));
+  }
+  const m15 = S.aggregateM15(bars.slice(Math.max(0, i - 20 * 288), i + 1)).map((b) => b.h - b.l).sort((a, b) => a - b);
+  return { vol: m15[m15.length >> 1] || 0, pools, pending: 0 };
+}
+
 function generate(dir) {
   fs.rmSync(dir, { recursive: true, force: true });
   fs.mkdirSync(path.join(dir, 'reports'), { recursive: true });
@@ -133,6 +159,8 @@ function generate(dir) {
     m15: m15.slice(Math.max(0, last - 63), last + 1).map((b) => [sec(b.t), b.o, b.h, b.l, b.c]),
     price: bars[i].c,
     checklist: diagnose(bars, m15, analysis, i),
+    strategy: cfg.strategy,
+    liquidity: liquidityState(bars, i),
     position: null,
     params: {
       mode: cfg.mode, market: cfg.market, unit: cfg.unit, riskPercent: cfg.riskPercent, maxTradesPerDay: cfg.maxTradesPerDay, maxLossesPerDay: cfg.maxLossesPerDay,

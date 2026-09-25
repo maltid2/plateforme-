@@ -4,6 +4,11 @@
 //|  Or (XAUUSD) par défaut, ou Dow Jones (US30).                    |
 //|  Zones M15 + confirmation M5.                                    |
 //|                                                                  |
+//|  Deux stratégies (InpStrategy) :                                 |
+//|   - LIQUIDITÉ (défaut) : sweep du haut/bas de l'Asie ou de la    |
+//|     veille, puis changement de structure M5, stop derrière la    |
+//|     mèche, target 3R. Distances ∝ volatilité récente.            |
+//|   - MÉTHODE DU PDF : check-list ci-dessous.                      |
 //|  Check-list appliquée à chaque clôture de bougie M5 :            |
 //|   1. Type de trade : range ou impulsion  -> taille du stop       |
 //|   2. Zone clé M15 : supply / demand      -> où entrer            |
@@ -21,6 +26,12 @@
 
 #include <Trade\Trade.mqh>
 
+enum ENUM_GD_STRATEGY
+  {
+   GD_STRAT_LIQUIDITY = 0, // Liquidité : sweep + changement de structure
+   GD_STRAT_GEOMETRY  = 1  // Méthode du PDF : zones M15 + confirmation M5
+  };
+
 enum ENUM_GD_MODE
   {
    GD_H24     = 0, // H24 : toute la journée (hors rollover 22:45-01:00)
@@ -35,6 +46,23 @@ enum ENUM_GD_MARKET
 
 //--- Toutes les distances sont en POINTS MÉTHODE : les valeurs du PDF (écrites pour le Dow),
 //--- converties en prix par l'échelle du marché : Dow 1 point = 1.0 ; or 1 point = 0.45 $ (calibré sur XAUUSD 2026).
+input group "Stratégie"
+input ENUM_GD_STRATEGY InpStrategy    = GD_STRAT_LIQUIDITY; // Stratégie (liquidité : seule positive sur l'or 2026)
+
+input group "Liquidité"
+input bool   InpLiqAsia               = true;      // Haut / bas de la session asiatique
+input bool   InpLiqPrevDay            = true;      // Haut / bas de la veille
+input string InpLiqAsiaStart          = "01:00";   // Session asiatique (heure de Paris)
+input string InpLiqAsiaEnd            = "08:00";
+input int    InpLiqSwingBars          = 6;         // Creux / sommet de référence : bougies M5 avant le sweep
+input int    InpLiqMaxWaitBars        = 24;        // Changement de structure au plus tard N bougies M5 après
+input double InpLiqTargetR            = 3;         // Target = N x le risque
+input int    InpLiqVolDays            = 20;        // Volatilité : bougie M15 médiane sur N jours
+input double InpLiqDepthVol           = 3.6;       // Sweep plus profond que N x volatilité = vraie cassure
+input double InpLiqMinSLVol           = 0.45;      // Stop mini (x volatilité)
+input double InpLiqMaxSLVol           = 3.6;       // Stop maxi (x volatilité)
+input double InpLiqBufferVol          = 0.18;      // Marge derrière la mèche (x volatilité)
+
 input group "Marché"
 input ENUM_GD_MARKET InpMarket        = GD_GOLD; // Marché tradé
 input double InpPointScale            = 0;       // Prix d'1 point méthode (0 = auto : or 0.45 $, Dow 1.0)
@@ -107,7 +135,7 @@ input group "Filtre anti-news"
 input double InpMaxM15Range           = -1;      // Amplitude M15 max en points méthode (-1 = auto : or 60 = 27 $, Dow off ; 0 = off)
 
 input group "Tendance de fond"
-input bool   InpTrendFilter           = true;      // N'acheter qu'en tendance haussière, ne vendre qu'en baissière
+input bool   InpTrendFilter           = false;     // N'acheter qu'en tendance haussière (conseillé avec la méthode du PDF)
 input ENUM_TIMEFRAMES InpTrendTF      = PERIOD_D1; // Unité de temps de la tendance
 input int    InpTrendEma              = 50;        // Période de l'EMA de tendance
 input int    InpTrendSlopeBars        = 3;         // L'EMA doit monter / descendre sur ces bougies
@@ -139,6 +167,15 @@ string   g_sessStr[3];
 double   g_pt;
 double   g_maxM15Range;   // en prix (0 = filtre désactivé)
 int      g_emaHandle = INVALID_HANDLE;
+struct LiqPool    { double price; int kind; bool used; string name; };      // kind : +1 haut, -1 bas
+struct LiqPending { int pool; int dir; double extreme; double mss; datetime start; };
+struct LiqSignal  { bool valid; int dir; double price; double sl; double tp; string zone; double mss; };
+LiqPool    g_pools[];
+LiqPending g_pend[];
+long       g_liqDay = -1;
+bool       g_poolsBuilt = false;
+double     g_liqVol = 0;
+int        g_asiaStart = 60, g_asiaEnd = 480;
 datetime g_newsCheckedAt = 0;
 string   g_newsReason = "";
 bool     g_newsWarned = false;
@@ -194,6 +231,9 @@ int OnInit()
       return INIT_PARAMETERS_INCORRECT;
      }
    g_pt = InpPointScale > 0 ? InpPointScale : (gold ? 0.45 : 1.0);
+   g_asiaStart = ParseHM(InpLiqAsiaStart);
+   g_asiaEnd   = ParseHM(InpLiqAsiaEnd);
+   if(g_asiaStart < 0 || g_asiaEnd <= g_asiaStart) { Print("Session asiatique invalide (HH:MM)"); return INIT_PARAMETERS_INCORRECT; }
    double maxRangePts = InpMaxM15Range >= 0 ? InpMaxM15Range : (gold ? 60 : 0);
    g_maxM15Range = maxRangePts * g_pt;
 
@@ -713,6 +753,163 @@ string NewsBlock(datetime now)
   }
 
 //+------------------------------------------------------------------+
+//| Stratégie liquidité                                              |
+//+------------------------------------------------------------------+
+double MedianM15Range(int days)
+  {
+   MqlRates r[];
+   int n = CopyRates(_Symbol, PERIOD_M15, 1, days * 92, r);
+   if(n <= 0) return 0;
+   double a[];
+   ArrayResize(a, n);
+   for(int k = 0; k < n; k++) a[k] = r[k].high - r[k].low;
+   ArraySort(a);
+   return a[n / 2];
+  }
+
+void AddPool(double price, int kind, string name)
+  {
+   int n = ArraySize(g_pools);
+   ArrayResize(g_pools, n + 1);
+   g_pools[n].price = price; g_pools[n].kind = kind; g_pools[n].used = false; g_pools[n].name = name;
+  }
+
+// Niveaux du jour : haut/bas de l'Asie (figés à la fin de la session) et de la veille.
+void BuildPools(long day, datetime now)
+  {
+   ArrayResize(g_pools, 0);
+   MqlRates r[];
+   datetime from = ParisDayStartServer(now) - 5 * 86400;
+   int n = CopyRates(_Symbol, PERIOD_M5, from, now, r);
+   if(n <= 0) return;
+   double tHi = -DBL_MAX, tLo = DBL_MAX, aHi = -DBL_MAX, aLo = DBL_MAX, pHi = -DBL_MAX, pLo = DBL_MAX;
+   long prevDay = -1;
+   for(int k = 0; k < n; k++)
+     {
+      long dk = ParisDay(r[k].time);
+      if(dk < day && dk > prevDay) prevDay = dk;   // dernier jour de marché avant aujourd'hui
+     }
+   for(int k = 0; k < n; k++)
+     {
+      if(r[k].time >= now) continue;   // bougies clôturées uniquement
+      long d = ParisDay(r[k].time);
+      if(d == day)
+        {
+         tHi = MathMax(tHi, r[k].high); tLo = MathMin(tLo, r[k].low);
+         int m = ParisMinuteOfDay(r[k].time);
+         if(m >= g_asiaStart && m < g_asiaEnd) { aHi = MathMax(aHi, r[k].high); aLo = MathMin(aLo, r[k].low); }
+        }
+      else if(d == prevDay) { pHi = MathMax(pHi, r[k].high); pLo = MathMin(pLo, r[k].low); }
+     }
+   if(InpLiqAsia && aHi > -DBL_MAX) { AddPool(aHi, 1, "haut Asie"); AddPool(aLo, -1, "bas Asie"); }
+   if(InpLiqPrevDay && pHi > -DBL_MAX) { AddPool(pHi, 1, "haut de la veille"); AddPool(pLo, -1, "bas de la veille"); }
+   // un niveau déjà dépassé aujourd'hui n'est plus de la liquidité
+   for(int k = 0; k < ArraySize(g_pools); k++)
+      if(g_pools[k].kind > 0 ? tHi > g_pools[k].price : tLo < g_pools[k].price) g_pools[k].used = true;
+  }
+
+// À la clôture de chaque bougie M5 (b) : suivi des niveaux, sweeps et changements de structure.
+void LiqOnBar(const MqlRates &b, datetime now, bool window, int trend, LiqSignal &sig)
+  {
+   sig.valid = false;
+   long day = ParisDay(b.time);
+   if(day != g_liqDay)
+     {
+      g_liqDay = day; g_poolsBuilt = false;
+      ArrayResize(g_pools, 0); ArrayResize(g_pend, 0);
+      g_liqVol = MedianM15Range(InpLiqVolDays);
+     }
+   if(!g_poolsBuilt && ParisMinuteOfDay(b.time) >= g_asiaEnd) { BuildPools(day, now); g_poolsBuilt = true; }
+   if(ArraySize(g_pools) == 0 || g_liqVol <= 0) return;
+
+   double depthMax = InpLiqDepthVol * g_liqVol, minSL = InpLiqMinSLVol * g_liqVol;
+   double maxSL = InpLiqMaxSLVol * g_liqVol, buffer = InpLiqBufferVol * g_liqVol;
+
+   // 1) nouveaux sweeps
+   for(int k = 0; k < ArraySize(g_pools); k++)
+     {
+      if(g_pools[k].used) continue;
+      bool swept = g_pools[k].kind > 0 ? b.high > g_pools[k].price : b.low < g_pools[k].price;
+      if(!swept) continue;
+      g_pools[k].used = true;   // un seul sweep par niveau et par jour
+      if(!window) continue;
+      MqlRates before[];
+      if(CopyRates(_Symbol, PERIOD_M5, 2, InpLiqSwingBars, before) < 1) continue;
+      double ref = g_pools[k].kind > 0 ? DBL_MAX : -DBL_MAX;
+      for(int q = 0; q < ArraySize(before); q++)
+         ref = g_pools[k].kind > 0 ? MathMin(ref, before[q].low) : MathMax(ref, before[q].high);
+      int n = ArraySize(g_pend);
+      ArrayResize(g_pend, n + 1);
+      g_pend[n].pool = k; g_pend[n].dir = -g_pools[k].kind;
+      g_pend[n].extreme = g_pools[k].kind > 0 ? b.high : b.low;
+      g_pend[n].mss = ref; g_pend[n].start = b.time;
+     }
+
+   // 2) sweeps en attente
+   LiqPending keep[];
+   for(int k = 0; k < ArraySize(g_pend); k++)
+     {
+      LiqPending s = g_pend[k];
+      s.extreme = s.dir < 0 ? MathMax(s.extreme, b.high) : MathMin(s.extreme, b.low);
+      double depth = (s.extreme - g_pools[s.pool].price) * -s.dir;
+      if(depth > depthMax) continue;                                        // vraie cassure
+      if((b.time - s.start) / PeriodSeconds(PERIOD_M5) > InpLiqMaxWaitBars) continue; // trop tard
+      bool mss = s.dir < 0 ? b.close < s.mss : b.close > s.mss;
+      if(!mss) { int n = ArraySize(keep); ArrayResize(keep, n + 1); keep[n] = s; continue; }
+      if(sig.valid || !window || !SideAllowed(trend, s.dir)) continue;
+      double sl = s.extreme - s.dir * buffer;
+      double dist = (b.close - sl) * s.dir;
+      if(dist < minSL || dist > maxSL) continue;
+      sig.valid = true; sig.dir = s.dir; sig.price = b.close; sig.sl = sl;
+      sig.tp = b.close + s.dir * InpLiqTargetR * dist;
+      sig.zone = StringFormat("sweep %s %.2f", g_pools[s.pool].name, g_pools[s.pool].price);
+      sig.mss = s.mss;
+     }
+   ArrayResize(g_pend, ArraySize(keep));
+   for(int k = 0; k < ArraySize(keep); k++) g_pend[k] = keep[k];
+  }
+
+string LiqJson()
+  {
+   string pj = "";
+   for(int k = 0; k < ArraySize(g_pools); k++)
+      pj += (k ? "," : "") + StringFormat("{\"name\":%s,\"price\":%s,\"kind\":%s,\"used\":%s}", JS(g_pools[k].name), J(g_pools[k].price),
+                                         JS(g_pools[k].kind > 0 ? "high" : "low"), JB(g_pools[k].used));
+   return StringFormat("\"strategy\":%s,\"liquidity\":{\"vol\":%s,\"pools\":[%s],\"pending\":%d}",
+                       JS(InpStrategy == GD_STRAT_LIQUIDITY ? "liquidity" : "geometry"), J(g_liqVol), pj, ArraySize(g_pend));
+  }
+
+// Ouverture au marché + journalisation (stratégie liquidité)
+void OpenLiquidity(const LiqSignal &sg)
+  {
+   int dir = sg.dir;
+   double px = dir > 0 ? SymbolInfoDouble(_Symbol, SYMBOL_ASK) : SymbolInfoDouble(_Symbol, SYMBOL_BID);
+   double sl = NormalizeDouble(sg.sl, _Digits), tp = NormalizeDouble(sg.tp, _Digits);
+   double risk = (px - sl) * dir;
+   if(risk <= 0 || (tp - px) * dir <= 0) return;
+   double lots = LotsForRisk(risk);
+   if(lots <= 0) return;
+   string cmt = "GDR:" + DoubleToString(risk, _Digits);
+   bool ok = dir > 0 ? trade.Buy(lots, _Symbol, px, sl, tp, cmt) : trade.Sell(lots, _Symbol, px, sl, tp, cmt);
+   ok = ok && (trade.ResultRetcode() == TRADE_RETCODE_DONE || trade.ResultRetcode() == TRADE_RETCODE_PLACED);
+   if(ok)
+     {
+      long   id   = (long)trade.ResultOrder();
+      double fill = trade.ResultPrice() > 0 ? trade.ResultPrice() : px;
+      string key  = IntegerToString(id);
+      GlobalVariableSet("GDR_" + key, (fill - sl) * dir);
+      GlobalVariableSet("GDE_" + key, fill);
+      AppendEvent(StringFormat("{\"type\":\"open\",\"t\":%I64d,\"pos\":%I64d,\"side\":%s,\"lots\":%s,\"entry\":%s,\"sl\":%s,\"tp\":%s,\"risk\":%s,\"balance\":%s,"
+                               "\"checklist\":{\"type\":\"liquidité\",\"zone\":%s,\"wicks\":0,\"stopHunt\":true,\"engulfing\":false,\"geometry\":%s}}",
+                               (long)TimeCurrent(), id, JS(dir > 0 ? "buy" : "sell"), J(lots), J(fill), J(sl), J(tp), J((fill - sl) * dir),
+                               J(AccountInfoDouble(ACCOUNT_BALANCE)), JS(sg.zone), JS(StringFormat("MSS %.2f", sg.mss))));
+      WriteState();
+     }
+   PrintFormat("%s %s %.2f lots @%.2f SL %.2f TP %.2f | %s | changement de structure %.2f",
+               ok ? "OUVERT" : "ÉCHEC", dir > 0 ? "BUY" : "SELL", lots, px, sl, tp, sg.zone, sg.mss);
+  }
+
+//+------------------------------------------------------------------+
 //| Évaluation de la check-list et prise de position                 |
 //+------------------------------------------------------------------+
 void OnTick()
@@ -736,7 +933,8 @@ void OnTick()
       ulong tk = (ulong)PositionGetInteger(POSITION_TICKET);
       if(trade.PositionClose(tk)) Print("Clôture avant le week-end");
      }
-   ManagePosition(m5[i]);
+   bool liqMode = InpStrategy == GD_STRAT_LIQUIDITY;
+   if(!liqMode) ManagePosition(m5[i]);   // la liquidité garde son stop et sa target fixes (réglage testé)
 
    Regime reg = DetectRegime(m15, last);
    Pivot pv[], zz[]; Zone zones[];
@@ -748,13 +946,18 @@ void OnTick()
    bool inSession = InSession(bar0);
    string block = GuardBlock(TimeCurrent());
    // Filtre anti-news : bougie M15 anormalement grande = accélération, pas un setup
-   if(block == "" && g_maxM15Range > 0 && m15[last].high - m15[last].low > g_maxM15Range)
+   if(!liqMode && block == "" && g_maxM15Range > 0 && m15[last].high - m15[last].low > g_maxM15Range)
       block = "bougie de news (filtre volatilité)";
    if(block == "") block = NewsBlock(TimeCurrent());
    int trend = TrendDir();
    if(inSession && block != "" && block != g_lastBlock)
       AppendEvent(StringFormat("{\"type\":\"block\",\"t\":%I64d,\"reason\":%s}", (long)TimeCurrent(), JS(block)));
    g_lastBlock = block;
+
+   // Stratégie liquidité : suivie à chaque bougie (niveaux, sweeps), décision d'entrée ensuite
+   LiqSignal liqSig; liqSig.valid = false;
+   bool hasPos = SelectOwnPosition();
+   if(liqMode) LiqOnBar(m5[i], bar0, !hasPos && inSession && block == "", trend, liqSig);
 
    if(InpExportDashboard)
      {
@@ -773,11 +976,25 @@ void OnTick()
                                  "\"checklist\":{\"buy\":%s,\"sell\":%s},\"price\":%s,\"inSession\":%s,\"block\":%s,\"trend\":%d",
                                  JS(reg.isRange ? "range" : "impulsion"), J(reg.efficiency, 3), J(reg.high), J(reg.low), J(reg.minSL),
                                  zj, mj, DiagJson(db), DiagJson(ds), J(m5[i].close), JB(inSession), JS(block), trend);
+      g_stateCore += "," + LiqJson();
       WriteState();
      }
 
    string status = StringFormat("Geometry %s | %s (eff. %.2f) | %d zones | tendance %s", InpMarket == GD_GOLD ? "Or" : "Dow", reg.isRange ? "RANGE" : "IMPULSION", reg.efficiency, ArraySize(zones),
                                 trend == 2 ? "non filtrée" : trend > 0 ? "haussière (achats seulement)" : trend < 0 ? "baissière (ventes seulement)" : "neutre (pas de trade)");
+   if(liqMode)
+     {
+      int free = 0;
+      for(int k = 0; k < ArraySize(g_pools); k++) if(!g_pools[k].used) free++;
+      status = StringFormat("Geometry %s | LIQUIDITÉ | %d niveau(x) libre(s), %d sweep(s) en attente | volatilité M15 %.2f",
+                            InpMarket == GD_GOLD ? "Or" : "Dow", free, ArraySize(g_pend), g_liqVol);
+      if(hasPos)            { Comment(status, "\nPosition en cours — pas de renfort"); return; }
+      if(!inSession)        { Comment(status, "\nHors créneau horaire"); return; }
+      if(block != "")       { Comment(status, "\nPause : ", block); return; }
+      Comment(status, "\nEn attente d'un sweep + changement de structure...");
+      if(liqSig.valid) OpenLiquidity(liqSig);
+      return;
+     }
    if(SelectOwnPosition())          { Comment(status, "\nPosition en cours — pas de renfort"); return; }
    if(!inSession)                   { Comment(status, "\nHors créneau horaire"); return; }
    if(block != "")                  { Comment(status, "\nPause : ", block); return; }

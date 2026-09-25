@@ -179,3 +179,4 @@ textarea {
   .kpi .value { font-size: 20px; }
 }
 .chart .level-label { fill: #fff; font-weight: 600; }
+.checklist .wide { grid-column: 1 / -1; }

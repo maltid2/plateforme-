@@ -222,7 +222,17 @@ function renderChecklist() {
     return;
   }
   const rg = st.regime || {};
-  box.replaceChildren(...['buy', 'sell'].map((side) => {
+  if (st.strategy === 'liquidity' && st.liquidity) {
+    const L = st.liquidity;
+    const pools = L.pools || [];
+    box.replaceChildren(h('div', { class: 'side wide' },
+      h('h3', {}, 'Liquidité du jour', L.pending ? h('span', { class: 'ready' }, `${L.pending} sweep(s) en attente`) : null),
+      pools.length
+        ? h('ol', {}, ...pools.map((p) => step(p.used ? 'ok' : 'info', `${p.name} : ${pf(p.price)}`,
+          p.used ? 'déjà pris' : 'en attente d\'un sweep')))
+        : h('div', { class: 'muted' }, 'Niveaux calculés à la fin de la session asiatique (08:00).'),
+      h('small', { class: 'muted' }, `Volatilité M15 : ${pf(L.vol || 0)} ${unitOf()} · stop derrière la mèche · target 3R`)));
+  } else box.replaceChildren(...['buy', 'sell'].map((side) => {
     const d = st.checklist[side] || {};
     return h('div', { class: 'side' },
       h('h3', {}, side === 'buy' ? 'Achat' : 'Vente', d.ready ? h('span', { class: 'ready' }, 'Setup prêt') : null),

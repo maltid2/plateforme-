@@ -116,6 +116,7 @@ Les distances ci-dessous sont en points méthode (voir le tableau de conversion)
 
 Paramètres à vérifier absolument :
 
+- **`InpStrategy`** : *Liquidité* par défaut, ou *Méthode du PDF* (avec `InpTrendFilter = true` conseillé).
 - **`InpMode`** : *Méthode du PDF* par défaut (horaires ci-dessus) ou *H24*.
 - **`InpMaxRiskPercentMinLot`** : perte maximale acceptée au lot minimum sur un petit compte (5 %).
 - **`InpMarket`** : *Or (XAUUSD)* par défaut. L'onglet *Experts* affiche un avertissement si le
@@ -150,6 +151,30 @@ partir d'un certain volume ; sinon comptez 10-30 €/mois).
    (et sur Telegram si tu l'as configuré, voir [`dashboard/README.md`](./dashboard/README.md)).
 
 Aperçu immédiat, sans MetaTrader : `cd dashboard && npm run demo`.
+
+## Stratégie liquidité (défaut sur l'or)
+
+Chasse aux stops, testée honnêtement : **réglée sur l'or 2025, vérifiée une seule fois sur 2026**.
+
+1. **Liquidité** : haut / bas de la session asiatique (01:00–08:00 Paris) et haut / bas de la veille.
+2. **Sweep** : pendant Londres (09:00–12:00) ou New York (14:45–18:00), le prix dépasse un niveau.
+3. **Changement de structure** : dans les 2 h, clôture M5 au-delà du dernier creux (vente) / sommet
+   (achat) des 30 min précédant le sweep. Sans cette confirmation, entrer sur le simple retour sous le
+   niveau perd nettement (−16,8 R en 2025).
+4. **Entrée** au marché, **stop** derrière la mèche du sweep, **target 3R**, pas de stop suiveur.
+5. Distances **proportionnelles à la volatilité** (bougie M15 médiane sur 20 jours) : la volatilité
+   de l'or a presque doublé entre 2025 (5 $) et 2026 (8,90 $), des distances fixes en dollars
+   bloquaient la plupart des setups.
+
+| | Trades | Gagnants | Profit factor | Résultat |
+|---|---|---|---|---|
+| Or 2025 (réglage) | 16 | 44 % | 1,94 | +8,5 R |
+| **Or 2026 (jamais vu)** | **13** | **38 %** | **1,70** | **+5,6 R** |
+| Dow, 6 mois (jamais vu, sans réglage propre au Dow) | 15 | 20 % | 0,73 | −3,2 R |
+
+Avec **280 $** (0,01 lot, perte ≤ 5 % par trade) : **280 $ → 368 $ en 17 mois**, pire baisse −13 %,
+mais seulement 17 trades pris et 12 refusés (stop trop large pour le capital en 2026). C'est
+**la première version positive sur des données jamais vues**, mais sur 29 trades : à confirmer en démo.
 
 ## ⚠️ Résultat sur 17 mois : le robot n'est pas rentable
 

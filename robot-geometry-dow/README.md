@@ -31,20 +31,20 @@ permet des stops courts et une entrée précise sur le setup. L'or bouge plus qu
 ### Conversion des distances
 
 Tous les réglages sont écrits en **points méthode** (les valeurs du PDF pour le Dow) et convertis
-en prix : **Dow 1 point = 1,0 · or 1 point = 0,20 $**. Ce ratio vient des volatilités M15
-typiques (une bougie M15 du Dow fait environ 5 fois plus en points qu'une bougie de l'or en dollars).
-C'est une **hypothèse de départ à vérifier avec le backtest** sur ton historique XAUUSD :
-si les stops sont trop souvent touchés, augmente `InpPointScale` (0,25 ; 0,30…).
+en prix : **Dow 1 point = 1,0 · or 1 point = 0,40 $**. Ce ratio a été **calibré sur de vrais cours
+XAUUSD M5** (février–mai 2026, voir plus bas) : une bougie M15 de l'or y fait en médiane **10 $**
+(16 $ pendant New York). Une première estimation à 0,20 $ donnait des stops trop serrés.
+Si ton broker ou la période est plus calme ou plus agitée, ajuste `InpPointScale`.
 
 | Réglage du PDF | Dow | Or |
 |---|---|---|
-| SL mini en range serré | 5 pts | 1,00 $ |
-| SL mini en impulsion | 20 pts | 4,00 $ |
-| SL mini en range large / seuil de range large | 30 / 100 pts | 6,00 / 20,00 $ |
-| SL maximum (au-delà : pas de trade) | 40 pts | 8,00 $ |
-| Achat / vente rapide (SL / TP) | 5 / 30 pts | 1,00 / 6,00 $ |
-| Distance max à la zone pour entrer | 15 pts | 3,00 $ |
-| Filtre anti-news (amplitude M15 max) | désactivé | 12,00 $ |
+| SL mini en range serré | 5 pts | 2 $ |
+| SL mini en impulsion | 20 pts | 8 $ |
+| SL mini en range large / seuil de range large | 30 / 100 pts | 12 / 40 $ |
+| SL maximum (au-delà : pas de trade) | 40 pts | 16 $ |
+| Achat / vente rapide (SL / TP) | 5 / 30 pts | 2 / 12 $ |
+| Distance max à la zone pour entrer | 15 pts | 6 $ |
+| Filtre anti-news (amplitude M15 max) | désactivé | 24 $ |
 
 ### Horaires : mode H24 (défaut pour l'or) ou mode méthode
 
@@ -69,9 +69,10 @@ Il fonctionne donc ainsi :
   ≤ `InpMaxRiskPercentMinLot` (5 %)**, soit un stop de 4,50 $ max avec 90 $ ;
 - sinon, **il ne prend pas le trade** (message dans l'onglet *Experts*).
 
-Concrètement, avec 90 $ : **chaque trade perdant coûte 1 à 4,50 $ (1 à 5 % du compte)**, et
-deux pertes dans la journée arrêtent le robot jusqu'au lendemain (environ −10 % maximum par jour).
-Plusieurs mauvais jours d'affilée peuvent faire perdre une grosse partie du capital.
+**Sur les vrais cours de 2026, ça ne suffit pas** : les stops logiques font 8 à 16 $ (médiane 12 $),
+donc avec 90 $ le robot a refusé **34 setups sur 34** en 3 mois. Il faut environ **250 à 350 $**
+pour que 0,01 lot reste sous 5 % de risque — et chaque perte coûte alors encore 4 à 5 % du compte
+(drawdown de 22 % à 300 $ sur la période testée).
 
 > Le plus adapté à ce capital est un **compte cent** (proposé par beaucoup de brokers) :
 > 90 $ y deviennent 9 000 cents et 0,01 lot ne vaut plus que 1 cent par dollar de mouvement.
@@ -120,7 +121,7 @@ Paramètres à vérifier absolument :
   graphique ne correspond pas au marché choisi.
 - **`InpServerMinusParisHours`** : heure du serveur MT5 moins heure de Paris. La plupart des
   brokers sont en UTC+2/+3 → **1**. Comparez l'heure de la fenêtre *Market Watch* avec l'heure de Paris.
-- **`InpPointScale`** : `0` = automatique (or 0,20 $, Dow 1,0). À ajuster après backtest.
+- **`InpPointScale`** : `0` = automatique (or 0,40 $, Dow 1,0). À ajuster après backtest.
 - **`InpSession1..3`** : `auto` = créneaux du mode et du marché choisis ; ou `HH:MM-HH:MM` ; vide = désactivé.
 - **`InpFridayLastEntry` / `InpFridayClose`** : `auto` = 21:00 / 22:30 en H24 ; vide = désactivé.
 - **`InpMaxM15Range`** : `-1` = automatique (or 60 points méthode = 12 $, Dow désactivé) ; `0` = désactivé.
@@ -147,6 +148,30 @@ partir d'un certain volume ; sinon comptez 10-30 €/mois).
 
 Aperçu immédiat, sans MetaTrader : `cd dashboard && npm run demo`.
 
+## Résultats sur de vrais cours XAUUSD
+
+Test sur **17 371 bougies M5 réelles, du 25/02 au 26/05/2026** (67 jours de marché), source :
+[Sai310421/xauusd-data](https://github.com/Sai310421/xauusd-data) (prix milieu, sans spread :
+le backtest ajoute 0,30 $ de spread). Période particulière : l'or est passé de 5 140 $ à 4 560 $.
+
+| Réglage | Trades | Réussite | Profit factor | Total | Drawdown (1 %/trade) |
+|---|---|---|---|---|---|
+| **H24**, 1 pt = 0,20 $ (ancien réglage) | 13 | 23 % | 0,46 | −5,1 R | 6,4 % |
+| **H24**, 1 pt = 0,40 $ | 57 | 37 % | 0,86 | −5,3 R | 14,2 % |
+| **Méthode du PDF** (créneaux), 1 pt = 0,40 $ | 21 | 52 % | 1,45 | **+5,4 R** | 4,9 % |
+| Méthode, mode rapide (SL 2 $ / TP 12 $) | 27 | 22 % | 0,54 | −10,4 R | — |
+| H24, mode rapide | 80 | 25 % | 0,62 | −24,3 R | — |
+
+Ce qu'on peut en dire :
+
+- **Le mode H24 perd** sur cette période, quels que soient les réglages testés (profit factor < 1).
+- **Les créneaux du PDF font mieux** et restent positifs sur chaque moitié de la période
+  (et avec 1 pt = 0,35 ou 0,45 $), mais **21 trades en 3 mois, c'est beaucoup trop peu** pour
+  conclure que la méthode gagne : ça peut être de la chance.
+- **Le mode rapide perd nettement** : sur l'or, un stop de 2 $ est touché presque à chaque fois.
+- Il faudrait refaire le test sur **au moins un an** de données, idéalement celles de ton broker
+  (export MT5, avec son vrai spread).
+
 ## Backtest en Node.js
 
 Aucune installation : Node.js ≥ 18 suffit.
@@ -157,7 +182,7 @@ npm test                                                # tests de la logique
 node src/index.js historique_XAUUSD_M5.csv              # or (défaut), H24, résultats en R
 node src/index.js historique_XAUUSD_M5.csv --capital=90  # simulation en dollars avec 90 $ (lots réels)
 node src/index.js historique_XAUUSD_M5.csv --mode=methode  # créneaux du PDF, 2 h max
-node src/index.js historique_XAUUSD_M5.csv --quick      # achat/vente rapide (SL 1 $ / TP 6 $)
+node src/index.js historique_XAUUSD_M5.csv --quick      # achat/vente rapide (SL 2 $ / TP 12 $)
 node src/index.js historique_US30_M5.csv --market=dow   # Dow Jones
 node src/index.js data.csv --offset=1 --risk=1 --spread=0.3 --journal=journal.csv
 ```
@@ -177,7 +202,7 @@ noms que dans l'EA (préfixe `Inp`), et les réglages propres à chaque marché 
 ## Limites
 
 - Les timings, stops et targets du PDF ont été pensés **pour le Dow** en faible volatilité.
-  La conversion vers l'or est une hypothèse raisonnable, pas une donnée du PDF : valide-la au backtest.
+  La conversion vers l'or est calibrée sur 3 mois de cours réels seulement : valide-la sur plus long.
 - Une zone supply/demand, une « belle série de mèches » ou une géométrie « qui tend à être
   complétée » sont des jugements visuels dans le PDF. Le robot en fait des règles chiffrées :
   il prendra des trades qu'un humain aurait refusés et en ratera d'autres. Ajustez les seuils

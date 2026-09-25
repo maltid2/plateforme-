@@ -34,10 +34,10 @@ enum ENUM_GD_MARKET
   };
 
 //--- Toutes les distances sont en POINTS MÉTHODE : les valeurs du PDF (écrites pour le Dow),
-//--- converties en prix par l'échelle du marché : Dow 1 point = 1.0 ; or 1 point = 0.20 $.
+//--- converties en prix par l'échelle du marché : Dow 1 point = 1.0 ; or 1 point = 0.40 $ (calibré sur XAUUSD 2026).
 input group "Marché"
 input ENUM_GD_MARKET InpMarket        = GD_GOLD; // Marché tradé
-input double InpPointScale            = 0;       // Prix d'1 point méthode (0 = auto : or 0.20 $, Dow 1.0)
+input double InpPointScale            = 0;       // Prix d'1 point méthode (0 = auto : or 0.40 $, Dow 1.0)
 input ENUM_GD_MODE InpMode            = GD_H24;  // Mode de trading
 input long   InpMagic                 = 25092026;
 
@@ -104,7 +104,7 @@ input int    InpPauseAfterLossMinutes = 120;
 input double InpMaxDailyLossPercent   = -1;      // -1 = auto : H24 10 %, méthode 3 %
 
 input group "Filtre anti-news"
-input double InpMaxM15Range           = -1;      // Amplitude M15 max en points méthode (-1 = auto : or 60 = 12 $, Dow off ; 0 = off)
+input double InpMaxM15Range           = -1;      // Amplitude M15 max en points méthode (-1 = auto : or 60 = 24 $, Dow off ; 0 = off)
 
 input group "Affichage"
 input bool   InpDrawZones             = true;
@@ -175,7 +175,7 @@ int OnInit()
       Print("Heure du vendredi invalide : format attendu HH:MM (ou « auto », ou vide)");
       return INIT_PARAMETERS_INCORRECT;
      }
-   g_pt = InpPointScale > 0 ? InpPointScale : (gold ? 0.2 : 1.0);
+   g_pt = InpPointScale > 0 ? InpPointScale : (gold ? 0.4 : 1.0);
    double maxRangePts = InpMaxM15Range >= 0 ? InpMaxM15Range : (gold ? 60 : 0);
    g_maxM15Range = maxRangePts * g_pt;
 

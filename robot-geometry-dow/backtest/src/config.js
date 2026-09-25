@@ -3,8 +3,8 @@
 // Paramètres par défaut du robot « Geometry Market Mastery ».
 // Les distances ci-dessous sont en « POINTS MÉTHODE » : les valeurs du PDF, écrites pour le
 // Dow Jones (SL 5 / 20 / 30 pts, TP 30 pts...). Chaque marché les convertit en prix avec
-// son échelle (pointScale) : Dow 1 point = 1.0 ; or 1 point = 0,20 $ (volatilité M15 ~5x plus
-// petite en dollars qu'en points Dow). Les mêmes noms (préfixés « Inp ») existent dans l'EA.
+// son échelle (pointScale) : Dow 1 point = 1.0 ; or 1 point = 0,40 $. Calibré sur les vrais cours
+// XAUUSD M5 de février à mai 2026 : bougie M15 médiane ~10 $ (contre ~25-30 pts pour le Dow). Les mêmes noms (préfixés « Inp ») existent dans l'EA.
 
 const base = {
   // --- Horaires (heure de Paris) -------------------------------------------
@@ -118,7 +118,7 @@ const markets = {
   gold: {
     label: 'Or (XAUUSD)',
     unit: '$',
-    pointScale: 0.2,
+    pointScale: 0.4,
     spread: 0.3, // en $, déjà en prix (non converti)
     contractSize: 100, // 1 lot = 100 onces : 0,01 lot = 1 $ par dollar de mouvement
     defaultMode: 'h24',
@@ -127,7 +127,7 @@ const markets = {
       { start: '09:00', end: '12:00' }, // ouverture de Londres
       { start: '14:45', end: '18:00' }, // chevauchement Londres / New York
     ],
-    maxM15Range: 60, // = 12 $ : bougie M15 de news, on ne court pas après
+    maxM15Range: 60, // = 24 $ : bougie M15 de news (~2x la moyenne), on ne court pas après
   },
   dow: {
     label: 'Dow Jones (US30)',

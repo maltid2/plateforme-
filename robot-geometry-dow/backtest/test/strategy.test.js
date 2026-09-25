@@ -210,19 +210,20 @@ console.log('Or (XAUUSD)');
 test('or par défaut : distances converties en dollars', () => {
   assert.strictEqual(config.market, 'gold');
   assert.strictEqual(gold.unit, '$');
-  assert.ok(Math.abs(gold.impulseMinSL - 4) < 1e-9);   // 20 pts méthode = 4 $
-  assert.ok(Math.abs(gold.quickTP - 6) < 1e-9);        // 30 pts méthode = 6 $
-  assert.ok(Math.abs(gold.maxM15Range - 12) < 1e-9);
+  assert.strictEqual(gold.pointScale, 0.4);
+  assert.ok(Math.abs(gold.impulseMinSL - 8) < 1e-9);   // 20 pts méthode = 8 $
+  assert.ok(Math.abs(gold.quickTP - 12) < 1e-9);       // 30 pts méthode = 12 $
+  assert.ok(Math.abs(gold.maxM15Range - 24) < 1e-9);
   assert.strictEqual(cfg.impulseMinSL, 20);            // Dow inchangé
   const methode = config.forMarket('gold', { mode: 'methode' });
   assert.ok(S.inSession(DAY + (10 * 60 + 30) * 60000, methode));   // 09:30 Paris : Londres
   assert.ok(!S.inSession(DAY + (15 * 60 + 35) * 60000, methode));  // 14:35 Paris : stats US, évité
 });
 
-// Même scénario ramené à l'échelle de l'or : 38000 -> 3800 $, écarts x0,2.
+// Même scénario ramené à l'échelle de l'or : 38000 -> 3800 $, écarts x pointScale.
 function goldScenario() {
   return buyScenario().map((b) => {
-    const g = (p) => 3800 + (p - 38000) * 0.2;
+    const g = (p) => 3800 + (p - 38000) * gold.pointScale;
     return { ...b, o: g(b.o), h: g(b.h), l: g(b.l), c: g(b.c) };
   });
 }
@@ -232,7 +233,7 @@ test('or : le même setup déclenche le même achat', () => {
   assert.strictEqual(trades.length, 1);
   const t = trades[0];
   assert.strictEqual(t.side, 'buy');
-  assert.ok(t.initialSL < 3780.2, `SL sous les mèches (${t.initialSL})`);
+  assert.ok(t.initialSL < 3800 + (37901 - 38000) * gold.pointScale, `SL sous les mèches (${t.initialSL})`);
   assert.ok((t.tp - t.entry) / (t.entry - t.initialSL) >= gold.minRR - 1e-9);
 });
 
@@ -266,18 +267,18 @@ test('petit compte 90 $ : lot minimum si la perte reste <= 5 %', () => {
   assert.strictEqual(sizeLots(10000, 4, small), 0.25); // gros compte : 1 % = 100 $ / 400 $
 });
 
-test('petit compte : stop trop large refusé à 90 $, accepté à 150 $', () => {
-  // Ce setup a un stop logique de ~6,15 $ : 0,01 lot risque 6,15 $.
+test('petit compte : stop trop large refusé à 90 $, accepté à 300 $', () => {
+  // Ce setup a un stop logique de ~12,3 $ : 0,01 lot risque 12,3 $.
   const at90 = run(goldScenario(), { ...gold, capital: 90 });
-  assert.strictEqual(at90.trades.length, 0);   // 6,8 % du capital > 5 % : refusé
+  assert.strictEqual(at90.trades.length, 0);   // 13,7 % du capital > 5 % : refusé
   assert.ok(at90.stats.skipped >= 1, 'setups refusés comptés');
-  const at150 = run(goldScenario(), { ...gold, capital: 150 });
+  const at150 = run(goldScenario(), { ...gold, capital: 300 });
   assert.ok(at150.trades.length >= 1);         // 4,1 % : accepté au lot minimum
   const t = at150.trades[0];
   assert.strictEqual(t.lots, 0.01);
   assert.ok(Math.abs(t.pnl - t.points * 0.01 * 100) < 1e-9);
   const total = at150.trades.reduce((x, k) => x + k.pnl, 0);
-  assert.ok(Math.abs(at150.stats.finalBalance - (150 + total)) < 1e-9);
+  assert.ok(Math.abs(at150.stats.finalBalance - (300 + total)) < 1e-9);
 });
 
 console.log('Garde-fous');

@@ -77,6 +77,7 @@ const base = {
 
   // --- Stratégie : 'geometry' (méthode du PDF) ou 'liquidity' (chasse aux stops)
   strategy: 'geometry',
+  barMinutes: 5,             // unité des bougies fournies : 5 (M5) ou 1 (M1, stratégie liquidité)
   liqPools: ['asia', 'pdhl'],  // haut/bas de l'Asie, haut/bas de la veille
   liqAsiaStart: '01:00',
   liqAsiaEnd: '08:00',
@@ -175,8 +176,10 @@ const markets = {
     // 2025 et positive sur 2026 jamais vu (13 trades, PF 1,70, +5,6 R). Voir README.
     strategy: 'liquidity',
     liqVolMode: true,
-    liqSwingBars: 6,
-    liqMaxWaitBars: 24,
+    liqSwingMinutes: 30,       // structure : creux/sommet des 30 min avant le sweep (M5 : 6 bougies, M1 : 30)
+    liqMaxWaitMinutes: 120,    // changement de structure au plus tard 2 h après
+    // Entrée en M1 (données M1, barMinutes: 1) : 7 mois 2026 → +5,4 R contre +5,1 R en M5,
+    // et 2x plus de trades pris à 280 $.
     liqTarget: 'fixed',
     liqTargetR: 3,
     trailing: false,

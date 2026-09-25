@@ -15,7 +15,7 @@ function fmt(t) {
 function main(argv) {
   const file = argv.find((a) => !a.startsWith('--'));
   if (!file) {
-    console.error('Usage : node src/index.js <historique_M5.csv> [--market=gold|dow] [--mode=h24|methode] [--capital=90] [--quick] [--offset=1] [--risk=1] [--spread=0.3] [--journal=fichier.csv]');
+    console.error('Usage : node src/index.js <historique_M5.csv> [--market=gold|dow] [--mode=h24|methode] [--capital=90] [--quick] [--offset=1] [--risk=1] [--spread=0.3] [--bars=1|5] [--journal=fichier.csv]');
     process.exit(1);
   }
   const opt = (name) => {
@@ -28,6 +28,7 @@ function main(argv) {
   if (opt('offset') !== undefined) cfg.serverMinusParisHours = Number(opt('offset'));
   if (opt('risk') !== undefined) cfg.riskPercent = Number(opt('risk'));
   if (opt('spread') !== undefined) cfg.spread = Number(opt('spread'));
+  if (opt('bars') !== undefined) cfg.barMinutes = Number(opt('bars')); // 1 = historique M1
 
   const bars = loadCsv(file);
   if (bars.length < 500) {

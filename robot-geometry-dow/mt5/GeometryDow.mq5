@@ -54,8 +54,9 @@ input bool   InpLiqAsia               = true;      // Haut / bas de la session a
 input bool   InpLiqPrevDay            = true;      // Haut / bas de la veille
 input string InpLiqAsiaStart          = "01:00";   // Session asiatique (heure de Paris)
 input string InpLiqAsiaEnd            = "08:00";
-input int    InpLiqSwingBars          = 6;         // Creux / sommet de référence : bougies M5 avant le sweep
-input int    InpLiqMaxWaitBars        = 24;        // Changement de structure au plus tard N bougies M5 après
+input ENUM_TIMEFRAMES InpLiqExecTF    = PERIOD_M1; // Unité d'entrée : M1 (sweep + structure en 1 min) ou M5
+input int    InpLiqSwingMinutes       = 30;        // Structure : creux / sommet des N minutes avant le sweep
+input int    InpLiqMaxWaitMinutes     = 120;       // Changement de structure au plus tard N minutes après
 input double InpLiqTargetR            = 3;         // Target = N x le risque
 input int    InpLiqVolDays            = 20;        // Volatilité : bougie M15 médiane sur N jours
 input double InpLiqDepthVol           = 3.6;       // Sweep plus profond que N x volatilité = vraie cassure
@@ -160,6 +161,7 @@ struct Diag   { string zone; bool zoneOk; int wicks; bool stopHunt; string geome
 
 CTrade   trade;
 datetime g_lastBar = 0;
+datetime g_lastExecBar = 0;   // dernière bougie d'entrée (M1) traitée par la stratégie liquidité
 string   g_lastBlock = "";
 string   g_stateCore = "";   // partie « marché » de state.json, recalculée à chaque bougie M5
 int      g_sessStart[3], g_sessEnd[3];
@@ -834,7 +836,8 @@ void LiqOnBar(const MqlRates &b, datetime now, bool window, int trend, LiqSignal
       g_pools[k].used = true;   // un seul sweep par niveau et par jour
       if(!window) continue;
       MqlRates before[];
-      if(CopyRates(_Symbol, PERIOD_M5, 2, InpLiqSwingBars, before) < 1) continue;
+      int swingBars = MathMax(1, InpLiqSwingMinutes * 60 / PeriodSeconds(InpLiqExecTF));
+      if(CopyRates(_Symbol, InpLiqExecTF, 2, swingBars, before) < 1) continue;
       double ref = g_pools[k].kind > 0 ? DBL_MAX : -DBL_MAX;
       for(int q = 0; q < ArraySize(before); q++)
          ref = g_pools[k].kind > 0 ? MathMin(ref, before[q].low) : MathMax(ref, before[q].high);
@@ -853,7 +856,7 @@ void LiqOnBar(const MqlRates &b, datetime now, bool window, int trend, LiqSignal
       s.extreme = s.dir < 0 ? MathMax(s.extreme, b.high) : MathMin(s.extreme, b.low);
       double depth = (s.extreme - g_pools[s.pool].price) * -s.dir;
       if(depth > depthMax) continue;                                        // vraie cassure
-      if((b.time - s.start) / PeriodSeconds(PERIOD_M5) > InpLiqMaxWaitBars) continue; // trop tard
+      if((b.time - s.start) > InpLiqMaxWaitMinutes * 60) continue;   // trop tard
       bool mss = s.dir < 0 ? b.close < s.mss : b.close > s.mss;
       if(!mss) { int n = ArraySize(keep); ArrayResize(keep, n + 1); keep[n] = s; continue; }
       if(sig.valid || !window || !SideAllowed(trend, s.dir)) continue;
@@ -912,8 +915,28 @@ void OpenLiquidity(const LiqSignal &sg)
 //+------------------------------------------------------------------+
 //| Évaluation de la check-list et prise de position                 |
 //+------------------------------------------------------------------+
+// Stratégie liquidité en M1 : traitée à chaque nouvelle bougie M1 (le M5 sert au contexte et au tableau de bord)
+void LiqExecTick()
+  {
+   datetime barNow = iTime(_Symbol, InpLiqExecTF, 0);
+   if(barNow == 0 || barNow == g_lastExecBar) return;
+   g_lastExecBar = barNow;
+   MqlRates r[];
+   ArraySetAsSeries(r, false);
+   if(CopyRates(_Symbol, InpLiqExecTF, 1, 1, r) < 1) return;   // bougie M1 clôturée
+   datetime now = TimeCurrent();
+   string block = GuardBlock(now);
+   if(block == "") block = NewsBlock(now);
+   bool window = !SelectOwnPosition() && InSession(barNow) && block == "";
+   LiqSignal sig; sig.valid = false;
+   LiqOnBar(r[0], barNow, window, TrendDir(), sig);
+   if(sig.valid && window) OpenLiquidity(sig);
+  }
+
 void OnTick()
   {
+   bool liqM1 = InpStrategy == GD_STRAT_LIQUIDITY && InpLiqExecTF != PERIOD_M5;
+   if(liqM1) LiqExecTick();
    datetime bar0 = iTime(_Symbol, PERIOD_M5, 0);
    if(bar0 == 0 || bar0 == g_lastBar) return;
    g_lastBar = bar0;
@@ -957,7 +980,7 @@ void OnTick()
    // Stratégie liquidité : suivie à chaque bougie (niveaux, sweeps), décision d'entrée ensuite
    LiqSignal liqSig; liqSig.valid = false;
    bool hasPos = SelectOwnPosition();
-   if(liqMode) LiqOnBar(m5[i], bar0, !hasPos && inSession && block == "", trend, liqSig);
+   if(liqMode && !liqM1) LiqOnBar(m5[i], bar0, !hasPos && inSession && block == "", trend, liqSig);
 
    if(InpExportDashboard)
      {
@@ -986,13 +1009,13 @@ void OnTick()
      {
       int free = 0;
       for(int k = 0; k < ArraySize(g_pools); k++) if(!g_pools[k].used) free++;
-      status = StringFormat("Geometry %s | LIQUIDITÉ | %d niveau(x) libre(s), %d sweep(s) en attente | volatilité M15 %.2f",
-                            InpMarket == GD_GOLD ? "Or" : "Dow", free, ArraySize(g_pend), g_liqVol);
+      status = StringFormat("Geometry %s | LIQUIDITÉ (entrée %s) | %d niveau(x) libre(s), %d sweep(s) en attente | volatilité M15 %.2f",
+                            InpMarket == GD_GOLD ? "Or" : "Dow", liqM1 ? "M1" : "M5", free, ArraySize(g_pend), g_liqVol);
       if(hasPos)            { Comment(status, "\nPosition en cours — pas de renfort"); return; }
       if(!inSession)        { Comment(status, "\nHors créneau horaire"); return; }
       if(block != "")       { Comment(status, "\nPause : ", block); return; }
       Comment(status, "\nEn attente d'un sweep + changement de structure...");
-      if(liqSig.valid) OpenLiquidity(liqSig);
+      if(liqSig.valid) OpenLiquidity(liqSig);   // (en M1, les entrées sont prises dans LiqExecTick)
       return;
      }
    if(SelectOwnPosition())          { Comment(status, "\nPosition en cours — pas de renfort"); return; }

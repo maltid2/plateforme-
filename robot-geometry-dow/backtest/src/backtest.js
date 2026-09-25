@@ -157,7 +157,7 @@ function run(m5, cfg) {
     // Stratégie liquidité : suivie à chaque bougie (niveaux, sweeps), indépendamment des M15.
     if (liq) {
       if (i + 1 >= m5.length) break;
-      const nextOpen = bar.t + S.M5;
+      const nextOpen = bar.t + (cfg.barMinutes || 5) * 60000; // bougies M5 ou M1
       let allow = { buy: true, sell: true };
       if (trendAt) { const tr = trendAt(nextOpen); allow = { buy: tr > 0, sell: tr < 0 }; }
       const window = !pos && !(cfg.startTime && nextOpen < cfg.startTime) && S.canEnter(nextOpen, cfg)

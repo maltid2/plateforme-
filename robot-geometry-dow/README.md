@@ -172,6 +172,21 @@ Chasse aux stops, testée honnêtement : **réglée sur l'or 2025, vérifiée un
 | **Or 2026 (jamais vu)** | **13** | **38 %** | **1,70** | **+5,6 R** |
 | Dow, 6 mois (jamais vu, sans réglage propre au Dow) | 15 | 20 % | 0,73 | −3,2 R |
 
+**Entrée en 1 minute (défaut de l'EA, `InpLiqExecTF = M1`)** : niveaux et volatilité calculés comme
+avant, mais sweep et changement de structure lus en **M1** (structure sur 30 min, 2 h max).
+Test sur 7 mois de vrais cours M1 (23/03 → 23/09/2026, sources [Sai310421/xauusd-data](https://github.com/Sai310421/xauusd-data)
+et [getdata-finance](https://github.com/getdata-finance/xauusd-1m-ohlcv-metals-historical-data)) :
+
+| Entrée | Trades | Gagnants | Profit factor | Résultat | 280 $ → |
+|---|---|---|---|---|---|
+| M5 | 11 | 45 % | 1,93 | +5,1 R | 332 $ (3 pris) |
+| **M1, structure 30 min** (défaut) | 13 | 38 % | 1,72 | **+5,4 R** | **341 $ (6 pris)** |
+| M1, structure 10 min | 26 | 31 % | 1,17 | +2,8 R | 304 $ |
+| M1, structure 5 min | 32 | 28 % | 1,00 | −0,1 R | 291 $ |
+
+Lire la structure trop vite en M1 multiplie les trades mais les dégrade. Backtest M1 :
+`node src/index.js historique_M1.csv --bars=1 --capital=280`.
+
 Avec **280 $** (0,01 lot, perte ≤ 5 % par trade) : **280 $ → 368 $ en 17 mois**, pire baisse −13 %,
 mais seulement 17 trades pris et 12 refusés (stop trop large pour le capital en 2026). C'est
 **la première version positive sur des données jamais vues**, mais sur 29 trades : à confirmer en démo.

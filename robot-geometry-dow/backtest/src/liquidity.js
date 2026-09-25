@@ -28,6 +28,10 @@ function createLiquidity(m5, cfg) {
   let vol = 0;
   const asiaStart = hhmm(cfg.liqAsiaStart);
   const asiaEnd = hhmm(cfg.liqAsiaEnd);
+  // Durées en minutes (indépendantes de l'unité des bougies M1 / M5), sinon en nombre de bougies.
+  const barMin = cfg.barMinutes || 5;
+  const swingBars = cfg.liqSwingMinutes ? Math.max(1, Math.round(cfg.liqSwingMinutes / barMin)) : cfg.liqSwingBars;
+  const waitBars = cfg.liqMaxWaitMinutes ? Math.max(1, Math.round(cfg.liqMaxWaitMinutes / barMin)) : cfg.liqMaxWaitBars;
   const days = new Map(); // jour de Paris -> { hi, lo, asiaHi, asiaLo }
   let dayOrder = [];
   let lastIndexed = -1;
@@ -111,7 +115,7 @@ function createLiquidity(m5, cfg) {
         p.used = true; // un seul sweep par niveau et par jour
         if (!tradingWindow) { if (cfg._stats) cfg._stats.horsSession++; continue; }
         if (cfg._stats) cfg._stats.sweeps++;
-        const from = Math.max(0, i - cfg.liqSwingBars);
+        const from = Math.max(0, i - swingBars);
         const before = m5.slice(from, i);
         if (!before.length) continue;
         pending.push({
@@ -132,7 +136,7 @@ function createLiquidity(m5, cfg) {
       else s.extreme = Math.min(s.extreme, b.l);
       const depth = (s.extreme - s.pool.price) * -s.dir;
       if (depth > V.depth) { if (cfg._stats) cfg._stats.cassure++; continue; } // vraie cassure, pas un sweep
-      if (i - s.start > cfg.liqMaxWaitBars) { if (cfg._stats) cfg._stats.pasDeMSS++; continue; } // trop tard
+      if (i - s.start > waitBars) { if (cfg._stats) cfg._stats.pasDeMSS++; continue; } // trop tard
       // 'mss' : cassure du dernier creux/sommet ; 'reclaim' : clôture revenue de l'autre côté du niveau pris
       const level = cfg.liqEntry === 'reclaim' ? s.pool.price : s.mss;
       const mssOk = s.dir < 0 ? b.c < level : b.c > level;

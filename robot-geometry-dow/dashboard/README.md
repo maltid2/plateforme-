@@ -6,8 +6,8 @@ Petit serveur Node.js **sans dépendance** qui lit les fichiers écrits par l'EA
 - **En direct** : capital, résultat du jour, zones supply/demand M15 sur les bougies,
   la **check-list** (achat et vente) étape par étape, la position en cours, la courbe de capital,
   les derniers trades avec leur setup.
-- **Rapports quotidiens** : chaque soir après la dernière session — **18:30** pour l'or,
-  **23:15** pour le Dow (heure de Paris) — du lundi au vendredi,
+- **Rapports quotidiens** : chaque soir après la dernière session — **23:15** en mode H24
+  et pour le Dow, **18:30** pour l'or en mode méthode (heure de Paris) — du lundi au vendredi,
   un bilan automatique est généré :
   - trades du jour, résultat en argent / points / R, capital ;
   - **audit des règles de la méthode** : stop jamais élargi, une seule position à la fois,
@@ -51,7 +51,7 @@ les fichiers exactement comme l'EA.
 | `GD_PORT` | port HTTP | `8787` |
 | `GD_HOST` | interface d'écoute | `127.0.0.1` (la machine seulement) |
 | `GD_PASSWORD` | mot de passe (identifiant libre) | aucun — **obligatoire** si `GD_HOST` ≠ local |
-| `GD_REPORT_TIME` | heure de Paris du rapport | or `18:30`, Dow `23:15` |
+| `GD_REPORT_TIME` | heure de Paris du rapport | `23:15` (or en mode méthode : `18:30`) |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | envoi du rapport sur Telegram | désactivé |
 
 Les rapports sont enregistrés dans `GeometryDow\reports\AAAA-MM-JJ.json` et `.txt`,

@@ -73,9 +73,37 @@ const base = {
   // --- Filtre anti-news : pas d'entrée si la dernière M15 dépasse cette amplitude
   maxM15Range: 0,            // 0 = désactivé
 
+  // --- Vendredi soir (heure de Paris) : '' = désactivé
+  fridayLastEntry: '',       // plus de nouvelle entrée après cette heure
+  fridayClose: '',           // clôture forcée avant le week-end
+
+  // --- Taille de position (backtest en argent réel : --capital=90) --------
+  capital: 0,                // 0 = résultats en R / % (sans contrainte de lot)
+  contractSize: 1,           // unités par lot (or : 100 onces)
+  minLot: 0.01,
+  lotStep: 0.01,
+  maxRiskPercentMinLot: 5,   // petit compte : lot minimum accepté si la perte au stop <= 5 %
+
   // --- Backtest ------------------------------------------------------------
   spread: 2,
   initialBalance: 10000,
+};
+
+// Modes de trading.
+const modes = {
+  // Méthode du PDF : créneaux du marché, 2 h max après la 1re entrée, 3 trades/jour.
+  methode: {},
+  // H24 : toute la journée, hors rollover (22:45-01:00 Paris : spreads très larges).
+  // Les garde-fous restent : pause 2 h après une perte, 2 pertes max, -10 % max par jour.
+  h24: {
+    sessions: [{ start: '01:00', end: '22:45' }],
+    maxMinutesAfterFirstTrade: 0,
+    maxTradesPerDay: 6,
+    maxLossesPerDay: 2,
+    maxDailyLossPercent: 10,
+    fridayLastEntry: '21:00',
+    fridayClose: '22:30',
+  },
 };
 
 // Distances converties en prix selon le marché.
@@ -91,6 +119,8 @@ const markets = {
     unit: '$',
     pointScale: 0.2,
     spread: 0.3, // en $, déjà en prix (non converti)
+    contractSize: 100, // 1 lot = 100 onces : 0,01 lot = 1 $ par dollar de mouvement
+    defaultMode: 'h24',
     // Or : Londres puis New York, en évitant le pic des stats US de 14:30.
     sessions: [
       { start: '09:00', end: '12:00' }, // ouverture de Londres
@@ -103,6 +133,8 @@ const markets = {
     unit: 'pts',
     pointScale: 1,
     spread: 2,
+    contractSize: 1, // CFD indice : 1 lot = 1 $ par point (vérifier chez le broker)
+    defaultMode: 'methode',
     sessions: base.sessions,
   },
 };
@@ -110,12 +142,14 @@ const markets = {
 function forMarket(name = 'gold', overrides = {}) {
   const m = markets[name];
   if (!m) throw new Error(`Marché inconnu : ${name} (disponibles : ${Object.keys(markets).join(', ')})`);
-  const { pointScale, spread, label, unit, ...rest } = m;
-  const cfg = { ...base, ...rest, market: name, marketLabel: label, unit, pointScale };
+  const { pointScale, spread, label, unit, defaultMode, ...rest } = m;
+  const mode = overrides.mode || defaultMode;
+  if (!modes[mode]) throw new Error(`Mode inconnu : ${mode} (disponibles : ${Object.keys(modes).join(', ')})`);
+  const cfg = { ...base, ...rest, ...modes[mode], market: name, marketLabel: label, unit, pointScale, mode };
   for (const k of DISTANCES) cfg[k] = cfg[k] * pointScale;
   cfg.spread = spread;
   return { ...cfg, ...overrides };
 }
 
 // Par défaut : l'or.
-module.exports = Object.assign(forMarket('gold'), { forMarket, markets, base, DISTANCES });
+module.exports = Object.assign(forMarket('gold'), { forMarket, markets, modes, base, DISTANCES });

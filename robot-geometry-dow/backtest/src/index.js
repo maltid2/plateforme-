@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
-// Usage : node src/index.js historique_XAUUSD_M5.csv [--market=gold|dow] [--quick] [--offset=1] [--risk=1] [--journal=journal.csv]
+// Usage : node src/index.js historique_XAUUSD_M5.csv [--market=gold|dow] [--mode=h24|methode] [--capital=90] [--quick] [--offset=1] [--risk=1] [--journal=journal.csv]
 
 const fs = require('fs');
 const { forMarket } = require('./config');
@@ -15,14 +15,15 @@ function fmt(t) {
 function main(argv) {
   const file = argv.find((a) => !a.startsWith('--'));
   if (!file) {
-    console.error('Usage : node src/index.js <historique_M5.csv> [--market=gold|dow] [--quick] [--offset=1] [--risk=1] [--spread=0.3] [--journal=fichier.csv]');
+    console.error('Usage : node src/index.js <historique_M5.csv> [--market=gold|dow] [--mode=h24|methode] [--capital=90] [--quick] [--offset=1] [--risk=1] [--spread=0.3] [--journal=fichier.csv]');
     process.exit(1);
   }
   const opt = (name) => {
     const a = argv.find((x) => x.startsWith(`--${name}=`));
     return a ? a.split('=')[1] : undefined;
   };
-  const cfg = forMarket(opt('market') || 'gold');
+  const cfg = forMarket(opt('market') || 'gold', opt('mode') ? { mode: opt('mode') } : {});
+  if (opt('capital') !== undefined) cfg.capital = Number(opt('capital'));
   if (argv.includes('--quick')) cfg.quickMode = true;
   if (opt('offset') !== undefined) cfg.serverMinusParisHours = Number(opt('offset'));
   if (opt('risk') !== undefined) cfg.riskPercent = Number(opt('risk'));
@@ -38,11 +39,12 @@ function main(argv) {
   const u = cfg.unit;
   console.log(`\nGeometry Market Mastery — ${cfg.marketLabel} — backtest ${fmt(bars[0].t)} → ${fmt(bars[bars.length - 1].t)}`);
   console.log(`Mode : ${cfg.quickMode ? `rapide (SL ${cfg.quickSL} ${u} / TP ${cfg.quickTP} ${u})` : 'complet (SL logique / TP zone)'}`);
+  console.log(`Mode : ${cfg.mode === 'h24' ? 'H24 (toute la journée)' : 'méthode du PDF (créneaux, 2 h max)'}${cfg.capital > 0 ? ` · capital ${cfg.capital} (lot min ${cfg.minLot}, perte max au lot min ${cfg.maxRiskPercentMinLot} %)` : ''}`);
   console.log(`Créneaux (Paris) : ${cfg.sessions.map((x) => `${x.start}-${x.end}`).join(', ')} · spread ${cfg.spread} ${u}\n`);
   for (const t of trades) {
     console.log(
       `${fmt(t.entryTime)}  ${t.side.toUpperCase().padEnd(4)} @${t.entry.toFixed(1)}  SL ${t.initialSL.toFixed(1)}  TP ${t.tp.toFixed(1)}`
-      + `  → ${t.reason.padEnd(10)} ${t.points >= 0 ? '+' : ''}${t.points.toFixed(cfg.unit === '$' ? 2 : 1)} ${cfg.unit} (${t.r.toFixed(2)}R)`
+      + `${t.lots != null ? `  ${t.lots} lot` : ''}  → ${t.reason.padEnd(10)} ${t.points >= 0 ? '+' : ''}${t.points.toFixed(cfg.unit === '$' ? 2 : 1)} ${cfg.unit} (${t.r.toFixed(2)}R${t.lots != null ? `, ${t.pnl >= 0 ? '+' : ''}${t.pnl.toFixed(2)}` : ''})`
       + `  [${t.checklist.type}, ${t.checklist.zone}, ${t.checklist.wicks} mèche(s)${t.checklist.stopHunt ? ', stop hunt' : ''}, ${t.checklist.geometry}]`,
     );
   }
@@ -54,6 +56,10 @@ function main(argv) {
   console.log(`R moyen          : ${stats.avgR.toFixed(2)}`);
   console.log(`Rendement        : ${stats.returnPercent.toFixed(2)} % (risque ${cfg.riskPercent} %/trade)`);
   console.log(`Drawdown max     : ${stats.maxDrawdownPercent.toFixed(2)} %`);
+  if (cfg.capital > 0) {
+    console.log(`Capital final    : ${stats.finalBalance.toFixed(2)} (départ ${cfg.capital})`);
+    console.log(`Setups refusés   : ${stats.skipped} (lot minimum trop risqué pour ce capital)`);
+  }
 
   const journal = opt('journal');
   if (journal) {

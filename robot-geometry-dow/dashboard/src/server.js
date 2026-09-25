@@ -12,7 +12,7 @@
 //   GD_PORT            port HTTP (défaut 8787)
 //   GD_HOST            interface d'écoute (défaut 127.0.0.1 = accessible seulement depuis la machine)
 //   GD_PASSWORD        mot de passe du tableau de bord (obligatoire si GD_HOST n'est pas local)
-//   GD_REPORT_TIME     heure de Paris du rapport quotidien (défaut : or 18:30, Dow 23:15 — après la dernière session)
+//   GD_REPORT_TIME     heure de Paris du rapport quotidien (défaut 23:15 ; or en mode méthode 18:30 — après la dernière session)
 //   TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID   facultatif : envoi du rapport sur Telegram
 
 const http = require('http');
@@ -46,7 +46,8 @@ const PASSWORD = env.GD_PASSWORD || '';
 function reportTime() {
   if (env.GD_REPORT_TIME) return env.GD_REPORT_TIME;
   const st = readJson(path.join(DATA, 'state.json'));
-  return st && st.params && st.params.market === 'dow' ? '23:15' : '18:30';
+  const p = (st && st.params) || {};
+  return p.market === 'gold' && p.mode === 'methode' ? '18:30' : '23:15';
 }
 
 if (!['127.0.0.1', 'localhost', '::1'].includes(HOST) && !PASSWORD) {

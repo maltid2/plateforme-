@@ -31,6 +31,24 @@ function hhmm(s) {
   return h * 60 + m;
 }
 
+// Jour de la semaine à Paris (0 = dimanche, 5 = vendredi).
+function parisWeekday(t, cfg) {
+  return new Date((Math.floor(t / 60000) - cfg.serverMinusParisHours * 60) * 60000).getUTCDay();
+}
+
+// Vendredi soir : plus de nouvelle entrée, puis clôture avant le week-end (pas de gap du lundi).
+function fridayNoEntry(t, cfg) {
+  return !!cfg.fridayLastEntry && parisWeekday(t, cfg) === 5 && parisMinutes(t, cfg) >= hhmm(cfg.fridayLastEntry);
+}
+
+function weekendClose(t, cfg) {
+  return !!cfg.fridayClose && parisWeekday(t, cfg) === 5 && parisMinutes(t, cfg) >= hhmm(cfg.fridayClose);
+}
+
+function canEnter(t, cfg) {
+  return inSession(t, cfg) && !fridayNoEntry(t, cfg);
+}
+
 function inSession(t, cfg) {
   const m = parisMinutes(t, cfg);
   return cfg.sessions.some((s) => m >= hhmm(s.start) && m < hhmm(s.end));
@@ -330,6 +348,10 @@ module.exports = {
   parisMinutes,
   parisDay,
   inSession,
+  parisWeekday,
+  fridayNoEntry,
+  weekendClose,
+  canEnter,
   aggregateM15,
   detectRegime,
   findPivots,

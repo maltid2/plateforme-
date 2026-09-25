@@ -21,6 +21,12 @@
 
 #include <Trade\Trade.mqh>
 
+enum ENUM_GD_MODE
+  {
+   GD_H24     = 0, // H24 : toute la journée (hors rollover 22:45-01:00)
+   GD_METHODE = 1  // Méthode du PDF : créneaux du marché, 2 h max
+  };
+
 enum ENUM_GD_MARKET
   {
    GD_GOLD = 0, // Or (XAUUSD)
@@ -32,14 +38,17 @@ enum ENUM_GD_MARKET
 input group "Marché"
 input ENUM_GD_MARKET InpMarket        = GD_GOLD; // Marché tradé
 input double InpPointScale            = 0;       // Prix d'1 point méthode (0 = auto : or 0.20 $, Dow 1.0)
+input ENUM_GD_MODE InpMode            = GD_H24;  // Mode de trading
 input long   InpMagic                 = 25092026;
 
 input group "Horaires (heure de Paris)"
 input int    InpServerMinusParisHours = 1;       // Heure serveur - heure de Paris
-input string InpSession1              = "auto";  // « auto » = créneaux du marché choisi
-input string InpSession2              = "auto";  // Or : 09:00-12:00 et 14:45-18:00
-input string InpSession3              = "auto";  // Dow : 10:00-13:30, 18:00-20:00, 21:30-23:00
-input int    InpMaxMinutesAfterFirst  = 120;     // Trader max 2 h puis arrêter
+input string InpSession1              = "auto";  // « auto » : H24 01:00-22:45 ; méthode or 09:00-12:00 / 14:45-18:00
+input string InpSession2              = "auto";  // méthode Dow : 10:00-13:30, 18:00-20:00, 21:30-23:00
+input string InpSession3              = "auto";
+input int    InpMaxMinutesAfterFirst  = -1;      // Minutes de trading après la 1re entrée (-1 = auto : H24 illimité, méthode 120)
+input string InpFridayLastEntry       = "auto";  // Vendredi : plus d'entrée après (auto : H24 21:00 ; vide = off)
+input string InpFridayClose           = "auto";  // Vendredi : clôture avant le week-end (auto : H24 22:30 ; vide = off)
 
 input group "1. Type de trade"
 input int    InpRegimeLookback        = 24;      // Bougies M15 analysées
@@ -88,10 +97,11 @@ input bool   InpTrailing              = true;
 
 input group "Money management & psychologie"
 input double InpRiskPercent           = 1.0;
-input int    InpMaxTradesPerDay       = 3;
+input double InpMaxRiskPercentMinLot  = 5.0;     // Petit compte : lot minimum accepté si la perte au stop <= ce %
+input int    InpMaxTradesPerDay       = -1;      // -1 = auto : H24 6, méthode 3
 input int    InpMaxLossesPerDay       = 2;
 input int    InpPauseAfterLossMinutes = 120;
-input double InpMaxDailyLossPercent   = 3;
+input double InpMaxDailyLossPercent   = -1;      // -1 = auto : H24 10 %, méthode 3 %
 
 input group "Filtre anti-news"
 input double InpMaxM15Range           = -1;      // Amplitude M15 max en points méthode (-1 = auto : or 60 = 12 $, Dow off ; 0 = off)
@@ -116,6 +126,9 @@ int      g_sessStart[3], g_sessEnd[3];
 string   g_sessStr[3];
 double   g_pt;
 double   g_maxM15Range;   // en prix (0 = filtre désactivé)
+int      g_maxTrades, g_maxMinutes;
+double   g_maxDailyLoss;
+int      g_fridayLastEntry = -1, g_fridayClose = -1;   // minutes Paris (-1 = off)
 
 //+------------------------------------------------------------------+
 int ParseHM(string s)
@@ -136,17 +149,31 @@ bool ParseSession(string s, int &a, int &b)
 int OnInit()
   {
    bool gold = InpMarket == GD_GOLD;
+   bool h24 = InpMode == GD_H24;
+   string presetH24[3]  = {"01:00-22:45", "", ""};
    string presetGold[3] = {"09:00-12:00", "14:45-18:00", ""};
    string presetDow[3]  = {"10:00-13:30", "18:00-20:00", "21:30-23:00"};
    g_sessStr[0] = InpSession1; g_sessStr[1] = InpSession2; g_sessStr[2] = InpSession3;
    for(int k = 0; k < 3; k++)
      {
-      if(g_sessStr[k] == "auto") g_sessStr[k] = gold ? presetGold[k] : presetDow[k];
+      if(g_sessStr[k] == "auto") g_sessStr[k] = h24 ? presetH24[k] : (gold ? presetGold[k] : presetDow[k]);
       if(!ParseSession(g_sessStr[k], g_sessStart[k], g_sessEnd[k]))
         {
          Print("Session invalide : format attendu HH:MM-HH:MM (ou « auto », ou vide)");
          return INIT_PARAMETERS_INCORRECT;
         }
+     }
+   g_maxTrades    = InpMaxTradesPerDay >= 0 ? InpMaxTradesPerDay : (h24 ? 6 : 3);
+   g_maxMinutes   = InpMaxMinutesAfterFirst >= 0 ? InpMaxMinutesAfterFirst : (h24 ? 0 : 120);
+   g_maxDailyLoss = InpMaxDailyLossPercent >= 0 ? InpMaxDailyLossPercent : (h24 ? 10 : 3);
+   string fe = InpFridayLastEntry == "auto" ? (h24 ? "21:00" : "") : InpFridayLastEntry;
+   string fc = InpFridayClose == "auto" ? (h24 ? "22:30" : "") : InpFridayClose;
+   g_fridayLastEntry = fe == "" ? -1 : ParseHM(fe);
+   g_fridayClose     = fc == "" ? -1 : ParseHM(fc);
+   if((fe != "" && g_fridayLastEntry < 0) || (fc != "" && g_fridayClose < 0))
+     {
+      Print("Heure du vendredi invalide : format attendu HH:MM (ou « auto », ou vide)");
+      return INIT_PARAMETERS_INCORRECT;
      }
    g_pt = InpPointScale > 0 ? InpPointScale : (gold ? 0.2 : 1.0);
    double maxRangePts = InpMaxM15Range >= 0 ? InpMaxM15Range : (gold ? 60 : 0);
@@ -157,8 +184,8 @@ int OnInit()
    bool looksGold = StringFind(sym, "XAU") >= 0 || StringFind(sym, "GOLD") >= 0;
    if(gold != looksGold)
       PrintFormat("ATTENTION : marché « %s » choisi mais le graphique est %s. Vérifie le paramètre InpMarket.", gold ? "Or" : "Dow", _Symbol);
-   PrintFormat("Geometry %s : 1 point méthode = %.2f en prix | SL mini impulsion %.2f | créneaux %s %s %s",
-               gold ? "Or" : "Dow", g_pt, InpImpulseMinSL * g_pt, g_sessStr[0], g_sessStr[1], g_sessStr[2]);
+   PrintFormat("Geometry %s (%s) : 1 point méthode = %.2f en prix | SL mini impulsion %.2f | créneaux %s %s %s | %d trades/jour max",
+               gold ? "Or" : "Dow", h24 ? "H24" : "méthode", g_pt, InpImpulseMinSL * g_pt, g_sessStr[0], g_sessStr[1], g_sessStr[2], g_maxTrades);
    trade.SetExpertMagicNumber(InpMagic);
    trade.SetTypeFillingBySymbol(_Symbol);
    trade.SetDeviationInPoints(30);
@@ -179,6 +206,16 @@ long ParisMinutesTotal(datetime t) { return (long)t / 60 - InpServerMinusParisHo
 int  ParisMinuteOfDay(datetime t)  { long m = ParisMinutesTotal(t); return (int)(((m % 1440) + 1440) % 1440); }
 long ParisDay(datetime t)          { long m = ParisMinutesTotal(t); return (m >= 0) ? m / 1440 : (m - 1439) / 1440; }
 datetime ParisDayStartServer(datetime t) { return (datetime)((ParisDay(t) * 1440 + InpServerMinusParisHours * 60) * 60); }
+
+int ParisWeekday(datetime t)
+  {
+   MqlDateTime d;
+   TimeToStruct((datetime)(ParisMinutesTotal(t) * 60), d);
+   return d.day_of_week;   // 0 = dimanche, 5 = vendredi
+  }
+
+bool FridayNoEntry(datetime t)  { return g_fridayLastEntry >= 0 && ParisWeekday(t) == 5 && ParisMinuteOfDay(t) >= g_fridayLastEntry; }
+bool WeekendClose(datetime t)   { return g_fridayClose >= 0 && ParisWeekday(t) == 5 && ParisMinuteOfDay(t) >= g_fridayClose; }
 
 bool InSession(datetime t)
   {
@@ -380,10 +417,11 @@ string GuardBlock(datetime now)
      }
    double startBalance = AccountInfoDouble(ACCOUNT_BALANCE) - pnl;
    double pnlPct = startBalance > 0 ? pnl / startBalance * 100.0 : 0;
-   if(trades >= InpMaxTradesPerDay) return "max trades/jour";
+   if(trades >= g_maxTrades) return "max trades/jour";
    if(losses >= InpMaxLossesPerDay) return "max pertes/jour";
-   if(pnlPct <= -InpMaxDailyLossPercent) return "perte journalière max";
-   if(first > 0 && now - first > InpMaxMinutesAfterFirst * 60) return "2 h de trading écoulées";
+   if(pnlPct <= -g_maxDailyLoss) return "perte journalière max";
+   if(g_maxMinutes > 0 && first > 0 && now - first > g_maxMinutes * 60) return "temps de trading du jour écoulé";
+   if(FridayNoEntry(now)) return "vendredi soir : plus d'entrée avant le week-end";
    if(lastLoss > 0 && now - lastLoss < InpPauseAfterLossMinutes * 60) return "pause après perte";
    return "";
   }
@@ -399,10 +437,22 @@ double LotsForRisk(double slDist)
    double vmin = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MIN);
    double vmax = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MAX);
    if(tickValue <= 0 || tickSize <= 0 || slDist <= 0 || step <= 0) return 0;
-   double money = AccountInfoDouble(ACCOUNT_BALANCE) * InpRiskPercent / 100.0;
-   double lots = money / (slDist / tickSize * tickValue);
-   lots = MathFloor(lots / step) * step;
-   if(lots < vmin) return 0;  // le risque minimal dépasserait le risque autorisé
+   double balance = AccountInfoDouble(ACCOUNT_BALANCE);
+   double perLot = slDist / tickSize * tickValue;   // perte au stop pour 1 lot
+   double lots = MathFloor(balance * InpRiskPercent / 100.0 / perLot / step + 1e-9) * step;
+   if(lots < vmin)
+     {
+      // Petit compte : lot minimum seulement si la perte au stop reste sous le plafond
+      double lossAtMin = perLot * vmin;
+      if(lossAtMin > balance * InpMaxRiskPercentMinLot / 100.0)
+        {
+         PrintFormat("Setup ignoré : même au lot minimum (%.2f) la perte au stop serait %.2f (%.1f %% du capital > %.1f %%)",
+                     vmin, lossAtMin, lossAtMin / balance * 100, InpMaxRiskPercentMinLot);
+         return 0;
+        }
+      PrintFormat("Petit compte : lot minimum %.2f, perte au stop %.2f (%.1f %% du capital)", vmin, lossAtMin, lossAtMin / balance * 100);
+      lots = vmin;
+     }
    return MathMin(lots, vmax);
   }
 
@@ -524,8 +574,8 @@ void WriteState()
       string js = SessionJson(list[k]);
       if(js != "") sessions += (sessions == "" ? "" : ",") + js;
      }
-   string params = StringFormat("{\"market\":%s,\"unit\":%s,\"riskPercent\":%s,\"maxTradesPerDay\":%d,\"maxLossesPerDay\":%d,\"pauseAfterLossMinutes\":%d,\"quickMode\":%s,\"sessions\":[%s]}",
-                                JS(InpMarket == GD_GOLD ? "gold" : "dow"), JS(InpMarket == GD_GOLD ? "$" : "pts"), J(InpRiskPercent), InpMaxTradesPerDay, InpMaxLossesPerDay, InpPauseAfterLossMinutes, JB(InpQuickMode), sessions);
+   string params = StringFormat("{\"mode\":%s,\"market\":%s,\"unit\":%s,\"riskPercent\":%s,\"maxTradesPerDay\":%d,\"maxLossesPerDay\":%d,\"pauseAfterLossMinutes\":%d,\"quickMode\":%s,\"sessions\":[%s]}",
+                                JS(InpMode == GD_H24 ? "h24" : "methode"), JS(InpMarket == GD_GOLD ? "gold" : "dow"), JS(InpMarket == GD_GOLD ? "$" : "pts"), J(InpRiskPercent), g_maxTrades, InpMaxLossesPerDay, InpPauseAfterLossMinutes, JB(InpQuickMode), sessions);
    string json = StringFormat("{\"version\":1,\"t\":%I64d,\"offset\":%d,\"symbol\":%s,\"balance\":%s,\"equity\":%s,%s,\"position\":%s,\"params\":%s}",
                               (long)TimeCurrent(), InpServerMinusParisHours, JS(_Symbol), J(AccountInfoDouble(ACCOUNT_BALANCE)),
                               J(AccountInfoDouble(ACCOUNT_EQUITY)), g_stateCore, pos, params);
@@ -586,7 +636,7 @@ void OnTradeTransaction(const MqlTradeTransaction &trans, const MqlTradeRequest 
    double risk    = GlobalVariableCheck("GDR_" + id) ? GlobalVariableGet("GDR_" + id) : 0;
    bool trailed   = GlobalVariableCheck("GDTR_" + id);
    long why = HistoryDealGetInteger(trans.deal, DEAL_REASON);
-   string reason = why == DEAL_REASON_TP ? "TP" : why == DEAL_REASON_SL ? (trailed ? "SL suiveur" : "SL") : why == DEAL_REASON_SO ? "stop out" : "manuel";
+   string reason = why == DEAL_REASON_TP ? "TP" : why == DEAL_REASON_SL ? (trailed ? "SL suiveur" : "SL") : why == DEAL_REASON_SO ? "stop out" : why == DEAL_REASON_EXPERT ? "clôture week-end" : "manuel";
    double move = (exitPx - entryPx) * dir;
    AppendEvent(StringFormat("{\"type\":\"close\",\"t\":%I64d,\"pos\":%I64d,\"side\":%s,\"exit\":%s,\"profit\":%s,\"points\":%s,\"r\":%s,\"reason\":%s,\"balance\":%s}",
                             (long)HistoryDealGetInteger(trans.deal, DEAL_TIME), pos, JS(dir > 0 ? "buy" : "sell"), J(exitPx), J(profit),
@@ -613,6 +663,12 @@ void OnTick()
    if(CopyRates(_Symbol, PERIOD_M15, 1, need, m15) < need) return;
    int i = ArraySize(m5) - 1, last = ArraySize(m15) - 1;
 
+   // Vendredi soir : on ne garde pas de position pendant le week-end (gap du lundi)
+   if(WeekendClose(TimeCurrent()) && SelectOwnPosition())
+     {
+      ulong tk = (ulong)PositionGetInteger(POSITION_TICKET);
+      if(trade.PositionClose(tk)) Print("Clôture avant le week-end");
+     }
    ManagePosition(m5[i]);
 
    Regime reg = DetectRegime(m15, last);
@@ -729,7 +785,7 @@ void OnTick()
          double risk = (px - sl) * dir;
          if(risk <= 0 || (tp - px) * dir <= 0 || risk > InpMaxSL * g_pt * 1.2) continue;
          double lots = LotsForRisk(risk);
-         if(lots <= 0) { Print("Lot minimum > risque autorisé : trade ignoré"); return; }
+         if(lots <= 0) return;
 
          string cmt = "GDR:" + DoubleToString(risk, _Digits);
          bool ok = dir > 0 ? trade.Buy(lots, _Symbol, px, sl, tp, cmt) : trade.Sell(lots, _Symbol, px, sl, tp, cmt);

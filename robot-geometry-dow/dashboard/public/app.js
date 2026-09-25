@@ -235,7 +235,8 @@ function renderChecklist() {
   }));
 
   const sess = (st.params && st.params.sessions) || [];
-  $('#session').textContent = sess.length ? sess.map((x) => `${x.start}–${x.end}`).join(' · ') : '';
+  const mode = st.params && st.params.mode === 'h24' ? 'H24 · ' : '';
+  $('#session').textContent = sess.length ? mode + sess.map((x) => `${x.start}–${x.end}`).join(' · ') : '';
   const p = st.position;
   $('#position').replaceChildren(p
     ? h('div', { class: 'position' }, h('b', {}, `${sideFr(p.side)} ${p.lots} lot(s) @ ${pf(p.entry)}`),

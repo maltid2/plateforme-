@@ -46,15 +46,37 @@ si les stops sont trop souvent touchés, augmente `InpPointScale` (0,25 ; 0,30�
 | Distance max à la zone pour entrer | 15 pts | 3,00 $ |
 | Filtre anti-news (amplitude M15 max) | désactivé | 12,00 $ |
 
-### Horaires (heure de Paris)
+### Horaires : mode H24 (défaut pour l'or) ou mode méthode
 
-| Marché | Créneaux |
-|---|---|
-| **Or** | 09:00–12:00 (ouverture de Londres) · 14:45–18:00 (Londres + New York, après les stats de 14:30) |
-| Dow | 10:00–13:30 · 18:00–20:00 · 21:30–23:00 (ceux du PDF) |
+| Mode | Créneaux (heure de Paris) | Limites par jour |
+|---|---|---|
+| **H24** (défaut or) | **01:00–22:45**, tous les jours de la semaine (le rollover 22:45–01:00 est évité : spreads très larges). Vendredi : plus d'entrée après 21:00, **clôture à 22:30** pour ne rien garder le week-end. | 6 trades, 2 pertes, −10 % |
+| Méthode (défaut Dow) | Or : 09:00–12:00 · 14:45–18:00 — Dow : 10:00–13:30 · 18:00–20:00 · 21:30–23:00 (ceux du PDF). Arrêt **2 h** après la première entrée (« prendre ce qu'on a à prendre pendant max deux heures »). | 3 trades, 2 pertes, −3 % |
 
-Dans les deux cas, après la **première** entrée de la journée le robot s'arrête au bout de
-**2 heures** (« prendre ce qu'on a à prendre pendant max deux heures »).
+Dans les deux modes, la pause de 2 h après une perte, le filtre anti-news, le stop jamais élargi et
+une seule position à la fois restent actifs. Le mode H24 s'éloigne du PDF, qui conseille de ne
+trader que peu de temps par jour : il y aura plus de trades, y compris dans des heures plus calmes
+(nuit asiatique) où les setups sont souvent moins nets.
+
+### Petit compte (80–100 $)
+
+Sur l'or, la plus petite position (**0,01 lot**) gagne ou perd **environ 1 $ par dollar de mouvement**.
+Avec 90 $ et 1 % de risque (0,90 $), aucun stop logique ne passerait : le robot ne traderait jamais.
+Il fonctionne donc ainsi :
+
+- il calcule le lot pour risquer `InpRiskPercent` (1 %) ;
+- si ça donne moins que le lot minimum, il prend **0,01 lot seulement si la perte au stop reste
+  ≤ `InpMaxRiskPercentMinLot` (5 %)**, soit un stop de 4,50 $ max avec 90 $ ;
+- sinon, **il ne prend pas le trade** (message dans l'onglet *Experts*).
+
+Concrètement, avec 90 $ : **chaque trade perdant coûte 1 à 4,50 $ (1 à 5 % du compte)**, et
+deux pertes dans la journée arrêtent le robot jusqu'au lendemain (environ −10 % maximum par jour).
+Plusieurs mauvais jours d'affilée peuvent faire perdre une grosse partie du capital.
+
+> Le plus adapté à ce capital est un **compte cent** (proposé par beaucoup de brokers) :
+> 90 $ y deviennent 9 000 cents et 0,01 lot ne vaut plus que 1 cent par dollar de mouvement.
+> Le robot peut alors vraiment risquer 1 % par trade. Rien à changer dans l'EA : le lot est
+> calculé à partir de la valeur du tick du symbole.
 
 ## Comment le robot applique la méthode
 
@@ -92,12 +114,15 @@ Les distances ci-dessous sont en points méthode (voir le tableau de conversion)
 
 Paramètres à vérifier absolument :
 
+- **`InpMode`** : *H24* par défaut (voir plus haut) ou *Méthode du PDF*.
+- **`InpMaxRiskPercentMinLot`** : perte maximale acceptée au lot minimum sur un petit compte (5 %).
 - **`InpMarket`** : *Or (XAUUSD)* par défaut. L'onglet *Experts* affiche un avertissement si le
   graphique ne correspond pas au marché choisi.
 - **`InpServerMinusParisHours`** : heure du serveur MT5 moins heure de Paris. La plupart des
   brokers sont en UTC+2/+3 → **1**. Comparez l'heure de la fenêtre *Market Watch* avec l'heure de Paris.
 - **`InpPointScale`** : `0` = automatique (or 0,20 $, Dow 1,0). À ajuster après backtest.
-- **`InpSession1..3`** : `auto` = créneaux du marché choisi ; ou `HH:MM-HH:MM` ; vide = désactivé.
+- **`InpSession1..3`** : `auto` = créneaux du mode et du marché choisis ; ou `HH:MM-HH:MM` ; vide = désactivé.
+- **`InpFridayLastEntry` / `InpFridayClose`** : `auto` = 21:00 / 22:30 en H24 ; vide = désactivé.
 - **`InpMaxM15Range`** : `-1` = automatique (or 60 points méthode = 12 $, Dow désactivé) ; `0` = désactivé.
 - **`InpRiskPercent`** : risque par trade (1 % par défaut). Le lot est calculé à partir de la
   distance du stop et de la valeur du tick du symbole : il s'adapte à l'or automatiquement.
@@ -117,7 +142,7 @@ partir d'un certain volume ; sinon comptez 10-30 €/mois).
 5. Lance `dashboard\demarrer.bat`, puis ouvre <http://127.0.0.1:8787> sur le VPS.
    Pour qu'il redémarre avec Windows : **Planificateur de tâches › Créer une tâche de base ›
    Au démarrage de l'ordinateur › Démarrer un programme** → `demarrer.bat`.
-6. Chaque soir (18:30 pour l'or) le rapport du jour apparaît dans l'onglet **Rapports quotidiens**
+6. Chaque soir le rapport du jour apparaît dans l'onglet **Rapports quotidiens**
    (et sur Telegram si tu l'as configuré, voir [`dashboard/README.md`](./dashboard/README.md)).
 
 Aperçu immédiat, sans MetaTrader : `cd dashboard && npm run demo`.
@@ -129,7 +154,9 @@ Aucune installation : Node.js ≥ 18 suffit.
 ```bash
 cd robot-geometry-dow/backtest
 npm test                                                # tests de la logique
-node src/index.js historique_XAUUSD_M5.csv              # or (défaut), mode complet
+node src/index.js historique_XAUUSD_M5.csv              # or (défaut), H24, résultats en R
+node src/index.js historique_XAUUSD_M5.csv --capital=90  # simulation en dollars avec 90 $ (lots réels)
+node src/index.js historique_XAUUSD_M5.csv --mode=methode  # créneaux du PDF, 2 h max
 node src/index.js historique_XAUUSD_M5.csv --quick      # achat/vente rapide (SL 1 $ / TP 6 $)
 node src/index.js historique_US30_M5.csv --market=dow   # Dow Jones
 node src/index.js data.csv --offset=1 --risk=1 --spread=0.3 --journal=journal.csv

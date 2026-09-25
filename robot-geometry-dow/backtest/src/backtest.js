@@ -33,7 +33,7 @@ class RiskGuard {
     if (this.trades >= c.maxTradesPerDay) return 'max trades/jour';
     if (this.losses >= c.maxLossesPerDay) return 'max pertes/jour';
     if (this.pnlPercent <= -c.maxDailyLossPercent) return 'perte journalière max';
-    if (this.firstTradeAt !== null && t - this.firstTradeAt > c.maxMinutesAfterFirstTrade * 60000) return '2 h de trading écoulées';
+    if (c.maxMinutesAfterFirstTrade > 0 && this.firstTradeAt !== null && t - this.firstTradeAt > c.maxMinutesAfterFirstTrade * 60000) return '2 h de trading écoulées';
     if (this.lastLossAt !== null && t - this.lastLossAt < c.pauseAfterLossMinutes * 60000) return 'pause après perte';
     return null;
   }
@@ -70,11 +70,27 @@ function trail(pos, bar, cfg) {
   return sl;
 }
 
+// Taille de position en lots quand on simule un vrai capital (cfg.capital > 0).
+// Petit compte : si le risque visé donne moins que le lot minimum, on prend le lot minimum
+// SEULEMENT si la perte au stop reste sous maxRiskPercentMinLot % du capital ; sinon pas de trade.
+function sizeLots(balance, risk, cfg) {
+  const perLot = risk * cfg.contractSize; // perte au stop pour 1 lot
+  if (perLot <= 0) return 0;
+  const target = (balance * cfg.riskPercent) / 100;
+  let lots = Math.floor(target / perLot / cfg.lotStep + 1e-9) * cfg.lotStep;
+  if (lots < cfg.minLot) {
+    lots = perLot * cfg.minLot <= (balance * cfg.maxRiskPercentMinLot) / 100 ? cfg.minLot : 0;
+  }
+  return Math.round(lots * 100) / 100;
+}
+
 function run(m5, cfg) {
   const m15 = S.aggregateM15(m5);
   const guard = new RiskGuard(cfg);
   const trades = [];
-  let balance = cfg.initialBalance;
+  const realMoney = cfg.capital > 0;
+  let balance = realMoney ? cfg.capital : cfg.initialBalance;
+  let skipped = 0; // setups valides refusés car le lot minimum dépasse le risque autorisé
   let peak = balance;
   let maxDD = 0;
   let pos = null;
@@ -88,12 +104,20 @@ function run(m5, cfg) {
     const dir = pos.side === 'buy' ? 1 : -1;
     const points = (price - pos.entry) * dir - half;
     const r = points / pos.risk;
-    const pct = r * cfg.riskPercent;
-    balance *= 1 + pct / 100;
+    let pct = r * cfg.riskPercent;
+    let pnl;
+    if (realMoney) {
+      pnl = points * pos.lots * cfg.contractSize;
+      pct = (pnl / balance) * 100;
+      balance += pnl;
+    } else {
+      pnl = balance * (pct / 100);
+      balance *= 1 + pct / 100;
+    }
     peak = Math.max(peak, balance);
     maxDD = Math.max(maxDD, (peak - balance) / peak);
     guard.onClose(bar.t, pct);
-    trades.push({ ...pos, exitTime: bar.t, exit: price, reason, points, r, balance });
+    trades.push({ ...pos, exitTime: bar.t, exit: price, reason, points, r, pnl, balance });
     pos = null;
   };
 
@@ -106,12 +130,17 @@ function run(m5, cfg) {
       const entry = bar.o + dir * half;
       const risk = (entry - pending.sl) * dir;
       const ok = risk > 0 && (pending.tp - entry) * dir > 0;
-      if (ok && !guard.canTrade(bar.t)) {
-        pos = { ...pending, entry, entryTime: bar.t, risk, initialSL: pending.sl };
+      const lots = realMoney ? sizeLots(balance, risk, cfg) : null;
+      if (ok && lots === 0) skipped++;
+      else if (ok && !guard.canTrade(bar.t)) {
+        pos = { ...pending, entry, entryTime: bar.t, risk, initialSL: pending.sl, lots };
         guard.onOpen(bar.t);
       }
       pending = null;
     }
+
+    // Vendredi soir : on sort à l'ouverture de la bougie, pas de position pendant le week-end.
+    if (pos && S.weekendClose(bar.t, cfg)) close(bar, bar.o, 'clôture week-end');
 
     // Gestion de la position : stop d'abord (hypothèse prudente), puis target.
     if (pos) {
@@ -131,13 +160,14 @@ function run(m5, cfg) {
 
     if (pos || i + 1 >= m5.length) continue;
     const nextOpen = bar.t + S.M5;
-    if (!S.inSession(nextOpen, cfg) || guard.canTrade(nextOpen)) continue;
+    if (realMoney && balance <= 0) break; // compte vidé
+    if (!S.canEnter(nextOpen, cfg) || guard.canTrade(nextOpen)) continue;
     const sig = S.evaluate(m5, i, m15, analysis, cfg);
     if (sig) pending = sig;
   }
   if (pos) close(m5[m5.length - 1], m5[m5.length - 1].c, 'fin des données');
 
-  return { trades, stats: stats(trades, cfg, balance, maxDD) };
+  return { trades, stats: { ...stats(trades, cfg, balance, maxDD), skipped } };
 }
 
 function stats(trades, cfg, balance, maxDD) {
@@ -153,9 +183,9 @@ function stats(trades, cfg, balance, maxDD) {
     profitFactor: gl > 0 ? gw / gl : wins.length ? Infinity : 0,
     avgR: trades.length ? trades.reduce((s, t) => s + t.r, 0) / trades.length : 0,
     finalBalance: balance,
-    returnPercent: (balance / cfg.initialBalance - 1) * 100,
+    returnPercent: (balance / (cfg.capital > 0 ? cfg.capital : cfg.initialBalance) - 1) * 100,
     maxDrawdownPercent: maxDD * 100,
   };
 }
 
-module.exports = { run, RiskGuard, trail, stats };
+module.exports = { run, RiskGuard, trail, stats, sizeLots };

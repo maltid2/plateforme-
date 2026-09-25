@@ -6,7 +6,7 @@ const config = require('../src/config');
 const cfg = config.forMarket('dow'); // scénarios écrits en prix du Dow
 const gold = config.forMarket('gold');
 const S = require('../src/strategy');
-const { run, RiskGuard, trail } = require('../src/backtest');
+const { run, RiskGuard, trail, sizeLots } = require('../src/backtest');
 const { parseCsv } = require('../src/csv');
 
 let passed = 0;
@@ -214,8 +214,9 @@ test('or par défaut : distances converties en dollars', () => {
   assert.ok(Math.abs(gold.quickTP - 6) < 1e-9);        // 30 pts méthode = 6 $
   assert.ok(Math.abs(gold.maxM15Range - 12) < 1e-9);
   assert.strictEqual(cfg.impulseMinSL, 20);            // Dow inchangé
-  assert.ok(S.inSession(DAY + (10 * 60 + 30) * 60000, gold));   // 09:30 Paris : Londres
-  assert.ok(!S.inSession(DAY + (15 * 60 + 35) * 60000, gold));  // 14:35 Paris : stats US, évité
+  const methode = config.forMarket('gold', { mode: 'methode' });
+  assert.ok(S.inSession(DAY + (10 * 60 + 30) * 60000, methode));   // 09:30 Paris : Londres
+  assert.ok(!S.inSession(DAY + (15 * 60 + 35) * 60000, methode));  // 14:35 Paris : stats US, évité
 });
 
 // Même scénario ramené à l'échelle de l'or : 38000 -> 3800 $, écarts x0,2.
@@ -238,6 +239,45 @@ test('or : le même setup déclenche le même achat', () => {
 test('or : filtre anti-news sur une bougie M15 géante', () => {
   const { trades } = run(goldScenario(), { ...gold, maxM15Range: 1 });
   assert.strictEqual(trades.length, 0);
+});
+
+console.log('Mode H24 & petit compte');
+test('or en H24 par défaut : toute la journée sauf le rollover', () => {
+  assert.strictEqual(gold.mode, 'h24');
+  assert.strictEqual(cfg.mode, 'methode'); // le Dow garde la méthode du PDF
+  const at = (day, h, m) => Date.UTC(2024, 0, day, h + 1, m); // heure serveur = Paris + 1
+  assert.ok(S.canEnter(at(2, 3, 0), gold));    // mardi 03:00
+  assert.ok(S.canEnter(at(2, 15, 0), gold));   // mardi 15:00
+  assert.ok(!S.canEnter(at(2, 23, 30), gold)); // rollover
+  assert.strictEqual(gold.maxMinutesAfterFirstTrade, 0); // pas de limite de 2 h
+  assert.ok(S.canEnter(at(5, 20, 0), gold));   // vendredi 20:00
+  assert.ok(!S.canEnter(at(5, 21, 30), gold)); // vendredi après 21:00 : plus d'entrée
+  assert.ok(!S.weekendClose(at(5, 22, 0), gold));
+  assert.ok(S.weekendClose(at(5, 22, 35), gold)); // clôture avant le week-end
+  const g = new RiskGuard(gold);
+  g.onOpen(at(2, 3, 0));
+  assert.strictEqual(g.canTrade(at(2, 15, 0)), null); // plus de coupure « 2 h »
+});
+
+test('petit compte 90 $ : lot minimum si la perte reste <= 5 %', () => {
+  const small = { ...gold, capital: 90 };
+  assert.strictEqual(sizeLots(90, 4, small), 0.01);   // stop 4 $ -> perte 4 $ = 4,4 %
+  assert.strictEqual(sizeLots(90, 6, small), 0);      // stop 6 $ -> 6,7 % : refusé
+  assert.strictEqual(sizeLots(10000, 4, small), 0.25); // gros compte : 1 % = 100 $ / 400 $
+});
+
+test('petit compte : stop trop large refusé à 90 $, accepté à 150 $', () => {
+  // Ce setup a un stop logique de ~6,15 $ : 0,01 lot risque 6,15 $.
+  const at90 = run(goldScenario(), { ...gold, capital: 90 });
+  assert.strictEqual(at90.trades.length, 0);   // 6,8 % du capital > 5 % : refusé
+  assert.ok(at90.stats.skipped >= 1, 'setups refusés comptés');
+  const at150 = run(goldScenario(), { ...gold, capital: 150 });
+  assert.ok(at150.trades.length >= 1);         // 4,1 % : accepté au lot minimum
+  const t = at150.trades[0];
+  assert.strictEqual(t.lots, 0.01);
+  assert.ok(Math.abs(t.pnl - t.points * 0.01 * 100) < 1e-9);
+  const total = at150.trades.reduce((x, k) => x + k.pnl, 0);
+  assert.ok(Math.abs(at150.stats.finalBalance - (150 + total)) < 1e-9);
 });
 
 console.log('Garde-fous');

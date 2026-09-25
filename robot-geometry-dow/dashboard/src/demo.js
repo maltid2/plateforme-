@@ -6,7 +6,8 @@
 
 const fs = require('fs');
 const path = require('path');
-const cfg = require('../../backtest/src/config').forMarket('gold');
+// Petit compte de 90 $ en mode H24, comme dans la vraie utilisation prévue.
+const cfg = require('../../backtest/src/config').forMarket('gold', { capital: 90 });
 const S = require('../../backtest/src/strategy');
 const { run } = require('../../backtest/src/backtest');
 const { buildReport, reportText } = require('./report');
@@ -85,13 +86,12 @@ function generate(dir) {
 
   // events.jsonl
   const events = [{ type: 'start', t: sec(bars[0].t) }];
-  let balance = cfg.initialBalance;
+  let balance = cfg.capital;
   let pos = 1000;
   for (const t of trades) {
     pos += 1;
-    const lots = Math.max(0.01, Math.round((balance * cfg.riskPercent / 100) / t.risk * 100) / 100);
     events.push({
-      type: 'open', t: sec(t.entryTime), pos, side: t.side, lots, entry: t.entry, sl: t.initialSL, tp: t.tp,
+      type: 'open', t: sec(t.entryTime), pos, side: t.side, lots: t.lots, entry: t.entry, sl: t.initialSL, tp: t.tp,
       risk: t.risk, balance, checklist: t.checklist,
     });
     if (t.reason === 'SL suiveur') events.push({ type: 'trail', t: sec(t.entryTime) + 900, pos, sl: t.exit });
@@ -134,7 +134,7 @@ function generate(dir) {
     checklist: diagnose(bars, m15, analysis, i),
     position: null,
     params: {
-      market: cfg.market, unit: cfg.unit, riskPercent: cfg.riskPercent, maxTradesPerDay: cfg.maxTradesPerDay, maxLossesPerDay: cfg.maxLossesPerDay,
+      mode: cfg.mode, market: cfg.market, unit: cfg.unit, riskPercent: cfg.riskPercent, maxTradesPerDay: cfg.maxTradesPerDay, maxLossesPerDay: cfg.maxLossesPerDay,
       pauseAfterLossMinutes: cfg.pauseAfterLossMinutes, quickMode: cfg.quickMode, sessions: cfg.sessions,
     },
   };

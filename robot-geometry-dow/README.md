@@ -8,6 +8,7 @@ de la méthode, avec les règles de psychologie du PDF codées en garde-fous.
 |---|---|
 | [`mt5/GeometryDow.mq5`](./mt5/GeometryDow.mq5) | Expert Advisor **MetaTrader 5** (trading démo/réel) |
 | [`backtest/`](./backtest) | Backtester **Node.js** sans dépendance, même logique, avec tests |
+| [`dashboard/`](./dashboard) | **Tableau de bord web** + **rapport quotidien automatique** (audit des règles, journal, Telegram facultatif) |
 
 > ⚠️ **Avertissement** : les CFD sur indices sont à effet de levier et la majorité des comptes
 > particuliers perdent de l'argent. Ce robot n'est **pas** un conseil en investissement et
@@ -43,7 +44,7 @@ le robot s'arrête au bout de **2 heures** (« prendre ce qu'on a à prendre pen
 | « Prends 2 h de pause » / pas de *Hail-Mary trade* | Pause de 120 min après chaque perte. |
 | « Un trade reste un trade » | Risque fixe par trade (1 % du capital), max 2 pertes et −3 % par jour, max 3 trades/jour. |
 | « Ne prends pas position sur une simple accélération du prix » | Pas d'entrée si le prix est à plus de 15 pts de la zone. |
-| « Tiens un journal de trading » | Le backtest exporte un journal CSV ; l'EA écrit chaque trade (check-list incluse) dans l'onglet *Experts*. |
+| « Tiens un journal de trading » | Le backtest exporte un journal CSV ; l'EA journalise chaque trade (check-list incluse) pour le tableau de bord, qui produit un rapport chaque soir avec un champ de notes. |
 
 ## Installation dans MetaTrader 5
 
@@ -61,6 +62,24 @@ Paramètres à vérifier absolument :
 - **`InpRiskPercent`** : risque par trade (1 % par défaut).
 
 Testez d'abord dans le **Testeur de stratégie** (Ctrl+R) en mode « Toutes les ticks basés sur des ticks réels ».
+
+## Mise en route pas à pas (tourner 24 h/24)
+
+Le robot ne trade que si MetaTrader 5 est ouvert. Pour ne pas dépendre de ton PC, fais tourner
+MT5 et le tableau de bord sur un **VPS Windows** (beaucoup de brokers en offrent un gratuit à
+partir d'un certain volume ; sinon comptez 10-30 €/mois).
+
+1. **Compte démo** chez un broker MT5 qui propose le Dow Jones (US30 / DJ30 / WS30).
+2. Sur le VPS : installe **MetaTrader 5** (depuis le site du broker) et **Node.js LTS** (nodejs.org).
+3. Copie le dossier `robot-geometry-dow` sur le VPS.
+4. Installe l'EA (section ci-dessus), règle `InpServerMinusParisHours`, laisse `InpExportDashboard = true`.
+5. Lance `dashboard\demarrer.bat`, puis ouvre <http://127.0.0.1:8787> sur le VPS.
+   Pour qu'il redémarre avec Windows : **Planificateur de tâches › Créer une tâche de base ›
+   Au démarrage de l'ordinateur › Démarrer un programme** → `demarrer.bat`.
+6. Chaque soir à 23:15 le rapport du jour apparaît dans l'onglet **Rapports quotidiens**
+   (et sur Telegram si tu l'as configuré, voir [`dashboard/README.md`](./dashboard/README.md)).
+
+Aperçu immédiat, sans MetaTrader : `cd dashboard && npm run demo`.
 
 ## Backtest en Node.js
 

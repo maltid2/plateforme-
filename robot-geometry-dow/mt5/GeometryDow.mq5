@@ -86,6 +86,7 @@ input double InpMaxDailyLossPercent   = 3;
 
 input group "Affichage"
 input bool   InpDrawZones             = true;
+input bool   InpExportDashboard       = true;    // Fichiers du tableau de bord (Common\Files\GeometryDow)
 
 //--- Structures
 struct Zone   { int side; double bottom; double top; int pivotIdx; }; // side : +1 demand, -1 supply
@@ -93,9 +94,12 @@ struct Pivot  { int idx; int kind; double price; };                   // kind : 
 struct Regime { bool isRange; double efficiency; double high; double low; double minSL; };
 struct Reject { int count; double extreme; bool stopHunt; bool engulf; int firstIdx; };
 struct Geo    { bool found; double ab; double cd; double ratio; bool complete; };
+struct Diag   { string zone; bool zoneOk; int wicks; bool stopHunt; string geometry; bool geoComplete; bool m5; bool ready; };
 
 CTrade   trade;
 datetime g_lastBar = 0;
+string   g_lastBlock = "";
+string   g_stateCore = "";   // partie « marché » de state.json, recalculée à chaque bougie M5
 int      g_sessStart[3], g_sessEnd[3];
 double   g_pt;
 
@@ -128,6 +132,7 @@ int OnInit()
    trade.SetExpertMagicNumber(InpMagic);
    trade.SetTypeFillingBySymbol(_Symbol);
    trade.SetDeviationInPoints(30);
+   AppendEvent(StringFormat("{\"type\":\"start\",\"t\":%I64d,\"symbol\":%s}", (long)TimeCurrent(), JS(_Symbol)));
    return INIT_SUCCEEDED;
   }
 
@@ -415,7 +420,12 @@ void ManagePosition(const MqlRates &bar)
    double stops = SymbolInfoInteger(_Symbol, SYMBOL_TRADE_STOPS_LEVEL) * _Point;
    double px = dir > 0 ? SymbolInfoDouble(_Symbol, SYMBOL_BID) : SymbolInfoDouble(_Symbol, SYMBOL_ASK);
    if((px - nsl) * dir <= stops) return;
-   if((nsl - sl) * dir > _Point) trade.PositionModify(ticket, nsl, tp);
+   if((nsl - sl) * dir > _Point && trade.PositionModify(ticket, nsl, tp))
+     {
+      long id = PositionGetInteger(POSITION_IDENTIFIER);
+      GlobalVariableSet("GDTR_" + IntegerToString(id), 1);
+      AppendEvent(StringFormat("{\"type\":\"trail\",\"t\":%I64d,\"pos\":%I64d,\"sl\":%s}", (long)TimeCurrent(), id, J(nsl)));
+     }
   }
 
 //+------------------------------------------------------------------+
@@ -435,6 +445,124 @@ void DrawZones(const MqlRates &m[], const Zone &z[])
       ObjectSetInteger(0, name, OBJPROP_BACK, true);
       ObjectSetInteger(0, name, OBJPROP_SELECTABLE, false);
      }
+  }
+
+//+------------------------------------------------------------------+
+//| Export pour le tableau de bord et le rapport quotidien           |
+//| (dossier commun : %APPDATA%\MetaQuotes\Terminal\Common\Files)   |
+//+------------------------------------------------------------------+
+string J(double v, int d = 2) { return DoubleToString(v, d); }
+string JB(bool b)             { return b ? "true" : "false"; }
+string JS(string v)
+  {
+   StringReplace(v, "\\", "\\\\");
+   StringReplace(v, "\"", "\\\"");
+   return "\"" + v + "\"";
+  }
+
+void AppendEvent(string line)
+  {
+   if(!InpExportDashboard) return;
+   int h = FileOpen("GeometryDow\\events.jsonl", FILE_READ | FILE_WRITE | FILE_TXT | FILE_ANSI | FILE_COMMON | FILE_SHARE_READ, '\t', CP_UTF8);
+   if(h == INVALID_HANDLE) { Print("Export tableau de bord impossible : ", GetLastError()); return; }
+   FileSeek(h, 0, SEEK_END);
+   FileWriteString(h, line + "\n");
+   FileClose(h);
+  }
+
+string SessionJson(string sess)
+  {
+   string p[];
+   if(StringSplit(sess, '-', p) != 2) return "";
+   return StringFormat("{\"start\":%s,\"end\":%s}", JS(p[0]), JS(p[1]));
+  }
+
+void WriteState()
+  {
+   if(!InpExportDashboard || g_stateCore == "") return;
+   string pos = "null";
+   if(SelectOwnPosition())
+      pos = StringFormat("{\"pos\":%I64d,\"side\":%s,\"lots\":%s,\"entry\":%s,\"sl\":%s,\"tp\":%s,\"profit\":%s,\"t\":%I64d}",
+                         PositionGetInteger(POSITION_IDENTIFIER), JS(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY ? "buy" : "sell"),
+                         J(PositionGetDouble(POSITION_VOLUME)), J(PositionGetDouble(POSITION_PRICE_OPEN)), J(PositionGetDouble(POSITION_SL)),
+                         J(PositionGetDouble(POSITION_TP)), J(PositionGetDouble(POSITION_PROFIT)), (long)PositionGetInteger(POSITION_TIME));
+   string sessions = "";
+   string list[3];
+   list[0] = InpSession1; list[1] = InpSession2; list[2] = InpSession3;
+   for(int k = 0; k < 3; k++)
+     {
+      string js = SessionJson(list[k]);
+      if(js != "") sessions += (sessions == "" ? "" : ",") + js;
+     }
+   string params = StringFormat("{\"riskPercent\":%s,\"maxTradesPerDay\":%d,\"maxLossesPerDay\":%d,\"pauseAfterLossMinutes\":%d,\"quickMode\":%s,\"sessions\":[%s]}",
+                                J(InpRiskPercent), InpMaxTradesPerDay, InpMaxLossesPerDay, InpPauseAfterLossMinutes, JB(InpQuickMode), sessions);
+   string json = StringFormat("{\"version\":1,\"t\":%I64d,\"offset\":%d,\"symbol\":%s,\"balance\":%s,\"equity\":%s,%s,\"position\":%s,\"params\":%s}",
+                              (long)TimeCurrent(), InpServerMinusParisHours, JS(_Symbol), J(AccountInfoDouble(ACCOUNT_BALANCE)),
+                              J(AccountInfoDouble(ACCOUNT_EQUITY)), g_stateCore, pos, params);
+   int h = FileOpen("GeometryDow\\state.tmp", FILE_WRITE | FILE_TXT | FILE_ANSI | FILE_COMMON, '\t', CP_UTF8);
+   if(h == INVALID_HANDLE) return;
+   FileWriteString(h, json);
+   FileClose(h);
+   FileMove("GeometryDow\\state.tmp", FILE_COMMON, "GeometryDow\\state.json", FILE_COMMON | FILE_REWRITE);
+  }
+
+// Diagnostic de la check-list sur la zone la plus proche (affiché dans le tableau de bord)
+void Diagnose(const MqlRates &m5[], int i, const MqlRates &m15[], int last, const Zone &zones[], const Pivot &zz[], const Regime &reg, int dir, Diag &d)
+  {
+   d.zone = ""; d.zoneOk = false; d.wicks = 0; d.stopHunt = false; d.geometry = "n/a"; d.geoComplete = false; d.ready = false;
+   double lo, hi;
+   d.m5 = ConfirmM5(m5, i, dir, lo, hi);
+   double price = m5[i].close, best = DBL_MAX; int zi = -1;
+   for(int k = 0; k < ArraySize(zones); k++)
+     {
+      if(zones[k].side != dir) continue;
+      double dd = MathAbs(price - (zones[k].top + zones[k].bottom) / 2);
+      if(dd < best) { best = dd; zi = k; }
+     }
+   if(zi < 0) return;
+   Zone z = zones[zi];
+   d.zone = StringFormat("%s %.1f-%.1f", dir > 0 ? "demand" : "supply", z.bottom, z.top);
+   double edge = dir > 0 ? z.top : z.bottom;
+   d.zoneOk = (price - edge) * dir <= InpMaxEntryDistance * g_pt && (dir > 0 ? price >= z.bottom : price <= z.top);
+   Reject rj;
+   if(Rejection(m15, last, z, dir, rj))
+     {
+      d.wicks = rj.count; d.stopHunt = rj.stopHunt;
+      Geo g = Geometry(zz, dir, rj.extreme, rj.firstIdx);
+      if(g.found) { d.geometry = StringFormat("%s AB=CD x%.2f", reg.isRange ? "U" : "N", g.ratio); d.geoComplete = g.complete; }
+     }
+   d.ready = d.zoneOk && d.wicks >= InpMinWicks && d.m5;
+  }
+
+string DiagJson(const Diag &d)
+  {
+   return StringFormat("{\"zone\":%s,\"zoneOk\":%s,\"wicks\":%d,\"stopHunt\":%s,\"geometry\":%s,\"geoComplete\":%s,\"m5\":%s,\"ready\":%s}",
+                       JS(d.zone), JB(d.zoneOk), d.wicks, JB(d.stopHunt), JS(d.geometry), JB(d.geoComplete), JB(d.m5), JB(d.ready));
+  }
+
+// Clôture d'une position du robot -> événement « close » (résultat, R, raison)
+void OnTradeTransaction(const MqlTradeTransaction &trans, const MqlTradeRequest &request, const MqlTradeResult &result)
+  {
+   if(trans.type != TRADE_TRANSACTION_DEAL_ADD || !HistoryDealSelect(trans.deal)) return;
+   if(HistoryDealGetInteger(trans.deal, DEAL_MAGIC) != InpMagic || HistoryDealGetString(trans.deal, DEAL_SYMBOL) != _Symbol) return;
+   long entry = HistoryDealGetInteger(trans.deal, DEAL_ENTRY);
+   if(entry != DEAL_ENTRY_OUT && entry != DEAL_ENTRY_OUT_BY) return;
+   long pos = HistoryDealGetInteger(trans.deal, DEAL_POSITION_ID);
+   string id = IntegerToString(pos);
+   int dir = HistoryDealGetInteger(trans.deal, DEAL_TYPE) == DEAL_TYPE_SELL ? 1 : -1; // une vente clôture un achat
+   double exitPx  = HistoryDealGetDouble(trans.deal, DEAL_PRICE);
+   double profit  = HistoryDealGetDouble(trans.deal, DEAL_PROFIT) + HistoryDealGetDouble(trans.deal, DEAL_SWAP) + HistoryDealGetDouble(trans.deal, DEAL_COMMISSION);
+   double entryPx = GlobalVariableCheck("GDE_" + id) ? GlobalVariableGet("GDE_" + id) : exitPx;
+   double risk    = GlobalVariableCheck("GDR_" + id) ? GlobalVariableGet("GDR_" + id) : 0;
+   bool trailed   = GlobalVariableCheck("GDTR_" + id);
+   long why = HistoryDealGetInteger(trans.deal, DEAL_REASON);
+   string reason = why == DEAL_REASON_TP ? "TP" : why == DEAL_REASON_SL ? (trailed ? "SL suiveur" : "SL") : why == DEAL_REASON_SO ? "stop out" : "manuel";
+   double move = (exitPx - entryPx) * dir;
+   AppendEvent(StringFormat("{\"type\":\"close\",\"t\":%I64d,\"pos\":%I64d,\"side\":%s,\"exit\":%s,\"profit\":%s,\"points\":%s,\"r\":%s,\"reason\":%s,\"balance\":%s}",
+                            (long)HistoryDealGetInteger(trans.deal, DEAL_TIME), pos, JS(dir > 0 ? "buy" : "sell"), J(exitPx), J(profit),
+                            J(move / g_pt, 1), J(risk > 0 ? move / risk : 0), JS(reason), J(AccountInfoDouble(ACCOUNT_BALANCE))));
+   GlobalVariableDel("GDE_" + id); GlobalVariableDel("GDR_" + id); GlobalVariableDel("GDTR_" + id);
+   WriteState();
   }
 
 //+------------------------------------------------------------------+
@@ -464,10 +592,33 @@ void OnTick()
    ZigZag(pv, zz);
    DrawZones(m15, zones);
 
+   bool inSession = InSession(bar0);
+   string block = GuardBlock(TimeCurrent());
+   if(inSession && block != "" && block != g_lastBlock)
+      AppendEvent(StringFormat("{\"type\":\"block\",\"t\":%I64d,\"reason\":%s}", (long)TimeCurrent(), JS(block)));
+   g_lastBlock = block;
+
+   if(InpExportDashboard)
+     {
+      string zj = "", mj = "";
+      for(int k = 0; k < ArraySize(zones); k++)
+         zj += (k ? "," : "") + StringFormat("{\"side\":%s,\"bottom\":%s,\"top\":%s,\"t\":%I64d}", JS(zones[k].side > 0 ? "demand" : "supply"),
+                                             J(zones[k].bottom), J(zones[k].top), (long)m15[zones[k].pivotIdx].time);
+      for(int k = MathMax(0, last - 63); k <= last; k++)
+         mj += (mj == "" ? "" : ",") + StringFormat("[%I64d,%s,%s,%s,%s]", (long)m15[k].time, J(m15[k].open), J(m15[k].high), J(m15[k].low), J(m15[k].close));
+      Diag db, ds;
+      Diagnose(m5, i, m15, last, zones, zz, reg, 1, db);
+      Diagnose(m5, i, m15, last, zones, zz, reg, -1, ds);
+      g_stateCore = StringFormat("\"regime\":{\"type\":%s,\"efficiency\":%s,\"high\":%s,\"low\":%s,\"minSL\":%s},\"zones\":[%s],\"m15\":[%s],"
+                                 "\"checklist\":{\"buy\":%s,\"sell\":%s},\"price\":%s,\"inSession\":%s,\"block\":%s",
+                                 JS(reg.isRange ? "range" : "impulsion"), J(reg.efficiency, 3), J(reg.high), J(reg.low), J(reg.minSL / g_pt, 1),
+                                 zj, mj, DiagJson(db), DiagJson(ds), J(m5[i].close), JB(inSession), JS(block));
+      WriteState();
+     }
+
    string status = StringFormat("Geometry Dow | %s (eff. %.2f) | %d zones", reg.isRange ? "RANGE" : "IMPULSION", reg.efficiency, ArraySize(zones));
    if(SelectOwnPosition())          { Comment(status, "\nPosition en cours — pas de renfort"); return; }
-   if(!InSession(bar0))             { Comment(status, "\nHors créneau horaire"); return; }
-   string block = GuardBlock(TimeCurrent());
+   if(!inSession)                   { Comment(status, "\nHors créneau horaire"); return; }
    if(block != "")                  { Comment(status, "\nPause : ", block); return; }
    Comment(status, "\nEn attente d'un setup...");
 
@@ -549,7 +700,23 @@ void OnTick()
 
          string cmt = "GDR:" + DoubleToString(risk, _Digits);
          bool ok = dir > 0 ? trade.Buy(lots, _Symbol, px, sl, tp, cmt) : trade.Sell(lots, _Symbol, px, sl, tp, cmt);
-         if(ok) GlobalVariableSet("GDR_" + IntegerToString((long)trade.ResultOrder()), risk);
+         ok = ok && (trade.ResultRetcode() == TRADE_RETCODE_DONE || trade.ResultRetcode() == TRADE_RETCODE_PLACED);
+         if(ok)
+           {
+            long   id   = (long)trade.ResultOrder();   // = identifiant de la position ouverte
+            double fill = trade.ResultPrice() > 0 ? trade.ResultPrice() : px;
+            double rsk  = (fill - sl) * dir;
+            string key  = IntegerToString(id);
+            GlobalVariableSet("GDR_" + key, rsk);
+            GlobalVariableSet("GDE_" + key, fill);
+            AppendEvent(StringFormat("{\"type\":\"open\",\"t\":%I64d,\"pos\":%I64d,\"side\":%s,\"lots\":%s,\"entry\":%s,\"sl\":%s,\"tp\":%s,\"risk\":%s,\"balance\":%s,"
+                                     "\"checklist\":{\"type\":%s,\"zone\":%s,\"wicks\":%d,\"stopHunt\":%s,\"engulfing\":%s,\"geometry\":%s}}",
+                                     (long)TimeCurrent(), id, JS(dir > 0 ? "buy" : "sell"), J(lots), J(fill), J(sl), J(tp), J(rsk),
+                                     J(AccountInfoDouble(ACCOUNT_BALANCE)), JS(reg.isRange ? "range" : "impulsion"),
+                                     JS(StringFormat("%s %.1f-%.1f", dir > 0 ? "demand" : "supply", z.bottom, z.top)), rj.count,
+                                     JB(rj.stopHunt), JB(rj.engulf), JS(g.found ? StringFormat("%s AB=CD x%.2f%s", reg.isRange ? "U" : "N", g.ratio, g.complete ? " ✓" : "") : "n/a")));
+            WriteState();
+           }
          PrintFormat("%s %s %.2f lots @%.1f SL %.1f TP %.1f | %s | zone %.1f-%.1f | %d mèche(s)%s%s | AB=CD x%.2f%s",
                      ok ? "OUVERT" : "ÉCHEC", dir > 0 ? "BUY" : "SELL", lots, px, sl, tp,
                      reg.isRange ? "range (U)" : "impulsion (N)", z.bottom, z.top, rj.count,

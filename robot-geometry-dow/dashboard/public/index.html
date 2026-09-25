@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Geometry Dow</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <h1>Geometry Dow</h1>
+      <span id="symbol" class="muted"></span>
+      <span id="demo" class="badge" hidden>Démo</span>
+    </div>
+    <div id="status" class="status" role="status"></div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="live">En direct</button>
+    <button role="tab" aria-selected="false" data-tab="reports">Rapports quotidiens</button>
+  </nav>
+
+  <main>
+    <section id="tab-live">
+      <div class="kpis" id="kpis"></div>
+
+      <div class="grid">
+        <article class="card chart-card">
+          <div class="card-head">
+            <h2>Zones clés M15</h2>
+            <span id="regime" class="muted"></span>
+          </div>
+          <div class="legend">
+            <span><i class="sw demand"></i>Demand (achat)</span>
+            <span><i class="sw supply"></i>Supply (vente)</span>
+            <span><i class="sw price"></i>Prix</span>
+          </div>
+          <div class="chart" id="chart"></div>
+        </article>
+
+        <article class="card">
+          <div class="card-head"><h2>Check-list</h2><span id="session" class="muted"></span></div>
+          <div id="checklist" class="checklist"></div>
+          <div id="position"></div>
+        </article>
+      </div>
+
+      <article class="card">
+        <div class="card-head"><h2>Courbe de capital</h2><span id="equity-note" class="muted"></span></div>
+        <div class="chart" id="equity"></div>
+      </article>
+
+      <article class="card">
+        <div class="card-head"><h2>Derniers trades</h2></div>
+        <div class="table-wrap"><table id="trades"></table></div>
+      </article>
+    </section>
+
+    <section id="tab-reports" hidden>
+      <div class="reports">
+        <article class="card report-list">
+          <div class="card-head"><h2>Jours</h2></div>
+          <ul id="report-list"></ul>
+        </article>
+        <article class="card" id="report"></article>
+      </div>
+    </section>
+  </main>
+
+  <div id="tooltip" class="tooltip" hidden></div>
+  <script src="app.js"></script>
+</body>
+</html>

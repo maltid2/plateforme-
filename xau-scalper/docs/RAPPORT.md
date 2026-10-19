@@ -122,3 +122,6 @@ Pré-enregistrée (addendum 2 de docs/CRITERES.md). Compte cent, choisi par l'ut
 **Conclusion** : la fusion fait mieux que chaque robot seul sur 2026 et reste positive avec des frais stress, mais elle
 dépend du régime de forte tendance de 2025-2026 et perd sur 2015-2018. Le robot est prêt pour la **démo et le paper
 trading** (`config.fusion.json`), pas pour de l'argent réel : le mode réel reste verrouillé.
+
+Contrôle de bout en bout : le moteur complet, en rejeu avec `config.fusion.json` (compte cent, 100 €, 0,25 %),
+2025-04 → 2026-09 : **343 trades, 100 € → 113,60 €**, aucune position en double, aucune exception.

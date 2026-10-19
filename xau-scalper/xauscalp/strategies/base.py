@@ -12,6 +12,7 @@ class Signal:
     max_minutes: float   # sortie au temps
     tag: str = ""
     features: dict = field(default_factory=dict)
+    be_at_r: float | None = None   # stop remonté au prix d'entrée quand le gain atteint be_at_r x R
 
 
 class Strategy:

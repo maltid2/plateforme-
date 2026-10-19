@@ -12,7 +12,7 @@
 | 3 | Les 3 stratégies testées en premier (sélection automatique sur le développement) | [docs/RAPPORT.md](docs/RAPPORT.md) |
 | 4 | Plateforme et architecture | ci-dessous |
 | 5 | Code Python organisé en fichiers | [xauscalp/](xauscalp/) |
-| 6 | Tests unitaires (47) | [tests/](tests/) |
+| 6 | Tests unitaires (55) | [tests/](tests/) |
 | 7 | Protocole de backtesting | [docs/PROTOCOLE.md](docs/PROTOCOLE.md), critères pré-enregistrés [docs/CRITERES.md](docs/CRITERES.md) |
 | 8 | Rapport de résultats réellement mesurés | [docs/RAPPORT.md](docs/RAPPORT.md), [reports/etude_A](reports/etude_A/RESULTATS_MESURES.md), [reports/etude_B](reports/etude_B/RESULTATS_MESURES.md) |
 | 9 | Guide d'installation et de lancement en démo | [docs/GUIDE_DEMO.md](docs/GUIDE_DEMO.md) |
@@ -29,6 +29,26 @@
   jamais vu (165 trades, PF 1,34, +0,150 R en coûts stress). La même règle perd −0,23 à −0,26 R par trade en 2015-2018 :
   son avantage dépend de la tendance. **À suivre en paper trading, pas en réel.**
 
+## Fusion des trois robots (étude C)
+
+Les deux anciens robots du dossier `robot-geometry-dow` (méthode géométrique du PDF, liquidité sweep + MSS) sont
+portés en Python (`xauscalp/strategies/legacy.py`) et combinés avec le nouveau dans un seul moteur :
+chaque robot garde son unité de temps et ses sessions, une seule position à la fois, priorité dans l'ordre.
+
+| Configuration | Contenu |
+|---|---|
+| `config.fusion.json` | **robot fusionné** : liquidité M5 (Londres / New York) puis Donchian M15 (Asie) |
+| `config.example.json` | Donchian M15 seul |
+
+La méthode du PDF est disponible (`geometry_pdf`) mais perd sur toutes les périodes testées : elle n'est pas dans la
+fusion. Résultats : docs/RAPPORT.md (étude C) et reports/etude_C_fusion.
+
+```bash
+python -m xauscalp fusion --ticks data/xau_m1_2015.csv ... --mt5-m5 export_M5.csv --m1 xau_m1_2026.csv
+python -m xauscalp paper export_M5.csv --server-tz paris+1 --config config.fusion.json --account cent --equity 100
+python -m xauscalp run --config config.fusion.json --mode demo
+```
+
 ## Architecture
 
 ```
@@ -38,7 +58,9 @@ xauscalp/
   sessions.py      Asie / Londres / chevauchement / NY, en heure locale (changements d'heure), rollover, week-end
   news.py          calendrier des annonces US (intégré pour le backtest, CSV MT5 en démo) et fenêtres d'exclusion
   market.py        contexte : indicateurs en cache, niveaux Asie / veille, tendance H1, régime (sans look-ahead)
-  strategies/      12 stratégies interchangeables + filtre H1 + moteur adaptatif par régime
+  strategies/      12 stratégies + les 2 anciens robots (legacy.py) + filtre H1 + ensemble + moteur par régime
+  portfolio.py     fusion de robots (une position à la fois) et simulation de compte
+  fusion.py        étude C (fusion des trois robots)
   ml.py            méta-filtre logistique (Python pur), utilisé seulement s'il est démontré hors échantillon
   symbol.py        spécification du symbole fournie par le courtier (taille de contrat, tick, lots, marge, stops)
   sizing.py        taille de position : perte au stop frais compris ≤ limite, sinon REFUS ; contrôle de marge
@@ -65,7 +87,7 @@ d'ordres d'un CFD sur or n'est pas un vrai order flow : la famille « order flow
 ## Commandes
 
 ```bash
-python -m unittest discover -s tests -t .                       # 47 tests, aucune dépendance
+python -m unittest discover -s tests -t .                       # 55 tests, aucune dépendance
 python -m xauscalp feasibility --equity 100 --risk 0.25         # faisabilité (specs d'exemple ou --spec réelle)
 python -m xauscalp validate export.csv --server-tz paris+1      # qualité des données
 python -m xauscalp backtest export.csv --server-tz paris+1 --tf 15 --strategy donchian_breakout --sessions asia --account cent

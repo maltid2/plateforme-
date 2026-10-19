@@ -21,6 +21,7 @@ class EngineConfig:
     strategy: str = "ny_orb"
     strategy_params: dict = field(default_factory=dict)
     h1_filter: bool = False
+    members: list = field(default_factory=list)  # plusieurs robots : [{"name", "params", "tf", "sessions", "h1"}]
     sessions: list = field(default_factory=lambda: ["overlap"])
     news_csv: str = ""                      # calendrier exporté de MT5 (mql5/ExportCalendar.mq5)
     news_before_min: int = 30
@@ -45,6 +46,7 @@ class EngineConfig:
         with open(path, encoding="utf-8") as f:
             d = json.load(f)
         risk = RiskLimits(**d.pop("risk", {}))
+        d = {k: v for k, v in d.items() if not k.startswith("_")}  # clés de commentaire
         return cls(risk=risk, **d)
 
     def to_dict(self) -> dict:

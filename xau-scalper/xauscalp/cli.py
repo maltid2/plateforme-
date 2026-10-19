@@ -12,6 +12,11 @@ def cmd_research(a):
     Research(a.ticks or [], a.holdout_m5, a.holdout_m1, a.out, study=a.study).run_all()
 
 
+def cmd_fusion(a):
+    from .fusion import Fusion
+    Fusion(a.ticks, a.mt5_m5, a.m1, a.out).run_all()
+
+
 def cmd_validate(a):
     from .data import load_csv, validate
     b = load_csv(a.csv, server_tz=a.server_tz)
@@ -157,6 +162,11 @@ def build() -> argparse.ArgumentParser:
     r.add_argument("--holdout-m1", default=None)
     r.add_argument("--out", default="reports")
     r.set_defaults(fn=cmd_research)
+
+    fu = sub.add_parser("fusion", help="étude C : fusion des deux anciens robots et du nouveau")
+    fu.add_argument("--ticks", nargs="+", required=True); fu.add_argument("--mt5-m5", required=True)
+    fu.add_argument("--m1", default=None); fu.add_argument("--out", default="reports/etude_C_fusion")
+    fu.set_defaults(fn=cmd_fusion)
 
     v = sub.add_parser("validate", help="contrôle qualité d'un fichier de bougies")
     v.add_argument("csv"); v.add_argument("--server-tz", default="UTC")

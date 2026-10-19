@@ -109,3 +109,31 @@ New York, pendant le rollover (16:55–18:05 NY), 30 min avant / après une anno
   rend le scalping M1 non viable avec ces coûts.
 - Gaps du lundi et des annonces (NFP, CPI, FOMC) : un stop ne garantit pas le prix de sortie.
 - Swaps (financement de nuit) : non modélisés, car toutes les stratégies sont intraday et fermées avant le week-end.
+
+## 4. Les deux anciens robots, portés en Python (xauscalp/strategies/legacy.py)
+
+### R1. `geometry_pdf` — méthode « Geometry Market Mastery » (ancien robot 1)
+Portage fidèle de `robot-geometry-dow/backtest/src/strategy.js` :
+1. type de trade sur les 24 dernières M15 (efficacité < 0,3 → range, sinon impulsion) → stop minimum ;
+2. zones M15 supply/demand à partir des pivots (2 bougies de chaque côté, 24 h), zone cassée seulement sur
+   une CLÔTURE au-delà ;
+3. géométrie AB=CD sur le zigzag des pivots (target « mouvement mesuré » en impulsion, borne du range en range) ;
+4. mèche de rejet M15 dans la zone (≥ 40 %, ou grande mèche ≥ 60 % avalée par la bougie suivante) ;
+5. deux bougies M5 dans le sens, volume ≥ moyenne → entrée ; stop derrière mèche/zone + marge ; target la plus
+   proche avec gain/risque ≥ 2 ; **breakeven à +1R** ; pas d'entrée après une bougie M15 de news (> 60 points).
+Distances en « points méthode » : `scale: "fixed"` = 0,45 $ par point (réglage d'origine sur l'or 2026),
+`scale: "vol"` (défaut) = bougie M15 médiane des 20 derniers jours / 22,2, pour rester valable en 2015-2018.
+Différence : le stop suiveur d'origine n'est pas repris, seulement le breakeven.
+
+### R2. `liquidity_mss` — chasse aux stops (ancien robot 2)
+Portage de `liquidity.js` (mode volatilité, réglages choisis sur 2025 dans l'ancien projet) : niveaux haut/bas de
+l'Asie (01:00-08:00 Paris) et de la veille ; sweep pendant 09:00-12:00 ou 14:45-18:00 (Paris) ; changement de
+structure = clôture au-delà du creux/sommet des 30 min avant le sweep, dans les 2 h ; stop derrière la mèche
++ 0,18 V ; target 3R ; sweep plus profond que 3,6 V = vraie cassure (V = bougie M15 médiane sur 20 jours).
+Recalculée à partir des bougies du jour (identique en backtest et en réel). Contrôle de fidélité sur les mêmes
+données 2025-2026 M5 : 35 trades, +10,0 R en Python contre 29 trades, +14,1 R dans le robot JavaScript (règles de
+garde et d'horaires légèrement différentes).
+
+### Ensemble (fusion)
+`make("ensemble", members=[...])` ou `members` dans la configuration du moteur : chaque robot garde son unité de
+temps et ses sessions, une seule position à la fois, priorité dans l'ordre de la liste.

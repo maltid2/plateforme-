@@ -8,6 +8,11 @@ from __future__ import annotations
 from . import indicators as I
 from .data import Bars, resample
 from .sessions import SessionClock, SESSIONS, LON
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
+import statistics
+
+PARIS = ZoneInfo("Europe/Paris")
 
 NaN = float("nan")
 
@@ -27,6 +32,7 @@ class Market:
         self.day = [x[2] for x in info]
         self.weekday = [x[3] for x in info]
         self._levels()
+        self._paris = None
 
     # --- coûts -----------------------------------------------------------------
     def spread(self, k: int) -> float:
@@ -125,6 +131,55 @@ class Market:
                 a_hi, a_lo = max(a_hi, self.b.h[k]), min(a_lo, self.b.l[k])
             elif lm >= a1 and a_hi > -1e18 and lm < 22 * 60:
                 self.asia_hi[k], self.asia_lo[k] = a_hi, a_lo
+
+    # --- outils des anciens robots (méthode géométrique, liquidité) ---------------
+    def paris(self):
+        """(jour calendaire de Paris, minute de Paris) de chaque bougie."""
+        if self._paris is None:
+            cache, day, minute = {}, [], []
+            for t in self.b.t:
+                h = t // 3600
+                r = cache.get(h)
+                if r is None:
+                    d = datetime.fromtimestamp(h * 3600, timezone.utc).astimezone(PARIS)
+                    r = ((d.replace(tzinfo=None) - datetime(1970, 1, 1)).days, d.hour * 60)
+                    cache[h] = r
+                day.append(r[0]); minute.append(r[1] + (t % 3600) // 60)
+            self._paris = (day, minute)
+        return self._paris
+
+    def htf_bars(self, minutes: int):
+        """Bougies d'unité supérieure + index de la dernière CLÔTURÉE à la fin de chaque bougie de base."""
+        key = ("htf_bars", minutes)
+        v = self._cache.get(key)
+        if v is None:
+            hb = resample(self.b, minutes)
+            idx, j = [], -1
+            for k in range(self.n):
+                end = self.b.t[k] + self.tf * 60
+                while j + 1 < len(hb) and hb.t[j + 1] + minutes * 60 <= end:
+                    j += 1
+                idx.append(j)
+            v = (hb, idx)
+            self._cache[key] = v
+        return v
+
+    def m15_vol(self, k: int, days: int = 20) -> float:
+        """Amplitude médiane des bougies M15 des `days` derniers jours, figée au début du jour (Paris)."""
+        pday = self.paris()[0]
+        key = ("m15_vol", days, pday[k])
+        v = self._cache.get(key)
+        if v is None:
+            hb, idx = self.htf_bars(15)
+            first = k
+            while first > 0 and pday[first - 1] == pday[k]:
+                first -= 1
+            j = idx[first]
+            lo = max(0, j - days * 92)
+            rng = [hb.h[x] - hb.l[x] for x in range(lo, j + 1)] if j >= 0 else []
+            v = statistics.median(rng) if len(rng) >= 92 else NaN
+            self._cache[key] = v
+        return v
 
     # --- régime -------------------------------------------------------------------
     def regime(self, k: int) -> str:

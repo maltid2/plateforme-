@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import random
 
-from ..data import Bars
+from ..data import Bars, resample
 from ..symbol import SymbolSpec
 from .base import AccountInfo, Broker, OrderResult, Position, Tick
 
@@ -68,9 +68,19 @@ class ReplayBroker(Broker):
         return Tick(self.now(), self.b.o[k], self.b.o[k] + sp)
 
     def bars(self, tf_minutes: int, count: int) -> Bars:
-        if tf_minutes != self.b.tf:
-            raise ValueError("ReplayBroker : une seule unité de temps")
-        return self.b.slice(max(0, self.k - count), self.k)
+        if tf_minutes == self.b.tf:
+            return self.b.slice(max(0, self.k - count), self.k)
+        if tf_minutes % self.b.tf:
+            raise ValueError("ReplayBroker : unité de temps non multiple des bougies rejouées")
+        # unité supérieure reconstruite à partir des bougies déjà clôturées ; la dernière doit être complète
+        ratio = tf_minutes // self.b.tf
+        base = self.b.slice(max(0, self.k - count * ratio - ratio), self.k)
+        hb = resample(base, tf_minutes)
+        if len(hb) and hb.t[-1] + tf_minutes * 60 > self.now():
+            hb = hb.slice(0, len(hb) - 1)
+        if len(hb) and base.t and hb.t[0] < base.t[0]:
+            hb = hb.slice(1, len(hb))
+        return hb.slice(max(0, len(hb) - count), len(hb))
 
     # --- ordres ----------------------------------------------------------------
     def positions(self) -> list[Position]:

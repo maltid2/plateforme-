@@ -33,13 +33,22 @@ class Engine:
         self.state_path = os.path.join(self.dir, "state.json")
         self.journal = Journal(os.path.join(self.dir, "journal.jsonl"))
         self.alerts = alerts or Alerts()
-        st = make(cfg.strategy, **cfg.strategy_params)
-        self.strategy = TrendFilter(st) if cfg.h1_filter else st
+        # plusieurs robots possibles (cfg.members), chacun avec son unité de temps et ses sessions ;
+        # sinon un seul robot décrit par strategy / tf / sessions. Ordre de la liste = priorité.
+        specs = cfg.members or [{"name": cfg.strategy, "params": cfg.strategy_params, "tf": cfg.tf,
+                                 "sessions": cfg.sessions, "h1": cfg.h1_filter}]
+        self.members = []
+        for sp in specs:
+            st = make(sp["name"], **sp.get("params", {}))
+            self.members.append({"strategy": TrendFilter(st) if sp.get("h1") else st, "tf": int(sp.get("tf", cfg.tf)),
+                                 "sessions": list(sp.get("sessions", cfg.sessions)), "name": sp["name"]})
+        self.strategy = self.members[0]["strategy"]
         self.news = news
         self.clock = SessionClock()
         self.state = load_state(self.state_path)
         self.risk = RiskManager(cfg.risk, RiskState(**self.state.get("risk", {})))
         self.state.setdefault("last_bar_ts", 0)
+        self.state.setdefault("last_bar", {})
         self.state.setdefault("intent", None)
         self.state.setdefault("managed", {})
         self.started = False
@@ -58,7 +67,7 @@ class Engine:
         acc = self.broker.account()
         ok, why = live_allowed(self.cfg, acc.is_demo)
         self.journal.log("start", mode=self.cfg.mode, account=acc.__dict__, allowed=ok, reason=why,
-                         strategy=self.strategy.label())
+                         strategy=" > ".join(f"{m['strategy'].label()} M{m['tf']} {'+'.join(m['sessions'])}" for m in self.members))
         if not ok:
             self.alerts.send("BLOQUÉ", why)
             self.stopped_reason = why
@@ -115,6 +124,14 @@ class Engine:
                 reason = "durée maximale"
             elif not p.sl:
                 reason = "position sans stop"
+            if not reason and info.get("be") and not info.get("be_done") and info.get("risk"):
+                t = self.broker.tick()
+                px = (t.bid if p.side > 0 else t.ask) if t else None
+                if px is not None and (px - info["entry"]) * p.side >= info["be"] * info["risk"]:
+                    r = self.broker.modify_sl_tp(p, info["entry"], p.tp or None)
+                    info["be_done"] = r.ok
+                    self.journal.log("breakeven", ticket=p.ticket, ok=r.ok, sl=info["entry"], message=r.message)
+                    self.persist()
             if reason:
                 r = self.broker.close(p, reason)
                 self.risk.on_exec_result(r.ok)
@@ -141,31 +158,57 @@ class Engine:
         self.manage(positions, now)
         positions = self.broker.positions()
 
-        bars = self.broker.bars(self.cfg.tf, self.cfg.history_bars)
-        if len(bars) < 300:
+        bars_by_tf, new_tf = {}, []
+        for tf in sorted({mm["tf"] for mm in self.members}):
+            bars = self.broker.bars(tf, self.cfg.history_bars)
+            if len(bars) < 300:
+                continue
+            bars_by_tf[tf] = bars
+            if bars.t[-1] > self.state["last_bar"].get(str(tf), 0):
+                new_tf.append(tf)
+                self.state["last_bar"][str(tf)] = bars.t[-1]
+        if not bars_by_tf:
             return self._decide("skip", "historique insuffisant")
-        last_ts = bars.t[-1]
-        if last_ts <= self.state["last_bar_ts"]:
+        if not new_tf:
             return {"action": "wait"}
-        self.state["last_bar_ts"] = last_ts       # une seule évaluation par bougie, même après un crash
+        # une seule évaluation par bougie et par unité de temps, même après un crash
+        self.state["last_bar_ts"] = max(self.state["last_bar"].values())
         self.persist()
         tick = self.broker.tick()
-        age = now - (last_ts + self.cfg.tf * 60)
-        if tick is None or age > self.cfg.risk.max_data_age_s or now - tick.ts > self.cfg.risk.max_data_age_s:
+        # données périmées : seule l'unité de temps concernée est ignorée (les autres robots continuent)
+        fresh = []
+        for tf in new_tf:
+            age = now - (bars_by_tf[tf].t[-1] + tf * 60)
+            if tick is not None and age <= self.cfg.risk.max_data_age_s and now - tick.ts <= self.cfg.risk.max_data_age_s:
+                fresh.append(tf)
+        if not fresh:
             self.alerts.send("ALERTE", f"données périmées ({age:.0f} s)", key="stale")
             return self._decide("skip", f"données périmées ({age:.0f} s)")
+        new_tf = fresh
         if positions or self.state.get("intent"):
             return self._decide("skip", "position ou ordre déjà en cours")
         nxt = int(now)
-        if not any(self.clock.in_session(nxt, s) for s in self.cfg.sessions):
-            return self._decide("skip", "hors session")
         if self.clock.friday_cutoff(nxt) or self.clock.rollover(nxt):
             return self._decide("skip", "vendredi soir / rollover")
-        m = Market(bars)
-        k = m.n - 1
-        sig = self.strategy.signal(m, k)
+        sig = member = m = None
+        in_session = False
+        for mem in self.members:
+            if mem["tf"] not in new_tf or not any(self.clock.in_session(nxt, s) for s in mem["sessions"]):
+                continue
+            in_session = True
+            m = Market(bars_by_tf[mem["tf"]])
+            k = m.n - 1
+            sig = mem["strategy"].signal(m, k)
+            if sig is not None:
+                member = mem
+                break
+        if not in_session:
+            return self._decide("skip", "hors session")
         if sig is None:
             return self._decide("no_signal", "")
+        last_ts = bars_by_tf[member["tf"]].t[-1]
+        age = now - (last_ts + member["tf"] * 60)
+        sig.tag = f"[{member['name']} M{member['tf']}] {sig.tag}"
         if self.news and self.news.blocked(nxt, self.cfg.news_before_min, self.cfg.news_after_min):
             return self._decide("refused", "annonce économique", sig)
         ar = m.get("atr_ratio", m.bars_for(5 * 1440))[k]
@@ -182,7 +225,7 @@ class Engine:
                            spread=tick.spread if sig.side < 0 else 0.0, slippage=0.05)
         if not sz.ok:
             return self._decide("refused", sz.reason, sig)
-        client_id = f"xs{last_ts}{'B' if sig.side > 0 else 'S'}"
+        client_id = f"xs{last_ts}{member['tf']}{'B' if sig.side > 0 else 'S'}"
         intent = {"client_id": client_id, "created": now, "side": sig.side, "volume": sz.volume, "sl": sig.stop,
                   "tp": sig.target, "max_until": now + sig.max_minutes * 60, "risk_money": sz.risk_money}
         self.state["intent"] = intent
@@ -197,7 +240,9 @@ class Engine:
             self.risk.on_open()
             pos = next((p for p in self.broker.positions() if p.comment == client_id[:31]), None)
             if pos:
-                self.state["managed"][str(pos.ticket)] = {"max_until": intent["max_until"], "client_id": client_id}
+                self.state["managed"][str(pos.ticket)] = {"max_until": intent["max_until"], "client_id": client_id,
+                                                          "be": sig.be_at_r, "entry": pos.price_open,
+                                                          "risk": abs(pos.price_open - sig.stop), "be_done": False}
             self.state["intent"] = None
             self.persist()
             self.alerts.send("TRADE", f"{'achat' if sig.side > 0 else 'vente'} {res.volume} lot @ {res.price:.2f} "

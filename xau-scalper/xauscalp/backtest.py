@@ -199,6 +199,7 @@ def run(m: Market, strat: Strategy, cost: CostModel, rules: ExecRules, *, start_
                                     tag=sig.tag, volume=vol,
                                     features=feature_fn(m, ks, sig.side) if feature_fn else {})
                         pos._max_k = k + max(1, round(sig.max_minutes / m.tf)) - 1
+                        pos._be = sig.be_at_r
                         if account:
                             risk.on_open()
 
@@ -231,6 +232,9 @@ def run(m: Market, strat: Strategy, cost: CostModel, rules: ExecRules, *, start_
                     close(k, pos.target, "target", 0.0)
                 elif k >= pos._max_k:
                     close(k, b.c[k] + sp + cost.slip_exit, "temps", cost.slip_exit)
+        # breakeven (méthode du PDF) : à la clôture, si le gain atteint be_at_r x R, stop au prix d'entrée
+        if pos and pos._be and (b.c[k] - pos.entry) * pos.side >= pos._be * pos.risk_dist:
+            pos.stop = max(pos.stop, pos.entry) if pos.side > 0 else min(pos.stop, pos.entry)
 
         # 3) nouveau signal à la clôture de k
         if pos or pend or k + 1 + cost.latency_bars >= n:

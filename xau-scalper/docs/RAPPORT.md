@@ -88,3 +88,37 @@ justifie pas de prendre un risque réglementaire.
 
 L'écart s'explique par la règle de fraîcheur des données, qui n'existe que dans le moteur. Le test automatique
 `test_moteur_et_backtest_prennent_les_memes_trades` exige au moins 90 % d'entrées communes sur des données synthétiques.
+
+## Étude C — fusion des deux anciens robots et du nouveau (rapport complet : reports/etude_C_fusion)
+
+Pré-enregistrée (addendum 2 de docs/CRITERES.md). Compte cent, choisi par l'utilisateur. Coûts base sauf mention.
+
+| Robot seul | 2015-16 | 2017-18 | 2025 | **2026 (validation)** |
+|---|---|---|---|---|
+| R1 méthode du PDF (M5) | 201 tr., −0,226 R | 149 tr., −0,298 R | 87 tr., −0,164 R | 77 tr., **−0,119 R** |
+| R2 liquidité sweep + MSS (M5) | 37 tr., +0,238 R | 19 tr., +0,140 R | 18 tr., +0,571 R | 17 tr., **−0,027 R** |
+| R3 Donchian M15 Asie | 302 tr., −0,262 R | 256 tr., −0,233 R | 174 tr., +0,245 R | 165 tr., **+0,172 R** |
+
+- La **méthode du PDF perd sur toutes les périodes**, avant comme après frais : la règle mécanique l'exclut.
+- La **liquidité** est le seul robot positif dans les deux régimes de marché (2015-2018 et 2025), mais avec très peu de
+  trades (17 à 37 par période) et elle est légèrement négative sur 2026 (17 trades). Exécutée en M1 sur 2026-03 → 09 :
+  16 trades, +0,227 R.
+- **Ensemble retenu (R2 liquidité > R3 Donchian, une position à la fois)** :
+
+| Période | Trades | Gagnants | E net (base) | E stress | PF | DD |
+|---|---|---|---|---|---|---|
+| 2015-16 | 337 | 35 % | −0,202 R | −0,360 R | 0,70 | 72,5 R |
+| 2017-18 | 269 | 36 % | −0,200 R | −0,373 R | 0,68 | 60,1 R |
+| 2025 (dév.) | 189 | 48 % | +0,261 R | +0,221 R | 1,53 | 11,5 R |
+| **2026 (validation)** | **180** | **46 %** | **+0,153 R** | **+0,132 R** | **1,30** | **11,9 R** |
+
+  Trimestres 2025-T2 → 2026-T3 : 5 positifs sur 6, mais **le dernier (2026-T3) est négatif (−0,087 R)**.
+  Monte-Carlo 2026 : P(total > 0) = 94 %.
+- Critères : 7 sur 9 remplis. Échecs : robustesse de la liquidité (17 trades médians par variante, sous le minimum
+  de 30) et résultat négatif sur 2017-18 (l'ensemble perd quand l'or n'est pas en forte tendance).
+- **Compte cent de 100 €** : 2026 → 105,51 € à 0,25 % de risque (pire baisse 2,2 %), 119,30 € à 1 % (pire baisse 5,3 %,
+  puis suspension automatique) ; 2017-18 → 95,60 € (suspension à −5 %). Compte standard 0,01 lot = 100 oz : 0 trade possible.
+
+**Conclusion** : la fusion fait mieux que chaque robot seul sur 2026 et reste positive avec des frais stress, mais elle
+dépend du régime de forte tendance de 2025-2026 et perd sur 2015-2018. Le robot est prêt pour la **démo et le paper
+trading** (`config.fusion.json`), pas pour de l'argent réel : le mode réel reste verrouillé.

@@ -428,11 +428,25 @@ class RegimeSwitch(Strategy):
         return "regime_switch(" + ", ".join(f"{r}:{s.name}" for r, s in self.by_regime.items()) + ")"
 
 
+from .legacy import GeometryPDF, LiquiditySweep, Ensemble, SessionOnly  # noqa: E402  (anciens robots)
+
 CATALOG: dict[str, type[Strategy]] = {c.name: c for c in (
     TrendPullback, AsiaRangeBreakout, NYOpeningRangeBreakout, SweepReversal, LevelRejection, MomentumImpulse,
     BollingerReversion, VWAPReversion, DonchianBreakout, SqueezeBreakout, RSI2Reversion, InsideBarBreakout,
+    GeometryPDF, LiquiditySweep,
 )}
 
 
 def make(name: str, **params) -> Strategy:
+    """`ensemble` : params = {"members": [{"name": ..., "params": {...}, "sessions": [...], "h1": false}, ...]}."""
+    if name == "ensemble":
+        members = []
+        for spec in params["members"]:
+            s = make(spec["name"], **spec.get("params", {}))
+            if spec.get("h1"):
+                s = TrendFilter(s)
+            if spec.get("sessions"):
+                s = SessionOnly(s, spec["sessions"])
+            members.append(s)
+        return Ensemble(members)
     return CATALOG[name](**params)

@@ -191,6 +191,25 @@ Avec **280 $** (0,01 lot, perte ≤ 5 % par trade) : **280 $ → 368 $ en 17 moi
 mais seulement 17 trades pris et 12 refusés (stop trop large pour le capital en 2026). C'est
 **la première version positive sur des données jamais vues**, mais sur 29 trades : à confirmer en démo.
 
+### Pistes d'amélioration testées (octobre 2026) — aucune retenue par défaut
+
+Même protocole : réglage sur l'or 2025, puis **une seule** vérification sur 2026 (M5 et M1).
+
+| Piste (backtest, option) | Or 2025 (réglage) | 2026 M5 | **2026 M1 (exécution de l'EA)** | Verdict |
+|---|---|---|---|---|
+| Actuel : Asie + veille | 16 trades, +8,5 R | 13 trades, +5,6 R | 13 trades, **+5,4 R** | gardé |
+| + haut/bas de **Londres** (`liqPools: [..., 'london']`) | 23 trades, +10,6 R | 22 trades, +8,4 R | 21 trades, **+1,4 R** | option, non retenue |
+| + haut/bas de la **semaine passée** (`'pweek'`) | identique (+8,5 R) | – | – | sans effet |
+| **Entrée sur repli** (ordre limite à 30–50 % vers la mèche, `liqEntryMode: 'retrace'`) | +0,9 à −9,2 R | – | – | rejetée |
+| **Breakeven** à 1,5R ou 2R | +5,6 R (au lieu de +8,5) | – | – | rejeté |
+
+- Les niveaux de Londres doublent presque le nombre de trades et aident en M5 (17 mois : 45 trades,
+  PF 1,70, +19,1 R), mais **en M1 le gain tombe à +1,4 R** et la moitié des setups en plus sont refusés
+  à 280 $ (stop trop large pour 0,01 lot). Pas assez solide pour l'activer.
+- L'entrée sur repli prend surtout les trades qui reviennent vers la mèche… puis la cassent : 0 gagnant
+  sur 9 avec un repli à 50 %. Le meilleur prix d'entrée ne compense pas cette mauvaise sélection.
+- Le breakeven coupe des trades qui seraient allés à 3R après un retour au prix d'entrée.
+
 ## ⚠️ Résultat sur 17 mois : le robot n'est pas rentable
 
 Test sur **101 023 bougies M5 réelles du 07/04/2025 au 17/09/2026** (export MetaTrader 5 avec

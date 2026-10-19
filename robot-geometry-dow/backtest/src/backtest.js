@@ -129,7 +129,27 @@ function run(m5, cfg) {
     const bar = m5[i];
 
     // Ordre en attente : exécution à l'ouverture de la bougie suivante.
-    if (pending) {
+    // Ordre limite (repli) : exécuté quand le prix revient au niveau, annulé à l'expiration.
+    let limitFill = false;
+    if (pending && pending.limit != null) {
+      const dir = pending.side === 'buy' ? 1 : -1;
+      if (bar.t > pending.expiry || !S.canEnter(bar.t, cfg)) pending = null;
+      else if ((pending.side === 'buy' ? bar.l <= pending.limit : bar.h >= pending.limit)) {
+        // ouverture déjà au-delà du niveau (gap) : exécution à l'ouverture
+        const px = dir > 0 ? Math.min(bar.o, pending.limit) : Math.max(bar.o, pending.limit);
+        const entry = px + dir * half;
+        const risk = (entry - pending.sl) * dir;
+        const ok = risk > 0 && (pending.tp - entry) * dir > 0;
+        const lots = realMoney ? sizeLots(balance, risk, cfg) : null;
+        if (ok && lots === 0) skipped++;
+        else if (ok && !guard.canTrade(bar.t)) {
+          pos = { ...pending, entry, entryTime: bar.t, risk, initialSL: pending.sl, lots };
+          guard.onOpen(bar.t);
+          limitFill = true;
+        }
+        pending = null;
+      }
+    } else if (pending) {
       const dir = pending.side === 'buy' ? 1 : -1;
       const entry = bar.o + dir * half;
       const risk = (entry - pending.sl) * dir;
@@ -150,7 +170,8 @@ function run(m5, cfg) {
     if (pos) {
       const buy = pos.side === 'buy';
       if (buy ? bar.l <= pos.sl : bar.h >= pos.sl) close(bar, pos.sl, pos.sl === pos.initialSL ? 'SL' : 'SL suiveur');
-      else if (buy ? bar.h >= pos.tp : bar.l <= pos.tp) close(bar, pos.tp, 'TP');
+      // bougie d'exécution d'un ordre limite : on ignore la target (ordre des mouvements inconnu)
+      else if (!limitFill && (buy ? bar.h >= pos.tp : bar.l <= pos.tp)) close(bar, pos.tp, 'TP');
       else pos.sl = trail(pos, bar, cfg);
     }
 
@@ -160,7 +181,7 @@ function run(m5, cfg) {
       const nextOpen = bar.t + (cfg.barMinutes || 5) * 60000; // bougies M5 ou M1
       let allow = { buy: true, sell: true };
       if (trendAt) { const tr = trendAt(nextOpen); allow = { buy: tr > 0, sell: tr < 0 }; }
-      const window = !pos && !(cfg.startTime && nextOpen < cfg.startTime) && S.canEnter(nextOpen, cfg)
+      const window = !pos && !pending && !(cfg.startTime && nextOpen < cfg.startTime) && S.canEnter(nextOpen, cfg)
         && !guard.canTrade(nextOpen) && !(cfg.newsFilter && F.newsBlocked(nextOpen, cfg)) && !(realMoney && balance <= 0);
       const sig = liq(i, allow, window);
       if (sig && window) pending = sig;

@@ -32,11 +32,16 @@ function createLiquidity(m5, cfg) {
   const barMin = cfg.barMinutes || 5;
   const swingBars = cfg.liqSwingMinutes ? Math.max(1, Math.round(cfg.liqSwingMinutes / barMin)) : cfg.liqSwingBars;
   const waitBars = cfg.liqMaxWaitMinutes ? Math.max(1, Math.round(cfg.liqMaxWaitMinutes / barMin)) : cfg.liqMaxWaitBars;
-  const days = new Map(); // jour de Paris -> { hi, lo, asiaHi, asiaLo }
+  const londonStart = hhmm(cfg.liqLondonStart || '09:00');
+  const londonEnd = hhmm(cfg.liqLondonEnd || '12:00');
+  const days = new Map(); // jour de Paris -> { hi, lo, asiaHi, asiaLo, lonHi, lonLo }
+  const weeks = new Map(); // semaine (lundi) -> { hi, lo }
+  const weekOf = (d) => Math.floor((d + 3) / 7); // jour 0 = jeudi 1er janvier 1970
   let dayOrder = [];
   let lastIndexed = -1;
   let curDay = null;
   let pools = [];
+  let londonAdded = false;
   let pending = [];
 
   function index(upTo) {
@@ -45,7 +50,7 @@ function createLiquidity(m5, cfg) {
       const d = S.parisDay(b.t, cfg);
       let r = days.get(d);
       if (!r) {
-        r = { hi: -Infinity, lo: Infinity, asiaHi: -Infinity, asiaLo: Infinity };
+        r = { hi: -Infinity, lo: Infinity, asiaHi: -Infinity, asiaLo: Infinity, lonHi: -Infinity, lonLo: Infinity };
         days.set(d, r);
         dayOrder.push(d);
       }
@@ -56,6 +61,14 @@ function createLiquidity(m5, cfg) {
         r.asiaHi = Math.max(r.asiaHi, b.h);
         r.asiaLo = Math.min(r.asiaLo, b.l);
       }
+      if (m >= londonStart && m < londonEnd) {
+        r.lonHi = Math.max(r.lonHi, b.h);
+        r.lonLo = Math.min(r.lonLo, b.l);
+      }
+      let w = weeks.get(weekOf(d));
+      if (!w) { w = { hi: -Infinity, lo: Infinity }; weeks.set(weekOf(d), w); }
+      w.hi = Math.max(w.hi, b.h);
+      w.lo = Math.min(w.lo, b.l);
     }
     lastIndexed = Math.max(lastIndexed, upTo);
   }
@@ -73,6 +86,11 @@ function createLiquidity(m5, cfg) {
       out.push({ name: 'haut de la veille', price: prev.hi, kind: 'high', used: false });
       out.push({ name: 'bas de la veille', price: prev.lo, kind: 'low', used: false });
     }
+    const pw = weeks.get(weekOf(d) - 1);
+    if (cfg.liqPools.includes('pweek') && pw) {
+      out.push({ name: 'haut semaine passée', price: pw.hi, kind: 'high', used: false });
+      out.push({ name: 'bas semaine passée', price: pw.lo, kind: 'low', used: false });
+    }
     return out;
   }
 
@@ -85,6 +103,7 @@ function createLiquidity(m5, cfg) {
     if (d !== curDay) {
       curDay = d;
       pools = [];
+      londonAdded = false;
       pending = [];
       if (cfg.liqVolMode) {
         while (k15 + 1 < m15.length && m15[k15 + 1].t + S.M15 <= b.t) k15++;
@@ -103,6 +122,15 @@ function createLiquidity(m5, cfg) {
       // un niveau déjà dépassé aujourd'hui (avant la fin de l'Asie) n'est plus de la liquidité
       const today = days.get(d);
       for (const p of pools) if (p.kind === 'high' ? today.hi > p.price : today.lo < p.price) p.used = true;
+    }
+    // Haut/bas de Londres : liquidité pour la séance de New York (figés à la fin de la matinée).
+    if (pools.length && !londonAdded && minute >= londonEnd && cfg.liqPools.includes('london')) {
+      londonAdded = true;
+      const today = days.get(d);
+      if (Number.isFinite(today.lonHi)) {
+        pools.push({ name: 'haut de Londres', price: today.lonHi, kind: 'high', used: false });
+        pools.push({ name: 'bas de Londres', price: today.lonLo, kind: 'low', used: false });
+      }
     }
     if (!pools.length) return null;
 
@@ -144,7 +172,9 @@ function createLiquidity(m5, cfg) {
       const side = s.dir > 0 ? 'buy' : 'sell';
       if (cfg._stats) cfg._stats.mss++;
       if (signal || !tradingWindow || !allow[side]) { if (cfg._stats) cfg._stats.bloque++; continue; }
-      const price = b.c;
+      // Entrée : au marché (clôture du MSS) ou ordre limite sur un repli vers l'extrême du sweep.
+      const retrace = cfg.liqEntryMode === 'retrace' ? cfg.liqRetrace : 0;
+      const price = b.c + (s.extreme - b.c) * retrace;
       const sl = s.extreme - s.dir * V.buffer;
       const dist = (price - sl) * s.dir;
       if (dist < V.minSL || dist > V.maxSL) { if (cfg._stats) cfg._stats[dist < V.minSL ? 'stopTropPetit' : 'stopTropGrand']++; continue; }
@@ -163,6 +193,7 @@ function createLiquidity(m5, cfg) {
         price,
         sl,
         tp,
+        ...(retrace ? { limit: price, expiry: b.t + (cfg.liqRetraceMinutes || 60) * 60000 } : {}),
         checklist: {
           type: 'liquidité',
           zone: `sweep ${s.pool.name} ${s.pool.price.toFixed(2)}`,

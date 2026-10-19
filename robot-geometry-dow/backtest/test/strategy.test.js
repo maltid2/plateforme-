@@ -339,6 +339,22 @@ test('liquidité : sweep du haut asiatique puis cassure de structure = vente', (
   assert.ok(t.checklist.zone.includes('haut Asie'));
 });
 
+test('liquidité : entrée sur repli = ordre limite exécuté au niveau, sinon expiré', () => {
+  const c = config.forMarket('gold', { newsFilter: false, startTime: Date.UTC(2024, 0, 3) + 3600000, liqEntryMode: 'retrace', liqRetrace: 0.5 });
+  // le prix file sans revenir : l'ordre limite expire, aucun trade
+  assert.strictEqual(run(sweepDay(), c).trades.length, 0);
+  // repli juste après le MSS (clôture 3004,5, mèche 3013) : limite à 3008,75
+  const bars = sweepDay();
+  const k = bars.length - 4;
+  bars[k] = { ...bars[k], o: 3004.5, h: 3009, l: 3004, c: 3005 };
+  const { trades } = run(bars, c);
+  assert.strictEqual(trades.length, 1, JSON.stringify(trades));
+  const t = trades[0];
+  assert.strictEqual(t.side, 'sell');
+  assert.ok(Math.abs(t.entry - (3008.75 - c.spread / 2)) < 1e-9, `exécution au prix limite (${t.entry})`);
+  assert.ok(t.exitTime > t.entryTime && t.reason === 'TP', `${t.reason}`);
+});
+
 test('tendance : EMA qui monte = achats seulement, qui baisse = ventes seulement', () => {
   const mk = (slope) => Array.from({ length: 288 * 80 }, (_, i) => {
     const p = 3000 + slope * i / 288; return { t: DAY + i * S.M5, o: p, h: p + 1, l: p - 1, c: p + slope * 0.001, v: 100 };

@@ -87,6 +87,11 @@ const base = {
   liqEntry: 'mss',           // 'mss' (changement de structure) ou 'reclaim' (retour sous/au-dessus du niveau)
   liqTarget: 'fixed',        // 'fixed' (liqTargetR x risque) ou 'opposite' (liquidité d'en face)
   liqTargetR: 2,
+  liqLondonStart: '09:00',   // pool 'london' : haut/bas de la matinée de Londres
+  liqLondonEnd: '12:00',
+  liqEntryMode: 'market',    // 'market' (clôture du MSS) ou 'retrace' (ordre limite sur repli)
+  liqRetrace: 0.5,           // repli : fraction du chemin entre la clôture du MSS et l'extrême du sweep
+  liqRetraceMinutes: 60,     // durée de validité de l'ordre limite
   // Distances proportionnelles à la volatilité (bougie M15 médiane des N derniers jours).
   // Multiples = réglages en dollars choisis sur l'or 2025 (bougie M15 médiane 5 $) :
   // cassure > 18 $ = 3,6x ; stop 2,25-18 $ = 0,45x-3,6x ; marge 0,90 $ = 0,18x.

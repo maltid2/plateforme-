@@ -127,7 +127,7 @@ def load_csv(path: str, *, server_tz: str = "UTC", point: float = 0.01, tf: int 
                 b.spread.append(float(r[cols["spread"]]) * point)  # MT5 : spread en points
             if has_ask:
                 b.ask_h.append(float(r[cols["ask_high"]])); b.ask_l.append(float(r[cols["ask_low"]]))
-    if not b.tf and len(b.t) > 10:
+    if not b.tf and len(b.t) > 1:
         b.tf = int(statistics.median(b.t[k + 1] - b.t[k] for k in range(min(len(b.t) - 1, 2000))) // 60)
     return b
 

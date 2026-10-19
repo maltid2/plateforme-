@@ -12,6 +12,7 @@ Hypothèses (prudentes, documentées dans docs/PROTOCOLE.md) :
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import bisect
 import random
 
 from .market import Market
@@ -152,7 +153,10 @@ def run(m: Market, strat: Strategy, cost: CostModel, rules: ExecRules, *, start_
         trades.append(p)
         pos = None
 
-    for k in range(1, n):
+    k0 = 1
+    if start_ts is not None:  # démarrage peu avant la période (les indicateurs sont déjà calculés sur tout l'historique)
+        k0 = max(1, bisect.bisect_left(b.t, start_ts) - 2)
+    for k in range(k0, n):
         t = b.t[k]
         if end_ts is not None and t >= end_ts and pos is None and pend is None:
             break

@@ -67,3 +67,23 @@ exception : le critère 8 (hold-out) n'existe pas dans l'étude B, faute de donn
 remplacé par l'exigence que l'étude A ne contredise pas franchement le résultat (indiqué, non bloquant).
 Limite connue : le développement de l'étude B chevauche la période du hold-out de l'étude A (déjà vue une fois).
 Le M1 n'est pas testé dans l'étude B (pas de M1 sur le développement 2025).
+
+---
+
+## Addendum 2 (écrit AVANT l'étude C) — étude C « fusion des trois robots »
+
+Demande : combiner les deux anciens robots (méthode géométrique du PDF, liquidité sweep + MSS) et le nouveau
+(cassure de Donchian M15 en session asiatique). Le courtier choisi par l'utilisateur n'est pas forcément régulé :
+la faisabilité (critère 9) est évaluée avec la spécification d'un **compte cent** (1 lot = 1 once).
+
+- Membres, réglages d'origine, sans optimisation :
+  R1 `geometry_pdf` M5 (Londres + chevauchement, R:R min 2, breakeven à 1R) ;
+  R2 `liquidity_mss` M5 (créneaux de Paris 09:00-12:00 et 14:45-18:00, target 3R) ;
+  R3 `donchian_breakout` M15 (session Asie, filtre H1).
+- Combinaison : une seule position à la fois, priorité R2 > R3 > R1 (ordre fixé ici).
+- Ensemble « tous » = R1 + R2 + R3. Ensemble « sélectionné » = membres dont l'espérance nette (coûts base) est > 0
+  sur le développement de l'étude B (2025) — règle appliquée mécaniquement par le script.
+- Périodes : développement / validation des études A (2015-16 / 2017-18) et B (2025 / 2026-01 → 09), plus le M1
+  2026-03 → 09 pour R2. Validation regardée une seule fois.
+- Mêmes scénarios de coûts et mêmes critères que l'étude B ; en plus, l'ensemble ne doit pas être négatif sur la
+  validation de l'étude A (indiqué).

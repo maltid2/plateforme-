@@ -45,3 +45,25 @@ Les seuils ne seront pas modifiés après coup pour faire passer une stratégie.
 
 Si aucune stratégie ne remplit ces critères : **pas de passage en réel**. Conclusion attendue dans ce cas : poursuivre
 la recherche et/ou augmenter le capital, sans forcer.
+
+---
+
+## Addendum (écrit après l'étude A, AVANT l'étude B) — étude B « régime de forte volatilité »
+
+Motif : dans l'étude A, le coût moyen représente 0,8 R/trade en M1, 0,34 R en M5 et 0,20 R en M15 (2015-2018),
+alors que l'ATR de l'or est 4 à 6 fois plus élevé en 2025-2026 pour un spread comparable. L'étude B teste si un
+avantage net apparaît quand le coût pèse moins face au mouvement. Le hold-out 2025-2026 de l'étude A ayant déjà été
+regardé une fois, l'étude B est une **nouvelle étude indépendante**, avec sa propre séparation :
+
+| Rôle | Données |
+|---|---|
+| Développement | MT5 XAUUSD M5 2025-04-07 → 2025-12-31 (M5 et M15 reconstruites) |
+| Validation | MT5 XAUUSD M5 2026-01-01 → 2026-09-17, une seule évaluation |
+| Walk-forward | 2025-04 → 2026-09, 6 mois / 3 mois |
+
+Mêmes stratégies, mêmes paramètres par défaut, même règle de sélection (meilleure espérance nette sur le développement,
+une unité par stratégie, n ≥ 100 sur le développement), mêmes scénarios de coûts et **mêmes 9 critères**, à une
+exception : le critère 8 (hold-out) n'existe pas dans l'étude B, faute de données indépendantes supplémentaires ; il est
+remplacé par l'exigence que l'étude A ne contredise pas franchement le résultat (indiqué, non bloquant).
+Limite connue : le développement de l'étude B chevauche la période du hold-out de l'étude A (déjà vue une fois).
+Le M1 n'est pas testé dans l'étude B (pas de M1 sur le développement 2025).

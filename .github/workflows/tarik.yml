@@ -82,10 +82,16 @@ jobs:
           UA='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130 Safari/537.36'
           curl -sSL -A "$UA" 'https://www.genetec.com/supported-device-list?page=1' -o page1.html || true
           curl -sSL -A "$UA" 'https://www.genetec.com/solutions/resources/supported-device-list/detail?pid=2528' -o detail.html || true
-          for f in page1.html detail.html; do
-            echo "===== $f ($(wc -c < $f) octets) ====="
-            sed -e 's/></>\n</g' "$f" | grep -vE '^\s*$' | cut -c1-300
-          done
+          JS=$(grep -oE "/webfiles/[^'\"]*main\.[0-9a-f]+\.js" page1.html | head -1)
+          echo "Bundle : $JS"
+          curl -sSL -A "$UA" "https://www.genetec.com$JS" -o main.js
+          echo "Taille bundle : $(wc -c < main.js)"
+          echo '----- chunks -----'
+          grep -oE '"static/js/[^"]+"|[0-9]+:"[0-9a-f]{8}"' main.js | head -40
+          echo '----- autour de supported-device / sdl / device -----'
+          grep -oiE '.{0,160}(supporteddevice|supported-device|devicelist|sdl[A-Za-z]*|/api/[A-Za-z/_-]+).{0,160}' main.js | head -60
+          echo '----- URLs absolues -----'
+          grep -oE 'https?://[A-Za-z0-9./_-]+' main.js | sort -u | head -80
 
       - name: Committer si changement
         run: |

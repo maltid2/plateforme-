@@ -10,6 +10,7 @@ on:
     paths:
       - "tarik/parc.txt"
       - "tarik/src/**"
+      - "tarik/scripts/**"
       - ".github/workflows/tarik.yml"
   schedule:
     - cron: "17 4 * * 1" # lundi 04:17 UTC

@@ -87,3 +87,20 @@ la faisabilité (critère 9) est évaluée avec la spécification d'un **compte 
   2026-03 → 09 pour R2. Validation regardée une seule fois.
 - Mêmes scénarios de coûts et mêmes critères que l'étude B ; en plus, l'ensemble ne doit pas être négatif sur la
   validation de l'étude A (indiqué).
+
+---
+
+## Addendum 3 (écrit AVANT l'étude D) — étude D « scalp agressif multi-positions »
+
+Demande : scalp agressif, plusieurs positions d'environ 1 € de risque (1 % de 100 €, compte cent), fermées en
+secondes ou en minutes.
+
+- Stratégies (paramètres par défaut, non optimisés) : `micro_momentum`, `micro_reversion`, `micro_breakout`,
+  `micro_sweep` ; durée maximale 1, 3 ou 5 minutes ; jusqu'à 3 positions simultanées ; sessions Londres + chevauchement.
+- Données et séparation : bougies de **10 secondes** reconstruites des ticks bid/ask 2018-01 → 03 (dév.) / 2018-04 → 06
+  (valid.) ; **M1** ticks 2017-01 → 09 (dév.) / 2017-10 → 2018-06 (valid.) ; **M1 2026** 03-26 → 06-30 (dév.) /
+  07-01 → 09-25 (valid.).
+- Sélection : pour chaque jeu, la variante avec la meilleure espérance nette (coûts base) sur le développement parmi
+  celles d'au moins 300 trades ; validation regardée une seule fois (coûts zéro, base, stress).
+- Critère minimal pour aller en démo : espérance nette ≥ +0,05 R en validation avec coûts base ET ≥ 0 en stress, sur
+  au moins 300 trades.

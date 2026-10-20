@@ -17,11 +17,22 @@ const URLS = process.argv.slice(2).length ? process.argv.slice(2) : [
 ];
 
 (async () => {
-  const browser = await chromium.launch();
-  const page = await browser.newPage();
+  const browser = await chromium.launch({ args: ['--disable-blink-features=AutomationControlled'] });
+  const context = await browser.newContext({
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+    locale: 'en-US',
+    viewport: { width: 1366, height: 900 },
+  });
+  const page = await context.newPage();
+  page.on('console', (m) => console.log(`[console.${m.type()}] ${m.text().slice(0, 300)}`));
+  page.on('pageerror', (e) => console.log('[pageerror] ' + e.message.slice(0, 300)));
+  page.on('requestfailed', (r) => console.log(`[échec] ${r.url().slice(0, 200)} ${r.failure() && r.failure().errorText}`));
   page.on('response', async (res) => {
     const type = res.headers()['content-type'] || '';
     const req = res.request();
+    if (!/google|cookielaw|doubleclick|facebook|linkedin|bing|hotjar/.test(res.url())) {
+      console.log(`[${req.resourceType()}] ${res.status()} ${type.split(';')[0]} ${res.url().slice(0, 200)}`);
+    }
     if (!/json/i.test(type) && !['xhr', 'fetch'].includes(req.resourceType())) return;
     let body = '';
     try { body = await res.text(); } catch { /* corps indisponible */ }
@@ -34,6 +45,8 @@ const URLS = process.argv.slice(2).length ? process.argv.slice(2) : [
     await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 }).catch((e) => console.log('goto : ' + e.message));
     await page.waitForTimeout(5000);
     const text = await page.evaluate(() => document.body.innerText).catch(() => '');
+    const htmlLen = await page.evaluate(() => document.documentElement.outerHTML.length).catch(() => 0);
+    console.log(`titre : ${await page.title()} | DOM : ${htmlLen} octets`);
     console.log('\n----- texte rendu -----\n' + text.slice(0, 4000));
   }
   await browser.close();

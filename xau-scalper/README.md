@@ -12,7 +12,7 @@
 | 3 | Les 3 stratégies testées en premier (sélection automatique sur le développement) | [docs/RAPPORT.md](docs/RAPPORT.md) |
 | 4 | Plateforme et architecture | ci-dessous |
 | 5 | Code Python organisé en fichiers | [xauscalp/](xauscalp/) |
-| 6 | Tests unitaires (55) | [tests/](tests/) |
+| 6 | Tests unitaires (60) | [tests/](tests/) |
 | 7 | Protocole de backtesting | [docs/PROTOCOLE.md](docs/PROTOCOLE.md), critères pré-enregistrés [docs/CRITERES.md](docs/CRITERES.md) |
 | 8 | Rapport de résultats réellement mesurés | [docs/RAPPORT.md](docs/RAPPORT.md), [reports/etude_A](reports/etude_A/RESULTATS_MESURES.md), [reports/etude_B](reports/etude_B/RESULTATS_MESURES.md) |
 | 9 | Guide d'installation et de lancement en démo | [docs/GUIDE_DEMO.md](docs/GUIDE_DEMO.md) |
@@ -49,6 +49,17 @@ python -m xauscalp paper export_M5.csv --server-tz paris+1 --config config.fusio
 python -m xauscalp run --config config.fusion.json --mode demo
 ```
 
+## Scalp agressif (étude D)
+
+`config.scalp.json` : jusqu'à 3 positions de ~1 € de risque (1 % de 100 €, compte cent), sorties en 1 à 5 minutes,
+bougies M1 ou en secondes (`"tf_seconds": 10`, construites à partir des ticks MT5). **Perdant dans tous les tests**
+(100 € → environ 80 € et arrêt automatique à −20 %) : voir docs/RAPPORT.md, étude D.
+
+```bash
+python -m xauscalp scalp --s10 data/xau_s10_2018H1.csv --m1-ticks data/xau_m1_2017.csv data/xau_m1_2018H1.csv --m1-2026 xau_m1_2026.csv --mt5-m5 export_M5.csv
+python -m xauscalp run --config config.scalp.json --mode demo
+```
+
 ## Architecture
 
 ```
@@ -61,6 +72,7 @@ xauscalp/
   strategies/      12 stratégies + les 2 anciens robots (legacy.py) + filtre H1 + ensemble + moteur par régime
   portfolio.py     fusion de robots (une position à la fois) et simulation de compte
   fusion.py        étude C (fusion des trois robots)
+  scalp.py         scalp agressif : backtest multi-positions, stratégies de quelques minutes, étude D
   ml.py            méta-filtre logistique (Python pur), utilisé seulement s'il est démontré hors échantillon
   symbol.py        spécification du symbole fournie par le courtier (taille de contrat, tick, lots, marge, stops)
   sizing.py        taille de position : perte au stop frais compris ≤ limite, sinon REFUS ; contrôle de marge
@@ -87,7 +99,7 @@ d'ordres d'un CFD sur or n'est pas un vrai order flow : la famille « order flow
 ## Commandes
 
 ```bash
-python -m unittest discover -s tests -t .                       # 55 tests, aucune dépendance
+python -m unittest discover -s tests -t .                       # 60 tests, aucune dépendance
 python -m xauscalp feasibility --equity 100 --risk 0.25         # faisabilité (specs d'exemple ou --spec réelle)
 python -m xauscalp validate export.csv --server-tz paris+1      # qualité des données
 python -m xauscalp backtest export.csv --server-tz paris+1 --tf 15 --strategy donchian_breakout --sessions asia --account cent

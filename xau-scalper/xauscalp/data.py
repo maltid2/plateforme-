@@ -128,7 +128,8 @@ def load_csv(path: str, *, server_tz: str = "UTC", point: float = 0.01, tf: int 
             if has_ask:
                 b.ask_h.append(float(r[cols["ask_high"]])); b.ask_l.append(float(r[cols["ask_low"]]))
     if not b.tf and len(b.t) > 1:
-        b.tf = int(statistics.median(b.t[k + 1] - b.t[k] for k in range(min(len(b.t) - 1, 2000))) // 60)
+        sec = statistics.median(b.t[k + 1] - b.t[k] for k in range(min(len(b.t) - 1, 2000)))
+        b.tf = int(sec // 60) if sec >= 60 else sec / 60   # minutes ; fraction de minute pour les bougies en secondes
     return b
 
 
@@ -168,7 +169,7 @@ def validate(b: Bars, gap_factor: int = 5, spike_factor: float = 25.0) -> DataRe
     bad = sum(1 for k in range(n) if not (b.l[k] <= min(b.o[k], b.c[k]) and b.h[k] >= max(b.o[k], b.c[k]) and b.l[k] <= b.h[k]))
     nonpos = sum(1 for k in range(n) if min(b.o[k], b.h[k], b.l[k], b.c[k]) <= 0)
     gaps = 0
-    step = b.tf * 60
+    step = max(1, int(round(b.tf * 60)))
     for k in range(1, n):
         dt = b.t[k] - b.t[k - 1]
         if dt > gap_factor * step and not all(is_market_closed(x) for x in range(b.t[k - 1] + step, b.t[k], max(step, 3600))):

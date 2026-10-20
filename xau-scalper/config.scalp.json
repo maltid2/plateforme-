@@ -1,0 +1,57 @@
+{
+  "mode": "paper",
+  "live_enabled": false,
+  "symbol": "XAUUSD",
+  "tf": 1,
+  "history_bars": 1500,
+  "strategy": "micro_reversion",
+  "strategy_params": {
+    "max_minutes": 5
+  },
+  "h1_filter": false,
+  "sessions": [
+    "london",
+    "overlap"
+  ],
+  "news_csv": "",
+  "news_before_min": 30,
+  "news_after_min": 30,
+  "flatten_before_news_min": 5,
+  "max_atr_ratio": 3.0,
+  "risk": {
+    "risk_pct": 1.0,
+    "max_daily_loss_pct": 5.0,
+    "max_drawdown_pct": 20.0,
+    "max_positions": 3,
+    "max_trades_per_day": 60,
+    "max_spread": 0.6,
+    "max_data_age_s": 120,
+    "max_exec_errors": 3,
+    "kill_file": "STOP"
+  },
+  "server_tz": "paris+1",
+  "commission_per_lot_rt": 0.0,
+  "deviation_points": 30,
+  "magic": 26101,
+  "poll_seconds": 1.0,
+  "order_retries": 2,
+  "intent_timeout_s": 60,
+  "state_dir": "state",
+  "mt5_login": null,
+  "mt5_server": null,
+  "mt5_path": null,
+  "_commentaire": "Scalp agressif : jusqu'à 3 positions de ~1 € de risque (1 % de 100 €, compte cent), sorties en 1 à 5 minutes. PERDANT dans tous les tests (étude D) : à garder en paper / démo. Pour des bougies de 10 s : remplacer \"tf\" par \"tf_seconds\": 10 dans le membre et poll_seconds à 1.",
+  "members": [
+    {
+      "name": "micro_reversion",
+      "params": {
+        "max_minutes": 5
+      },
+      "tf": 1,
+      "sessions": [
+        "london",
+        "overlap"
+      ]
+    }
+  ]
+}

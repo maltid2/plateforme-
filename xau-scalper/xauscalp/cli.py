@@ -17,6 +17,11 @@ def cmd_fusion(a):
     Fusion(a.ticks, a.mt5_m5, a.m1, a.out).run_all()
 
 
+def cmd_scalp(a):
+    from .scalp import study
+    study(a.s10, a.m1_ticks, a.m1_2026, a.mt5_m5, a.out)
+
+
 def cmd_validate(a):
     from .data import load_csv, validate
     b = load_csv(a.csv, server_tz=a.server_tz)
@@ -167,6 +172,12 @@ def build() -> argparse.ArgumentParser:
     fu.add_argument("--ticks", nargs="+", required=True); fu.add_argument("--mt5-m5", required=True)
     fu.add_argument("--m1", default=None); fu.add_argument("--out", default="reports/etude_C_fusion")
     fu.set_defaults(fn=cmd_fusion)
+
+    sc = sub.add_parser("scalp", help="étude D : scalp agressif multi-positions (secondes / minutes)")
+    sc.add_argument("--s10", required=True, help="bougies de 10 s (scripts/ticks2sec.py)")
+    sc.add_argument("--m1-ticks", nargs="+", required=True); sc.add_argument("--m1-2026", required=True)
+    sc.add_argument("--mt5-m5", required=True); sc.add_argument("--out", default="reports/etude_D_scalp")
+    sc.set_defaults(fn=cmd_scalp)
 
     v = sub.add_parser("validate", help="contrôle qualité d'un fichier de bougies")
     v.add_argument("csv"); v.add_argument("--server-tz", default="UTC")

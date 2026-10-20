@@ -125,3 +125,24 @@ trading** (`config.fusion.json`), pas pour de l'argent réel : le mode réel res
 
 Contrôle de bout en bout : le moteur complet, en rejeu avec `config.fusion.json` (compte cent, 100 €, 0,25 %),
 2025-04 → 2026-09 : **343 trades, 100 € → 113,60 €**, aucune position en double, aucune exception.
+
+## Étude D — scalp agressif : plusieurs positions de ~1 €, fermées en secondes ou en minutes (reports/etude_D_scalp)
+
+Pré-enregistrée (addendum 3). 4 stratégies très courtes × durée max 1 / 3 / 5 min, jusqu'à 3 positions en même temps.
+
+| Données | Spread moyen | Mouvement moyen d'une bougie (ATR) | Spread / mouvement |
+|---|---|---|---|
+| Bougies de 10 s (ticks 2018) | 0,22 $ | 0,105 $ | **210 %** |
+| M1 (ticks 2017-18) | 0,23 $ | 0,30 $ | 76 % |
+| M1 2026 | 0,075 $ (spread minimum enregistré ; plancher 0,20 $ appliqué) | 2,39 $ | 3 % (8 % avec le plancher) |
+
+- Sur le développement : 21 variantes sur 36 sont positives avant frais, **2 seulement après frais** (M1 2026, à peine
+  +0,01 / +0,03 R).
+- **Validation : toutes négatives.** 10 s : −1,83 R par trade ; M1 2017-18 : −0,56 R ; M1 2026 : −0,069 R (avant frais +0,027 R).
+- Compte cent de 100 €, ~1 € de risque par position, 3 positions max : **100 € → 79,72 € (10 s), 79,32 € (M1 2017-18),
+  79,88 € (M1 2026)**, à chaque fois arrêt automatique à −20 %.
+
+À la seconde, le spread vaut deux fois le mouvement d'une bougie : chaque trade commence avec une perte que le marché
+ne rattrape presque jamais. À la minute, même en 2026 où le spread pèse peu, les signaux n'ont pas d'avantage avant frais
+(+0,027 R). Le mode existe (`config.scalp.json`, multi-positions, bougies en secondes depuis les ticks MT5) pour la démo,
+mais **les tests disent qu'il perd de l'argent**.

@@ -77,7 +77,9 @@ class MT5Broker(Broker):
             return None
         return Tick(self._server_ts_to_utc(t.time), t.bid, t.ask)
 
-    def bars(self, tf_minutes: int, count: int) -> Bars:
+    def bars(self, tf_minutes: float, count: int) -> Bars:
+        if tf_minutes < 1:
+            return self._tick_bars(int(round(tf_minutes * 60)), count)
         tfmap = {1: self.mt5.TIMEFRAME_M1, 5: self.mt5.TIMEFRAME_M5, 15: self.mt5.TIMEFRAME_M15, 60: self.mt5.TIMEFRAME_H1}
         rates = self.mt5.copy_rates_from_pos(self.symbol, tfmap[tf_minutes], 1, count)  # 1 = bougies clôturées
         b = Bars(tf_minutes, spread=[], source=f"mt5:{self.symbol}")
@@ -89,6 +91,37 @@ class MT5Broker(Broker):
             b.o.append(float(r["open"])); b.h.append(float(r["high"])); b.l.append(float(r["low"])); b.c.append(float(r["close"]))
             b.v.append(float(r["tick_volume"])); b.spread.append(float(r["spread"]) * point)
         return b
+
+    def _tick_bars(self, seconds: int, count: int) -> Bars:
+        """Bougies de quelques secondes construites à partir des ticks (MT5 n'a pas d'unité < M1)."""
+        mt = self.mt5
+        last = mt.symbol_info_tick(self.symbol)
+        start = datetime.fromtimestamp(int(last.time) - (count + 2) * seconds, UTC)
+        ticks = mt.copy_ticks_from(self.symbol, start, count * seconds * 20, mt.COPY_TICKS_INFO)
+        b = Bars(seconds / 60, spread=[], ask_h=[], ask_l=[], source=f"mt5-ticks:{self.symbol}")
+        if ticks is None:
+            return b
+        cur, n_sp = None, 0
+        for tk in ticks:
+            ts = int(self._server_ts_to_utc(int(tk["time_msc"]) // 1000))
+            key, bid, ask = ts - ts % seconds, float(tk["bid"]), float(tk["ask"])
+            if bid <= 0 or ask <= 0:
+                continue
+            if key != cur:
+                if cur is not None:
+                    b.spread[-1] /= n_sp
+                cur, n_sp = key, 0
+                b.t.append(key); b.o.append(bid); b.h.append(bid); b.l.append(bid); b.c.append(bid); b.v.append(0.0)
+                b.spread.append(0.0); b.ask_h.append(ask); b.ask_l.append(ask)
+            b.h[-1], b.l[-1], b.c[-1] = max(b.h[-1], bid), min(b.l[-1], bid), bid
+            b.v[-1] += 1; b.spread[-1] += ask - bid; n_sp += 1
+            b.ask_h[-1], b.ask_l[-1] = max(b.ask_h[-1], ask), min(b.ask_l[-1], ask)
+        if cur is not None and n_sp:
+            b.spread[-1] /= n_sp
+        now = self._server_ts_to_utc(int(last.time))
+        if len(b) and b.t[-1] + seconds > now:   # dernière bougie pas encore clôturée
+            b = b.slice(0, len(b) - 1)
+        return b.slice(max(0, len(b) - count), len(b))
 
     # --- positions -------------------------------------------------------------
     def positions(self) -> list[Position]:

@@ -40,7 +40,8 @@ class Engine:
         self.members = []
         for sp in specs:
             st = make(sp["name"], **sp.get("params", {}))
-            self.members.append({"strategy": TrendFilter(st) if sp.get("h1") else st, "tf": int(sp.get("tf", cfg.tf)),
+            tf = sp["tf_seconds"] / 60 if sp.get("tf_seconds") else sp.get("tf", cfg.tf)  # bougies en secondes possibles
+            self.members.append({"strategy": TrendFilter(st) if sp.get("h1") else st, "tf": tf,
                                  "sessions": list(sp.get("sessions", cfg.sessions)), "name": sp["name"]})
         self.strategy = self.members[0]["strategy"]
         self.news = news
@@ -185,8 +186,8 @@ class Engine:
             self.alerts.send("ALERTE", f"données périmées ({age:.0f} s)", key="stale")
             return self._decide("skip", f"données périmées ({age:.0f} s)")
         new_tf = fresh
-        if positions or self.state.get("intent"):
-            return self._decide("skip", "position ou ordre déjà en cours")
+        if len(positions) >= self.cfg.risk.max_positions or self.state.get("intent"):
+            return self._decide("skip", "nombre max de positions ou ordre déjà en cours")
         nxt = int(now)
         if self.clock.friday_cutoff(nxt) or self.clock.rollover(nxt):
             return self._decide("skip", "vendredi soir / rollover")
@@ -225,7 +226,7 @@ class Engine:
                            spread=tick.spread if sig.side < 0 else 0.0, slippage=0.05)
         if not sz.ok:
             return self._decide("refused", sz.reason, sig)
-        client_id = f"xs{last_ts}{member['tf']}{'B' if sig.side > 0 else 'S'}"
+        client_id = f"xs{last_ts}{int(round(member['tf'] * 60))}{'B' if sig.side > 0 else 'S'}"
         intent = {"client_id": client_id, "created": now, "side": sig.side, "volume": sz.volume, "sl": sig.stop,
                   "tp": sig.target, "max_until": now + sig.max_minutes * 60, "risk_money": sz.risk_money}
         self.state["intent"] = intent

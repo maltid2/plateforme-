@@ -21,6 +21,9 @@ const { parseFirmwareFile } = require('./lib/firmware-file');
 
 const DB_FILE = path.join(__dirname, '..', 'data', 'genetec-sdl.json');
 
+// Options sans valeur : ne doivent pas avaler l'argument qui suit.
+const FLAGS = new Set(['hors-ligne', 'json']);
+
 function parseArgs(argv) {
   const args = { _: [] };
   for (let i = 0; i < argv.length; i++) {
@@ -28,7 +31,7 @@ function parseArgs(argv) {
     if (a.startsWith('--')) {
       const key = a.slice(2);
       const next = argv[i + 1];
-      if (next == null || next.startsWith('--')) args[key] = true;
+      if (FLAGS.has(key) || next == null || next.startsWith('--')) args[key] = true;
       else args[key] = argv[++i];
     } else args._.push(a);
   }

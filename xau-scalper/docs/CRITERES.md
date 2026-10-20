@@ -120,3 +120,18 @@ Demande : privilégier la quantité de positions pour maximiser le gain total.
   perte max 5 %/jour, suspension à -20 %.
 - Le mode volume n'est retenu que s'il gagne plus d'euros que le robot sélectif sur 2026 **et** ne perd pas plus que
   lui sur 2017-18, avec des coûts base et stress.
+
+---
+
+## Addendum 5 (écrit AVANT l'étude F) — étude F « méthode agressive : taille des positions »
+
+Demande : méthode agressive pour un gain maximal. Les études C et E montrent que le gain vient du risque par trade du
+robot sélectif (liquidité + Donchian M15 Asie), pas du nombre de positions.
+
+- Signaux : ceux du robot fusionné (config.fusion.json), coûts base et stress, inchangés.
+- Profils testés : risque fixe 0,5 / 1 / 2 / 3 / 5 / 8 % par trade ; « anti-martingale » : risque de base × 1,5 après
+  chaque gain (plafond 3×), retour à la base après une perte. Garde-fous agressifs : perte max 10 %/jour, arrêt à −40 %.
+- Choix du profil sur 2025 (dév.) : celui qui maximise le capital final avec une pire baisse ≤ 30 %. Puis une seule
+  vérification sur 2026 et sur 2017-18.
+- Monte-Carlo (5 000 séquences tirées des trades de 2026, et de 2017-18) : capital médian, 5e centile, probabilité de
+  finir sous 50 € et sous 100 €.

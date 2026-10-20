@@ -10,7 +10,6 @@ on:
     paths:
       - "tarik/parc.txt"
       - "tarik/src/**"
-      - "tarik/scripts/**"
       - ".github/workflows/tarik.yml"
   schedule:
     - cron: "17 4 * * 1" # lundi 04:17 UTC
@@ -22,10 +21,6 @@ on:
       sc:
         description: "Version Security Center (ex. 5.11)"
         required: false
-      details:
-        description: "Enrichir avec les fiches détail (plus long)"
-        type: boolean
-        default: false
 
 permissions:
   contents: write
@@ -51,7 +46,7 @@ jobs:
 
       - name: Synchroniser la Supported Device List
         working-directory: tarik
-        run: node src/index.js sync ${{ inputs.details && '--details' || '' }}
+        run: node src/index.js sync
 
       - name: Vérifier le firmware demandé
         if: ${{ inputs.firmware != '' && inputs.firmware != null }}
@@ -61,7 +56,7 @@ jobs:
           SC: ${{ inputs.sc }}
         run: |
           set +e
-          node src/index.js check "$FW" ${SC:+--sc "$SC"} | tee result.txt
+          node src/index.js check --hors-ligne "$FW" ${SC:+--sc "$SC"} | tee result.txt
           { echo '```'; cat result.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
           exit 0
 
@@ -72,18 +67,11 @@ jobs:
           [ -f parc.txt ] || exit 0
           echo '## Vérification du parc' >> "$GITHUB_STEP_SUMMARY"
           grep -vE '^\s*(#|$)' parc.txt | while read -r fw sc; do
-            node src/index.js check "$fw" ${sc:+--sc "$sc"} | tee -a parc-result.txt
+            node src/index.js check --hors-ligne "$fw" ${sc:+--sc "$sc"} | tee -a parc-result.txt
             echo >> parc-result.txt
           done
           { echo '```'; cat parc-result.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
           exit 0
-
-      - name: Diagnostic si la synchro échoue (navigateur)
-        if: failure()
-        timeout-minutes: 8
-        working-directory: tarik
-        run: |
-          node scripts/api-probe.js "PNM-9322VQP"
 
       - name: Committer si changement
         run: |

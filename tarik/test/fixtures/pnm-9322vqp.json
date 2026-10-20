@@ -1,0 +1,20 @@
+{
+  "id": "7410",
+  "title": "PNM-9322VQP",
+  "document": {
+    "structData": {
+      "device_type": "Camera",
+      "title": "PNM-9322VQP",
+      "security_center_latest_firmware": "1.33.03_20220420_R128",
+      "manufacturer": "Hanwha Vision",
+      "basic_information": "{\"Extension\":\"Generic Plus (Sunapi)\",\"DeviceType\":\"Camera\",\"LicenseCount\":1,\"ManufacturerName\":\"Hanwha Vision\",\"ModelName\":\"PNM-9322VQP\",\"Comments\":\"Enroll in Security Center with Hanwha Techwin > WiseNet (P/Q/X/T/L/SPE).\",\"EquivalentModels\":\"\",\"LicenseType\":\"Regular\"}",
+      "model": "PNM-9322VQP",
+      "id": "7410",
+      "comments": "Enroll in Security Center with Hanwha Techwin > WiseNet (P/Q/X/T/L/SPE).",
+      "equivalent_models": "",
+      "category_type": "camera",
+      "firmware_information": "{\"AllFirmwares\":[{\"Releases\":[\"5.9.4.0\"],\"DeviceID\":7410,\"FirmwareURL\":\"\",\"Product\":\"Security Center\",\"FirmwareName\":\" 1.33.00\",\"Certification\":\"Tested by Partner\"},{\"Releases\":[\"5.9.4.0 Driver Pack 10.10.0\"],\"DeviceID\":7410,\"FirmwareURL\":\"\",\"Product\":\"Security Center\",\"FirmwareName\":\"1.33.03_20220420_R128\",\"Certification\":\"Certified\"},{\"Releases\":[\"5.9.4.0\"],\"DeviceID\":7410,\"FirmwareURL\":\"\",\"Product\":\"Security Center\",\"FirmwareName\":\"2.22.00\",\"Certification\":\"Certified\"},{\"Releases\":[\"5.9.4.0\"],\"DeviceID\":7410,\"FirmwareURL\":\"\",\"Product\":\"Security Center\",\"FirmwareName\":\"2.22.01\",\"Certification\":\"Supported by Design\"},{\"Releases\":[\"5.9.4.0\"],\"DeviceID\":7410,\"FirmwareURL\":\"\",\"Product\":\"Security Center\",\"FirmwareName\":\"2.22.02\",\"Certification\":\"Supported by Design\"}],\"Omnicast\":{\"OmnLatestFirmware\":\"N/A\",\"OmnStatus\":\"Not Tested\",\"OmnInitialRelease\":\"N/A\",\"OmnRDStatus\":\"Not Tested\",\"OmnInitialFirmware\":\"N/A\"},\"SecurityCenter\":{\"SecurityCenterInitialRelease\":\"5.9.4.0\",\"SecurityCenterRDStatus\":\"Certified\",\"SecurityCenterLatestFirmware\":\"1.33.03_20220420_R128\",\"SecurityCenterInitialFirmware\":\"5.10.1.0 Driver Pack 10.10.0\",\"SecurityCenterStatus\":\"Certified\"}}",
+      "security_center_initial_firmware": "5.9.4.0"
+    }
+  }
+}

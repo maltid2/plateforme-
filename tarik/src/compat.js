@@ -1,16 +1,21 @@
 'use strict';
 
 /**
- * Moteur de vérification : à partir de la base synchronisée, indique si un
- * couple (caméra + firmware) est compatible avec une version de Security Center.
+ * Moteur de vérification : indique si un couple (caméra + firmware) est
+ * supporté par une version de Security Center, d'après la SDL Genetec.
  *
- * Règles (convention Genetec SDL) :
- *   - le firmware listé est le DERNIER validé ; un firmware plus récent n'est
- *     pas validé, un firmware plus ancien est en général supporté ;
- *   - la version Security Center listée est la version MINIMALE requise.
+ * Règles :
+ *   - firmware listé par Genetec → on reprend sa certification
+ *     (Certified / Tested by Partner / Supported by Design) et la version SC
+ *     minimale associée ;
+ *   - firmware non listé et PLUS RÉCENT que le plus haut listé → non validé ;
+ *   - firmware non listé mais dans la plage listée → supporté en général ;
+ *   - version SC < version SC initiale du modèle → incompatible.
  */
 
 const { compareVersions, parseVersion } = require('./lib/version');
+
+const norm = (s) => String(s || '').toLowerCase().replace(/[\s_-]+/g, '');
 
 /** « 5.11 » est un préfixe de « 5.11.0.1 » : même branche, build à préciser. */
 function isBranchPrefix(short, full) {
@@ -19,51 +24,65 @@ function isBranchPrefix(short, full) {
   return !!a && !!b && a.length < b.length && a.every((n, i) => n === b[i]);
 }
 
-const norm = (s) => String(s || '').toLowerCase().replace(/[\s_-]+/g, '');
-
 function search(devices, { manufacturer, model } = {}) {
   const m = norm(manufacturer);
   const q = norm(model);
-  return devices.filter(
-    (d) =>
-      (!m || norm(d.manufacturer).includes(m)) &&
-      (!q || norm(d.model).includes(q))
+  const found = devices.filter(
+    (d) => (!m || norm(d.manufacturer).includes(m)) && (!q || norm(d.model).includes(q))
   );
+  // Correspondance exacte du modèle en priorité.
+  const exact = found.filter((d) => q && norm(d.model) === q);
+  return exact.length ? exact : found;
 }
+
+const scLabel = (sc, dp) => (sc ? sc + (dp ? ' + Driver Pack ' + dp : '') : 'n/c');
 
 function verdict(device, { firmware, securityCenter } = {}) {
   const checks = [];
   let status = 'compatible';
+  const rank = ['compatible', 'compatible (à vérifier)', 'inconnu', 'non validé', 'incompatible'];
+  const worsen = (s) => { if (rank.indexOf(s) > rank.indexOf(status)) status = s; };
+  let minSc = device.securityCenter;
+  let minDp = device.driverPack;
+
+  const listed = device.firmwares || [];
+  const highest = listed.length ? listed[listed.length - 1].version : device.latestFirmware;
 
   if (firmware) {
-    const c = compareVersions(firmware, device.firmware);
-    if (c == null) {
-      checks.push(`firmware : comparaison impossible (validé : ${device.firmware || 'non renseigné'})`);
-      status = 'inconnu';
-    } else if (c === 0) {
-      checks.push(`firmware ${firmware} : version validée par Genetec`);
-    } else if (c < 0) {
-      checks.push(`firmware ${firmware} : antérieur au dernier validé (${device.firmware}) — supporté en général, mise à jour conseillée`);
-      if (status === 'compatible') status = 'compatible (à vérifier)';
+    const match = listed.find((f) => compareVersions(f.version, firmware) === 0);
+    if (match) {
+      checks.push(`firmware ${firmware} : listé par Genetec — ${match.certification || 'statut n/c'} (SC ${scLabel(match.securityCenter, match.driverPack)})`);
+      if (match.securityCenter) { minSc = match.securityCenter; minDp = match.driverPack; }
+      if (/supported by design/i.test(match.certification || '')) worsen('compatible (à vérifier)');
     } else {
-      checks.push(`firmware ${firmware} : PLUS RÉCENT que le dernier validé (${device.firmware}) — non validé`);
-      status = 'non validé';
+      const c = compareVersions(firmware, highest);
+      if (c == null) {
+        checks.push(`firmware ${firmware} : comparaison impossible (plus haut listé : ${highest || 'aucun'})`);
+        worsen('inconnu');
+      } else if (c > 0) {
+        checks.push(`firmware ${firmware} : NON LISTÉ, plus récent que le plus haut testé par Genetec (${highest}) — non validé`);
+        worsen('non validé');
+      } else {
+        checks.push(`firmware ${firmware} : non listé, mais dans la plage testée (≤ ${highest}) — supporté en général`);
+        worsen('compatible (à vérifier)');
+      }
     }
   }
 
   if (securityCenter) {
-    const c = compareVersions(securityCenter, device.securityCenter);
+    const c = compareVersions(securityCenter, minSc);
     if (c == null) {
-      checks.push(`Security Center : version minimale non renseignée`);
-      if (status === 'compatible') status = 'inconnu';
-    } else if (c < 0 && isBranchPrefix(securityCenter, device.securityCenter)) {
-      checks.push(`Security Center ${securityCenter} : même branche, vérifier que la build installée est ≥ ${device.securityCenter}${device.driverPack ? ' avec le Driver Pack ' + device.driverPack : ''}`);
-      if (status === 'compatible') status = 'compatible (à vérifier)';
+      checks.push('Security Center : version minimale non renseignée');
+      worsen('inconnu');
+    } else if (c < 0 && isBranchPrefix(securityCenter, minSc)) {
+      checks.push(`Security Center ${securityCenter} : même branche, vérifier que la build est ≥ ${scLabel(minSc, minDp)}`);
+      worsen('compatible (à vérifier)');
     } else if (c < 0) {
-      checks.push(`Security Center ${securityCenter} : TROP ANCIEN (minimum ${device.securityCenter}${device.driverPack ? ', Driver Pack ' + device.driverPack : ''})`);
-      status = 'incompatible';
+      checks.push(`Security Center ${securityCenter} : TROP ANCIEN (minimum ${scLabel(minSc, minDp)})`);
+      worsen('incompatible');
     } else {
-      checks.push(`Security Center ${securityCenter} : OK (minimum ${device.securityCenter}${device.driverPack ? ', Driver Pack ' + device.driverPack : ''})`);
+      checks.push(`Security Center ${securityCenter} : OK (minimum ${scLabel(minSc, minDp)})`);
+      if (minDp) checks.push(`Driver Pack : vérifier qu'au moins le ${minDp} est installé`);
     }
   }
 

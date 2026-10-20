@@ -3,165 +3,157 @@
 /**
  * Source : Genetec Supported Device List (SDL).
  *
- *   Liste paginée : https://www.genetec.com/supported-device-list?page=N
- *   Fiche détail  : https://www.genetec.com/solutions/resources/supported-device-list/detail?pid=N
+ * La page https://www.genetec.com/supported-device-list est une application
+ * React qui interroge l'API de recherche publique ci-dessous. Chaque appareil
+ * y expose un bloc `firmware_information` (JSON) qui liste, pour Security
+ * Center, chaque firmware testé avec sa certification et la version SC.
  *
- * Chaque appareil y indique le dernier firmware validé pour Security Center
- * (« Latest firmware supported (SC) ») et la version de Security Center /
- * Driver Pack à partir de laquelle il est supporté.
- *
- * Le parsing repose sur les libellés de colonnes (et non leur position) pour
- * résister aux changements de mise en page : voir COLUMNS.
+ * Les identifiants moteur / data store sont lus dans la configuration de la
+ * page (resourceapi, clé `sdl.config`) ; les valeurs ci-dessous ne servent
+ * que de repli.
  */
 
-const { getText, sleep } = require('../lib/http');
-const html = require('../lib/html');
+const { compareVersions } = require('../lib/version');
 
-const BASE = 'https://www.genetec.com';
-const LIST_URL = (page) => `${BASE}/supported-device-list?page=${page}`;
-const DETAIL_URL = (pid) =>
-  `${BASE}/solutions/resources/supported-device-list/detail?pid=${pid}`;
-
-// Champ normalisé → motifs de libellé (colonne de liste ou fiche détail).
-const COLUMNS = {
-  manufacturer: /manufacturer|fabricant|vendor|brand|marque/i,
-  model: /model|mod[eè]le|product|produit|device name/i,
-  type: /device type|^type|category|cat[eé]gorie/i,
-  firmware: /firmware/i,
-  securityCenter: /security ?center|^sc\b|supported (in|since)|version/i,
-  driverPack: /driver ?pack/i,
-  protocol: /protocol|protocole|integration|driver\b/i,
-  features: /feature|capabilit|fonctionnalit/i,
+const SEARCH_URL = 'https://www.genetec.com/restservices/public/search';
+const CONFIG_URL = 'https://www.genetec.com/resourceapi/supported-device-list?page=1';
+const PAGE_URL = 'https://www.genetec.com/supported-device-list';
+const FALLBACK = {
+  engineId: 'gen-prod-en-sdl_1779984486679',
+  dataStore: 'gen-prod-en-pub-sdl-camera_3690587630811',
 };
+const UA =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36';
 
-function fieldFor(label) {
-  // L'ordre compte : firmware et driver pack avant le motif générique « version ».
-  for (const key of ['firmware', 'driverPack', 'manufacturer', 'model', 'type',
-    'protocol', 'features', 'securityCenter']) {
-    if (COLUMNS[key].test(label)) return key;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+let configCache = null;
+
+/** Lit engineId / dataStore caméra depuis la configuration publiée de la page. */
+async function loadConfig() {
+  if (configCache) return configCache;
+  configCache = { ...FALLBACK };
+  try {
+    const res = await fetch(CONFIG_URL, { headers: { 'user-agent': UA } });
+    const text = await res.text();
+    const engine = text.match(/"sdl_default_engine_id"\s*:\s*"([^"]+)"/);
+    const store = text.match(/"sdl_camera_datastore_id"\s*:\s*"([^"]+)"/);
+    if (engine) configCache.engineId = engine[1];
+    if (store) configCache.dataStore = store[1];
+  } catch {
+    /* repli sur les valeurs connues */
   }
-  return null;
+  return configCache;
 }
 
-/**
- * Découpe une cellule du type « Security Center: 5.11.0.1 Driver Pack 11.11.0 »
- * en { securityCenter: "5.11.0.1", driverPack: "11.11.0" }.
- */
-function splitScCell(value) {
-  const out = {};
-  const sc = value.match(/(?:security ?center|sc)\s*:?\s*v?(\d+(?:\.\d+)+)/i) ||
-    value.match(/^v?(\d+(?:\.\d+)+)/);
+async function search(query, { limit = 50, page = 1, retries = 3 } = {}) {
+  const cfg = await loadConfig();
+  const body = {
+    query,
+    engineId: cfg.engineId,
+    limit,
+    page,
+    facets: ['manufacturer', 'device_type'],
+    dataStores: [cfg.dataStore],
+    languageCode: 'en-US',
+    spellCorrectionMode: 'AUTO',
+    includeSnippet: false,
+  };
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const res = await fetch(SEARCH_URL, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          accept: 'application/json',
+          origin: 'https://www.genetec.com',
+          referer: PAGE_URL,
+          'user-agent': UA,
+        },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status + ' sur l\'API Genetec');
+      const json = await res.json();
+      return (json.results || []).map(normalize).filter(Boolean);
+    } catch (err) {
+      if (attempt >= retries) throw err;
+      await sleep(2000 * 2 ** attempt);
+    }
+  }
+}
+
+const parseJson = (s) => {
+  if (s && typeof s === 'object') return s;
+  try { return JSON.parse(s); } catch { return {}; }
+};
+
+/** « 5.9.4.0 Driver Pack 10.10.0 » → { securityCenter, driverPack } */
+function splitRelease(value) {
+  const out = { raw: value || null };
+  const sc = String(value || '').match(/^\s*v?(\d+(?:\.\d+)+)/);
   if (sc) out.securityCenter = sc[1];
-  const dp = value.match(/driver ?pack\s*:?\s*v?(\d+(?:\.\d+)+)/i);
+  const dp = String(value || '').match(/driver ?pack\s*:?\s*v?(\d+(?:\.\d+)+)/i);
   if (dp) out.driverPack = dp[1];
   return out;
 }
 
-function pidFrom(urls) {
-  for (const u of urls || []) {
-    const m = u.match(/[?&](?:pid|id)=(\d+)/);
-    if (m) return m[1];
-  }
-  return null;
+/** Résultat brut de l'API → appareil au schéma Tarik. */
+function normalize(result) {
+  const d = (result.document && result.document.structData) || result.structData || result;
+  if (!d || !(d.model || d.title)) return null;
+  const fw = parseJson(d.firmware_information);
+  const sc = fw.SecurityCenter || {};
+  const firmwares = (fw.AllFirmwares || [])
+    .filter((f) => !f.Product || /security center/i.test(f.Product))
+    .map((f) => {
+      const rel = splitRelease((f.Releases || [])[0]);
+      return {
+        version: String(f.FirmwareName || '').trim(),
+        certification: f.Certification || null,
+        securityCenter: rel.securityCenter || null,
+        driverPack: rel.driverPack || null,
+      };
+    })
+    .filter((f) => f.version)
+    .sort((a, b) => compareVersions(a.version, b.version) || 0);
+  const initial = splitRelease(sc.SecurityCenterInitialRelease || d.security_center_initial_firmware);
+  const basic = parseJson(d.basic_information);
+  return {
+    source: 'genetec',
+    id: String(d.id || result.id || ''),
+    manufacturer: d.manufacturer || basic.ManufacturerName || null,
+    model: d.model || d.title,
+    type: d.device_type || null,
+    status: sc.SecurityCenterStatus || null,
+    latestFirmware: sc.SecurityCenterLatestFirmware || d.security_center_latest_firmware || null,
+    securityCenter: initial.securityCenter || null,
+    driverPack: initial.driverPack || null,
+    firmwares,
+    extension: basic.Extension || null,
+    comments: d.comments || basic.Comments || null,
+    equivalentModels: d.equivalent_models || null,
+    url: `${PAGE_URL}?query=${encodeURIComponent(d.model || d.title)}`,
+  };
 }
 
-/** Normalise un enregistrement { libellé: valeur } vers le schéma Tarik. */
-function normalize(record, extra = {}) {
-  const dev = { source: 'genetec', ...extra, raw: {} };
-  for (const [label, value] of Object.entries(record)) {
-    if (!value) continue;
-    dev.raw[label] = value;
-    const key = fieldFor(label);
-    if (!key) continue;
-    if (key === 'securityCenter' || key === 'driverPack') {
-      const parsed = splitScCell(value);
-      if (parsed.securityCenter && !dev.securityCenter) dev.securityCenter = parsed.securityCenter;
-      if (parsed.driverPack && !dev.driverPack) dev.driverPack = parsed.driverPack;
-      if (key === 'driverPack' && !dev.driverPack) dev.driverPack = value;
-      if (key === 'securityCenter') dev.securityCenterRaw = value;
-    } else if (!dev[key]) {
-      dev[key] = value;
-    }
-  }
-  if (dev.pid) dev.url = DETAIL_URL(dev.pid);
-  return dev;
-}
-
-/** Extrait les appareils d'une page de liste HTML. */
-function parseListPage(page) {
-  const devices = [];
-  for (const t of html.tables(page)) {
-    if (!t.headers.some((h) => /firmware/i.test(h)) &&
-      !t.headers.some((h) => /model|product/i.test(h))) continue;
-    for (const row of t.rows) {
-      const record = {};
-      t.headers.forEach((h, i) => (record[h || `col${i}`] = row.cells[i] || ''));
-      const dev = normalize(record, { pid: pidFrom(row.links) });
-      if (dev.model || dev.manufacturer) devices.push(dev);
-    }
-  }
-  return devices;
-}
-
-/** Extrait un appareil d'une fiche détail HTML. */
-function parseDetailPage(page, pid) {
-  const dev = normalize(html.labelValues(page), { pid: pid != null ? String(pid) : null });
-  return dev.model || dev.firmware ? dev : null;
-}
-
-const keyOf = (d) =>
-  d.pid || [d.manufacturer, d.model, d.firmware].map((s) => (s || '').toLowerCase()).join('|');
-
-/**
- * Parcourt la liste paginée jusqu'à une page vide ou sans nouveauté.
- * Options : maxPages, delayMs, details (enrichit via la fiche détail), log.
- */
-async function crawl({ maxPages = 500, delayMs = 800, details = false, log = () => {} } = {}) {
-  const byKey = new Map();
+/** Télécharge toute la liste caméras (pagination jusqu'à épuisement). */
+async function crawl({ limit = 100, maxPages = 1000, delayMs = 500, log = () => {} } = {}) {
+  const byId = new Map();
   for (let page = 1; page <= maxPages; page++) {
-    const body = await getText(LIST_URL(page));
-    if (!body) break;
-    const found = parseListPage(body);
+    const batch = await search('', { limit, page });
     let added = 0;
-    for (const d of found) {
-      const k = keyOf(d);
-      if (!byKey.has(k)) {
-        byKey.set(k, d);
+    for (const dev of batch) {
+      const key = dev.id || `${dev.manufacturer}|${dev.model}`;
+      if (!byId.has(key)) {
+        byId.set(key, dev);
         added++;
       }
     }
-    log(`page ${page} : ${found.length} appareils (${added} nouveaux)`);
-    if (!found.length || !added) break;
+    log(`page ${page} : ${batch.length} appareils (${added} nouveaux, total ${byId.size})`);
+    if (!batch.length || !added) break;
     await sleep(delayMs);
   }
-
-  if (details) {
-    for (const d of byKey.values()) {
-      if (!d.pid) continue;
-      try {
-        const body = await getText(DETAIL_URL(d.pid));
-        const det = body && parseDetailPage(body, d.pid);
-        if (det) {
-          for (const [k, v] of Object.entries(det)) {
-            if (k === 'raw') Object.assign(d.raw, v);
-            else if (v && !d[k]) d[k] = v;
-          }
-        }
-      } catch (err) {
-        log(`détail pid=${d.pid} ignoré : ${err.message}`);
-      }
-      await sleep(delayMs);
-    }
-  }
-
-  return [...byKey.values()];
+  return [...byId.values()];
 }
 
-module.exports = {
-  crawl,
-  parseListPage,
-  parseDetailPage,
-  splitScCell,
-  LIST_URL,
-  DETAIL_URL,
-};
+module.exports = { search, crawl, normalize, splitRelease, loadConfig };

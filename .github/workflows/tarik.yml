@@ -6,6 +6,10 @@ name: Tarik — compatibilité firmware caméras / Genetec
 # s'affiche dans le résumé du job (onglet Actions).
 
 on:
+  push:
+    paths:
+      - "tarik/parc.txt"
+      - "tarik/src/**"
   schedule:
     - cron: "17 4 * * 1" # lundi 04:17 UTC
   workflow_dispatch:
@@ -58,6 +62,25 @@ jobs:
           { echo '```'; cat result.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
           exit 0
 
+      - name: Vérifier le parc (tarik/parc.txt)
+        working-directory: tarik
+        run: |
+          set +e
+          [ -f parc.txt ] || exit 0
+          echo '## Vérification du parc' >> "$GITHUB_STEP_SUMMARY"
+          grep -vE '^\s*(#|$)' parc.txt | while read -r fw sc; do
+            node src/index.js check "$fw" ${sc:+--sc "$sc"} | tee -a parc-result.txt
+            echo >> parc-result.txt
+          done
+          { echo '```'; cat parc-result.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          exit 0
+
+      - name: Diagnostic si la synchro échoue
+        if: failure()
+        run: |
+          curl -sSL -A 'Mozilla/5.0' 'https://www.genetec.com/supported-device-list?page=1' -o page1.html || true
+          echo "Taille : $(wc -c < page1.html)"; grep -oiE '<table|<th[^>]*>[^<]{0,60}|api/[^"'"'"' ]{0,80}|\.json[^"'"'"' ]{0,40}' page1.html | head -60
+
       - name: Committer si changement
         run: |
           set -euo pipefail
@@ -71,4 +94,4 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add "$FILE"
           git commit -m "chore(tarik): mise à jour de la Supported Device List Genetec"
-          git push
+          git push origin "HEAD:${GITHUB_REF_NAME}"

@@ -1,0 +1,74 @@
+name: Tarik — compatibilité firmware caméras / Genetec
+
+# Synchronise chaque lundi la Supported Device List Genetec dans
+# tarik/data/genetec-sdl.json (commit seulement si changement).
+# En lancement manuel, peut aussi vérifier un firmware précis : le verdict
+# s'affiche dans le résumé du job (onglet Actions).
+
+on:
+  schedule:
+    - cron: "17 4 * * 1" # lundi 04:17 UTC
+  workflow_dispatch:
+    inputs:
+      firmware:
+        description: "Nom du fichier firmware (ex. PNM-9322VQP_2.24.01_20260827_R3.zip) — optionnel"
+        required: false
+      sc:
+        description: "Version Security Center (ex. 5.11)"
+        required: false
+      details:
+        description: "Enrichir avec les fiches détail (plus long)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tarik-sync
+  cancel-in-progress: false
+
+jobs:
+  tarik:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Tests
+        working-directory: tarik
+        run: node test/smoke.test.js
+
+      - name: Synchroniser la Supported Device List
+        working-directory: tarik
+        run: node src/index.js sync ${{ inputs.details && '--details' || '' }}
+
+      - name: Vérifier le firmware demandé
+        if: ${{ inputs.firmware != '' && inputs.firmware != null }}
+        working-directory: tarik
+        env:
+          FW: ${{ inputs.firmware }}
+          SC: ${{ inputs.sc }}
+        run: |
+          set +e
+          node src/index.js check "$FW" ${SC:+--sc "$SC"} | tee result.txt
+          { echo '```'; cat result.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          exit 0
+
+      - name: Committer si changement
+        run: |
+          set -euo pipefail
+          FILE="tarik/data/genetec-sdl.json"
+          git add -N "$FILE"
+          if git diff --quiet -- "$FILE"; then
+            echo "Aucun changement — rien à committer."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$FILE"
+          git commit -m "chore(tarik): mise à jour de la Supported Device List Genetec"
+          git push

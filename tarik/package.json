@@ -1,0 +1,16 @@
+{
+  "name": "tarik",
+  "version": "1.0.0",
+  "description": "Tarik — agent qui récupère la compatibilité firmware caméras ↔ versions Genetec Security Center depuis la Supported Device List du constructeur.",
+  "main": "src/index.js",
+  "bin": { "tarik": "src/index.js" },
+  "scripts": {
+    "sync": "node src/index.js sync",
+    "check": "node src/index.js check",
+    "test": "node test/smoke.test.js"
+  },
+  "keywords": ["genetec", "security-center", "camera", "firmware", "compatibility"],
+  "license": "MIT",
+  "dependencies": {},
+  "engines": { "node": ">=18" }
+}

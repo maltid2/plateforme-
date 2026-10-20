@@ -1,7 +1,7 @@
 {
   "source": "https://www.genetec.com/supported-device-list",
-  "updatedAt": "2026-10-20T08:00:37.446Z",
-  "count": 5089,
+  "updatedAt": "2026-10-20T08:03:14.696Z",
+  "count": 5091,
   "devices": [
     {
       "source": "genetec",
@@ -72011,6 +72011,41 @@
     },
     {
       "source": "genetec",
+      "id": "1836",
+      "manufacturer": "Axis Communications",
+      "model": "P7210",
+      "type": "Encoder",
+      "status": "Certified",
+      "latestFirmware": "5.51.7.6",
+      "securityCenter": "5.1",
+      "driverPack": null,
+      "firmwares": [
+        {
+          "version": "5.51.6",
+          "certification": "Security Vulnerability",
+          "securityCenter": "5.4",
+          "driverPack": null
+        },
+        {
+          "version": "5.51.7.5",
+          "certification": "Supported by Design",
+          "securityCenter": "5.4",
+          "driverPack": null
+        },
+        {
+          "version": "5.51.7.6",
+          "certification": "Supported by Design",
+          "securityCenter": "5.4",
+          "driverPack": null
+        }
+      ],
+      "extension": "Axis",
+      "comments": null,
+      "equivalentModels": null,
+      "url": "https://www.genetec.com/supported-device-list?query=P7210"
+    },
+    {
+      "source": "genetec",
       "id": "1809",
       "manufacturer": "Axis Communications",
       "model": "P7214",
@@ -93285,35 +93320,6 @@
       "comments": null,
       "equivalentModels": null,
       "url": "https://www.genetec.com/supported-device-list?query=Q8685-LE"
-    },
-    {
-      "source": "genetec",
-      "id": "2636",
-      "manufacturer": "Axis Communications",
-      "model": "Q8721-E",
-      "type": "Camera",
-      "status": "Certified",
-      "latestFirmware": "5.50.2.6",
-      "securityCenter": "5.2",
-      "driverPack": null,
-      "firmwares": [
-        {
-          "version": "5.50.2.5",
-          "certification": "Supported by Design",
-          "securityCenter": "5.5",
-          "driverPack": null
-        },
-        {
-          "version": "5.50.2.6",
-          "certification": "Supported by Design",
-          "securityCenter": "5.5",
-          "driverPack": null
-        }
-      ],
-      "extension": "Axis",
-      "comments": null,
-      "equivalentModels": null,
-      "url": "https://www.genetec.com/supported-device-list?query=Q8721-E"
     },
     {
       "source": "genetec",
@@ -122302,6 +122308,29 @@
     },
     {
       "source": "genetec",
+      "id": "11339",
+      "manufacturer": "FLIR Systems",
+      "model": "CB-6505-21-IA",
+      "type": "Camera",
+      "status": "Supported by Design",
+      "latestFirmware": "v1.1.0.6",
+      "securityCenter": "5.11.0.1",
+      "driverPack": "11.11.0",
+      "firmwares": [
+        {
+          "version": "v1.1.0.6",
+          "certification": "Supported by Design",
+          "securityCenter": "5.11.0.1",
+          "driverPack": "11.11.0"
+        }
+      ],
+      "extension": "Generic Plus (ONVIF)",
+      "comments": null,
+      "equivalentModels": null,
+      "url": "https://www.genetec.com/supported-device-list?query=CB-6505-21-IA"
+    },
+    {
+      "source": "genetec",
       "id": "11316",
       "manufacturer": "FLIR Systems",
       "model": "CB-6508-21-IA",
@@ -124570,6 +124599,41 @@
       "comments": null,
       "equivalentModels": null,
       "url": "https://www.genetec.com/supported-device-list?query=FB-632%20O"
+    },
+    {
+      "source": "genetec",
+      "id": "6091",
+      "manufacturer": "FLIR Systems",
+      "model": "FB-650 ID",
+      "type": "Camera",
+      "status": "Supported by Design",
+      "latestFirmware": "v1.3.2.16",
+      "securityCenter": "5.8.0.0",
+      "driverPack": null,
+      "firmwares": [
+        {
+          "version": "v1.3.2.4",
+          "certification": "Supported by Design",
+          "securityCenter": "5.8.0.0",
+          "driverPack": null
+        },
+        {
+          "version": "v1.3.2.13",
+          "certification": "Supported by Design",
+          "securityCenter": "5.11.0.0",
+          "driverPack": "11.3.0"
+        },
+        {
+          "version": "v1.3.2.16",
+          "certification": "Supported by Design",
+          "securityCenter": "5.11.0.0",
+          "driverPack": "11.9.0"
+        }
+      ],
+      "extension": "Generic Plus (ONVIF)",
+      "comments": "Analytics:\r\nVideo/Analytics/Motion, VideoAnalytics/IntrusionStarted and Ended, Tripwire and Line Crossed",
+      "equivalentModels": null,
+      "url": "https://www.genetec.com/supported-device-list?query=FB-650%20ID"
     },
     {
       "source": "genetec",
@@ -131770,6 +131834,29 @@
     },
     {
       "source": "genetec",
+      "id": "11250",
+      "manufacturer": "Hanwha Vision",
+      "model": "PNM-C20000QB",
+      "type": "Camera",
+      "status": "Tested by Partner",
+      "latestFirmware": "24.01.01",
+      "securityCenter": "5.11.0.1",
+      "driverPack": "11.12.0",
+      "firmwares": [
+        {
+          "version": "24.01.01",
+          "certification": "Tested by Partner",
+          "securityCenter": "5.11.0.1",
+          "driverPack": "11.12.0"
+        }
+      ],
+      "extension": "Generic Plus (Sunapi)",
+      "comments": "Events supported: Object exited, Object detected in field, Loitering, Object entered, Object left, Object crossed line, Object detected, People Counting, Shock Detection.  ",
+      "equivalentModels": null,
+      "url": "https://www.genetec.com/supported-device-list?query=PNM-C20000QB"
+    },
+    {
+      "source": "genetec",
       "id": "10585",
       "manufacturer": "Hanwha Vision",
       "model": "PNM-C32083RQZ",
@@ -136825,6 +136912,47 @@
       "comments": null,
       "equivalentModels": null,
       "url": "https://www.genetec.com/supported-device-list?query=QNP-6230RH"
+    },
+    {
+      "source": "genetec",
+      "id": "7943",
+      "manufacturer": "Hanwha Vision",
+      "model": "QNP-6250",
+      "type": "Camera",
+      "status": "Supported by Design",
+      "latestFirmware": "2.21.06",
+      "securityCenter": "5.10.0.0",
+      "driverPack": "10.6.0",
+      "firmwares": [
+        {
+          "version": "2.11.00",
+          "certification": "Supported by Design",
+          "securityCenter": "5.10.0.0",
+          "driverPack": "10.6.0"
+        },
+        {
+          "version": "2.21.02",
+          "certification": "Supported by Design",
+          "securityCenter": "5.10.0.0",
+          "driverPack": "10.6.0"
+        },
+        {
+          "version": "2.21.04",
+          "certification": "Supported by Design",
+          "securityCenter": "5.10.0.0",
+          "driverPack": "10.6.0"
+        },
+        {
+          "version": "2.21.06",
+          "certification": "Supported by Design",
+          "securityCenter": "5.10.0.0",
+          "driverPack": "10.6.0"
+        }
+      ],
+      "extension": "Generic Plus (Sunapi)",
+      "comments": null,
+      "equivalentModels": null,
+      "url": "https://www.genetec.com/supported-device-list?query=QNP-6250"
     },
     {
       "source": "genetec",
@@ -147596,77 +147724,6 @@
       "comments": "Product Type: WiseNet (P/Q/X/T/L/SPE).\r\nEdge Playback and Gap Filling:  The SD card used must be at least 512GB.",
       "equivalentModels": null,
       "url": "https://www.genetec.com/supported-device-list?query=XND-8081VZ"
-    },
-    {
-      "source": "genetec",
-      "id": "6882",
-      "manufacturer": "Hanwha Vision",
-      "model": "XND-8082RF",
-      "type": "Camera",
-      "status": "Supported by Design",
-      "latestFirmware": "2.23.10",
-      "securityCenter": "5.9.4.0",
-      "driverPack": null,
-      "firmwares": [
-        {
-          "version": "2.01.01",
-          "certification": "Supported by Design",
-          "securityCenter": "5.9.3.0",
-          "driverPack": null
-        },
-        {
-          "version": "2.01.02",
-          "certification": "Supported by Design",
-          "securityCenter": "5.9.3.0",
-          "driverPack": null
-        },
-        {
-          "version": "2.22.02",
-          "certification": "Supported by Design",
-          "securityCenter": "5.9.3.0",
-          "driverPack": null
-        },
-        {
-          "version": "2.22.03",
-          "certification": "Supported by Design",
-          "securityCenter": "5.9.3.0",
-          "driverPack": null
-        },
-        {
-          "version": "2.23.00",
-          "certification": "Supported by Design",
-          "securityCenter": "5.9.3.0",
-          "driverPack": null
-        },
-        {
-          "version": "2.23.02",
-          "certification": "Supported by Design",
-          "securityCenter": "5.9.3.0",
-          "driverPack": null
-        },
-        {
-          "version": "2.23.04",
-          "certification": "Supported by Design",
-          "securityCenter": "5.9.3.0",
-          "driverPack": null
-        },
-        {
-          "version": "2.23.05",
-          "certification": "Supported by Design",
-          "securityCenter": "5.9.3.0",
-          "driverPack": null
-        },
-        {
-          "version": "2.23.10",
-          "certification": "Supported by Design",
-          "securityCenter": "5.9.3.0",
-          "driverPack": null
-        }
-      ],
-      "extension": "Generic Plus (Sunapi)",
-      "comments": "Product Type: WiseNet (P/Q/X/T/L/SPE)",
-      "equivalentModels": null,
-      "url": "https://www.genetec.com/supported-device-list?query=XND-8082RF"
     },
     {
       "source": "genetec",
@@ -175791,6 +175848,95 @@
     },
     {
       "source": "genetec",
+      "id": "4348",
+      "manufacturer": "i-PRO/Panasonic",
+      "model": "WV-SPN310A",
+      "type": "Camera",
+      "status": "Supported by Design",
+      "latestFirmware": "4.80",
+      "securityCenter": "5.3",
+      "driverPack": null,
+      "firmwares": [
+        {
+          "version": "2.00",
+          "certification": "Supported by Design",
+          "securityCenter": "5.3",
+          "driverPack": null
+        },
+        {
+          "version": "2.41",
+          "certification": "Supported by Design",
+          "securityCenter": "5.4",
+          "driverPack": null
+        },
+        {
+          "version": "2.50",
+          "certification": "Supported by Design",
+          "securityCenter": "5.4",
+          "driverPack": null
+        },
+        {
+          "version": "2.51",
+          "certification": "Supported by Design",
+          "securityCenter": "5.5",
+          "driverPack": null
+        },
+        {
+          "version": "2.52",
+          "certification": "Supported by Design",
+          "securityCenter": "5.5",
+          "driverPack": null
+        },
+        {
+          "version": "2.54",
+          "certification": "Supported by Design",
+          "securityCenter": "5.4",
+          "driverPack": null
+        },
+        {
+          "version": "2.56",
+          "certification": "Supported by Design",
+          "securityCenter": "5.5",
+          "driverPack": null
+        },
+        {
+          "version": "2.58",
+          "certification": "Supported by Design",
+          "securityCenter": "5.5",
+          "driverPack": null
+        },
+        {
+          "version": "4.00",
+          "certification": "Supported by Design",
+          "securityCenter": "5.7",
+          "driverPack": null
+        },
+        {
+          "version": "4.10",
+          "certification": "Supported by Design",
+          "securityCenter": "5.7",
+          "driverPack": null
+        },
+        {
+          "version": "4.30",
+          "certification": "Supported by Design",
+          "securityCenter": "5.7",
+          "driverPack": null
+        },
+        {
+          "version": "4.80",
+          "certification": "Supported by Design",
+          "securityCenter": "5.10.0.0",
+          "driverPack": "10.10.0"
+        }
+      ],
+      "extension": "Panasonic",
+      "comments": null,
+      "equivalentModels": null,
+      "url": "https://www.genetec.com/supported-device-list?query=WV-SPN310A"
+    },
+    {
+      "source": "genetec",
       "id": "3791",
       "manufacturer": "i-PRO/Panasonic",
       "model": "WV-SPN310V",
@@ -188360,29 +188506,6 @@
     },
     {
       "source": "genetec",
-      "id": "542",
-      "manufacturer": "Interlogix",
-      "model": "SymDec1",
-      "type": "Encoder",
-      "status": "Certified",
-      "latestFirmware": "148.Build.a",
-      "securityCenter": "5.1",
-      "driverPack": null,
-      "firmwares": [
-        {
-          "version": "148.Build.a",
-          "certification": "Certified",
-          "securityCenter": "5.0",
-          "driverPack": null
-        }
-      ],
-      "extension": "GE MPEG-4",
-      "comments": null,
-      "equivalentModels": null,
-      "url": "https://www.genetec.com/supported-device-list?query=SymDec1"
-    },
-    {
-      "source": "genetec",
       "id": "553",
       "manufacturer": "Interlogix",
       "model": "SymDec16",
@@ -189779,35 +189902,6 @@
       "comments": null,
       "equivalentModels": null,
       "url": "https://www.genetec.com/supported-device-list?query=IQ811"
-    },
-    {
-      "source": "genetec",
-      "id": "1320",
-      "manufacturer": "IQeye",
-      "model": "IQ832N",
-      "type": "Camera",
-      "status": "Certified",
-      "latestFirmware": "V3.6/5",
-      "securityCenter": "5.1",
-      "driverPack": null,
-      "firmwares": [
-        {
-          "version": "V3.3/1",
-          "certification": "Certified",
-          "securityCenter": "5.1",
-          "driverPack": null
-        },
-        {
-          "version": "V3.6/5",
-          "certification": "Supported by Design",
-          "securityCenter": "5.2",
-          "driverPack": null
-        }
-      ],
-      "extension": "IQEye",
-      "comments": null,
-      "equivalentModels": null,
-      "url": "https://www.genetec.com/supported-device-list?query=IQ832N"
     },
     {
       "source": "genetec",
@@ -212143,6 +212237,29 @@
     },
     {
       "source": "genetec",
+      "id": "9321",
+      "manufacturer": "Pelco",
+      "model": "S7230L",
+      "type": "Camera",
+      "status": "Supported by Design",
+      "latestFirmware": "3.10.1.1.9350-A0.0",
+      "securityCenter": "5.10.0.0",
+      "driverPack": "10.15.0",
+      "firmwares": [
+        {
+          "version": "3.10.1.1.9350-A0.0",
+          "certification": "Supported by Design",
+          "securityCenter": "5.10.0.0",
+          "driverPack": "10.15.0"
+        }
+      ],
+      "extension": "Generic Plus",
+      "comments": "Use Pelco > Onvif Integration to enroll the camera in Security Center.",
+      "equivalentModels": null,
+      "url": "https://www.genetec.com/supported-device-list?query=S7230L"
+    },
+    {
+      "source": "genetec",
       "id": "10091",
       "manufacturer": "Pelco",
       "model": "S7230L-EW1",
@@ -214793,6 +214910,41 @@
       "comments": null,
       "equivalentModels": null,
       "url": "https://www.genetec.com/supported-device-list?query=SRXP4-5V10-IMD"
+    },
+    {
+      "source": "genetec",
+      "id": "9201",
+      "manufacturer": "Pelco",
+      "model": "SRXP4-5V10-IMD-IR",
+      "type": "Camera",
+      "status": "Supported by Design",
+      "latestFirmware": "5.20.0.20",
+      "securityCenter": "5.11.0.1",
+      "driverPack": "11.4.0",
+      "firmwares": [
+        {
+          "version": "4.58.0.18",
+          "certification": "Supported by Design",
+          "securityCenter": "5.11.0.0",
+          "driverPack": "11.2.3"
+        },
+        {
+          "version": "4.60.0.24",
+          "certification": "Supported by Design",
+          "securityCenter": "5.11.0.1",
+          "driverPack": "11.4.0"
+        },
+        {
+          "version": "5.20.0.20",
+          "certification": "Supported by Design",
+          "securityCenter": "5.11.0.1",
+          "driverPack": "11.11.0"
+        }
+      ],
+      "extension": "Generic Plus",
+      "comments": null,
+      "equivalentModels": null,
+      "url": "https://www.genetec.com/supported-device-list?query=SRXP4-5V10-IMD-IR"
     },
     {
       "source": "genetec",
@@ -223208,53 +223360,6 @@
       "comments": null,
       "equivalentModels": null,
       "url": "https://www.genetec.com/supported-device-list?query=SNC-ER520"
-    },
-    {
-      "source": "genetec",
-      "id": "1983",
-      "manufacturer": "Sony",
-      "model": "SNC-ER521",
-      "type": "Camera",
-      "status": "Supported by Design",
-      "latestFirmware": "1.88.00",
-      "securityCenter": "5.1",
-      "driverPack": null,
-      "firmwares": [
-        {
-          "version": "1.78",
-          "certification": "Security Vulnerability",
-          "securityCenter": "5.2",
-          "driverPack": null
-        },
-        {
-          "version": "1.85",
-          "certification": "Security Vulnerability",
-          "securityCenter": "5.2",
-          "driverPack": null
-        },
-        {
-          "version": "1.86.00",
-          "certification": "Security Vulnerability",
-          "securityCenter": "5.2",
-          "driverPack": null
-        },
-        {
-          "version": "1.87.00",
-          "certification": "Security Vulnerability",
-          "securityCenter": "5.2",
-          "driverPack": null
-        },
-        {
-          "version": "1.88.00",
-          "certification": "Supported by Design",
-          "securityCenter": "5.2",
-          "driverPack": null
-        }
-      ],
-      "extension": "Sony",
-      "comments": null,
-      "equivalentModels": null,
-      "url": "https://www.genetec.com/supported-device-list?query=SNC-ER521"
     },
     {
       "source": "genetec",
@@ -239031,35 +239136,6 @@
       "comments": null,
       "equivalentModels": null,
       "url": "https://www.genetec.com/supported-device-list?query=ND9326P"
-    },
-    {
-      "source": "genetec",
-      "id": "8093",
-      "manufacturer": "Vivotek",
-      "model": "ND9425P",
-      "type": "Other",
-      "status": "Tested by Partner",
-      "latestFirmware": "4.0.0.9",
-      "securityCenter": "5.10.0.0",
-      "driverPack": "10.8.0",
-      "firmwares": [
-        {
-          "version": "4.0.0.6",
-          "certification": "Supported by Design",
-          "securityCenter": "5.10.0.0",
-          "driverPack": "10.8.0"
-        },
-        {
-          "version": "4.0.0.9",
-          "certification": "Supported by Design",
-          "securityCenter": "5.10.0.0",
-          "driverPack": "10.8.0"
-        }
-      ],
-      "extension": "Generic Plus (ONVIF)",
-      "comments": "Video resolutions supported depends on the attached cameras",
-      "equivalentModels": null,
-      "url": "https://www.genetec.com/supported-device-list?query=ND9425P"
     },
     {
       "source": "genetec",

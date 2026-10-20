@@ -60,6 +60,11 @@ python -m xauscalp scalp --s10 data/xau_s10_2018H1.csv --m1-ticks data/xau_m1_20
 python -m xauscalp run --config config.scalp.json --mode demo
 ```
 
+## Méthode agressive (étude F)
+
+`config.agressif.json` : les signaux du robot fusionné avec **3 % de risque par trade**. 2026 : 100 € → 195,42 €
+(pire baisse −30 %) ; 2017-18 : arrêt automatique à −40 % (≈ 65 €). Monte-Carlo 2026 : 16 % de chances de finir sous 100 €.
+
 ## Mode volume (étude E)
 
 `config.volume.json` : 16 robots en parallèle, jusqu'à 5 positions. Il gagne moins que `config.fusion.json` sur 2026
@@ -77,6 +82,7 @@ xauscalp/
   strategies/      12 stratégies + les 2 anciens robots (legacy.py) + filtre H1 + ensemble + moteur par régime
   portfolio.py     fusion de robots (une position à la fois) et simulation de compte
   fusion.py        étude C (fusion des trois robots)
+  aggressive.py    méthode agressive : taille des positions, anti-martingale, Monte-Carlo (étude F)
   volume.py        mode volume : beaucoup de positions en parallèle, étude E
   scalp.py         scalp agressif : backtest multi-positions, stratégies de quelques minutes, étude D
   ml.py            méta-filtre logistique (Python pur), utilisé seulement s'il est démontré hors échantillon

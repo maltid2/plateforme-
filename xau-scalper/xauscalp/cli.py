@@ -27,6 +27,11 @@ def cmd_volume(a):
     study(a.ticks, a.mt5_m5, a.study_b, a.out, a.max_positions)
 
 
+def cmd_aggressive(a):
+    from .aggressive import study
+    study(a.ticks, a.mt5_m5, a.m1, a.out)
+
+
 def cmd_validate(a):
     from .data import load_csv, validate
     b = load_csv(a.csv, server_tz=a.server_tz)
@@ -189,6 +194,11 @@ def build() -> argparse.ArgumentParser:
     vo.add_argument("--study-b", default="reports/etude_B/research.json"); vo.add_argument("--max-positions", type=int, default=5)
     vo.add_argument("--out", default="reports/etude_E_volume")
     vo.set_defaults(fn=cmd_volume)
+
+    ag = sub.add_parser("agressif", help="étude F : taille agressive des positions du robot fusionné")
+    ag.add_argument("--ticks", nargs="+", required=True); ag.add_argument("--mt5-m5", required=True)
+    ag.add_argument("--m1", default=None); ag.add_argument("--out", default="reports/etude_F_agressif")
+    ag.set_defaults(fn=cmd_aggressive)
 
     v = sub.add_parser("validate", help="contrôle qualité d'un fichier de bougies")
     v.add_argument("csv"); v.add_argument("--server-tz", default="UTC")

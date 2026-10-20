@@ -171,3 +171,25 @@ Jusqu'à 5 positions ouvertes, compte cent de 100 €. Comparaison avec le robot
 **Ce qui augmente vraiment le gain dans ces tests, c'est le risque par trade du robot sélectif, pas le nombre de
 trades** : à 1 % au lieu de 0,5 %, 2026 passe de 111,74 € à 126,95 €. En contrepartie, la pire baisse passe de 5 % à
 11 %, et la perte sur 2017-18 reste d'environ 20 %.
+
+## Étude F — méthode agressive : taille des positions (reports/etude_F_agressif)
+
+Pré-enregistrée (addendum 5). Mêmes signaux que le robot fusionné, seule la mise change. Compte cent de 100 €,
+perte max 10 %/jour, arrêt automatique à −40 %. Profil retenu par la règle (meilleur capital sur 2025 avec une pire
+baisse ≤ 30 %) : **3 % de risque par trade** → `config.agressif.json`.
+
+| Risque par trade | 2026 (jamais vu) | 2026 frais stress | 2017-18 (or calme) |
+|---|---|---|---|
+| 0,5 % | 111,74 € (pire baisse −5 %) | 110,59 € | 77,51 € (−25 %) |
+| 1 % | 126,95 € (−11 %) | 123,33 € | 62,02 € (arrêt à −40 %) |
+| 2 % | 160,36 € (−21 %) | 148,37 € | 63,36 € (arrêt) |
+| **3 %** | **195,42 € (−30 %)** | **174,40 €** | **65,73 € (arrêt)** |
+| 5 % | 293,74 € (arrêt à −40 % en cours de route) | 234,34 € | 66,85 € (arrêt) |
+| 8 % | 393,60 € (arrêt) | 348,37 € | 69,78 € (arrêt) |
+| anti-martingale 2 % | 163,70 € (−24 %) | 147,77 € | 62,98 € (arrêt) |
+
+Monte-Carlo sur les trades de 2026 (5 000 tirages), 3 % : médiane 194,56 €, 5 % des cas sous 67,77 €,
+**16 % de chances de finir sous 100 €**. À 5 % et 8 %, la médiane baisse (148 € et 104 €) alors que le meilleur cas
+monte : passé 3 %, la mise plus grosse fait surtout plus souvent sauter le compte. Sur les trades de 2017-18, tous les
+profils finissent sous 100 € dans 95 à 100 % des cas : c'est l'arrêt à −40 % qui limite la perte à environ 40 €.
+L'anti-martingale (mise augmentée après un gain) ne fait pas mieux qu'un risque fixe.

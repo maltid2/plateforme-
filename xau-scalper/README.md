@@ -12,7 +12,7 @@
 | 3 | Les 3 stratégies testées en premier (sélection automatique sur le développement) | [docs/RAPPORT.md](docs/RAPPORT.md) |
 | 4 | Plateforme et architecture | ci-dessous |
 | 5 | Code Python organisé en fichiers | [xauscalp/](xauscalp/) |
-| 6 | Tests unitaires (60) | [tests/](tests/) |
+| 6 | Tests unitaires (63) | [tests/](tests/) |
 | 7 | Protocole de backtesting | [docs/PROTOCOLE.md](docs/PROTOCOLE.md), critères pré-enregistrés [docs/CRITERES.md](docs/CRITERES.md) |
 | 8 | Rapport de résultats réellement mesurés | [docs/RAPPORT.md](docs/RAPPORT.md), [reports/etude_A](reports/etude_A/RESULTATS_MESURES.md), [reports/etude_B](reports/etude_B/RESULTATS_MESURES.md) |
 | 9 | Guide d'installation et de lancement en démo | [docs/GUIDE_DEMO.md](docs/GUIDE_DEMO.md) |
@@ -60,6 +60,11 @@ python -m xauscalp scalp --s10 data/xau_s10_2018H1.csv --m1-ticks data/xau_m1_20
 python -m xauscalp run --config config.scalp.json --mode demo
 ```
 
+## Mode volume (étude E)
+
+`config.volume.json` : 16 robots en parallèle, jusqu'à 5 positions. Il gagne moins que `config.fusion.json` sur 2026
+(110,72 € contre 111,74 € à 0,5 % ; 98,04 € contre 126,95 € à 1 %) : non retenu, démo seulement.
+
 ## Architecture
 
 ```
@@ -72,6 +77,7 @@ xauscalp/
   strategies/      12 stratégies + les 2 anciens robots (legacy.py) + filtre H1 + ensemble + moteur par régime
   portfolio.py     fusion de robots (une position à la fois) et simulation de compte
   fusion.py        étude C (fusion des trois robots)
+  volume.py        mode volume : beaucoup de positions en parallèle, étude E
   scalp.py         scalp agressif : backtest multi-positions, stratégies de quelques minutes, étude D
   ml.py            méta-filtre logistique (Python pur), utilisé seulement s'il est démontré hors échantillon
   symbol.py        spécification du symbole fournie par le courtier (taille de contrat, tick, lots, marge, stops)
@@ -99,7 +105,7 @@ d'ordres d'un CFD sur or n'est pas un vrai order flow : la famille « order flow
 ## Commandes
 
 ```bash
-python -m unittest discover -s tests -t .                       # 60 tests, aucune dépendance
+python -m unittest discover -s tests -t .                       # 63 tests, aucune dépendance
 python -m xauscalp feasibility --equity 100 --risk 0.25         # faisabilité (specs d'exemple ou --spec réelle)
 python -m xauscalp validate export.csv --server-tz paris+1      # qualité des données
 python -m xauscalp backtest export.csv --server-tz paris+1 --tf 15 --strategy donchian_breakout --sessions asia --account cent

@@ -146,3 +146,28 @@ Pré-enregistrée (addendum 3). 4 stratégies très courtes × durée max 1 / 3 
 ne rattrape presque jamais. À la minute, même en 2026 où le spread pèse peu, les signaux n'ont pas d'avantage avant frais
 (+0,027 R). Le mode existe (`config.scalp.json`, multi-positions, bougies en secondes depuis les ticks MT5) pour la démo,
 mais **les tests disent qu'il perd de l'argent**.
+
+## Étude E — mode volume : beaucoup de positions en parallèle (reports/etude_E_volume)
+
+Pré-enregistrée (addendum 4). 16 robots en même temps : toutes les combinaisons gagnantes sur 2025, plus la liquidité.
+Jusqu'à 5 positions ouvertes, compte cent de 100 €. Comparaison avec le robot fusionné sélectif (liquidité + Donchian M15 Asie).
+
+| 2026 (jamais vu) | Signaux | Trades pris | Gain moyen par trade | Capital final | Pire baisse |
+|---|---|---|---|---|---|
+| Sélectif, 0,5 % par trade | 182 | 178 | +0,149 R | **111,74 €** | 5,3 % |
+| Volume, 0,5 % par position | 2 988 | 1 075 | +0,028 R | **110,72 €** | 21,7 % (arrêt auto) |
+| Sélectif, 1 % par trade | 182 | 180 | +0,153 R | **126,95 €** | 10,8 % |
+| Volume, 1 % par position | 2 988 | 460 | +0,009 R | **98,04 €** | 21,4 % (arrêt auto) |
+
+- Le volume multiplie les signaux par 16, mais **le gain moyen par trade tombe presque à zéro** : la plupart des robots
+  ajoutés ne gagnent quasiment rien (5 sur 16 perdent déjà sur 2026). Avec des frais plus élevés, le volume à 1 % finit
+  à 87,86 €.
+- Plusieurs positions de robots différents se retrouvent souvent dans le même sens au même moment : elles perdent
+  ensemble. Le compte atteint vite −20 % et s'arrête automatiquement.
+- Sur 2017-18, les deux modes perdent environ 20 % (arrêt automatique).
+- Règle fixée à l'avance : le volume devait gagner plus que le sélectif sur 2026. **Ce n'est le cas dans aucune
+  configuration : mode non retenu.** `config.volume.json` existe pour la démo seulement.
+
+**Ce qui augmente vraiment le gain dans ces tests, c'est le risque par trade du robot sélectif, pas le nombre de
+trades** : à 1 % au lieu de 0,5 %, 2026 passe de 111,74 € à 126,95 €. En contrepartie, la pire baisse passe de 5 % à
+11 %, et la perte sur 2017-18 reste d'environ 20 %.

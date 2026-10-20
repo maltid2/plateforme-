@@ -22,6 +22,11 @@ def cmd_scalp(a):
     study(a.s10, a.m1_ticks, a.m1_2026, a.mt5_m5, a.out)
 
 
+def cmd_volume(a):
+    from .volume import study
+    study(a.ticks, a.mt5_m5, a.study_b, a.out, a.max_positions)
+
+
 def cmd_validate(a):
     from .data import load_csv, validate
     b = load_csv(a.csv, server_tz=a.server_tz)
@@ -178,6 +183,12 @@ def build() -> argparse.ArgumentParser:
     sc.add_argument("--m1-ticks", nargs="+", required=True); sc.add_argument("--m1-2026", required=True)
     sc.add_argument("--mt5-m5", required=True); sc.add_argument("--out", default="reports/etude_D_scalp")
     sc.set_defaults(fn=cmd_scalp)
+
+    vo = sub.add_parser("volume", help="étude E : beaucoup de positions en parallèle")
+    vo.add_argument("--ticks", nargs="+", required=True); vo.add_argument("--mt5-m5", required=True)
+    vo.add_argument("--study-b", default="reports/etude_B/research.json"); vo.add_argument("--max-positions", type=int, default=5)
+    vo.add_argument("--out", default="reports/etude_E_volume")
+    vo.set_defaults(fn=cmd_volume)
 
     v = sub.add_parser("validate", help="contrôle qualité d'un fichier de bougies")
     v.add_argument("csv"); v.add_argument("--server-tz", default="UTC")

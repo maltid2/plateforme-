@@ -435,8 +435,8 @@ CATALOG: dict[str, type[Strategy]] = {c.name: c for c in (
     BollingerReversion, VWAPReversion, DonchianBreakout, SqueezeBreakout, RSI2Reversion, InsideBarBreakout,
     GeometryPDF, LiquiditySweep,
 )}
-from .. import scalp as _scalp  # noqa: E402  (stratégies de scalp, étude D)
-CATALOG.update(_scalp.SCALP)
+from .micro import SCALP as _SCALP  # noqa: E402  (stratégies de scalp, étude D)
+CATALOG.update(_SCALP)
 
 
 def make(name: str, **params) -> Strategy:

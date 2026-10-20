@@ -83,9 +83,7 @@ jobs:
         timeout-minutes: 8
         working-directory: tarik
         run: |
-          npm i --no-save --silent playwright
-          npx playwright install --with-deps chromium > /dev/null
-          node scripts/probe.js
+          node scripts/api-probe.js "PNM-9322VQP"
 
       - name: Committer si changement
         run: |

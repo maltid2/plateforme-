@@ -78,8 +78,13 @@ jobs:
       - name: Diagnostic si la synchro échoue
         if: failure()
         run: |
-          curl -sSL -A 'Mozilla/5.0' 'https://www.genetec.com/supported-device-list?page=1' -o page1.html || true
-          echo "Taille : $(wc -c < page1.html)"; grep -oiE '<table|<th[^>]*>[^<]{0,60}|api/[^"'"'"' ]{0,80}|\.json[^"'"'"' ]{0,40}' page1.html | head -60
+          UA='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130 Safari/537.36'
+          curl -sSL -A "$UA" 'https://www.genetec.com/supported-device-list?page=1' -o page1.html || true
+          curl -sSL -A "$UA" 'https://www.genetec.com/solutions/resources/supported-device-list/detail?pid=2528' -o detail.html || true
+          for f in page1.html detail.html; do
+            echo "===== $f ($(wc -c < $f) octets) ====="
+            sed -e 's/></>\n</g' "$f" | grep -vE '^\s*$' | cut -c1-300
+          done
 
       - name: Committer si changement
         run: |

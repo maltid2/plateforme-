@@ -104,3 +104,19 @@ secondes ou en minutes.
   celles d'au moins 300 trades ; validation regardée une seule fois (coûts zéro, base, stress).
 - Critère minimal pour aller en démo : espérance nette ≥ +0,05 R en validation avec coûts base ET ≥ 0 en stress, sur
   au moins 300 trades.
+
+---
+
+## Addendum 4 (écrit AVANT l'étude E) — étude E « volume : beaucoup de positions »
+
+Demande : privilégier la quantité de positions pour maximiser le gain total.
+
+- Unités : **toutes** les combinaisons (stratégie, unité de temps, session) du criblage de l'étude B avec au moins
+  100 trades et une espérance nette > 0 sur le développement 2025, plus la liquidité (ancien robot 2). Règle
+  appliquée mécaniquement à reports/etude_B/research.json, paramètres par défaut.
+- Chaque unité tourne sur sa session ; le compte accepte jusqu'à 5 positions simultanées (toutes unités confondues).
+- Comparaison sur la validation 2026 (une seule fois) et sur la validation de l'étude A (2017-18) : mode volume contre
+  robot fusionné sélectif (liquidité + Donchian M15 Asie), compte cent de 100 €, risque 0,5 % et 1 % par position,
+  perte max 5 %/jour, suspension à -20 %.
+- Le mode volume n'est retenu que s'il gagne plus d'euros que le robot sélectif sur 2026 **et** ne perd pas plus que
+  lui sur 2017-18, avec des coûts base et stress.

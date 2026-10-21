@@ -677,78 +677,91 @@ export default function AuditForm({
               onClick={() => setContactOpen(false)}
             />
             <motion.div
-              initial={{ opacity: 0, y: 14, scale: 0.98 }}
+              initial={{ opacity: 0, y: 18, scale: 0.97 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ duration: 0.22, ease: [0.2, 0.7, 0.2, 1] }}
-              className="relative w-full max-w-lg rounded-[20px] border border-white/[0.07] bg-card p-6 shadow-soft"
+              transition={{ duration: 0.3, ease: [0.2, 0.7, 0.2, 1] }}
+              className="beam-frame relative w-full max-w-lg"
             >
-              <button
-                onClick={() => setContactOpen(false)}
-                aria-label="Fermer"
-                className="absolute right-4 top-4 text-muted transition-colors hover:text-ink"
-              >
-                <X className="h-5 w-5" />
-              </button>
-
-              <div className="flex items-center gap-3">
-                <span className="grid h-10 w-10 flex-none place-items-center rounded-xl bg-acc-violet/15">
-                  <ShieldCheck className="h-5 w-5 text-acc-violet" />
-                </span>
-                <h3 className="text-lg font-bold text-ink">
-                  Passez à l&apos;action
-                </h3>
-              </div>
-
-              <div className="mt-4 space-y-3 text-sm leading-relaxed text-muted">
-                <p>
-                  Cet audit vous a montré <strong className="text-ink">où</strong>{" "}
-                  votre site est exposé.{" "}
-                  {host ? (
-                    <>
-                      L&apos;étape suivante&nbsp;: <strong className="text-ink">corriger</strong>{" "}
-                      les points détectés sur{" "}
-                      <span className="font-mono text-ink">{host}</span> et sécuriser
-                      votre infrastructure durablement.
-                    </>
-                  ) : (
-                    <>
-                      L&apos;étape suivante&nbsp;: <strong className="text-ink">corriger</strong>{" "}
-                      les points détectés et sécuriser votre infrastructure durablement.
-                    </>
-                  )}
-                </p>
-                <p>
-                  Décrivez votre besoin en un message&nbsp;: je vous recontacte pour
-                  poursuivre l&apos;audit et mettre en place les correctifs.
-                </p>
-              </div>
-
-              <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <div className="beam-inner relative overflow-hidden p-6 sm:p-7">
+                <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[radial-gradient(circle,rgba(141,124,255,0.28),transparent_65%)] blur-2xl" />
                 <button
                   onClick={() => setContactOpen(false)}
-                  className="rounded-full border border-line bg-white/[0.03] px-5 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-white/20"
+                  aria-label="Fermer"
+                  className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-full text-muted transition-colors hover:bg-white/[0.06] hover:text-ink"
                 >
-                  Plus tard
+                  <X className="h-4 w-4" />
                 </button>
-                <a
-                  href={contactHref}
-                  onClick={() => setContactOpen(false)}
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-br from-acc-violet to-[#6b5cff] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_16px_40px_-16px_rgba(141,124,255,0.8)] transition-all hover:-translate-y-0.5"
-                >
-                  <Mail className="h-4 w-4" />
-                  Me faire recontacter
-                </a>
-              </div>
 
-              <p className="mt-4 text-center text-xs text-muted">
-                Ou écrivez directement à{" "}
-                <a
-                  href={contactHref}
-                  className="font-medium text-acc-violet hover:text-ink"
-                >
-                  {CONTACT_EMAIL}
-                </a>
-              </p>
+                <div className="relative">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-acc-violet/30 bg-acc-violet/[0.08] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-acc-violet">
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    Résultat de l&apos;audit
+                  </span>
+
+                  <h3 className="mt-4 text-2xl font-extrabold leading-tight tracking-tight text-ink">
+                    Passez de <span className="headline-shine">l&apos;alerte</span> à l&apos;action
+                  </h3>
+
+                  {result && (
+                    <div className="mt-5 flex items-center gap-4 rounded-2xl border border-line bg-white/[0.03] p-4">
+                      <ScoreRing score={result.score} grade={result.grade} size={64} />
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-ink">
+                          Note {result.grade} · {result.score}/100
+                        </div>
+                        <div className="mt-0.5 truncate font-mono text-xs text-muted">
+                          {host || result.host}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="mt-5 space-y-3 text-sm leading-relaxed text-muted">
+                    <p>
+                      Cet audit vous a montré <strong className="text-ink">où</strong>{" "}
+                      votre site est exposé. L&apos;étape suivante&nbsp;:{" "}
+                      <strong className="text-ink">corriger</strong> les points détectés
+                      {host ? (
+                        <>
+                          {" "}sur <span className="font-mono text-ink">{host}</span>
+                        </>
+                      ) : null}{" "}
+                      et sécuriser votre infrastructure durablement.
+                    </p>
+                    <p>
+                      Décrivez votre besoin en un message&nbsp;: je vous recontacte pour
+                      poursuivre l&apos;audit et mettre en place les correctifs.
+                    </p>
+                  </div>
+
+                  <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                    <button
+                      onClick={() => setContactOpen(false)}
+                      className="rounded-full border border-line bg-white/[0.03] px-5 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-white/20"
+                    >
+                      Plus tard
+                    </button>
+                    <a
+                      href={contactHref}
+                      onClick={() => setContactOpen(false)}
+                      className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-b from-[#9a8cff] to-[#6b5cff] px-6 py-2.5 text-sm font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_16px_40px_-16px_rgba(141,124,255,0.9)] transition-all hover:-translate-y-0.5"
+                    >
+                      <Mail className="h-4 w-4" />
+                      Me faire recontacter
+                    </a>
+                  </div>
+
+                  <p className="mt-4 text-center text-xs text-muted">
+                    Ou écrivez directement à{" "}
+                    <a
+                      href={contactHref}
+                      className="font-medium text-acc-violet hover:text-ink"
+                    >
+                      {CONTACT_EMAIL}
+                    </a>
+                  </p>
+                </div>
+              </div>
             </motion.div>
           </div>,
           document.body

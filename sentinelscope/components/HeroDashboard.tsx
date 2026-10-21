@@ -162,11 +162,11 @@ export default function HeroDashboard() {
               <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
               <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
             </span>
-            <span className="ml-2 font-medium">Aperçu de votre audit</span>
+            <span className="ml-2 font-medium">Exemple de rapport</span>
           </div>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-acc-violet/10 px-2.5 py-1 text-[11px] font-semibold text-acc-violet">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-acc-violet" />
-            En direct
+            Exemple
           </span>
         </div>
 
@@ -192,7 +192,7 @@ export default function HeroDashboard() {
                   {up ? "+" : "−"}
                   {Math.abs(view.delta)} pts
                 </div>
-                cette semaine
+                sur l&apos;exemple
               </div>
             </div>
           </div>

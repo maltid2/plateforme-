@@ -1,81 +1,123 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Sparkles } from "lucide-react";
+import {
+  FileSearch,
+  Gauge,
+  Lock,
+  Radar,
+  ScanSearch,
+  ShieldCheck,
+} from "lucide-react";
 import { Container } from "./ui";
 import HeroDashboard from "./HeroDashboard";
 import AuditForm from "./AuditForm";
 import NetworkBackground from "./NetworkBackground";
 import { ease } from "@/lib/motion";
 
+const CONTROLS = [
+  { icon: Lock, label: "SSL/TLS" },
+  { icon: ShieldCheck, label: "En-têtes" },
+  { icon: FileSearch, label: "Fichiers exposés" },
+  { icon: Radar, label: "Réputation" },
+  { icon: ScanSearch, label: "Failles connues" },
+  { icon: Gauge, label: "RGPD" },
+];
+
 export default function Hero() {
   return (
-    <section id="top" className="relative overflow-hidden pt-32 pb-20 sm:pt-40 sm:pb-28">
-      {/* background */}
+    <section id="top" className="relative overflow-hidden pt-32 pb-24 sm:pt-40 sm:pb-32">
+      {/* fond : aurore + grille + constellation */}
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-grid-fade opacity-70" />
-        {/* Réseau d'intelligence de sécurité (constellation animée) */}
+        <div className="aurora absolute inset-[-10%]" />
+        <div className="absolute inset-0 bg-grid-fade opacity-60" />
         <div className="absolute inset-0 [mask-image:radial-gradient(130%_110%_at_68%_38%,#000_50%,transparent_85%)] [-webkit-mask-image:radial-gradient(130%_110%_at_68%_38%,#000_50%,transparent_85%)]">
-          <NetworkBackground className="h-full w-full opacity-100" density={0.00018} />
+          <NetworkBackground className="h-full w-full opacity-80" density={0.00016} />
         </div>
-        <motion.div
-          aria-hidden
-          animate={{ opacity: [0.5, 0.8, 0.5], scale: [1, 1.06, 1] }}
-          transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute left-1/2 top-[-12%] h-[560px] w-[820px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(141,124,255,0.22),transparent_60%)] blur-2xl"
-        />
-        <div className="absolute right-[6%] top-[30%] h-[380px] w-[380px] rounded-full bg-[radial-gradient(circle,rgba(141,124,255,0.12),transparent_65%)] blur-2xl" />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-bg" />
       </div>
 
-      <Container className="grid items-center gap-14 lg:grid-cols-[1.05fr_.95fr]">
-        {/* left */}
+      <Container className="grid items-center gap-16 lg:grid-cols-[1.15fr_.85fr]">
+        {/* gauche */}
         <div>
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease }}
-            className="inline-flex items-center gap-2 rounded-full border border-line bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-acc-cyan"
+            className="inline-flex items-center gap-2.5 rounded-full border border-acc-violet/30 bg-acc-violet/[0.08] py-1.5 pl-2 pr-4 text-xs font-medium text-ink/90 backdrop-blur"
           >
-            <Sparkles className="h-3.5 w-3.5" />
+            <span className="grid h-5 w-5 place-items-center rounded-full bg-acc-violet/25">
+              <Radar className="h-3 w-3 text-acc-violet" />
+            </span>
             Audit de sécurité web automatisé
           </motion.div>
 
-          <h1 className="mt-6 text-[2.25rem] font-extrabold leading-[1.05] tracking-tight xs:text-[2.75rem] sm:text-[3.5rem] lg:text-[4.5rem]">
-            {["Voyez ce qui est", "exposé sur votre site", "avant les attaquants."].map((line, i) => (
-              <motion.span
-                key={i}
-                initial={{ opacity: 0, y: 18 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, ease, delay: 0.15 + i * 0.12 }}
-                className="block"
-              >
-                {i === 1 ? <span className="text-gradient">{line}</span> : line}
-              </motion.span>
-            ))}
+          <h1 className="mt-7 text-[2.4rem] font-extrabold leading-[1.02] tracking-[-0.035em] xs:text-[2.9rem] sm:text-[3.8rem] lg:text-[3.3rem] xl:text-[3.75rem]">
+            {["Voyez ce qui est", "exposé sur votre site", "avant les attaquants."].map(
+              (line, i) => (
+                <motion.span
+                  key={i}
+                  initial={{ opacity: 0, y: 22, filter: "blur(8px)" }}
+                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                  transition={{ duration: 0.7, ease, delay: 0.15 + i * 0.13 }}
+                  className="block"
+                >
+                  {i === 1 ? <span className="headline-shine">{line}</span> : line}
+                </motion.span>
+              )
+            )}
           </h1>
 
           <motion.p
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease, delay: 0.5 }}
-            className="mt-6 max-w-xl text-lg leading-relaxed text-muted"
+            transition={{ duration: 0.6, ease, delay: 0.55 }}
+            className="mt-7 max-w-xl text-lg leading-relaxed text-muted"
           >
-            Entrez l&apos;adresse de votre site et obtenez en quelques minutes
-            un audit de sécurité complet : un score clair, les vulnérabilités
-            détectées et les actions à mener — sans installation.
+            Entrez l&apos;adresse de votre site : obtenez en quelques minutes un
+            score clair, les points faibles détectés et les actions à mener —
+            sans installation.
           </motion.p>
 
+          {/* champ d'audit : cadre lumineux */}
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease, delay: 0.65 }}
-            className="mt-8"
+            initial={{ opacity: 0, y: 18, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.7, ease, delay: 0.7 }}
+            className="mt-9 max-w-xl"
           >
-            <AuditForm id="audit-hero" />
+            <div className="beam-frame">
+              <div className="beam-inner p-3 sm:p-4">
+                <AuditForm id="audit-hero" />
+              </div>
+            </div>
+          </motion.div>
+
+          {/* contrôles couverts */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 1.1 }}
+            className="mt-10 max-w-xl border-t border-line pt-6"
+          >
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted/80">
+              6 contrôles analysés
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {CONTROLS.map(({ icon: Icon, label }) => (
+                <span
+                  key={label}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white/[0.03] px-3 py-1.5 text-xs font-medium text-ink/85 transition-colors hover:border-acc-violet/40 hover:bg-acc-violet/[0.08]"
+                >
+                  <Icon className="h-3.5 w-3.5 text-acc-violet" />
+                  {label}
+                </span>
+              ))}
+            </div>
           </motion.div>
         </div>
 
-        {/* right */}
+        {/* droite */}
         <HeroDashboard />
       </Container>
     </section>

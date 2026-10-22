@@ -1,5 +1,6 @@
 "use client";
 
+import type React from "react";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Container, Reveal, SectionLabel } from "./ui";
@@ -14,7 +15,7 @@ import {
 import { staggerParent, fadeUp, viewport } from "@/lib/motion";
 
 type Feature = {
-  Picto: (p: { className?: string }) => JSX.Element;
+  Picto: (p: { className?: string }) => React.JSX.Element;
   category: string;
   title: string;
   body: string;

@@ -17,11 +17,12 @@ Ignore (à me dire) : le programme exact de ton Mastère (modules, dates de rend
 | Priorité | Piste | Pourquoi | Rythme (pour ~10 h/semaine) |
 |---|---|---|---|
 | 1 | Anglais écrit (piste 4) | échéance ferme, note minimale | 6 h |
-| 2 | Réseau et système (piste 2) | cœur de ton Mastère, nourrit aussi l'anglais (vocabulaire) | 2,5 h |
-| 3 | Sécurité web (piste 3) | ton produit, tes relectures de PR | 1 h |
-| 4 | Langages et technique (piste 1) | utile surtout pour juger les diffs | 0,5 h |
+| 2 | Réseau et système (piste 2) | cœur de ton Mastère, nourrit aussi l'anglais (vocabulaire) | 2 h |
+| 3 | Français : orthographe et écrit (piste 5) | rapports, PR, mails ; dictée à trous + 5 règles par semaine | 1 h |
+| 4 | Sécurité web (piste 3) | ton produit, tes relectures de PR | 0,5 h |
+| 5 | Langages et technique (piste 1) | utile surtout pour juger les diffs | 0,5 h |
 
-Si ton temps est inférieur à 10 h, on **réduit les pistes 3 et 4 en premier** ; l'anglais ne se sacrifie pas avant janvier.
+Si ton temps est inférieur à 10 h, on **réduit les pistes sécurité web et langages en premier** ; l'anglais ne se sacrifie pas avant janvier.
 
 ## Le lien entre les pistes (pour ne pas faire deux fois le même travail)
 

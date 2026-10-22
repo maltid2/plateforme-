@@ -6,7 +6,7 @@ Objectif : savoir **juger un diff** produit par ATLAS, GHOST, SIMBA ou le CEO su
 Matière : le dépôt (code, commits, PR, issues) et le web (sources citées avec date de consultation).
 Chaque fiche : 20 à 30 minutes, exercice compris. Fiches dans ce dossier, nommées `AAAA-MM-JJ-sujet.md`.
 
-## Les quatre pistes
+## Les cinq pistes
 
 ### Piste 1 — Langages et technique du projet (TypeScript, Node, Next.js, CSS)
 
@@ -42,6 +42,16 @@ Glossaire de travail : [`anglais-reseau-glossaire.md`](anglais-reseau-glossaire.
 | 2. Lire | Notes de version, README, messages d'erreur, avis de sécurité : comprendre sans traduire mot à mot | Niveau 1 |
 | 3. Écrire | Rédiger une description de PR, une issue, un commentaire de revue clairs et courtois en anglais | Niveau 2 |
 
+### Piste 5 — Français écrit (orthographe, grammaire, rédaction professionnelle)
+
+| Niveau | Contenu | Prérequis |
+|---|---|---|
+| 1. Fiabiliser | homophones fréquents et tests de remplacement, accords simples (sujet–verbe, participe en -é/-er) | Aucun |
+| 2. Accorder | participe passé (être / avoir / pronominaux), accords dans le groupe nominal, ponctuation | Niveau 1 |
+| 3. Rédiger | structure d'un rapport, concision, ton professionnel, relecture méthodique | Niveau 2 |
+
+Fiche 1 : [`francais-orthographe-fiche-1-homophones.md`](francais-orthographe-fiche-1-homophones.md).
+
 ## Tableau de suivi
 
 Statuts : `vu` · `à revoir` · `acquis`. Mis à jour à chaque fiche.
@@ -52,6 +62,7 @@ Statuts : `vu` · `à revoir` · `acquis`. Mis à jour à chaque fiche.
 | De l'URL à la réponse : DNS, TCP, TLS, HTTP (fiche n° 2) | 2/3 | 2026-10-22 | vu (fiche rédigée, en attente de lecture) |
 | Anglais réseau : glossaire | 4 | 2026-10-22 | à revoir (à apprendre par répétition) |
 | Anglais cybersécurité/infra : glossaire + cas n° 1 | 4 | 2026-10-22 | à revoir |
+| Français : homophones (fiche 1) | 5 | 2026-10-22 | vu (fiche rédigée, en attente de lecture) |
 
 ## Calibrage
 

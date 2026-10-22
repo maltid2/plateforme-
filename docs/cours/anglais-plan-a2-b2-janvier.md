@@ -127,3 +127,24 @@ Ajout au rythme : 15 min par jour de **vie quotidienne** (une courte vidéo ou u
 ## Source (consultée le 2026-10-22)
 
 - Cambridge English, « Guided learning hours » : https://support.cambridgeenglish.org/hc/en-gb/articles/202838506-Guided-learning-hours — environ 200 h de cours guidés par niveau ; tableau cumulé A2 ≈ 180–200 h, B1 ≈ 350–400 h, B2 ≈ 500–600 h. Ces chiffres m'ont été restitués par une recherche web, je n'ai pas ouvert la page moi-même : à vérifier avant de s'y fier pour une décision importante. Le calcul « 14 semaines » et « 21 à 30 h/semaine » est le mien.
+
+## 9. Calendrier daté (mis à jour le 2026-10-22)
+
+Données reçues d'Aymerick : note minimale **10**, examen le **4 janvier 2027**. Je suppose que la note est sur 20 (« 10 minimale » = la moyenne) : **à confirmer**. Je suppose aussi que l'épreuve est écrite uniquement, comme il l'a dit.
+
+Du 22 octobre 2026 au 4 janvier 2027 : **74 jours**, soit dix semaines pleines (le 4 janvier 2027 est un lundi). Ce qui rend l'objectif plus réaliste : atteindre 10/20 à une épreuve précise n'est pas la même chose que maîtriser tout le niveau B2. Cela dépend de la grille de l'école, que je n'ai toujours pas.
+
+| Période | Objectif | Contenu | Contrôle |
+|---|---|---|---|
+| Jeu 22 → dim 25 oct (semaine 0) | Mesurer le point de départ | répondre par écrit aux 6 questions de « The unpatched gateway » et à celles de « The slow checkout » | tu m'envoies tes réponses, je les corrige |
+| Lun 26 oct → dim 8 nov (semaines 1-2) | Fondations de l'écrit | phrases complètes, 7 connecteurs, temps verbaux de base, 10 mots/jour | **test blanc n° 1** le dim 8 nov |
+| Lun 9 nov → dim 29 nov (semaines 3-5) | Lire un cas et répondre juste | 1 étude de cas par semaine, réponses paraphrasées, vocabulaire cyber/infra | **test blanc n° 2** le dim 29 nov |
+| Lun 30 nov → dim 20 déc (semaines 6-8) | Qualité des réponses | réponses de 80 à 100 mots, correction des erreurs récurrentes, chrono | **test blanc n° 3** en conditions réelles le dim 20 déc |
+| Lun 21 → dim 27 déc (semaine 9) | Corriger ce qui reste faible | uniquement les types de questions ratés au test 3 | |
+| Lun 28 déc → dim 3 jan (semaine 10) | Révision légère | relire ses erreurs, pas de matière nouvelle ; dim 3 jan = repos | |
+| **Lun 4 janv. 2027** | **Examen** | | |
+
+Règles :
+- **Un test blanc = un sujet complet, chronométré, sans dictionnaire.** Sans sujet de l'école, j'écris des tests au format que tu m'as décrit (texte + questions en anglais) ; avec un vrai sujet, je les reproduis fidèlement.
+- Si un test blanc révèle un écart important avec 10/20, on réalloue les heures aux types de questions les plus faibles, et on décide tôt (au test n° 2) s'il faut demander une autre session ou un autre moyen de justifier le niveau.
+- Ce calendrier suppose ~10 h/semaine. Si tu peux moins, dis-le : je retire du contenu plutôt que de promettre l'impossible.

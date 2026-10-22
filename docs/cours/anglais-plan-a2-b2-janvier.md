@@ -13,11 +13,18 @@ Calcul de faisabilité, à titre indicatif :
 
 Conclusion honnête : devenir B2 *dans tous les domaines* en 14 semaines à partir de A2 est improbable, sauf si ton vrai niveau est déjà plus haut que A2 sur certaines compétences (c'est fréquent à l'écrit technique). Ce qu'on peut viser : **maximiser le score à l'examen précis**, en travaillant en priorité les épreuves où le gain est le plus rapide. Cela dépend de l'examen, d'où les questions ci-dessous.
 
-## 2. À me dire
+## 2. Ce que je sais maintenant, et ce qui manque
 
-1. **Quel examen ?** (Cambridge B2 First, IELTS, TOEIC, TOEFL, un examen de ton école ou employeur…). Le format change tout.
-2. **Quelle date exacte, et quel score ou niveau exigé ?** B2 « validé » sur les quatre compétences, ou un score minimum ?
-3. **Combien d'heures par semaine peux-tu consacrer ?** Sois réaliste, une semaine tenue vaut mieux qu'un plan abandonné.
+Connu (réponse d'Aymerick, 2026-10-22) : examen d'**école**, de type européen (donc rattaché au CECRL) ; on lit un **texte** et on répond à des **questions en anglais** ; il s'agit, d'après lui, d'une **étude de cas en informatique** ("je crois" : à confirmer). Il veut aussi progresser pour la **vie de tous les jours** et le **professionnel**.
+
+Ce que cela change : l'épreuve repose surtout sur la **compréhension écrite** et l'**expression écrite** (répondre par des phrases claires), dans un contexte **informatique**. C'est le terrain le plus favorable : tu lis déjà de la documentation technique, et le vocabulaire est celui du glossaire. Je réoriente donc les heures vers la lecture de cas et l'écriture de réponses.
+
+Il manque encore :
+1. **La date exacte** de l'examen.
+2. **Le barème ou le niveau exigé** (une note minimale ? B2 validé ?). Demande-le à l'école, c'est la donnée la plus utile.
+3. **Un exemple d'épreuve** (sujet des années précédentes, ou consignes de l'école) : je préparerai des exercices exactement au même format.
+4. **Le nombre d'heures par semaine** que tu peux tenir.
+5. L'oral est-il évalué ? (Tu as décrit une épreuve écrite ; je ne suppose rien d'autre.)
 
 ## 3. Les quatre compétences
 
@@ -46,7 +53,52 @@ Base : 10 h/semaine. Chaque séance de 30 à 90 min.
 | 12 | Test blanc n° 3 en conditions réelles (chrono, sans dictionnaire) | dernière correction |
 | 13–14 | Révision ciblée, pas de matière nouvelle | repos la veille |
 
-## 6. Ce que MINERVE fait pour toi
+## 6. Méthode pour l'épreuve : lire une étude de cas et répondre
+
+Techniques à acquérir (elles se travaillent, et elles font gagner des points vite) :
+1. **Lire les questions avant le texte**, pour savoir quoi chercher.
+2. **Survoler (skim) puis chercher (scan)** : une première lecture pour le sujet général, puis des relectures ciblées pour les détails (noms, chiffres, causes).
+3. **Deviner un mot inconnu par le contexte** avant de renoncer : mot voisin, préfixe, ressemblance avec le français (attention aux faux amis : *actually* = en fait, *eventually* = finalement).
+4. **Répondre avec tes mots** : recopier une phrase du texte est souvent compté faux ; reformule (*paraphrase*).
+5. **Répondre à la question posée** : *why* → une cause (*because*, *due to*) ; *how* → une manière ; *what could be done* → une proposition (*should*, *could*) ; *compare* → deux éléments.
+6. **Écrire des phrases complètes**, courtes, sans faute évitable : sujet + verbe + complément.
+7. **Connecteurs utiles** : *however* (cependant), *therefore* (donc), *as a result* (en conséquence), *in addition* (de plus), *for example*, *on the other hand*.
+
+### Entraînement type (texte écrit par moi, donc sans source externe)
+
+> **Case study — The slow checkout.** An online shop noticed that customers were leaving the checkout page. The team found that the page took about eight seconds to load on mobile phones. The cause was a large image and an animation that ran continuously and used a lot of the phone's processor. After the team removed the animation and compressed the image, the load time dropped to two seconds. However, the number of completed orders rose only slightly, so the team decided to test the payment form as well.
+
+Questions (réponds en anglais, phrases complètes) :
+1. Why were customers leaving the checkout page?
+2. What two changes did the team make?
+3. Did the changes solve the whole problem? Explain.
+4. What would you do next, and why?
+
+<details>
+<summary>Éléments de réponse</summary>
+
+1. Because the page was slow on mobile phones: it took about eight seconds to load.
+2. They removed the continuous animation and compressed the large image.
+3. Not completely. Loading time improved, from eight seconds to two, but completed orders increased only slightly, so another problem probably remained.
+4. Open réponse : par exemple, « I would test the payment form with real users, because the loading time is now acceptable but customers may still find the form confusing. »
+
+Remarque : cette étude de cas reprend l'idée de la fiche n° 1 (une animation permanente coûte du processeur). C'est voulu : ton vocabulaire du cours sert à l'examen.
+</details>
+
+## 7. Anglais de la vie quotidienne et du professionnel
+
+Tu as demandé les deux. Je les traite en parallèle mais séparément, parce que le registre (le niveau de langue) change :
+
+| Contexte | Exemple | À travailler |
+|---|---|---|
+| Quotidien | se présenter, commander, demander son chemin, s'excuser, donner un avis | phrases courtes, questions polies (*Could you…?*, *Would it be possible to…?*) |
+| Professionnel écrit | e-mail, description de PR, issue, compte-rendu | formules d'ouverture et de fermeture, ton neutre et précis |
+| Professionnel oral | réunion, point d'avancement, explication d'un problème | *The issue is…*, *As far as I know…*, *Let me clarify…* |
+| Technique | documentation, avis de sécurité, messages d'erreur | glossaire réseau, 1 source réelle par semaine |
+
+Ajout au rythme : 15 min par jour de **vie quotidienne** (une courte vidéo ou un dialogue, 5 phrases réutilisables), indépendamment des fiches. Les heures s'ajoutent au plan : si ton budget est de 10 h par semaine, retire 1 h au bloc écoute technique pour la vie quotidienne.
+
+## 8. Ce que MINERVE fait pour toi
 
 - Chaque fiche contient déjà 10 à 15 termes, un paragraphe à traduire et trois phrases à réutiliser.
 - Dès que tu connais ton examen, je prépare : un **plan hebdomadaire daté** jusqu'à la date d'examen, des exercices au format de l'épreuve, et des textes d'entraînement tirés de vraies sources techniques.

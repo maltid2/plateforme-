@@ -5,11 +5,13 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { Button } from "./ui";
+import { CONTACT_HREF } from "@/lib/contact";
 
 const LINKS = [
   { label: "Produit", href: "#features" },
   { label: "Sécurité", href: "#security" },
   { label: "FAQ", href: "#faq" },
+  { label: "Contact", href: CONTACT_HREF },
 ];
 
 export function Logo() {

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { Container, Reveal, SectionLabel } from "./ui";
+import { CONTACT_EMAIL, CONTACT_HREF } from "@/lib/contact";
 
 const FAQS = [
   {
@@ -128,6 +129,19 @@ export default function FAQ() {
               onToggle={() => setOpen(open === idx ? null : idx)}
             />
           ))}
+        </Reveal>
+
+        <Reveal delay={0.15} className="mt-10 text-center">
+          <p className="text-[15px] text-muted">
+            Une autre question ? Écrivez-nous à{" "}
+            <a
+              href={CONTACT_HREF}
+              className="rounded font-medium text-acc-violet underline-offset-4 transition-colors hover:text-ink hover:underline"
+            >
+              {CONTACT_EMAIL}
+            </a>
+            .
+          </p>
         </Reveal>
       </Container>
     </section>

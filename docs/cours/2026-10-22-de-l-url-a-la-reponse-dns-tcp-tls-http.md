@@ -92,9 +92,9 @@ La note par version est un choix de produit du dépôt (pas une norme) ; elle il
 SSRF (*server-side request forgery*) : faire visiter à **ton** serveur une adresse que l'attaquant ne peut pas atteindre lui-même (réseau interne, service de métadonnées du cloud en `169.254.169.254`). Le garde résout le nom et refuse les IP privées :
 
 ```js
-records = await dns.lookup(host, { all: true });     // l.108 : résolution (étape 1)
+records = await dns.lookup(host, { all: true });     // l.111 : résolution (étape 1)
 ...
-for (const r of records) {                           // l.116-123 : TOUTES les IP sont vérifiées
+for (const r of records) {                           // l.118-123 : TOUTES les IP sont vérifiées
   if (r.family === 4 && isPrivateV4(r.address)) return { ok: false, ... };
 ```
 

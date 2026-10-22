@@ -1,5 +1,7 @@
 # Cours MINERVE — plan de montée en compétence
 
+Plans et calendriers : [`parcours-en-parallele.md`](parcours-en-parallele.md) (toutes les pistes) et [`anglais-plan-a2-b2-janvier.md`](anglais-plan-a2-b2-janvier.md) (examen du 4 janvier 2027).
+
 Objectif : savoir **juger un diff** produit par ATLAS, GHOST, SIMBA ou le CEO sur SentinelScope, pas réciter du vocabulaire.
 Matière : le dépôt (code, commits, PR, issues) et le web (sources citées avec date de consultation).
 Chaque fiche : 20 à 30 minutes, exercice compris. Fiches dans ce dossier, nommées `AAAA-MM-JJ-sujet.md`.
@@ -47,6 +49,9 @@ Statuts : `vu` · `à revoir` · `acquis`. Mis à jour à chaque fiche.
 | Sujet | Piste | Date | Statut |
 |---|---|---|---|
 | Repaints et animations web (pipeline de rendu, `transform`/`opacity`, `@property`) | 1 | 2026-10-22 | vu (fiche rédigée, en attente de lecture) |
+| De l'URL à la réponse : DNS, TCP, TLS, HTTP (fiche n° 2) | 2/3 | 2026-10-22 | vu (fiche rédigée, en attente de lecture) |
+| Anglais réseau : glossaire | 4 | 2026-10-22 | à revoir (à apprendre par répétition) |
+| Anglais cybersécurité/infra : glossaire + cas n° 1 | 4 | 2026-10-22 | à revoir |
 
 ## Calibrage
 

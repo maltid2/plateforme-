@@ -30,11 +30,13 @@ Chaque fiche : 20 à 30 minutes, exercice compris. Fiches dans ce dossier, nomm�
 | 2. Comprendre | En-têtes de sécurité (CSP, HSTS, X-Frame-Options…), XSS, CSRF, injection, OWASP Top 10, cookies `Secure`/`HttpOnly`/`SameSite` | Piste 2 niveau 2 |
 | 3. Juger | Lire un avis de sécurité et décider de l'urgence (ex. alerte Next), chaîne d'approvisionnement des dépendances, ce qu'un audit passif peut et ne peut pas affirmer (faux positifs/négatifs), cadre légal d'un scan | Niveau 2 |
 
-### Piste 4 — Anglais technique
+### Piste 4 — Anglais technique (priorité : le vocabulaire réseau)
+
+Glossaire de travail : [`anglais-reseau-glossaire.md`](anglais-reseau-glossaire.md) (~90 termes, prononciation, codes HTTP, phrases d'erreur, méthode de mémorisation). Chaque fiche ajoute ses 10 à 15 termes du jour.
 
 | Niveau | Contenu | Prérequis |
 |---|---|---|
-| 1. Reconnaître | 200 termes de base (commit, merge, branch, deploy, bug, fix, issue…), prononciation des pièges | Aucun |
+| 1. Reconnaître | 200 termes de base (commit, merge, branch, deploy, bug, fix, issue…) et tout le glossaire réseau, prononciation des pièges | Aucun |
 | 2. Lire | Notes de version, README, messages d'erreur, avis de sécurité : comprendre sans traduire mot à mot | Niveau 1 |
 | 3. Écrire | Rédiger une description de PR, une issue, un commentaire de revue clairs et courtois en anglais | Niveau 2 |
 

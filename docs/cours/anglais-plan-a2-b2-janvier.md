@@ -26,6 +26,26 @@ Il manque encore :
 4. **Le nombre d'heures par semaine** que tu peux tenir.
 5. L'oral est-il évalué ? (Tu as décrit une épreuve écrite ; je ne suppose rien d'autre.)
 
+## 2 bis. Précision d'Aymerick : l'examen de janvier est un « B2 écrit »
+
+Cela resserre le plan : **seul l'écrit compte**, donc compréhension écrite (lire le cas) et expression écrite (répondre). L'écoute et l'oral ne sont pas à préparer pour l'examen ; ils restent utiles pour ta vie quotidienne, mais ils passent après.
+
+Nouvelle répartition pour 10 h/semaine (remplace le tableau du §4 pour l'examen) :
+
+| Bloc | Heures/semaine |
+|---|---|
+| Lecture de textes et d'études de cas, avec questions | 3,5 h |
+| Écriture de réponses (phrases complètes, paragraphes), avec correction | 3 h |
+| Grammaire et connecteurs | 1,5 h |
+| Vocabulaire (glossaire réseau + informatique général), répétition espacée | 1,5 h |
+| Vie quotidienne (écoute, oral léger) | 0,5 h |
+
+Ce que « B2 écrit » demande en pratique, dit avec mes mots : comprendre un texte assez long sur un sujet courant ou professionnel, et écrire un texte clair et organisé, avec des phrases variées, en donnant des raisons et des exemples. Je n'ai **pas pu consulter la définition officielle du Conseil de l'Europe** (le site m'a refusé l'accès, erreur 403 le 2026-10-22), donc je ne la cite pas. La définition qui compte vraiment est celle de **ton école** : demande-lui la grille de notation de l'épreuve (critères : contenu, organisation, vocabulaire, grammaire), c'est elle qui décide des points.
+
+Conséquence sur la faisabilité : l'écrit est la compétence qu'on fait progresser le plus vite avec un travail régulier et des corrections, parce qu'il se prépare par des exercices répétés au format de l'épreuve. Cela reste un gain à confirmer par un test blanc : je ne promets pas le B2.
+
+**Étape suivante concrète :** envoie-moi (dans la PR) un sujet d'examen précédent ou la grille de l'école. Sans cela, je prépare des exercices génériques ; avec, je reproduis exactement le format.
+
 ## 3. Les quatre compétences
 
 Un examen B2 mesure en général : **compréhension écrite, compréhension orale, expression écrite, expression orale** (et souvent grammaire/vocabulaire). Le vocabulaire réseau du glossaire aide surtout en lecture technique ; pour l'examen, il faut aussi de l'anglais général. Je ne veux pas que tu apprennes 90 mots de réseau et rates l'examen sur la grammaire de base.

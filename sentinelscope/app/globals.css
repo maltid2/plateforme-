@@ -96,7 +96,7 @@
     animation: aurora-drift 22s ease-in-out infinite alternate;
   }
 
-  /* Titre : reflet qui traverse le dégradé */
+  /* Titre : un seul reflet à l'arrivée, puis dégradé fixe (pas de repeinte continue du texte) */
   .headline-shine {
     background: linear-gradient(
       100deg,
@@ -106,19 +106,34 @@
       #b7a6ff 100%
     );
     background-size: 220% 100%;
+    background-position: 0% 0;
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    animation: shine 7s linear infinite;
+    animation: shine 2.6s cubic-bezier(0.2, 0.7, 0.2, 1) 0.9s 1 both;
   }
 
-  /* Cadre à bordure lumineuse tournante autour du champ d'audit */
+  /* Cadre à bordure lumineuse : un calque conique tourne par transform
+     (animé par le compositeur, sans repeindre le dégradé à chaque image). */
   .beam-frame {
     position: relative;
+    isolation: isolate;
+    overflow: hidden;
     border-radius: 28px;
     padding: 1.5px;
+    box-shadow:
+      0 30px 80px -30px rgba(141, 124, 255, 0.55),
+      0 0 0 1px rgba(255, 255, 255, 0.03);
+  }
+  .beam-frame::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    left: 50%;
+    top: 50%;
+    width: 250%;
+    aspect-ratio: 1;
     background: conic-gradient(
-      from var(--beam-angle, 0deg),
       rgba(141, 124, 255, 0.08),
       #8d7cff 12%,
       #e4ddff 20%,
@@ -127,20 +142,9 @@
       #8d7cff 82%,
       rgba(141, 124, 255, 0.08)
     );
+    transform: translate(-50%, -50%) rotate(0deg);
+    will-change: transform;
     animation: beam-spin 7s linear infinite;
-    box-shadow:
-      0 30px 80px -30px rgba(141, 124, 255, 0.55),
-      0 0 0 1px rgba(255, 255, 255, 0.03);
-  }
-  .beam-frame::before {
-    content: "";
-    position: absolute;
-    inset: -1px;
-    z-index: -1;
-    border-radius: inherit;
-    background: inherit;
-    filter: blur(22px);
-    opacity: 0.45;
   }
   .beam-frame > .beam-inner {
     border-radius: 26.5px;
@@ -237,19 +241,17 @@
 }
 
 /* Animations du hero */
-@property --beam-angle {
-  syntax: "<angle>";
-  inherits: false;
-  initial-value: 0deg;
-}
 @keyframes beam-spin {
   to {
-    --beam-angle: 360deg;
+    transform: translate(-50%, -50%) rotate(360deg);
   }
 }
 @keyframes shine {
+  from {
+    background-position: 100% 0;
+  }
   to {
-    background-position: -220% 0;
+    background-position: 0% 0;
   }
 }
 @keyframes aurora-drift {

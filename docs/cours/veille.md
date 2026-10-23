@@ -113,3 +113,25 @@ Les quatre ont 1 million de jetons de contexte et 128 000 jetons de sortie maxim
 
 ### Écartées
 Introduction en bourse d'Anthropic, litiges publics, « modèles à venir » : rumeurs ou hors critère, non consignées.
+
+---
+
+## 2026-10-23 (vendredi) — Innovation, sorties et TikTok (ajout)
+
+Même règle : officiel lu = consigné ; presse secondaire = rumeur tant que non confirmée.
+
+### 1. Microsoft : « Securing the agentic insider » — **billet publié le 19 octobre 2026**
+- **Fait (billet de Hayete Gallot, Microsoft Security) :** les agents d'entreprise sont souvent **sur-privilégiés** (accès à des données, outils et systèmes) et imprévisibles ; Microsoft les appelle des « agentic insiders » (initiés agentiques). Position affichée : « frontier models ... cannot be trusted » (non par malveillance, mais parce qu'ils sont entraînés à atteindre un résultat, ce qui peut conduire à des contournements). Proposition en trois volets : capteurs et signaux pour découvrir les agents et les placer sous gestion, notation dynamique du risque, et **Guardian Agents** qui surveillent et modèrent les actions avant leur exécution.
+- **Statut :** concept et positionnement. **Project Perception** (annoncé en juillet 2026) n'a pas de date de disponibilité dans le billet ; **aucune configuration concrète** (Entra, permissions, journalisation) n'est donnée.
+- **Ce que ça change pour toi :** le principe utile, applicable dès maintenant à ta flotte : **donner à chaque agent une identité, un périmètre isolé et des permissions minimales, et garder des traces de ce qu'il a fait**. C'est le moindre privilège appliqué aux agents. C'est un billet d'éditeur : les produits cités sont de la promesse, pas du disponible.
+- Source : https://blogs.microsoft.com/blog/2026/10/19/securing-the-agentic-insider/ (2026-10-23).
+- Titres vus sur le blog Microsoft, **non lus** : « Advancing digital sovereignty with greater control and choice » (20 oct.), « Microsoft to expand Azure Maia system to multi-gigawatt deployments » (12 oct.), « Introducing the new Copilot with Home, Code and Autopilot » (25 sept.). Source : https://blogs.microsoft.com/ (2026-10-23).
+
+### 2. TikTok
+- **Officiel (salle de presse, seul billet visible) :** « What's shaping the holiday season on TikTok Shop » (14 octobre 2026) : retours possibles dans environ 10 000 points Happy Returns **aux États-Unis**, badge « 3-Day Delivery », assurance bijoux d'un an, Black Friday et Cyber Monday du 11 au 30 novembre sur TikTok Shop. La page affiche un pied de page « © 2025 » : à relativiser. Source : https://newsroom.tiktok.com/en-us (2026-10-23).
+- **Presse (ABC News, 3 septembre 2026) :** nouveaux commentaires : **commentaires vocaux** jusqu'à 60 secondes (comptes de 18 ans et plus), **sondages** ajoutés par le créateur à son propre commentaire (jusqu'à cinq options), **carrousel de photos** jusqu'à neuf images, déploiement mondial « over the next month » ; les commentaires en Live Photo sont déjà disponibles. Source secondaire (non confirmée par la salle de presse) : https://goodmorningamerica.com/living/story/tiktok-announces-new-ways-comment-including-voice-messages-136153358 (2026-10-23).
+- **Non trouvé :** aucune annonce de fonctionnalité TikTok datée d'octobre 2026 dans une source officielle.
+- **Ce que ça change pour toi :** rien d'opérationnel sur ta flotte ni ton produit ; ce serait utile seulement si tu communiques sur TikTok (je n'en sais rien).
+
+### 3. Matériel grand public (Apple, Microsoft Surface, Nvidia, Samsung) : **non confirmé**
+Les résultats de recherche ne contiennent que de la presse d'avant-événement (par exemple des vagues de lancements Apple annoncées par un journaliste, une conférence Windows/Surface du 7 octobre, des hausses de prix Samsung). La page officielle Apple lue ne listait aucun article. **Je ne consigne aucune sortie de produit** faute de source officielle lue.

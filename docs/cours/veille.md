@@ -64,3 +64,52 @@ Classement par « ce que ça change pour toi ». Définition utile : le catalogu
 
 ### Non traité aujourd'hui
 Intelligence artificielle et nouvelles technologies : volume des avis ci-dessus suffisant, rien consigné.
+
+---
+
+## 2026-10-23 (vendredi) — Intelligence artificielle et nouvelles technologies (ajout)
+
+Critère de tri : est-ce que ça change la façon de faire travailler ta flotte d'agents, ou ce que tu peux vendre. Sources **officielles** lues le 2026-10-23 ; les sites de presse et blogs trouvés par recherche web ont été traités comme des rumeurs tant qu'ils n'étaient pas confirmés par une source officielle (voir la dernière rubrique, où plusieurs se sont révélés faux ou contredits).
+
+Vocabulaire d'état : **annoncé** = l'éditeur l'a dit ; **disponible** = utilisable aujourd'hui (changelog ou documentation) ; **rumeur** = source secondaire non confirmée.
+
+### 1. Agent Skills passe à une fondation neutre — **annoncé le 22 octobre 2026**
+- **Fait :** Anthropic donne le standard Agent Skills (instructions et savoir-faire spécialisés pour agents) à l'Agentic AI Foundation (AAIF), placée sous la Linux Foundation. Elle a été cofondée avec Block et OpenAI et héberge déjà le Model Context Protocol (MCP). Sont transférés : le nom et le logo, l'organisation GitHub et le domaine agentskills.io. Anthropic dit vouloir le garder « open, community-driven, and vendor-neutral ».
+- **Chiffres donnés par Anthropic (non vérifiés indépendamment) :** plus de 70 plateformes d'agents l'ont intégré (dont ChatGPT, Cursor, GitHub Copilot, VS Code), 1 million de skills publiés, près de 280 millions d'installations.
+- **Prévu mais non daté :** versions numérotées, processus formel de proposition, **consignes de sécurité pour ceux qui écrivent et installent des skills**.
+- **Ce que ça change pour toi :** les instructions que tu confies à ta flotte sous forme de skills ne sont plus liées à un seul fournisseur ; elles resteront utilisables si tu changes d'outil. Conséquence pratique (mon avis, pas celui de l'annonce) : tant que les consignes de sécurité n'existent pas, n'installe pas de skill dont tu ne maîtrises pas le contenu : une skill est du texte qui guide un agent, donc elle peut lui faire exécuter des actions.
+- Source : https://www.anthropic.com/news/donating-agent-skills-to-the-agentic-ai-foundation (2026-10-23).
+
+### 2. Gamme Claude et tarifs — **disponible** (page de documentation consultée le 2026-10-23)
+| Modèle | ID d'API | Entrée / sortie par million de jetons | Retrait (engagement Anthropic) |
+|---|---|---|---|
+| Claude Fable 5.1 | `claude-fable-5-1` | 10 $ / 50 $ | pas avant le 1er septembre 2027 |
+| Claude Opus 5.5 | `claude-opus-5-5` | 4 $ / 20 $ | pas avant le 22 septembre 2027 |
+| Claude Sonnet 5.5 | `claude-sonnet-5-5` | 2 $ / 10 $ | pas avant le 28 septembre 2027 |
+| Claude Haiku 5.5 | `claude-haiku-5-5` | à partir de 0,10 $ / 0,50 $ | pas avant le 7 octobre 2027 |
+
+Les quatre ont 1 million de jetons de contexte et 128 000 jetons de sortie maximum. L'API par lots coûte 50 % de moins ; la lecture depuis le cache d'invites coûte 10 % du prix d'entrée de base (5 % pour Opus 5.5 et Sonnet 5.5, 2,5 % pour Fable 5.1 et Mythos 5.1, selon la page). La documentation recommande Opus 5.5 pour la plupart des usages, Fable 5.1 pour le raisonnement exigeant et le travail d'agent de longue haleine, Haiku 5.5 pour la classification, l'extraction et l'aiguillage.
+- **Ce que ça change pour toi :** un coût par rôle d'agent peut se raisonner : Haiku pour les tâches répétitives et de tri, Sonnet pour le travail courant, Opus ou Fable pour les cas difficiles. Les dates de retrait donnent un horizon stable de près d'un an. Je ne connais pas le modèle réellement utilisé par chaque agent de ta flotte : à vérifier chez toi.
+- Source : https://platform.claude.com/docs/en/about-claude/models/overview (2026-10-23).
+
+### 3. MCP : spécification du 28 juillet 2026 — **disponible** (page officielle lue)
+- **Fait (page officielle) :** la spécification en vigueur est datée 2026-07-28. Elle décrit des requêtes **sans état et autonomes** (*stateless, self-contained*) et une négociation des capacités **à chaque requête**. Extensions optionnelles : **Tasks** (opérations asynchrones de longue durée), **Skills over MCP** (instructions d'agents découvertes via MCP) et **MCP Apps** (interfaces interactives dans la conversation).
+- **Rumeur / source secondaire :** des blogs affirment que la révision supprime la poignée de main `initialize` et l'en-tête `Mcp-Session-Id`, avec une période de dépréciation de 12 mois pour certaines fonctions. La page officielle que j'ai lue ne détaille pas ces points : **non confirmé**.
+- **Ce que ça change pour toi :** si tes agents utilisent des serveurs MCP (c'est le cas de ta session), une mise à jour côté client ou serveur peut être nécessaire à terme ; l'extension Tasks et le lien avec les skills vont dans le sens de la flotte d'agents. Non vérifié sur ton installation.
+- Source : https://modelcontextprotocol.io/specification (2026-10-23).
+
+### 4. Anthropic Cyber Mission — **annoncée le 8 octobre 2026**
+- **Fait :** engagement à long terme pour aider les défenseurs : programme pour les infrastructures critiques (CIDP, avec notamment Palo Alto Networks, CrowdStrike, Deloitte, Accenture parmi les partenaires fondateurs), **OSS Scanner** (analyses périodiques gratuites de projets open source, avec preuve de concept, explication et correctif proposé), financement de fondations open source, et **Cyber Verification Program** (accès élargi aux capacités cyber de Claude pour un usage défensif).
+- **Réserves dites par Anthropic :** les rapports d'OSS Scanner sont « sent without human review » ; l'objectif annoncé est un taux de vrais positifs supérieur à 90 % : c'est une **attente**, pas un résultat mesuré.
+- **Ce que ça change pour toi :** deux pistes à évaluer, sans rien supposer : le Cyber Verification Program, si ton travail d'audit défensif se heurte à des refus de modèle ; OSS Scanner, seulement si un dépôt open source est concerné (je ne sais pas si le dépôt SentinelScope est public). La [mise à jour de la politique d'usage](https://www.anthropic.com/news/2026-usage-policy-update) (effective le 12 novembre 2026) ne mentionne, dans la page lue, **ni cybersécurité ni scan automatisé** ; elle précise notamment l'obligation d'un humain dans la boucle et d'une information des personnes pour les usages à haut risque. À relire pour ton produit.
+- Sources : https://www.anthropic.com/news/anthropic-cyber-mission ; https://www.anthropic.com/news/2026-usage-policy-update (2026-10-23).
+
+### 5. Google et OpenAI : ce qui est réellement **disponible** — et pourquoi je n'ai pas repris la presse
+- **Google (journal des modifications officiel) :** Gemini 4 Argon (`gemini-4-argon`) est **en disponibilité générale depuis le 13 octobre 2026**. Prix standard : 2 $ en entrée et 10 $ en sortie par million de jetons jusqu'au 30 novembre 2026, puis 4 $ et 20 $ à partir du 1er décembre 2026. Gemini 3.8 Flash : 0,75 $ / 3,75 $ jusqu'au 31 décembre 2026, puis 1,50 $ / 7,50 $.
+- **OpenAI (journal des modifications officiel) :** GPT-6 Sol et GPT-6 Luna le 22 septembre 2026, GPT-6.1 Sol le 29 septembre 2026 ; le 22 octobre, l'API Decisions passe en disponibilité générale avec `gpt-6-luna` ; ajouts récents côté agents (mode « Ultrafast », bacs à sable hébergés, cache d'invites de 12 heures).
+- **Rumeurs contredites par ces sources officielles :** une recherche web m'a d'abord rapporté que le modèle OpenAI de l'automne était « abandonné » (GPT-6.1 Astra) et qu'un lancement GPT-6 aurait eu lieu le 7 octobre ; le journal officiel montre au contraire GPT-6.1 Sol publié le 29 septembre et GPT-6 le 22 septembre. De même, une source secondaire disait Gemini 4 Argon limité à un aperçu restreint le 30 septembre ; le journal officiel indique une disponibilité générale le 13 octobre. **Leçon pratique : une seule source secondaire ne suffit pas, y compris pour des dates et des noms de modèles.**
+- **Ce que ça change pour toi :** rien d'obligatoire. Ta flotte est construite sur Claude ; ces sorties comptent pour la pression sur les prix (le tarif d'entrée de Gemini 4 Argon, 2 $ puis 4 $ par million de jetons, se compare à 4 $ pour Claude Opus 5.5, **sans que je compare leurs performances**, que je n'ai pas mesurées).
+- Sources : https://ai.google.dev/gemini-api/docs/changelog ; https://ai.google.dev/gemini-api/docs/pricing ; https://developers.openai.com/api/docs/changelog (2026-10-23).
+
+### Écartées
+Introduction en bourse d'Anthropic, litiges publics, « modèles à venir » : rumeurs ou hors critère, non consignées.

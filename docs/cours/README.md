@@ -8,6 +8,17 @@ Objectif : savoir **juger un diff** produit par ATLAS, GHOST, SIMBA ou le CEO su
 Matière : le dépôt (code, commits, PR, issues) et le web (sources citées avec date de consultation).
 Chaque fiche : 20 à 30 minutes, exercice compris. Fiches dans ce dossier, nommées `AAAA-MM-JJ-sujet.md`.
 
+## Profil et niveaux constatés (mis à jour le 2026-10-23)
+
+- **Réseau et commutation : à l'aise en pratique** (déclaré). Preuve dans le dépôt : `Read Me Exercice Packet Tracer Cisco` décrit un mini-lab VLAN, trunks entre commutateurs, routage inter-VLAN en *router-on-a-stick*, DHCP sur routeur et Wi-Fi. Conséquence : la fiche n° 2 du 22 octobre (DNS/TCP/TLS/HTTP) était d'un niveau plus basique que nécessaire ; les prochaines fiches réseau expliquent **ce qui se passe dans l'équipement** et donnent le vocabulaire exact, sans tutoriel de configuration.
+- **Active Directory** et **SQL** : niveau **non établi**. Calibrage par trois questions de difficulté croissante à la première fiche de chaque piste (mardi pour Active Directory, mercredi pour SQL) ; résultat noté ici.
+- **Matière disponible dans le dépôt** : `projet plateforme.pkt`, `Read Me Active Directory`, `Read Me Exercice Packet Tracer Cisco`, `script ajout utilisateur Active Directory`, `fichier csv`, `docker-compose.yml`.
+- **Règle** : aucune manipulation d'apprentissage sur le réseau de l'employeur ; laboratoires personnels uniquement (Packet Tracer, GNS3, VM Windows Server, conteneur de base de données). Vérifier une version ou l'exposition d'un portail d'administration relève de l'exploitation normale, pas de l'apprentissage.
+
+## Rotation hebdomadaire des fiches
+
+lundi réseau et commutation · mardi Active Directory et Windows Server · mercredi SQL · jeudi sécurité de l'infrastructure · vendredi projet et développement · samedi poste de travail et support · dimanche synthèse. Veille des avis éditeurs : [`veille.md`](veille.md).
+
 ## Les cinq pistes
 
 ### Piste 1 — Langages et technique du projet (TypeScript, Node, Next.js, CSS)
@@ -65,6 +76,7 @@ Statuts : `vu` · `à revoir` · `acquis`. Mis à jour à chaque fiche.
 | Anglais réseau : glossaire | 4 | 2026-10-22 | à revoir (à apprendre par répétition) |
 | Anglais cybersécurité/infra : glossaire + cas n° 1 | 4 | 2026-10-22 | à revoir |
 | Français : homophones (fiche 1) | 5 | 2026-10-22 | vu (fiche rédigée, en attente de lecture) |
+| Lire un avis de vulnérabilité de dépendance (plages, correctifs par branche) | 1/3 | 2026-10-23 | vu (fiche rédigée, en attente de lecture) |
 
 ## Calibrage
 

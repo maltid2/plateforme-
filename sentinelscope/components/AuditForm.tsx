@@ -428,9 +428,8 @@ export default function AuditForm({
                   <div className="mt-4 h-1 overflow-hidden rounded-full bg-white/[0.08]" aria-hidden="true">
                     <div className="h-full w-1/3 rounded-full bg-acc-violet motion-safe:animate-pulse" />
                   </div>
-                  <p className="mt-3 text-sm text-muted">
-                    En général quelques dizaines de secondes.{" "}
-                    <span className="tabular-nums">Durée écoulée : {elapsed} s</span>
+                  <p className="mt-3 text-sm tabular-nums text-muted">
+                    Durée écoulée : {elapsed} s
                   </p>
                 </div>
               ) : phase === "error" ? (

@@ -135,3 +135,13 @@ Même règle : officiel lu = consigné ; presse secondaire = rumeur tant que non
 
 ### 3. Matériel grand public (Apple, Microsoft Surface, Nvidia, Samsung) : **non confirmé**
 Les résultats de recherche ne contiennent que de la presse d'avant-événement (par exemple des vagues de lancements Apple annoncées par un journaliste, une conférence Windows/Surface du 7 octobre, des hausses de prix Samsung). La page officielle Apple lue ne listait aucun article. **Je ne consigne aucune sortie de produit** faute de source officielle lue.
+
+---
+
+## 2026-10-23 — Correctif à l'entrée « Agent Skills » (ajout)
+
+Vérification demandée par Aymerick sur les chiffres de l'annonce Anthropic du 22 octobre 2026.
+- **« 1 million de skills » et « près de 280 millions d'installations » :** retrouvés dans un rapport de **Vercel** (publié le 25 septembre 2026, chiffres jusqu'en août 2026), qui les attribue au **registre skills.sh** (lancé par Vercel en janvier 2026) : « In seven months, the skills.sh registry grew to one million agent skills and recorded nearly 280 million installs. » Ce sont donc des chiffres d'**un registre précis**, pas nécessairement de « tout l'écosystème » ; l'annonce Anthropic, telle que je l'ai lue, ne précise pas cette provenance dans mon résumé. Confirmé par une source indépendante d'Anthropic, mais **avec cette réserve de périmètre**.
+- **« Plus de 70 plateformes » :** **non confirmé**. Ni le site agentskills.io (qui renvoie à une « Client Showcase » sans chiffre lu), ni le dépôt GitHub `agentskills` (aucune liste d'adoptants visible), ni le rapport Vercel (aucun décompte) ne donnent ce nombre. La seule autre figure trouvée : « 30+ plateformes » dans un annuaire tiers, qui agrège un autre ensemble de skills (plus de 100 000) : elle ne confirme ni n'infirme le chiffre.
+- **Ce que le site officiel confirme :** une skill est un dossier contenant un fichier `SKILL.md` (métadonnées `name` et `description` + instructions), éventuellement avec scripts, références et ressources ; les agents les chargent par « divulgation progressive » (découverte, activation, exécution). Le dépôt `agentskills/agentskills` affiche 26 485 étoiles, licence Apache-2.0 (page GitHub lue le 2026-10-23).
+- Sources : https://vercel.com/blog/state-of-agent-skills ; https://agentskills.io ; https://github.com/agentskills (2026-10-23).

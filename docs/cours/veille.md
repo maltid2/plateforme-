@@ -145,3 +145,35 @@ Vérification demandée par Aymerick sur les chiffres de l'annonce Anthropic du 
 - **« Plus de 70 plateformes » :** **non confirmé**. Ni le site agentskills.io (qui renvoie à une « Client Showcase » sans chiffre lu), ni le dépôt GitHub `agentskills` (aucune liste d'adoptants visible), ni le rapport Vercel (aucun décompte) ne donnent ce nombre. La seule autre figure trouvée : « 30+ plateformes » dans un annuaire tiers, qui agrège un autre ensemble de skills (plus de 100 000) : elle ne confirme ni n'infirme le chiffre.
 - **Ce que le site officiel confirme :** une skill est un dossier contenant un fichier `SKILL.md` (métadonnées `name` et `description` + instructions), éventuellement avec scripts, références et ressources ; les agents les chargent par « divulgation progressive » (découverte, activation, exécution). Le dépôt `agentskills/agentskills` affiche 26 485 étoiles, licence Apache-2.0 (page GitHub lue le 2026-10-23).
 - Sources : https://vercel.com/blog/state-of-agent-skills ; https://agentskills.io ; https://github.com/agentskills (2026-10-23).
+
+---
+
+## 2026-10-24 (samedi)
+
+Sources consultées le 2026-10-24 : catalogue CISA KEV (`catalogVersion` 2026.10.23, publié le 2026-10-23 à 19 h 30 UTC), pages PSIRT Palo Alto et Fortinet (lues), liste des avis du CERT-FR (page lue, entrées du 23 octobre). Non lue : la liste des avis Cisco (page vide à la lecture, gabarit non rendu). Les avis déjà consignés hier (Ivanti, Cisco Secure Email Gateway, PAN-OS CVE-2026-0322, Windows CVE-2026-96951, Fortinet CVE-2025-61624, Citrix CVE-2026-88779) ne sont pas répétés.
+
+### Nouveautés du catalogue KEV depuis le 21 octobre
+Deux entrées, **toutes deux hors de ta liste d'éditeurs** : Arista VeloCloud Orchestrator, injection SQL (CVE-2026-114625), et Collabora Online, injection de commande dans le serveur CODE intégré (CVE-2026-110447), toutes deux ajoutées le 2026-10-23 avec échéance au 2026-10-26. Aucune entrée nouvelle pour Palo Alto, Fortinet, Cisco, Microsoft, Ivanti, Citrix, Veeam, VMware ou les autres éditeurs de ta liste. Détails non lus (nom et date uniquement).
+
+### 1. Palo Alto PAN-OS : failles PHP (CVE-2026-109618 et CVE-2026-109619) — **corrigés « bientôt », pas encore tous disponibles**
+- **Exploitation :** Palo Alto écrit ne connaître aucune exploitation malveillante contre ses produits (« not aware of any malicious exploitation »). Le CERT-FR a publié le 21 octobre 2026 l'alerte CERTFR-2026-ALE-014 « Multiples vulnérabilités dans PHP », et sa page indique que des preuves de concept existent pour ces deux CVE dans certains déploiements PHP (selon la liste des alertes ; alerte non ouverte).
+- **Score et urgence :** 8,7 HIGH (CVSS 4.0, évaluation de l'avis), score éditeur 9,2, « urgence suggérée » MODERATE, 7,1 si l'accès d'administration passe par un poste de rebond.
+- **Produits :** PAN-OS sur pare-feu PA-Series et VM-Series et sur Panorama. Aucune configuration particulière requise. Le risque est le plus élevé quand l'**interface d'administration est joignable depuis Internet** ; l'interface de données n'est concernée que si un profil de gestion y est attaché. GlobalProtect (portail, passerelle, VPN sans client) et le portail captif ne sont pas concernés.
+- **Versions affectées → corrigées (dates de disponibilité estimées par l'éditeur, fin octobre) :** 12.2 → 12.2.4-h1 (28/10) ; 12.1 → 12.1.4-h13 (29/10), 12.1.7-h11 (28/10), 12.1.10-h3 (30/10) ; 11.2 → 11.2.4-h23 (30/10), 11.2.7-h23 (29/10), 11.2.10-h16 (26/10), 11.2.13-h4 (27/10), 11.2.16-h1 (28/10) ; 11.1 → 11.1.4-h38 (29/10), 11.1.6-h40 (29/10), 11.1.7-h12 (30/10), 11.1.10-h36 (28/10), 11.1.13-h16 (27/10), 11.1.16-h4 (26/10) ; 10.2 → 10.2.7-h39 (30/10), 10.2.10-h42 (29/10), 10.2.13-h27 (27/10), 10.2.16-h12 (28/10), 10.2.18-h13 (26/10). L'avis dit que les correctifs arrivent dans « les prochaines versions » : **ces dates sont des estimations**.
+- **Contournement :** signatures Threat Prevention (identifiant 543004 et la série 97622 à 97678, contenu Applications et Threats 9162, 9163 ou 9164 minimum selon la branche) ; acheminer le trafic du port de gestion par un port de données, remplacer le certificat de gestion entrant, déchiffrer le trafic de gestion entrant ; **surtout, restreindre l'accès à l'interface d'administration aux IP internes de confiance**.
+- **Ce que tu vérifies (si tu as PAN-OS) :** (1) ta branche et ta version exacte, et si un correctif de la liste ci-dessus est déjà publié pour elle ; (2) **l'interface d'administration est-elle joignable depuis Internet ?** C'est la même question que pour CVE-2026-0322 (entrée du 2026-10-23) : restreindre cet accès réduit les deux risques ; (3) si un profil de gestion est attaché à une interface de données.
+- Source : https://security.paloaltonetworks.com/CVE-2026-109618 (publié le 2026-10-21, mis à jour le 2026-10-24, consulté le 2026-10-24).
+
+### 2. Fortinet FortiSandbox : contournement d'authentification — CVE-2026-107656 (FG-IR-26-185) — **pas d'exploitation constatée**
+- **Exploitation :** « Known Exploited: No » ; pas de contournement ni de correctif virtuel.
+- **Score :** CVSSv3 9,6, **Critical**. Un attaquant distant **non authentifié** peut contourner la connexion de l'interface web de gestion avec des requêtes HTTP forgées (CWE-288) et exécuter du code ou des commandes. L'avis ne dit pas explicitement que l'interface doit être exposée sur Internet.
+- **Versions affectées → corrigées :** FortiSandbox 5.0.0 à 5.0.6 → 5.0.7 ou plus ; 4.4.0 à 4.4.9 → 4.4.10 ou plus ; 5.2 non affecté. FortiSandbox PaaS 5.0.0 à 5.0.6 → 5.0.7 ou plus ; PaaS 4.4 : toutes les versions, migrer vers une version corrigée. L'avis ne liste **aucun autre produit** (FortiOS, FortiProxy, FortiManager non listés).
+- **Ce que tu vérifies (si tu as un FortiSandbox) :** version ; interface web joignable ou non depuis Internet ; qui peut l'atteindre. Publié le 2026-10-13.
+- Source : https://fortiguard.fortinet.com/psirt/FG-IR-26-185 (consulté le 2026-10-24).
+
+### Vu, non détaillé
+- Autres avis Fortinet du 13 octobre 2026 dans la liste PSIRT : FG-IR-26-179 (contournement d'authentification de l'API Fabric, gravité Medium), FG-IR-26-178 (lecture/écriture de fichiers via injection SQL, High), FG-IR-26-177 (exécution de commande dans fgfmsd, Medium) ; produits et versions non lus. Source : https://www.fortiguard.com/psirt (2026-10-24).
+- Avis du CERT-FR du 23 octobre 2026 : CERTFR-2026-AVI-1371 sur Microsoft Edge (contenu non précisé dans la page lue) ; AVI-1369 sur HPE Aruba Networking ; autres avis du jour hors liste. Source : https://cert.cyber.gouv.fr/avis/ (2026-10-24).
+
+### Pile de production du projet
+Pas de nouvelle trouvaille aujourd'hui sur Next.js, React ou Node. L'issue #49 reste ouverte. Fait de projet : la PR #50 (GHOST, « alléger les animations du hero ») est ouverte depuis le 23 octobre ; elle porte sur les deux animations que la fiche n° 1 désigne comme coûteuses (cadre lumineux et reflet du titre). Je ne l'ai pas relue.

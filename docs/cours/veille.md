@@ -177,3 +177,9 @@ Deux entrées, **toutes deux hors de ta liste d'éditeurs** : Arista VeloCloud O
 
 ### Pile de production du projet
 Pas de nouvelle trouvaille aujourd'hui sur Next.js, React ou Node. L'issue #49 reste ouverte. Fait de projet : la PR #50 (GHOST, « alléger les animations du hero ») est ouverte depuis le 23 octobre ; elle porte sur les deux animations que la fiche n° 1 désigne comme coûteuses (cadre lumineux et reflet du titre). Je ne l'ai pas relue.
+
+---
+
+## 2026-10-25 (dimanche)
+
+Sources consultées le 2026-10-25 : catalogue CISA KEV (`catalogVersion` 2026.10.23, publié le 2026-10-23 ; **aucune entrée nouvelle** depuis la lecture du 24 octobre). Aucun nouvel avis retenu aujourd'hui ; les avis déjà consignés ne sont pas répétés. Rotation du dimanche : synthèse de la semaine ([`2026-10-25-synthese-de-la-semaine.md`](2026-10-25-synthese-de-la-semaine.md)). Rappel de ce qui reste ouvert : issues #48 (garde SSRF) et #49 (Next.js), PR #45, #46 et #50 non fusionnées au 2026-10-25 (liste des PR lue le même jour).

@@ -1,5 +1,7 @@
 # Cours MINERVE — plan de montée en compétence
 
+Synthèse de la semaine du 22 au 25 octobre : [`2026-10-25-synthese-de-la-semaine.md`](2026-10-25-synthese-de-la-semaine.md).
+
 Analyse de l'examen FEDE (janvier 2025) : [`anglais-examen-fede-cu-b4-analyse.md`](anglais-examen-fede-cu-b4-analyse.md).
 
 Plans et calendriers : [`parcours-en-parallele.md`](parcours-en-parallele.md) (toutes les pistes) et [`anglais-plan-a2-b2-janvier.md`](anglais-plan-a2-b2-janvier.md) (examen du 4 janvier 2027).
@@ -79,6 +81,7 @@ Statuts : `vu` · `à revoir` · `acquis`. Mis à jour à chaque fiche.
 | Français : homophones (fiche 1) | 5 | 2026-10-22 | vu (fiche rédigée, en attente de lecture) |
 | Lire un avis de vulnérabilité de dépendance (plages, correctifs par branche) | 1/3 | 2026-10-23 | vu (fiche rédigée, en attente de lecture) |
 | DHCP côté client : bail, T1/T2, repli en 169.254 (poste de travail et support) | 2 | 2026-10-24 | vu (fiche rédigée, en attente de lecture) |
+| Synthèse de la semaine 22-25 octobre | 1/2/3/4 | 2026-10-25 | à revoir (aucune réponse aux contrôles reçue) |
 
 ## Calibrage
 

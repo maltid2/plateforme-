@@ -82,6 +82,7 @@ Statuts : `vu` · `à revoir` · `acquis`. Mis à jour à chaque fiche.
 | Lire un avis de vulnérabilité de dépendance (plages, correctifs par branche) | 1/3 | 2026-10-23 | vu (fiche rédigée, en attente de lecture) |
 | DHCP côté client : bail, T1/T2, repli en 169.254 (poste de travail et support) | 2 | 2026-10-24 | vu (fiche rédigée, en attente de lecture) |
 | Synthèse de la semaine 22-25 octobre | 1/2/3/4 | 2026-10-25 | à revoir (aucune réponse aux contrôles reçue) |
+| Commutateur : apprentissage, inondation d'unicast inconnu, vieillissement, MAC contre ARP | 2 | 2026-10-26 | vu (fiche rédigée, en attente de lecture) |
 
 ## Calibrage
 

@@ -183,3 +183,15 @@ Pas de nouvelle trouvaille aujourd'hui sur Next.js, React ou Node. L'issue #49 r
 ## 2026-10-25 (dimanche)
 
 Sources consultées le 2026-10-25 : catalogue CISA KEV (`catalogVersion` 2026.10.23, publié le 2026-10-23 ; **aucune entrée nouvelle** depuis la lecture du 24 octobre). Aucun nouvel avis retenu aujourd'hui ; les avis déjà consignés ne sont pas répétés. Rotation du dimanche : synthèse de la semaine ([`2026-10-25-synthese-de-la-semaine.md`](2026-10-25-synthese-de-la-semaine.md)). Rappel de ce qui reste ouvert : issues #48 (garde SSRF) et #49 (Next.js), PR #45, #46 et #50 non fusionnées au 2026-10-25 (liste des PR lue le même jour).
+
+---
+
+## 2026-10-26 (lundi)
+
+Sources consultées le 2026-10-26 : catalogue CISA KEV (`catalogVersion` 2026.10.23, inchangé : **aucune entrée nouvelle**), liste des alertes du CERT-FR (**aucune alerte nouvelle** après CERTFR-2026-ALE-014 du 21 octobre), liste PSIRT Fortinet (aucun avis après le 13 octobre), avis Palo Alto (relu). Cisco : page de liste illisible (gabarit non rendu), non contrôlée.
+
+### Suivi d'une trouvaille déjà consignée : Palo Alto PAN-OS, failles PHP (CVE-2026-109618 et CVE-2026-109619)
+Mise à jour de l'avis le **2026-10-26** : plusieurs correctifs sont désormais **publiés** (« released ») : 11.1.4-h38, 11.1.6-h40, 11.1.10-h36, 11.1.13-h16, 11.1.16-h4, 11.2.10-h16 et 10.2.18-h13. Toujours annoncés avec une date estimée : 12.2.4-h1 (28/10), 12.1.4-h13 (29/10), 12.1.7-h11 (28/10), 12.1.10-h3 (30/10), 11.2.4-h23 (30/10), 11.2.7-h23 (29/10), 11.2.13-h4 (27/10), 11.2.16-h1 (28/10), 11.1.7-h12 (30/10), 10.2.7-h39 (30/10), 10.2.10-h42 (29/10), 10.2.13-h27 (27/10), 10.2.16-h12 (28/10). **Statut d'exploitation inchangé** : Palo Alto « is not aware of any malicious exploitation ». Ce que tu vérifies si tu as PAN-OS : si ta branche figure dans la liste « publiée », applique-la ; sinon, **restreins l'accès à l'interface d'administration** en attendant. Source : https://security.paloaltonetworks.com/CVE-2026-109618 (mis à jour le 2026-10-26, consulté le 2026-10-26).
+
+### Rien d'autre aujourd'hui
+Aucun nouvel avis activement exploité pour les éditeurs de ta liste. Pile de production du projet : rien de nouveau (issues #48 et #49 ouvertes ; PR #45, #46, #50 non fusionnées au 2026-10-26).

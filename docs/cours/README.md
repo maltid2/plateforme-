@@ -14,7 +14,7 @@ Chaque fiche : 20 à 30 minutes, exercice compris. Fiches dans ce dossier, nomm�
 
 - **Réseau et commutation : à l'aise en pratique** (déclaré). Preuve dans le dépôt : `Read Me Exercice Packet Tracer Cisco` décrit un mini-lab VLAN, trunks entre commutateurs, routage inter-VLAN en *router-on-a-stick*, DHCP sur routeur et Wi-Fi. Conséquence : la fiche n° 2 du 22 octobre (DNS/TCP/TLS/HTTP) était d'un niveau plus basique que nécessaire ; les prochaines fiches réseau expliquent **ce qui se passe dans l'équipement** et donnent le vocabulaire exact, sans tutoriel de configuration.
 - **Poste de travail et support** (samedi) : fiche DHCP du 2026-10-24 rédigée à partir de ton lab Packet Tracer ; niveau à confirmer par tes retours.
-- **Active Directory** et **SQL** : niveau **non établi**. Calibrage par trois questions de difficulté croissante à la première fiche de chaque piste (mardi pour Active Directory, mercredi pour SQL) ; résultat noté ici.
+- **Active Directory** : calibrage lancé le 2026-10-27 (trois questions en tête de la fiche Kerberos) ; **résultat : en attente de ta réponse**. Ton lab (`Read Me Active Directory`) montre que tu as installé AD DS, promu un contrôleur de domaine et automatisé la création d'utilisateurs et de groupes par PowerShell : niveau pratique de base, à confirmer. **SQL** : Calibrage par trois questions de difficulté croissante à la première fiche de chaque piste (mardi pour Active Directory, mercredi pour SQL) ; résultat noté ici.
 - **Matière disponible dans le dépôt** : `projet plateforme.pkt`, `Read Me Active Directory`, `Read Me Exercice Packet Tracer Cisco`, `script ajout utilisateur Active Directory`, `fichier csv`, `docker-compose.yml`.
 - **Règle** : aucune manipulation d'apprentissage sur le réseau de l'employeur ; laboratoires personnels uniquement (Packet Tracer, GNS3, VM Windows Server, conteneur de base de données). Vérifier une version ou l'exposition d'un portail d'administration relève de l'exploitation normale, pas de l'apprentissage.
 
@@ -83,6 +83,7 @@ Statuts : `vu` · `à revoir` · `acquis`. Mis à jour à chaque fiche.
 | DHCP côté client : bail, T1/T2, repli en 169.254 (poste de travail et support) | 2 | 2026-10-24 | vu (fiche rédigée, en attente de lecture) |
 | Synthèse de la semaine 22-25 octobre | 1/2/3/4 | 2026-10-25 | à revoir (aucune réponse aux contrôles reçue) |
 | Commutateur : apprentissage, inondation d'unicast inconnu, vieillissement, MAC contre ARP | 2 | 2026-10-26 | vu (fiche rédigée, en attente de lecture) |
+| Kerberos : ouverture de session, événement 4768, écart d'horloge (Active Directory) | AD | 2026-10-27 | vu (fiche rédigée, en attente de lecture) |
 
 ## Calibrage
 

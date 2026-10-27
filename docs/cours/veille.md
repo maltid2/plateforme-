@@ -195,3 +195,24 @@ Mise à jour de l'avis le **2026-10-26** : plusieurs correctifs sont désormais 
 
 ### Rien d'autre aujourd'hui
 Aucun nouvel avis activement exploité pour les éditeurs de ta liste. Pile de production du projet : rien de nouveau (issues #48 et #49 ouvertes ; PR #45, #46, #50 non fusionnées au 2026-10-26).
+
+---
+
+## 2026-10-27 (mardi)
+
+Sources consultées le 2026-10-27 : catalogue CISA KEV (`catalogVersion` 2026.10.26, publié le 2026-10-26 à 22 h 24 UTC), alerte CERT-FR CERTFR-2026-ALE-014 (page lue), avis Palo Alto (relu). Les avis déjà consignés ne sont répétés que pour ce qui a changé.
+
+### 1. PHP : exécution de code à distance non authentifiée, **exploitation active constatée** — CVE-2026-109618 et CVE-2026-109619
+Ce n'est pas un éditeur de ta liste, mais il touche **Palo Alto PAN-OS** (entrée du 24 octobre) et ton laboratoire WordPress (voir plus bas).
+- **Exploitation :** ajoutées au catalogue CISA le **2026-10-26** (échéance fixée au 2026-10-29), ce qui vaut preuve d'exploitation. Le CERT-FR écrit le 26 octobre « constater des tentatives d'exploitation » de ces deux failles (alerte publiée le 21 octobre ; preuves de concept signalées le 22).
+- **Nature :** CVE-2026-109618 : corruption mémoire (« out-of-memory corruption ») ; CVE-2026-109619 : état interne de requête périmé (« stale internal request-state ») ; toutes deux permettent à un attaquant distant non authentifié d'exécuter du code (descriptions du catalogue CISA).
+- **Versions (CERT-FR) :** à mettre à jour : PHP 8.2.x avant **8.2.35**, 8.3.x avant **8.3.36**, 8.4.x avant **8.4.27**, 8.5.x avant **8.5.12** ; PHP 5.x, 7.x, 8.0.x et 8.1.x ne sont plus supportés (pas de correctif). Le CERT-FR renvoie au bulletin de l'éditeur pour les correctifs ; **je n'ai pas lu ce bulletin**.
+- **Contournements cités par le CERT-FR (non qualifiés par lui) :** désactiver le suivi de progression d'envoi (`session.upload_progress.enabled = Off`, avec `php_admin_flag[session.upload_progress.enabled] = off` pour PHP-FPM), ce qui ne réduit la surface d'attaque que pour CVE-2026-109619 ; bloquer au niveau d'un pare-feu applicatif les requêtes dont le `Content-Type` est `multipart`, ou à défaut les superviser. Le CERT-FR recommande aussi d'**isoler les équipements affectés**.
+- **Ce que tu vérifies chez toi :** (1) toute machine qui exécute PHP : version exacte (`php -v`) comparée aux seuils ci-dessus ; (2) si elle est joignable depuis Internet ; (3) dans ton lab WordPress du dépôt, l'image `php:8.2-fpm` (ligne 21 de `docker-compose.yml`) : le suffixe `8.2` désigne une branche, pas une version : **la version réellement présente dépend de la date de téléchargement de l'image** ; vérifie qu'elle est ≥ 8.2.35 (je ne peux pas le savoir), et ne l'expose pas à Internet tant que ce n'est pas fait. Ce lab n'est pas la production de SentinelScope (Next.js et Node, sans PHP) : aucune issue ouverte.
+- Sources : https://www.cisa.gov/known-exploited-vulnerabilities-catalog ; https://cert.cyber.gouv.fr/alerte/CERTFR-2026-ALE-014/ (consultés le 2026-10-27).
+
+### 2. Suivi : Palo Alto PAN-OS, failles PHP (entrée du 24 octobre)
+Avis mis à jour le 2026-10-27 : en plus des versions déjà publiées signalées hier, sont désormais **publiées** 12.2.4-h1, 12.1.7-h11, 10.2.13-h27 et 10.2.16-h12. Restent avec une date estimée : 12.1.4-h13 (29/10), 12.1.10-h3 (30/10), 11.1.7-h12 (30/10), 11.2.4-h23 (30/10), 11.2.7-h23 (29/10), 11.2.13-h4 (27/10), 11.2.16-h1 (28/10), 10.2.7-h39 (30/10), 10.2.10-h42 (29/10). **Exploitation :** la page de l'avis dit toujours que Palo Alto « is not aware of any malicious exploitation of this issue against our products » ; cela concerne **ses produits**, alors que le catalogue CISA signale maintenant l'exploitation de PHP en général. Ne prends pas l'absence de constat chez l'éditeur pour une absence de risque : **restreins l'accès à l'interface d'administration** et applique le correctif de ta branche dès qu'il est publié. Source : https://security.paloaltonetworks.com/CVE-2026-109618 (mis à jour le 2026-10-27, consulté le 2026-10-27).
+
+### Rien d'autre aujourd'hui
+Aucune autre entrée nouvelle du catalogue CISA pour les éditeurs de ta liste. Pile de production du projet : rien de nouveau (issues #48 et #49 ouvertes).

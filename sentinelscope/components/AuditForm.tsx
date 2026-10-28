@@ -2,10 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   ArrowRight,
-  CheckCircle2,
   Loader2,
   Mail,
   Search,
@@ -39,14 +38,6 @@ type Result = {
   sections?: Section[];
   reportHtml?: string;
 };
-
-const STEPS = [
-  "Résolution du domaine",
-  "Connexion sécurisée (TLS)",
-  "En-têtes de sécurité",
-  "Exposition & services",
-  "Génération du rapport",
-];
 
 const CONSENT_KEY = "ss-audit-consent-v1";
 
@@ -104,10 +95,12 @@ function ScoreRing({
   grade: string;
   size?: number;
 }) {
+  const reduceMotion = useReducedMotion();
   const stroke = 7;
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const color = gradeColor[grade] || "#8B5CF6";
+  const offset = c * (1 - Math.max(0, Math.min(100, score)) / 100);
   return (
     <div className="relative flex-none" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
@@ -128,9 +121,9 @@ function ScoreRing({
           strokeLinecap="round"
           fill="none"
           strokeDasharray={c}
-          initial={{ strokeDashoffset: c }}
-          animate={{ strokeDashoffset: c * (1 - Math.max(0, Math.min(100, score)) / 100) }}
-          transition={{ duration: 1, ease: [0.2, 0.7, 0.2, 1] }}
+          initial={{ strokeDashoffset: reduceMotion ? offset : c }}
+          animate={{ strokeDashoffset: offset }}
+          transition={{ duration: reduceMotion ? 0 : 1, ease: [0.2, 0.7, 0.2, 1] }}
           style={{ filter: `drop-shadow(0 0 6px ${color}66)` }}
         />
       </svg>
@@ -153,7 +146,7 @@ export default function AuditForm({
 }) {
   const [value, setValue] = useState("");
   const [phase, setPhase] = useState<Phase>("idle");
-  const [step, setStep] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
   const [host, setHost] = useState("");
   const [inputError, setInputError] = useState(false);
   const [errMsg, setErrMsg] = useState("");
@@ -181,6 +174,8 @@ export default function AuditForm({
   // si la librairie ne se charge pas.
   useEffect(() => {
     if (phase !== "done" || !result) return;
+    // Mouvement réduit : le résultat s'affiche directement, sans animation.
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     let stopped = false;
     (async () => {
       try {
@@ -233,14 +228,14 @@ export default function AuditForm({
     setResult(null);
     setHost(raw.replace(/^https?:\/\//i, "").replace(/\/.*$/, ""));
     setPhase("scanning");
-    setStep(0);
+    setElapsed(0);
 
+    // Seule information réellement connue pendant l'attente : le temps écoulé.
     const startedAt = Date.now();
-    const MIN_LOADER_MS = 5200; // durée minimale d'affichage du loader
     stopTimer();
     timer.current = setInterval(() => {
-      setStep((s) => (s < STEPS.length - 1 ? s + 1 : s));
-    }, 900);
+      setElapsed(Math.floor((Date.now() - startedAt) / 1000));
+    }, 1000);
 
     try {
       const r = await fetch("/api/audit", {
@@ -255,13 +250,8 @@ export default function AuditForm({
         setPhase("error");
         return;
       }
-      const elapsed = Date.now() - startedAt;
-      if (elapsed < MIN_LOADER_MS) {
-        await new Promise((res) => setTimeout(res, MIN_LOADER_MS - elapsed));
-      }
       stopTimer();
       setResult(j as Result);
-      setStep(STEPS.length);
       setPhase("done");
     } catch (err) {
       stopTimer();
@@ -317,7 +307,7 @@ export default function AuditForm({
     stopTimer();
     setPhase("idle");
     setHost("");
-    setStep(0);
+    setElapsed(0);
     setResult(null);
     setErrMsg("");
     setContactOpen(false);
@@ -405,6 +395,14 @@ export default function AuditForm({
           : "Sans inscription · Audit non intrusif · Résultat en quelques minutes"}
       </p>
 
+      <p className="sr-only" role="status" aria-live="polite">
+        {phase === "scanning"
+          ? `Analyse de ${host} en cours`
+          : phase === "done" && result
+          ? `Analyse terminée, note ${result.grade}`
+          : ""}
+      </p>
+
       <AnimatePresence>
         {phase !== "idle" && (
           <motion.div
@@ -421,26 +419,18 @@ export default function AuditForm({
               <div className="relative">
               {phase === "scanning" ? (
                 <div>
-                  <div className="mb-4 flex items-center gap-2 text-sm text-muted">
-                    <Loader2 className="h-4 w-4 animate-spin text-acc-violet" />
-                    Analyse de <span className="font-mono text-ink">{host}</span>
+                  <div className="flex items-center gap-2 text-sm text-muted">
+                    <Loader2 className="h-4 w-4 flex-none text-acc-violet motion-safe:animate-spin" />
+                    <span>
+                      Analyse de <span className="font-mono text-ink">{host}</span> en cours
+                    </span>
                   </div>
-                  <div className="space-y-2.5">
-                    {STEPS.map((s, i) => (
-                      <div key={s} className="flex items-center gap-2.5 text-sm">
-                        {i < step ? (
-                          <CheckCircle2 className="h-4 w-4 flex-none text-acc-violet" />
-                        ) : i === step ? (
-                          <Loader2 className="h-4 w-4 flex-none animate-spin text-acc-violet" />
-                        ) : (
-                          <span className="h-4 w-4 flex-none rounded-full border border-line" />
-                        )}
-                        <span className={i <= step ? "text-ink/90" : "text-muted"}>
-                          {s}
-                        </span>
-                      </div>
-                    ))}
+                  <div className="mt-4 h-1 overflow-hidden rounded-full bg-white/[0.08]" aria-hidden="true">
+                    <div className="h-full w-1/3 rounded-full bg-acc-violet motion-safe:animate-pulse" />
                   </div>
+                  <p className="mt-3 text-sm tabular-nums text-muted">
+                    Durée écoulée : {elapsed} s
+                  </p>
                 </div>
               ) : phase === "error" ? (
                 <div>

@@ -216,3 +216,25 @@ Avis mis à jour le 2026-10-27 : en plus des versions déjà publiées signalée
 
 ### Rien d'autre aujourd'hui
 Aucune autre entrée nouvelle du catalogue CISA pour les éditeurs de ta liste. Pile de production du projet : rien de nouveau (issues #48 et #49 ouvertes).
+
+---
+
+## 2026-10-28 (mercredi)
+
+Sources consultées le 2026-10-28 : catalogue CISA KEV (`catalogVersion` 2026.10.27, publié le 2026-10-27 à 19 h UTC), publication de sécurité Node.js du 21 octobre 2026 (page officielle lue), NVD (API). Les avis déjà consignés ne sont pas répétés.
+
+### 1. Node.js : décodeur Brotli (CVE-2026-111497) — **exploitation active constatée, touche la pile de production du projet**
+- **Exploitation :** ajoutée au catalogue CISA le **2026-10-27** (échéance 2026-11-10), donc exploitation constatée. L'entrée du catalogue la rattache à Google Brotli (bibliothèque réutilisée par plusieurs produits).
+- **Nature (Node.js) :** « A flaw in the Brotli decoder bundled with Node.js allows malformed compressed input to write past the end of an internal decoder buffer. » Un attaquant qui peut fournir des données Brotli qu'une application décompresse avec `node:zlib` peut provoquer un plantage, divulguer la mémoire du processus ou exécuter du code. Gravité **high** selon Node.js ; CVSS 4.0 de **9,2** (critique) dans la base NVD.
+- **Versions :** lignes **26.x, 24.x et 22.x** affectées ; corrigées en **22.23.4, 24.22.1 et 26.12.1** (publication du 21 octobre 2026). Les versions en fin de vie sont « always affected ». Côté bibliothèque Brotli autonome (NVD) : 1.0.3 à 1.2.0 affectées ; corrigées en 1.0.10, 1.1.1 ou 1.2.1.
+- **Contournement :** la page Node.js n'en indique **aucun**.
+- **Ce que tu vérifies chez toi :** (1) la version de Node.js de **chaque** machine qui l'exécute (`node --version`) ; (2) si une application décompresse du Brotli venant de l'extérieur ; (3) tout produit tiers qui embarque sa propre copie de Brotli (mettre à jour la bibliothèque autonome ne corrige pas la copie intégrée à Node.js).
+- **Autres corrections de la même publication, gravité high :** CVE-2026-105483 et CVE-2026-106069 (contournements de la vérification du nom d'hôte d'un certificat TLS) et CVE-2026-105482 (`dns.resolve` tronque les noms contenant un caractère NUL).
+- **Projet SentinelScope :** version de Node en production non lisible dans le dépôt ; aucun usage direct de `zlib` ou de Brotli ; moteur d'audit sans décompression. Applicabilité non établie. **Issue ouverte : https://github.com/maltid2/plateforme-/issues/51**.
+- Sources : https://nodejs.org/en/blog/vulnerability/october-2026-security-releases ; https://nvd.nist.gov/vuln/detail/CVE-2026-111497 (API) ; catalogue CISA (consultés le 2026-10-28).
+
+### Vu, hors de ta liste
+Adobe Commerce et Magento, envoi de fichier dangereux (CVE-2026-48356), ajouté au catalogue le 2026-10-27 avec échéance 2026-11-10 ; détails non lus.
+
+### Suivi
+Rien de nouveau sur PAN-OS, Fortinet, Cisco, Ivanti ou Citrix dans les sources lues aujourd'hui (catalogue CISA : aucune nouvelle entrée pour ces éditeurs).

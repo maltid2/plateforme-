@@ -85,6 +85,7 @@ Statuts : `vu` · `à revoir` · `acquis`. Mis à jour à chaque fiche.
 | Commutateur : apprentissage, inondation d'unicast inconnu, vieillissement, MAC contre ARP | 2 | 2026-10-26 | vu (fiche rédigée, en attente de lecture) |
 | Kerberos : ouverture de session, événement 4768, écart d'horloge (Active Directory) | AD | 2026-10-27 | vu (fiche rédigée, en attente de lecture) |
 | SQL : index, plan d'exécution `EXPLAIN` (MariaDB) | SQL | 2026-10-28 | vu (fiche rédigée, en attente de lecture) |
+| Enchaînement PHP + noyau Linux vers root (sécurité de l'infrastructure) | 3 | 2026-10-29 | vu (fiche rédigée, en attente de lecture) |
 
 ## Calibrage
 

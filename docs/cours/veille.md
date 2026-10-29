@@ -238,3 +238,34 @@ Adobe Commerce et Magento, envoi de fichier dangereux (CVE-2026-48356), ajouté 
 
 ### Suivi
 Rien de nouveau sur PAN-OS, Fortinet, Cisco, Ivanti ou Citrix dans les sources lues aujourd'hui (catalogue CISA : aucune nouvelle entrée pour ces éditeurs).
+
+---
+
+## 2026-10-29 (jeudi)
+
+Sources consultées le 2026-10-29 : catalogue CISA KEV (`catalogVersion` 2026.10.28, publié le 2026-10-28 à 19 h UTC), avis Broadcom VMSA-2026-0006.2 (lu), NVD (API). Les avis déjà consignés ne sont pas répétés.
+
+### 1. Enchaînement PHP puis noyau Linux, exploitation active — CVE-2026-46300 (noyau Linux) avec CVE-2026-109618 et CVE-2026-109619 (PHP, entrée du 27 octobre)
+- **Exploitation :** CVE-2026-46300 ajoutée au catalogue CISA le **2026-10-28** (échéance **2026-10-31**, triage forensique demandé). Le catalogue précise qu'elle « peut être enchaînée avec CVE-2026-109618 et CVE-2026-109619 pour implanter des webshells PHP et exécuter des commandes en tant que root ».
+- **Score :** 7,8 (High), `AV:L/AC:L/PR:L` (NVD, statut « Undergoing Analysis »). Faille locale : le premier maillon (exécution de code PHP) fournit l'accès local peu privilégié.
+- **Versions du noyau (NVD, bornes amont) :** concernées : 3.9 à 5.10.257 inclus ; 5.11 avant 5.15.208 ; 5.16 avant 6.1.174 ; 6.2 avant 6.6.141 ; 6.7 avant 6.12.91 ; 6.13 avant 6.18.33 ; 6.19 avant 7.0.10. Les distributions rétroportent : **le numéro de version amont ne suffit pas**, consulte l'avis de ta distribution (non lu).
+- **Contournement :** non lu.
+- **Ce que tu vérifies chez toi :** (1) sur tout serveur Linux qui exécute du code exposé (PHP, applications web), la version du noyau **en cours d'exécution** (`uname -r`) et l'avis de ta distribution ; (2) la version de PHP (entrée du 27 octobre) ; (3) des fichiers PHP récents ou inattendus dans les dossiers publiés et des processus fils inattendus d'un processus PHP (la CISA demande un triage forensique). **Fiche du jour : `2026-10-29-enchainement-php-noyau-linux-vers-root.md`.**
+- Sources : catalogue CISA ; https://nvd.nist.gov/vuln/detail/CVE-2026-46300 (consultés le 2026-10-29).
+
+### 2. Broadcom VMware ESX : journalisation insuffisante — CVE-2026-41709 — **exploitation active constatée par la CISA**
+- **Exploitation :** ajoutée au catalogue le **2026-10-28** (échéance 2026-11-11). L'avis Broadcom lu indique ne pas faire état d'exploitation, mais il date du 29 juillet 2026 (mis à jour le 19 août) : **il précède l'ajout au catalogue**.
+- **Nature :** un administrateur malveillant peut effectuer certaines opérations **sans qu'elles soient journalisées** (CWE-778). Il faut un accès administrateur : c'est une faille qui **masque des traces**, pas une porte d'entrée.
+- **Score :** 2,7 (Low), `AV:N/AC:L/PR:H`. Le score est bas parce qu'il faut déjà être administrateur ; l'exploitation constatée justifie malgré tout l'attention.
+- **Avis :** VMSA-2026-0006.2, « VMware ESX, vCenter, Workstation, and Fusion updates address multiple vulnerabilities », publié le 2026-07-29.
+- **Versions corrigées pour CVE-2026-41709 :** ESX 9.1 → ESXi-9.1.0.0-25370933 ; ESX 9.0 → ESXi-9.0.2.0100-25595025 ; ESXi 8.0 U3 → ESXi80U3j-25429389 ; VCF 5.x → 5.2.3 / 5.2.4 ; Telco Cloud Platform ESX 5.0.x et 5.1.x → KB449886 (sans version listée). ESXi 7.0 **n'apparaît pas** pour cette CVE dans le tableau lu.
+- **Contournement :** aucun pour les CVE ESX de cet avis.
+- **Même avis, autres CVE sur ESX (non exploitées au catalogue au 2026-10-29) :** CVE-2026-47876 (9,3) et CVE-2026-41703 (7,6) ; correctifs en ESXi 9.1 : ESXi-9.1.0.0200-25557999 ; 9.0 : ESXi-9.0.2.0100-25595025 ; 8.0 U3 : ESXi80U3k-25595708 (pour 47876) et ESXi80U3i-25205845 (pour 41703) ; 8.0 U2 : ESXi80U2f-25626445 ; 7.0 : pas de version listée pour 47876, contacter Broadcom si contrat d'assistance étendu. Les failles vCenter CVE-2026-59309 et CVE-2026-59310 (9,8) sont dans le même avis ; CVE-2026-59310 figure déjà au catalogue depuis le 2026-08-18.
+- **Ce que tu vérifies chez toi (si tu as ESXi ou vCenter) :** (1) le numéro de build exact (`vmware -vl` ou l'interface), comparé aux versions ci-dessus ; (2) que les journaux de l'hôte sont **envoyés à un serveur distant** (une journalisation locale peut être incomplète d'après cette faille) ; (3) qui a un accès administrateur à l'hôte, et que l'interface d'administration n'est pas joignable depuis Internet.
+- Sources : https://support.broadcom.com/web/ecx/support-content-notification/-/external/content/SecurityAdvisories/0/38017 ; https://nvd.nist.gov/vuln/detail/CVE-2026-41709 ; catalogue CISA (consultés le 2026-10-29).
+
+### Suivi : Node.js Brotli (entrée du 28 octobre)
+Rien de nouveau lu aujourd'hui. L'issue #51 reste ouverte pour confirmer la version de Node en production.
+
+### Pile de production du projet
+Aucune nouvelle trouvaille. Issues #48, #49 et #51 ouvertes ; PR #45, #46 et #50 à vérifier côté dépôt.

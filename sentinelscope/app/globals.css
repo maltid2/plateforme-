@@ -86,65 +86,41 @@
     color: transparent;
   }
 
-  /* Aurore violette lente derrière le hero */
+  /* Aurore violette derrière le hero : dégradés statiques (aucune animation,
+     aucun filtre : coût nul après le premier rendu). */
   .aurora {
     background:
-      radial-gradient(40% 50% at 18% 20%, rgba(141, 124, 255, 0.32), transparent 70%),
-      radial-gradient(34% 44% at 82% 14%, rgba(183, 166, 255, 0.2), transparent 70%),
-      radial-gradient(46% 40% at 60% 90%, rgba(91, 70, 230, 0.22), transparent 70%);
-    filter: blur(28px);
-    animation: aurora-drift 22s ease-in-out infinite alternate;
+      radial-gradient(40% 50% at 18% 20%, rgba(141, 124, 255, 0.3), transparent 70%),
+      radial-gradient(34% 44% at 82% 14%, rgba(183, 166, 255, 0.18), transparent 70%),
+      radial-gradient(46% 40% at 60% 90%, rgba(91, 70, 230, 0.2), transparent 70%);
   }
 
-  /* Titre : un seul reflet à l'arrivée, puis dégradé fixe (pas de repeinte continue du texte) */
+  /* Titre : dégradé violet fixe (pas de repeinte du texte). */
   .headline-shine {
-    background: linear-gradient(
-      100deg,
-      #8d7cff 0%,
-      #d9d0ff 38%,
-      #8d7cff 62%,
-      #b7a6ff 100%
-    );
-    background-size: 220% 100%;
-    background-position: 0% 0;
+    background: linear-gradient(100deg, #8d7cff 0%, #d9d0ff 45%, #b7a6ff 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    animation: shine 2.6s cubic-bezier(0.2, 0.7, 0.2, 1) 0.9s 1 both;
   }
 
-  /* Cadre à bordure lumineuse : un calque conique tourne par transform
-     (animé par le compositeur, sans repeindre le dégradé à chaque image). */
+  /* Cadre lumineux autour du champ d'audit : bordure en dégradé statique. */
   .beam-frame {
     position: relative;
-    isolation: isolate;
-    overflow: hidden;
     border-radius: 28px;
     padding: 1.5px;
+    background: conic-gradient(
+      from 210deg,
+      rgba(141, 124, 255, 0.12),
+      #8d7cff 14%,
+      #e4ddff 22%,
+      rgba(141, 124, 255, 0.12) 36%,
+      rgba(141, 124, 255, 0.12) 68%,
+      #8d7cff 84%,
+      rgba(141, 124, 255, 0.12)
+    );
     box-shadow:
       0 30px 80px -30px rgba(141, 124, 255, 0.55),
       0 0 0 1px rgba(255, 255, 255, 0.03);
-  }
-  .beam-frame::before {
-    content: "";
-    position: absolute;
-    z-index: -1;
-    left: 50%;
-    top: 50%;
-    width: 250%;
-    aspect-ratio: 1;
-    background: conic-gradient(
-      rgba(141, 124, 255, 0.08),
-      #8d7cff 12%,
-      #e4ddff 20%,
-      rgba(141, 124, 255, 0.08) 34%,
-      rgba(141, 124, 255, 0.08) 66%,
-      #8d7cff 82%,
-      rgba(141, 124, 255, 0.08)
-    );
-    transform: translate(-50%, -50%) rotate(0deg);
-    will-change: transform;
-    animation: beam-spin 7s linear infinite;
   }
   .beam-frame > .beam-inner {
     border-radius: 26.5px;
@@ -238,27 +214,4 @@
 }
 :focus:not(:focus-visible) {
   outline: none;
-}
-
-/* Animations du hero */
-@keyframes beam-spin {
-  to {
-    transform: translate(-50%, -50%) rotate(360deg);
-  }
-}
-@keyframes shine {
-  from {
-    background-position: 100% 0;
-  }
-  to {
-    background-position: 0% 0;
-  }
-}
-@keyframes aurora-drift {
-  0% {
-    transform: translate3d(-2%, 0, 0) scale(1);
-  }
-  100% {
-    transform: translate3d(3%, 4%, 0) scale(1.08);
-  }
 }

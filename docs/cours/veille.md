@@ -269,3 +269,26 @@ Rien de nouveau lu aujourd'hui. L'issue #51 reste ouverte pour confirmer la vers
 
 ### Pile de production du projet
 Aucune nouvelle trouvaille. Issues #48, #49 et #51 ouvertes ; PR #45, #46 et #50 à vérifier côté dépôt.
+
+---
+
+## 2026-10-30 (vendredi)
+
+Sources consultées le 2026-10-30 : catalogue CISA KEV (`catalogVersion` 2026.10.29, publié le 2026-10-29 à 19 h UTC), avis Cisco (lu), liste des alertes du CERT-FR (aucune alerte après celle du 21 octobre sur PHP, mise à jour le 26 octobre). Les avis déjà consignés ne sont pas répétés.
+
+### 1. Cisco Secure Firewall ASA et Secure FTD : déni de service sur le VPN SSL d'accès distant — CVE-2026-76418 — **exploitation active, équipement exposé sur Internet**
+- **Exploitation :** Cisco écrit qu'en octobre 2026 son PSIRT a eu connaissance d'une « active exploitation ». Ajoutée au catalogue CISA le **2026-10-29** (échéance 2026-11-01).
+- **Nature :** un attaquant distant **non authentifié** peut faire **redémarrer l'équipement de façon inattendue** (déni de service ; faiblesse CWE-690, « unchecked return value to NULL pointer dereference »). Avis : cisco-sa-asaftd-tunnel-dos-s6mgkb75, première publication le **2026-10-28**, identifiant de bogue CSCwx26625.
+- **Score :** CVSS 3.1 de **8,6 (High)**, `AV:N/AC:L/PR:N/UI:N/S:C/C:N/I:N/A:H`.
+- **Configuration vulnérable (d'après l'avis) :** VPN SSL d'accès distant activé (`webvpn` avec le VPN SSL activé sur au moins une interface) **et** authentification secondaire configurée dans un groupe de tunnels (`secondary-authentication-server-group`), y compris dans `DefaultWEBVPNGroup`. Le contrôle vaut même si `tunnel-group-list enable` est absent.
+- **Versions corrigées (première version corrigée par branche) :** ASA 9.16 et antérieures → **9.16.4.104** ; 9.18 → **9.18.4.96** ; 9.20 → **9.20.4.50** ; 9.22 → **9.22.3.200** ; 9.23 → **9.23.1.48** ; 9.24 → **9.24.1.27** et **9.24.10.1**. FTD 7.0 et antérieures → **7.0.11** ; 7.2 → **7.2.13** ; 7.4 → **7.4.9** ; 7.6 → **7.6.7** ; 7.7 → **7.7.14** ; 10.0 → **10.0.3** ; 10.1 → **10.1.1**. Non concernés : Cloud-delivered Firewall, cdFMC, Secure Access et Secure FMC Software.
+- **Contournement :** aucun qui corrige entièrement la faille. Atténuations officielles : (cas 1) si `DefaultWEBVPNGroup` n'utilise pas l'authentification secondaire, désactiver la liste des groupes de tunnels (`no tunnel-group-list enable`, les utilisateurs doivent alors connaître le nom exact du profil) ; (cas 2) si `DefaultWEBVPNGroup` l'utilise, retirer l'authentification secondaire (`no secondary-authentication-server-group`), ce qui **abaisse le niveau de sécurité du VPN**. Cisco recommande de **mettre à niveau**.
+- **Indicateurs de compromission :** l'avis n'en donne aucun (ni empreintes, ni adresses, ni signature de journaux).
+- **Ce que tu vérifies chez toi (si tu as ASA ou FTD) :** (1) la version exacte et la comparer à ta branche ci-dessus ; (2) si le VPN SSL d'accès distant est activé et **joignable depuis Internet**, et si une authentification secondaire est configurée dans un groupe de tunnels ; (3) des **redémarrages inattendus** de l'équipement dans l'historique et les journaux depuis octobre.
+- Sources : https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-asaftd-tunnel-dos-s6mgkb75 ; catalogue CISA (consultés le 2026-10-30).
+
+### Vu, hors de ta liste d'éditeurs
+**GitLab Community et Enterprise Edition** (CVE-2026-97229) : un utilisateur non authentifié pourrait exécuter du code sur le serveur par une expression régulière forgée dans une configuration CI/CD (dépassement d'entier). Ajoutée au catalogue CISA le 2026-10-29, échéance 2026-11-01, triage forensique demandé. Les notes du catalogue renvoient à la version de correctif GitLab 19.4.2 et à une annonce Ruby sur des « regexp fixes » du 23 octobre ; ces pages ne sont **pas lues**. Si tu as GitLab, consulte l'avis de l'éditeur.
+
+### Projet : trois PR d'agents fusionnées le 28 octobre
+Les PR #45 (Next 16), #46 et #50 sont dans `main`. Vérification du verrou : `next` 16.4.2, `react` 19.3.1, `sharp` 0.35.5 ; l'API d'avis npm ne renvoie plus d'avis pour `next` ni `react`. Il reste 2 avis (`source-map-js` high, `postcss-selector-parser` moderate), applicabilité non établie. J'ai commenté les issues #49 (suivi) et #51 (version de Node toujours inconnue ; minimum Next 16 : Node 20.9). Détail : fiche `2026-10-30-relire-une-pr-de-performance.md`.

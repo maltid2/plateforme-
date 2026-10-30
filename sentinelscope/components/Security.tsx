@@ -1,6 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useRef } from "react";
+import { motion, useInView } from "framer-motion";
 import { KeyRound, Lock, ScanFace, ShieldCheck, Timer } from "lucide-react";
 import { Container, Reveal, SectionLabel } from "./ui";
 import { viewport, ease } from "@/lib/motion";
@@ -14,12 +15,15 @@ const BADGES = [
 ];
 
 export default function Security() {
+  // Les animations en boucle ne tournent que lorsque l'illustration est visible.
+  const illu = useRef<HTMLDivElement | null>(null);
+  const active = useInView(illu);
   return (
     <section id="security" className="relative py-20 sm:py-28">
       <Container className="grid items-center gap-16 lg:grid-cols-2">
         {/* shield illustration */}
         <Reveal className="order-2 lg:order-1">
-          <div className="relative mx-auto grid aspect-square w-full max-w-md place-items-center">
+          <div ref={illu} className="relative mx-auto grid aspect-square w-full max-w-md place-items-center">
             <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(141,124,255,0.14),transparent_65%)] blur-2xl" />
             {[0, 1, 2].map((i) => (
               <motion.div
@@ -37,7 +41,7 @@ export default function Security() {
                 {/* point travelling along the contour */}
                 <motion.div
                   className="absolute inset-0"
-                  animate={{ rotate: i % 2 ? -360 : 360 }}
+                  animate={active ? { rotate: i % 2 ? -360 : 360 } : undefined}
                   transition={{
                     duration: 10 + i * 4,
                     repeat: Infinity,
@@ -64,7 +68,7 @@ export default function Security() {
               <ShieldCheck className="h-12 w-12 text-acc-cyan" strokeWidth={1.6} />
               <motion.span
                 className="absolute inset-0 rounded-3xl border border-acc-cyan/40"
-                animate={{ scale: [1, 1.25], opacity: [0.6, 0] }}
+                animate={active ? { scale: [1, 1.25], opacity: [0.6, 0] } : undefined}
                 transition={{ duration: 2.4, repeat: Infinity, ease: "easeOut" }}
               />
             </motion.div>

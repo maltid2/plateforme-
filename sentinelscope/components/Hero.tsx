@@ -57,8 +57,8 @@ export default function Hero() {
               (line, i) => (
                 <motion.span
                   key={i}
-                  initial={{ opacity: 0, y: 22, filter: "blur(8px)" }}
-                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                  initial={{ opacity: 0, y: 18 }}
+                  animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.7, ease, delay: 0.15 + i * 0.13 }}
                   className="block"
                 >

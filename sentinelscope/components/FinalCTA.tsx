@@ -1,6 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useRef } from "react";
+import { motion, useInView } from "framer-motion";
 import { Container, Reveal } from "./ui";
 import AuditForm from "./AuditForm";
 import NetworkBackground from "./NetworkBackground";
@@ -25,7 +26,7 @@ const LINKS: [number, number][] = [
   [2, 4],
 ];
 
-function Constellation() {
+function Constellation({ active }: { active: boolean }) {
   return (
     <svg
       aria-hidden
@@ -51,7 +52,7 @@ function Constellation() {
           cy={p.y}
           r="0.5"
           fill={i % 2 ? "#8D7CFF" : "#8D7CFF"}
-          animate={{ opacity: [0.2, 0.9, 0.2] }}
+          animate={active ? { opacity: [0.2, 0.9, 0.2] } : undefined}
           transition={{
             duration: 4 + (i % 3),
             repeat: Infinity,
@@ -65,8 +66,11 @@ function Constellation() {
 }
 
 export default function FinalCTA() {
+  // Les animations en boucle ne tournent que lorsque la section est visible.
+  const ref = useRef<HTMLElement | null>(null);
+  const active = useInView(ref);
   return (
-    <section id="cta" className="relative overflow-hidden py-24 sm:py-32">
+    <section ref={ref} id="cta" className="relative overflow-hidden py-24 sm:py-32">
       {/* background */}
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-grid-fade opacity-70" />
@@ -75,11 +79,11 @@ export default function FinalCTA() {
         </div>
         <motion.div
           aria-hidden
-          animate={{ opacity: [0.4, 0.7, 0.4], scale: [1, 1.08, 1] }}
+          animate={active ? { opacity: [0.4, 0.7, 0.4], scale: [1, 1.08, 1] } : undefined}
           transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
           className="absolute left-1/2 top-1/2 h-[420px] w-[720px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(141,124,255,0.24),transparent_62%)] blur-3xl"
         />
-        <Constellation />
+        <Constellation active={active} />
       </div>
 
       <Container>

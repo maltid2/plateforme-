@@ -153,7 +153,7 @@ export default function HeroDashboard() {
       style={{ perspective: 1200 }}
       className="relative"
     >
-      <div className="animate-float rounded-[22px] border border-white/[0.07] bg-card/80 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_40px_90px_-45px_rgba(0,0,0,0.95),0_0_70px_-24px_rgba(141,124,255,0.45)] backdrop-blur-xl sm:p-5">
+      <div className="rounded-[22px] border border-white/[0.07] bg-card p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_40px_90px_-45px_rgba(0,0,0,0.95),0_0_70px_-24px_rgba(141,124,255,0.45)] sm:p-5">
         {/* window bar */}
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-muted">
@@ -274,7 +274,7 @@ Touchez un contrôle pour le détail
         initial={{ opacity: 0, scale: 0.9, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 1.1, ease }}
-        className="absolute -right-3 -top-4 hidden rounded-xl border border-line bg-card/90 px-3 py-2 shadow-glow backdrop-blur-xl sm:block"
+        className="absolute -right-3 -top-4 hidden rounded-xl border border-line bg-card px-3 py-2 shadow-glow sm:block"
       >
         <div className="text-[11px] text-muted">Point détecté</div>
         <div className="text-sm font-semibold text-acc-violet">fichier .env exposé</div>

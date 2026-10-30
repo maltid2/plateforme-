@@ -75,18 +75,21 @@ export default function NetworkBackground({
       const rect = canvas.parentElement?.getBoundingClientRect();
       w = Math.max(1, Math.floor(rect?.width || canvas.clientWidth || 1));
       h = Math.max(1, Math.floor(rect?.height || canvas.clientHeight || 1));
-      dpr = Math.min(2, window.devicePixelRatio || 1);
+      dpr = Math.min(1.5, window.devicePixelRatio || 1);
       canvas.width = Math.floor(w * dpr);
       canvas.height = Math.floor(h * dpr);
       canvas.style.width = w + "px";
       canvas.style.height = h + "px";
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      // Halo du cœur : fond CSS fixe (posé une seule fois), plutôt qu'un
+      // dégradé redessiné sur tout le canevas à chaque image.
+      canvas.style.background = `radial-gradient(circle 300px at ${(w * 0.62).toFixed(0)}px ${(h * 0.34).toFixed(0)}px, rgba(${ACC},0.30), rgba(${ACC},0) 100%)`;
 
       // Plafond bas : le calcul des liens est en O(n²), on limite fort pour
       // garantir zéro latence (scroll, génération d'audit) même sur mobile.
       const count = Math.max(
         22,
-        Math.min(72, Math.round(w * h * density))
+        Math.min(48, Math.round(w * h * density))
       );
       nodes = Array.from({ length: count }, () => ({
         x: Math.random() * w,
@@ -107,12 +110,6 @@ export default function NetworkBackground({
       ctx.clearRect(0, 0, w, h);
 
       const c = core();
-      // Halo du cœur
-      const glow = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, 300);
-      glow.addColorStop(0, `rgba(${ACC},0.30)`);
-      glow.addColorStop(1, `rgba(${ACC},0)`);
-      ctx.fillStyle = glow;
-      ctx.fillRect(0, 0, w, h);
 
       // Liens entre nœuds proches
       for (let i = 0; i < nodes.length; i++) {
@@ -157,14 +154,20 @@ export default function NetworkBackground({
         ctx.fill();
       }
 
-      // Cœur
+      // Cœur : disque plein + deux anneaux translucides (pas de shadowBlur,
+      // coûteux à chaque image).
+      ctx.fillStyle = `rgba(${ACC},0.14)`;
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, 16, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = `rgba(${ACC},0.28)`;
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, 9, 0, Math.PI * 2);
+      ctx.fill();
       ctx.fillStyle = `rgba(${ACC},1)`;
-      ctx.shadowColor = `rgba(${ACC},1)`;
-      ctx.shadowBlur = 28;
       ctx.beginPath();
       ctx.arc(c.x, c.y, 4.4, 0, Math.PI * 2);
       ctx.fill();
-      ctx.shadowBlur = 0;
     };
 
     let running = false;

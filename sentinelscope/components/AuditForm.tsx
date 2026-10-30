@@ -158,6 +158,20 @@ export default function AuditForm({
   const pendingUrl = useRef<string | null>(null);
   const contactShown = useRef(false);
 
+  // Pop-up ouvert : on fige le défilement de la page et on met en pause les
+  // animations du fond (le navigateur ne repeint plus que le pop-up).
+  useEffect(() => {
+    if (!consentOpen && !contactOpen) return;
+    const b = document.body;
+    const prev = b.style.overflow;
+    b.classList.add("modal-open");
+    b.style.overflow = "hidden";
+    return () => {
+      b.classList.remove("modal-open");
+      b.style.overflow = prev;
+    };
+  }, [consentOpen, contactOpen]);
+
   // Ouvre automatiquement le pop-up de contact une seule fois, quelques
   // secondes après l'affichage du résultat (moment où l'intérêt est maximal).
   useEffect(() => {
@@ -412,7 +426,7 @@ export default function AuditForm({
             transition={{ duration: 0.35 }}
             className="mt-5 overflow-hidden"
           >
-            <div className="relative overflow-hidden rounded-[20px] border border-white/[0.07] bg-card/70 p-5 text-left shadow-soft backdrop-blur-xl">
+            <div className="relative overflow-hidden rounded-[20px] border border-white/[0.07] bg-card/70 p-5 text-left shadow-soft">
               <div className="pointer-events-none absolute inset-0 [mask-image:radial-gradient(130%_120%_at_85%_0%,#000_18%,transparent_72%)] [-webkit-mask-image:radial-gradient(130%_120%_at_85%_0%,#000_18%,transparent_72%)]">
                 <NetworkBackground className="h-full w-full opacity-30" density={0.00012} staticRender />
               </div>
@@ -589,7 +603,7 @@ export default function AuditForm({
             aria-label="Avant de lancer l'analyse"
           >
             <div
-              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/80"
               onClick={declineConsent}
             />
             <motion.div
@@ -663,7 +677,7 @@ export default function AuditForm({
             aria-label="Aller plus loin avec un expert"
           >
             <div
-              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/80"
               onClick={() => setContactOpen(false)}
             />
             <motion.div

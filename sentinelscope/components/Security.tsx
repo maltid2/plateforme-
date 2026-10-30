@@ -63,7 +63,7 @@ export default function Security() {
               whileInView={{ scale: 1, opacity: 1 }}
               viewport={viewport}
               transition={{ duration: 0.7, ease }}
-              className="relative grid h-28 w-28 place-items-center rounded-3xl border border-acc-cyan/30 bg-card/80 shadow-glow-cyan backdrop-blur-xl"
+              className="relative grid h-28 w-28 place-items-center rounded-3xl border border-acc-cyan/30 bg-card/80 shadow-glow-cyan"
             >
               <ShieldCheck className="h-12 w-12 text-acc-cyan" strokeWidth={1.6} />
               <motion.span

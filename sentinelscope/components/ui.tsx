@@ -136,7 +136,7 @@ export function GlowCard({
         : "before:bg-acc-violet/20";
   return (
     <div
-      className={`group relative rounded-[calc(1.25rem+6px)] border border-white/[0.06] bg-white/[0.02] p-1.5 backdrop-blur-sm before:absolute before:-inset-px before:-z-10 before:rounded-[inherit] before:opacity-0 before:blur-2xl before:transition-opacity before:duration-500 hover:before:opacity-100 ${glowColor}`}
+      className={`group relative rounded-[calc(1.25rem+6px)] border border-white/[0.06] bg-white/[0.02] p-1.5 before:absolute before:-inset-px before:-z-10 before:rounded-[inherit] before:opacity-0 before:blur-2xl before:transition-opacity before:duration-500 hover:before:opacity-100 ${glowColor}`}
     >
       <div
         className={`h-full rounded-2xl border border-white/[0.06] bg-card/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] ${className}`}

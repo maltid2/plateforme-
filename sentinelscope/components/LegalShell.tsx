@@ -15,7 +15,7 @@ export default function LegalShell({
 }) {
   return (
     <>
-      <header className="border-b border-line bg-bg/70 backdrop-blur-xl">
+      <header className="border-b border-line bg-bg/70">
         <Container className="flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5 text-lg font-bold">
             <img

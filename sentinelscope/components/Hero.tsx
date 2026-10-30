@@ -29,11 +29,11 @@ export default function Hero() {
     <section id="top" className="relative overflow-hidden pt-32 pb-24 sm:pt-40 sm:pb-32">
       {/* fond : aurore + grille + constellation */}
       <div className="pointer-events-none absolute inset-0 -z-10">
+        {/* fond animé (canvas) + fondu fixe vers le noir, sans masque recomposé à chaque image */}
+        <NetworkBackground className="absolute inset-0 h-full w-full" density={0.00016} opacity={0.8} />
+        <div className="absolute inset-0 bg-[radial-gradient(130%_110%_at_68%_38%,transparent_50%,#07090D_85%)]" />
         <div className="aurora absolute inset-[-10%]" />
         <div className="absolute inset-0 bg-grid-fade opacity-60" />
-        <div className="absolute inset-0 [mask-image:radial-gradient(130%_110%_at_68%_38%,#000_50%,transparent_85%)] [-webkit-mask-image:radial-gradient(130%_110%_at_68%_38%,#000_50%,transparent_85%)]">
-          <NetworkBackground className="h-full w-full opacity-80" density={0.00016} />
-        </div>
         <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-bg" />
       </div>
 
@@ -44,7 +44,7 @@ export default function Hero() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease }}
-            className="inline-flex items-center gap-2.5 rounded-full border border-acc-violet/30 bg-acc-violet/[0.08] py-1.5 pl-2 pr-4 text-xs font-medium text-ink/90 backdrop-blur"
+            className="inline-flex items-center gap-2.5 rounded-full border border-acc-violet/30 bg-acc-violet/[0.08] py-1.5 pl-2 pr-4 text-xs font-medium text-ink/90"
           >
             <span className="grid h-5 w-5 place-items-center rounded-full bg-acc-violet/25">
               <Radar className="h-3 w-3 text-acc-violet" />

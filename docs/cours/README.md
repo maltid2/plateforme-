@@ -87,6 +87,7 @@ Statuts : `vu` · `à revoir` · `acquis`. Mis à jour à chaque fiche.
 | SQL : index, plan d'exécution `EXPLAIN` (MariaDB) | SQL | 2026-10-28 | vu (fiche rédigée, en attente de lecture) |
 | Enchaînement PHP + noyau Linux vers root (sécurité de l'infrastructure) | 3 | 2026-10-29 | vu (fiche rédigée, en attente de lecture) |
 | Relire une PR de performance (PR #50, mesures avant/après, p95, bruit) | 1 | 2026-10-30 | vu (fiche rédigée, en attente de lecture) |
+| Numéro de build Windows : build, révision (UBR), types B/D/OOB, seuil d'un avis (poste de travail et support) | 2 | 2026-10-31 | vu (fiche rédigée, en attente de lecture) |
 
 ## Calibrage
 

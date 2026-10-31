@@ -292,3 +292,31 @@ Sources consultées le 2026-10-30 : catalogue CISA KEV (`catalogVersion` 2026.10
 
 ### Projet : trois PR d'agents fusionnées le 28 octobre
 Les PR #45 (Next 16), #46 et #50 sont dans `main`. Vérification du verrou : `next` 16.4.2, `react` 19.3.1, `sharp` 0.35.5 ; l'API d'avis npm ne renvoie plus d'avis pour `next` ni `react`. Il reste 2 avis (`source-map-js` high, `postcss-selector-parser` moderate), applicabilité non établie. J'ai commenté les issues #49 (suivi) et #51 (version de Node toujours inconnue ; minimum Next 16 : Node 20.9). Détail : fiche `2026-10-30-relire-une-pr-de-performance.md`.
+
+---
+
+## 2026-10-31 (samedi)
+
+Sources consultées le 2026-10-31 : catalogue CISA KEV (`catalogVersion` 2026.10.30), API NVD (CVE-2026-104935, CVE-2026-111357, CVE-2026-118527, CVE-2026-96951), page « Windows Server release information » de Microsoft Learn (mise à jour 2026-10-28). Deux ajouts au catalogue depuis hier, tous deux Ivanti. Les avis déjà consignés ne sont pas répétés.
+
+### 1. Ivanti Connect Secure : la faille du 13 octobre devient une **chaîne de trois CVE** — **exploitation active, équipement exposé sur Internet**
+- **Ce qui est nouveau :** le 2026-10-30, la CISA a ajouté **CVE-2026-118527** et **CVE-2026-111357**. Les deux notes du catalogue écrivent que chacune « peut être enchaînée » avec **CVE-2026-104935** (déjà consignée le 23 octobre) et avec l'autre.
+- **Les trois maillons (d'après le catalogue et NVD) :**
+  1. **CVE-2026-104935** : contournement d'authentification, distant, non authentifié, exécution de commandes. CVSS 3.1 de 8,6 (NVD). Voir l'entrée du 2026-10-23.
+  2. **CVE-2026-118527** : « génération de nombres ou d'identifiants prévisibles » (CWE-340) ; un attaquant distant **authentifié** peut déposer des fichiers au contenu qu'il contrôle **à un emplacement connu** du disque. Échéance CISA : **2026-11-13**. NVD ne renvoie **aucun enregistrement** pour cette CVE au 2026-10-31 : pas de score ni de versions lues.
+  3. **CVE-2026-111357** : fonction critique sans authentification (CWE-306, CWE-862, CWE-345) ; un attaquant **local authentifié** peut passer **root**. NVD : « Ivanti Connect Secure 22.8R2.4 », vecteur `AV:L/AC:H/PR:L`, **7,0 (High)**, description « exploited in the wild in October 2026 ». Échéance CISA : **2026-11-02**, triage forensique demandé par le catalogue.
+- **Lecture :** pris isolément, les deux nouveaux maillons ont besoin d'un accès préalable (authentifié, local). C'est le premier maillon qui les rend atteignables depuis Internet. C'est la même logique que la fiche du 2026-10-29 (PHP puis noyau) : **le score d'une CVE seule sous-estime la chaîne**.
+- **Versions corrigées et contournement officiel :** **non lus dans ce journal** (l'avis Ivanti n'a pas été consigné ici). Les plages NVD pour CVE-2026-104935 sont dans l'entrée du 23 octobre ; ne pas en déduire la liste des versions sûres. À lire sur l'avis Ivanti référencé par le catalogue : https://hub.ivanti.com/s/article/Security-Advisory-Ivanti-Connect-Secure-CVE-2026-104935 .
+- **Indicateurs de compromission :** aucun consigné ici.
+- **Ce que tu vérifies chez toi (si tu as Connect Secure) :** (1) la version exacte, comparée à l'avis Ivanti (pas à ce journal) ; (2) si le portail est joignable depuis Internet ; (3) l'état du boîtier : un correctif appliqué **après** une compromission ne la supprime pas. Suivre la procédure de l'éditeur et du CERT-FR (vérification d'intégrité, journaux, rotation des secrets) plutôt que « mettre à jour et passer à autre chose ».
+- Sources : https://www.cisa.gov/known-exploited-vulnerabilities-catalog (2026-10-31) ; https://nvd.nist.gov/vuln/detail/CVE-2026-111357 ; https://nvd.nist.gov/vuln/detail/CVE-2026-118527 (consultés le 2026-10-31).
+
+### 2. Rien d'autre dans ta liste d'éditeurs
+Le catalogue ne contient aucune autre entrée nouvelle hier. Pas de nouvelle lecture sur PAN-OS, Fortinet, Check Point, Citrix, Veeam, Commvault ni sur les autres éditeurs de la liste aujourd'hui : **absence de trouvaille ≠ absence de faille**, je n'ai pas relu chaque PSIRT.
+
+### Suivis
+- Cisco ASA/FTD CVE-2026-76418 (entrée du 30 octobre) : échéance CISA 2026-11-01, demain. Rien de nouveau lu.
+- Microsoft CVE-2026-96951 : sert d'exemple à la fiche du jour (seuils NVD comparés au tableau de versions de Microsoft).
+
+### Pile de production du projet
+La PR #52 (« perf(ui) : site fluide… ») est fusionnée dans `main` ; **non lue** dans ce journal. Issues #48, #49 et #51 toujours ouvertes. Aucune nouvelle trouvaille ; pas de nouvelle issue.

@@ -320,3 +320,17 @@ Le catalogue ne contient aucune autre entrée nouvelle hier. Pas de nouvelle lec
 
 ### Pile de production du projet
 La PR #52 (« perf(ui) : site fluide… ») est fusionnée dans `main` ; **non lue** dans ce journal. Issues #48, #49 et #51 toujours ouvertes. Aucune nouvelle trouvaille ; pas de nouvelle issue.
+
+---
+
+## 2026-11-01 (dimanche)
+
+Sources consultées le 2026-11-01 : catalogue CISA KEV (`catalogVersion` **2026.10.30**, 1 766 entrées, **identique à celui d'hier** : aucune nouvelle entrée). Liste des PR et issues du dépôt. Je n'ai relu aucun PSIRT éditeur aujourd'hui : **absence de nouvelle entrée au catalogue ≠ absence de nouvel avis**.
+
+### Suivis (rien de nouveau, rien de répété)
+- **Ivanti Connect Secure** (chaîne CVE-2026-104935 / 118527 / 111357) : échéance CISA de CVE-2026-111357 = **demain, 2026-11-02**. Versions corrigées toujours à lire sur l'avis Ivanti (non consignées ici).
+- **Cisco ASA/FTD CVE-2026-76418** : échéance CISA = aujourd'hui, 2026-11-01.
+
+### Pile de production du projet
+- Nouvelle PR ouverte : **#53 « perf(ui) : défilement et pop-up de résultat fluides »**, mise à jour le 2026-10-31. **Non lue** ; je n'en dis rien. Candidate à la fiche de vendredi prochain.
+- Issues **#48, #49, #51** toujours ouvertes, sans nouvelle réponse. Pas de nouvelle issue.

@@ -1,6 +1,6 @@
 # Cours MINERVE — plan de montée en compétence
 
-Synthèse de la semaine du 22 au 25 octobre : [`2026-10-25-synthese-de-la-semaine.md`](2026-10-25-synthese-de-la-semaine.md).
+Synthèses : [22-25 octobre](2026-10-25-synthese-de-la-semaine.md) · [26 octobre - 1er novembre](2026-11-01-synthese-de-la-semaine.md).
 
 Analyse de l'examen FEDE (janvier 2025) : [`anglais-examen-fede-cu-b4-analyse.md`](anglais-examen-fede-cu-b4-analyse.md).
 
@@ -88,6 +88,7 @@ Statuts : `vu` · `à revoir` · `acquis`. Mis à jour à chaque fiche.
 | Enchaînement PHP + noyau Linux vers root (sécurité de l'infrastructure) | 3 | 2026-10-29 | vu (fiche rédigée, en attente de lecture) |
 | Relire une PR de performance (PR #50, mesures avant/après, p95, bruit) | 1 | 2026-10-30 | vu (fiche rédigée, en attente de lecture) |
 | Numéro de build Windows : build, révision (UBR), types B/D/OOB, seuil d'un avis (poste de travail et support) | 2 | 2026-10-31 | vu (fiche rédigée, en attente de lecture) |
+| Synthèse de la semaine 26 octobre - 1er novembre | 1/2/3/AD/SQL | 2026-11-01 | à revoir (aucune réponse aux contrôles ni aux calibrages reçue) |
 
 ## Calibrage
 

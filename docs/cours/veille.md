@@ -334,3 +334,16 @@ Sources consultées le 2026-11-01 : catalogue CISA KEV (`catalogVersion` **2026.
 ### Pile de production du projet
 - Nouvelle PR ouverte : **#53 « perf(ui) : défilement et pop-up de résultat fluides »**, mise à jour le 2026-10-31. **Non lue** ; je n'en dis rien. Candidate à la fiche de vendredi prochain.
 - Issues **#48, #49, #51** toujours ouvertes, sans nouvelle réponse. Pas de nouvelle issue.
+
+---
+
+## 2026-11-02 (lundi)
+
+Sources consultées le 2026-11-02 : catalogue CISA KEV (`catalogVersion` **2026.10.30**, 1 766 entrées : **inchangé depuis le 2026-10-31**, aucune nouvelle entrée). Je n'ai relu aucun PSIRT éditeur aujourd'hui : **le catalogue inchangé ne dit rien des avis non exploités**. `main` : seulement des mises à jour automatiques de signatures d'audit depuis hier ; aucune lecture de code.
+
+### Échéances CISA du jour (rappel, rien de nouveau)
+- **Ivanti Connect Secure CVE-2026-111357** : échéance CISA **aujourd'hui, 2026-11-02**. Si tu as ce produit : version exacte lue sur l'avis Ivanti, exposition du portail, état du boîtier (voir l'entrée du 2026-10-31).
+- Cisco ASA/FTD CVE-2026-76418 : échéance passée hier (2026-11-01).
+
+### Pile de production du projet
+Rien de nouveau lu. La PR #53 (« perf(ui) : défilement et pop-up de résultat fluides ») reste non lue. Issues #48, #49, #51 : aucune nouvelle réponse connue de ma part ; pas de nouvelle issue.

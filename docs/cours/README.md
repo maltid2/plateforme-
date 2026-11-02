@@ -89,6 +89,7 @@ Statuts : `vu` · `à revoir` · `acquis`. Mis à jour à chaque fiche.
 | Relire une PR de performance (PR #50, mesures avant/après, p95, bruit) | 1 | 2026-10-30 | vu (fiche rédigée, en attente de lecture) |
 | Numéro de build Windows : build, révision (UBR), types B/D/OOB, seuil d'un avis (poste de travail et support) | 2 | 2026-10-31 | vu (fiche rédigée, en attente de lecture) |
 | Synthèse de la semaine 26 octobre - 1er novembre | 1/2/3/AD/SQL | 2026-11-01 | à revoir (aucune réponse aux contrôles ni aux calibrages reçue) |
+| Étiquette 802.1Q et VLAN natif (trame, TPID, désaccord de VLAN natif) | 2 | 2026-11-02 | vu (fiche rédigée, en attente de lecture) |
 
 ## Calibrage
 

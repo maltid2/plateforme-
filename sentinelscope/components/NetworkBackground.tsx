@@ -15,12 +15,15 @@ export default function NetworkBackground({
   className = "",
   density = 0.00013,
   staticRender = false,
+  opacity = 1,
 }: {
   className?: string;
   /** Nœuds par pixel² (plus haut = plus dense). */
   density?: number;
   /** Rendu figé (aucune boucle d'animation) — pour zéro coût CPU. */
   staticRender?: boolean;
+  /** Opacité globale, intégrée au dessin (évite un calque translucide). */
+  opacity?: number;
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -83,7 +86,7 @@ export default function NetworkBackground({
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       // Halo du cœur : fond CSS fixe (posé une seule fois), plutôt qu'un
       // dégradé redessiné sur tout le canevas à chaque image.
-      canvas.style.background = `radial-gradient(circle 300px at ${(w * 0.62).toFixed(0)}px ${(h * 0.34).toFixed(0)}px, rgba(${ACC},0.30), rgba(${ACC},0) 100%)`;
+      canvas.style.background = `radial-gradient(circle 300px at ${(w * 0.62).toFixed(0)}px ${(h * 0.34).toFixed(0)}px, rgba(${ACC},${(0.3 * opacity).toFixed(3)}), rgba(${ACC},0) 100%)`;
 
       // Plafond bas : le calcul des liens est en O(n²), on limite fort pour
       // garantir zéro latence (scroll, génération d'audit) même sur mobile.
@@ -108,6 +111,7 @@ export default function NetworkBackground({
 
     const draw = () => {
       ctx.clearRect(0, 0, w, h);
+      ctx.globalAlpha = opacity;
 
       const c = core();
 
@@ -176,7 +180,8 @@ export default function NetworkBackground({
     const FRAME_MS = 1000 / 30; // ~30 fps suffit pour ce fond
 
     const step = (t: number) => {
-      if (t - lastDraw >= FRAME_MS) {
+      // Rien à dessiner pendant qu'un pop-up est ouvert.
+      if (!document.body.classList.contains("modal-open") && t - lastDraw >= FRAME_MS) {
         lastDraw = t;
         for (const n of nodes) {
           n.x += n.vx;
@@ -277,7 +282,7 @@ export default function NetworkBackground({
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseleave", onLeave);
     };
-  }, [density, staticRender]);
+  }, [density, staticRender, opacity]);
 
   return (
     <canvas

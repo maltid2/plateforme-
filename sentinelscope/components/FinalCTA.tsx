@@ -74,9 +74,8 @@ export default function FinalCTA() {
       {/* background */}
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-grid-fade opacity-70" />
-        <div className="absolute inset-0 [mask-image:radial-gradient(90%_90%_at_50%_50%,#000_30%,transparent_72%)] [-webkit-mask-image:radial-gradient(90%_90%_at_50%_50%,#000_30%,transparent_72%)]">
-          <NetworkBackground className="h-full w-full opacity-85" density={0.0001} />
-        </div>
+        <NetworkBackground className="absolute inset-0 h-full w-full" density={0.0001} opacity={0.85} />
+        <div className="absolute inset-0 bg-[radial-gradient(90%_90%_at_50%_50%,transparent_30%,#07090D_72%)]" />
         <motion.div
           aria-hidden
           animate={active ? { opacity: [0.4, 0.7, 0.4], scale: [1, 1.08, 1] } : undefined}

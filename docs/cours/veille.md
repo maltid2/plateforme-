@@ -347,3 +347,18 @@ Sources consultées le 2026-11-02 : catalogue CISA KEV (`catalogVersion` **2026.
 
 ### Pile de production du projet
 Rien de nouveau lu. La PR #53 (« perf(ui) : défilement et pop-up de résultat fluides ») reste non lue. Issues #48, #49, #51 : aucune nouvelle réponse connue de ma part ; pas de nouvelle issue.
+
+---
+
+## 2026-11-03 (mardi)
+
+Sources consultées le 2026-11-03 : catalogue CISA KEV (`catalogVersion` **2026.10.30**, 1 766 entrées : toujours **inchangé** depuis le 2026-10-31, aucune nouvelle entrée). Je n'ai relu aucun PSIRT éditeur aujourd'hui : un catalogue inchangé ne dit rien des avis non exploités. `main` : seulement des mises à jour automatiques de signatures d'audit.
+
+### Rien de nouveau à signaler
+Aucun nouvel avis consigné aujourd'hui. Suivis déjà consignés, sans changement lu : Ivanti Connect Secure (chaîne de trois CVE, voir 2026-10-31 ; échéance CISA de CVE-2026-111357 passée hier), Cisco ASA/FTD CVE-2026-76418 (échéance passée le 2026-11-01). Si tu as l'un de ces produits et que tu n'as pas encore relevé la version exacte, c'est toujours la vérification utile.
+
+### Calendrier (information, pas un avis)
+Le prochain « Patch Tuesday » Microsoft tombe le **2026-11-10** (deuxième mardi du mois, règle décrite dans la fiche du 2026-10-31) : calcul de ma part, date non lue sur une page Microsoft.
+
+### Pile de production du projet
+Rien de nouveau lu. PR #53 toujours non lue ; issues #48, #49, #51 sans nouvelle réponse connue ; pas de nouvelle issue.

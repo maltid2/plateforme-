@@ -362,3 +362,27 @@ Le prochain « Patch Tuesday » Microsoft tombe le **2026-11-10** (deuxième mar
 
 ### Pile de production du projet
 Rien de nouveau lu. PR #53 toujours non lue ; issues #48, #49, #51 sans nouvelle réponse connue ; pas de nouvelle issue.
+
+---
+
+## 2026-11-04 (mercredi)
+
+Sources consultées le 2026-11-04 : catalogue CISA KEV (`catalogVersion` **2026.11.03**, 1 767 entrées : **une** nouvelle entrée depuis hier), API NVD (CVE-2026-119977), annonce de sécurité WordPress 7.1.4. Aucun PSIRT d'éditeur de ta liste relu aujourd'hui : **le catalogue ne dit rien des avis non exploités**.
+
+### 1. WordPress Core : exécution de code pendant une mise à jour — CVE-2026-119977 — **exploitation active constatée par la CISA** (hors de ta liste d'éditeurs)
+- **Pourquoi je la mets en tête malgré tout :** ton lab (`docker-compose.yml`) fait tourner WordPress. Ce n'est pas la pile de SentinelScope ; si tu as un WordPress ailleurs, c'est l'avis qui compte.
+- **Exploitation :** ajoutée au catalogue le **2026-11-03**, échéance CISA **2026-11-06**.
+- **Nature :** condition de concurrence « time-of-check time-of-use » (CWE-367) ; des chemins de préparation prévisibles et accessibles depuis le web, utilisés lors des mises à jour complètes du noyau, permettent à un attaquant **non authentifié** d'exécuter du code sur le serveur **pendant la fenêtre de mise à jour** (description NVD).
+- **Score :** CVSS 3.1 de **8,1**, vecteur `AV:N/AC:H/PR:N/UI:N` (complexité d'attaque élevée : la fenêtre est courte).
+- **Versions affectées (NVD) :** WordPress « 4.7 à 7.1.3 ».
+- **Version corrigée :** l'annonce officielle de **WordPress 7.1.4** (publiée le **2026-10-28**, version de sécurité) liste « une faiblesse du processus de mise à jour de WordPress pouvant mener à une exécution de code à distance pendant la fenêtre de mise à jour ». Elle ne cite pas le numéro CVE ; le rapprochement avec CVE-2026-119977 vient de la note du catalogue CISA, qui renvoie à cette annonce. Les correctifs sont aussi **rétroportés** vers les branches encore éligibles, « jusqu'à 4.7 », mais l'annonce précise que **les rétroportages sont en cours et sortent au fur et à mesure** : ne pas supposer qu'une branche ancienne est déjà corrigée.
+- **Contournement :** aucun officiel lu.
+- **Indicateurs de compromission :** aucun lu (la note du catalogue renvoie à un article Wordfence, **non lu**).
+- **Ce que tu vérifies chez toi (si tu as un WordPress) :** (1) la version exacte (tableau de bord, ou fichier de version du noyau) ; (2) si le site est joignable depuis Internet ; (3) si les mises à jour automatiques sont actives (le risque est pendant la mise à jour) et l'état des fichiers de `wp-admin` après la dernière mise à jour.
+- Sources : https://wordpress.org/news/2026/10/wordpress-7-1-4 ; https://nvd.nist.gov/vuln/detail/CVE-2026-119977 ; catalogue CISA (consultés le 2026-11-04).
+
+### Suivis (rien de nouveau)
+Ivanti Connect Secure (chaîne CVE-2026-104935 / 118527 / 111357, voir 2026-10-31) et Cisco ASA/FTD CVE-2026-76418 : aucune lecture nouvelle. Le **Patch Tuesday du 2026-11-10** approche (calcul de ma part).
+
+### Pile de production du projet
+`main` contient désormais la PR **#53** (« perf(ui) : défilement et pop-up de résultat fluides… ») fusionnée ; **non lue**. Issues #48, #49, #51 sans nouvelle réponse connue. Pas de nouvelle issue : WordPress n'est pas dans la pile de SentinelScope.

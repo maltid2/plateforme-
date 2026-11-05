@@ -2,14 +2,7 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  FileText,
-  Gauge,
-  ListChecks,
-  Radar,
-  ShieldCheck,
-  type LucideIcon,
-} from "lucide-react";
+import { FileText, Gauge, ListChecks, type LucideIcon } from "lucide-react";
 import { Container, Reveal, SectionLabel } from "./ui";
 import { viewport } from "@/lib/motion";
 
@@ -22,20 +15,12 @@ type Module = {
   cards: { title: string; body: string }[];
 };
 
+// Cette section répond à « qu'est-ce que j'obtiens à la fin ? ».
+// Elle ne redit PAS les six contrôles analysés : c'est le rôle de la
+// section « L'audit » (Features), juste au-dessus. L'onglet « Analyse »
+// a été retiré pour cette raison, et l'onglet « Confiance » parce que la
+// section « En toute confiance » (Security) dit déjà la même chose.
 const MODULES: Module[] = [
-  {
-    id: "analyse",
-    label: "Analyse",
-    icon: Radar,
-    accent: "#8D7CFF",
-    headline: "Voyez votre site comme le ferait un attaquant",
-    cards: [
-      { title: "Connexion & certificat (SSL/TLS)", body: "Vérifie votre HTTPS, la validité du certificat et la solidité du chiffrement." },
-      { title: "En-têtes de sécurité", body: "Contrôle HSTS, CSP, X-Frame-Options et les protections contre les attaques courantes." },
-      { title: "Fichiers sensibles exposés", body: "Détecte les fichiers privés (.env, .git, sauvegardes) accessibles publiquement." },
-      { title: "Réputation, failles & RGPD", body: "Vérifie les listes noires, les vulnérabilités connues et la conformité RGPD/cookies." },
-    ],
-  },
   {
     id: "score",
     label: "Score",
@@ -66,26 +51,13 @@ const MODULES: Module[] = [
     id: "priorites",
     label: "Priorités",
     icon: ListChecks,
-    accent: "#A78BFA",
+    accent: "#8D7CFF",
     headline: "Les bonnes actions d'abord",
     cards: [
       { title: "Tri par gravité", body: "Les points classés du plus critique au moins urgent." },
       { title: "À corriger en priorité", body: "Les problèmes qui exposent réellement votre site arrivent en tête." },
       { title: "Recommandations concrètes", body: "Des correctifs actionnables, pas des alertes vagues." },
       { title: "État des fichiers", body: "Pour chaque fichier sensible : accessible ou non depuis Internet." },
-    ],
-  },
-  {
-    id: "confiance",
-    label: "Confiance",
-    icon: ShieldCheck,
-    accent: "#8D7CFF",
-    headline: "Une analyse respectueuse de votre site",
-    cards: [
-      { title: "Sans installation", body: "Rien à installer : vous entrez simplement l'adresse de votre site." },
-      { title: "Sans compte", body: "Aucune inscription nécessaire pour lancer une analyse." },
-      { title: "Non intrusif", body: "Une analyse passive, sans requête agressive sur votre site." },
-      { title: "Aucune donnée revendue", body: "Vos résultats restent les vôtres." },
     ],
   },
 ];
@@ -95,18 +67,18 @@ export default function Modules() {
   const current = MODULES.find((m) => m.id === active)!;
 
   return (
-    <section id="modules" className="relative py-20 sm:py-28">
+    <section id="modules" className="relative py-14 sm:py-20">
       <Container>
         <Reveal className="mx-auto max-w-2xl text-center">
           <div className="flex justify-center">
             <SectionLabel>Ce que vous obtenez</SectionLabel>
           </div>
           <h2 className="mt-5 text-3xl font-bold leading-[1.12] tracking-tight sm:text-[2.6rem] lg:text-[3.25rem]">
-            De l&apos;analyse au rapport, tout est clair.
+            Un score, un rapport, des priorités.
           </h2>
           <p className="mt-4 text-lg text-muted">
-            Un seul audit de votre site vous donne un score, un rapport lisible
-            et des priorités concrètes — sans jargon.
+            Ce que l&apos;audit vous remet à la fin, et dans quel ordre traiter
+            ce qu&apos;il a trouvé.
           </p>
         </Reveal>
 

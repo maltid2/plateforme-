@@ -19,7 +19,7 @@ export default function Security() {
   const illu = useRef<HTMLDivElement | null>(null);
   const active = useInView(illu);
   return (
-    <section id="security" className="relative py-20 sm:py-28">
+    <section id="security" className="relative py-14 sm:py-20">
       <Container className="grid items-center gap-16 lg:grid-cols-2">
         {/* shield illustration */}
         <Reveal className="order-2 lg:order-1">

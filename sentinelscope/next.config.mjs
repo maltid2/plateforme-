@@ -5,9 +5,21 @@
 //  - 'self' pour l'app et l'API (même origine)
 //  - Google Fonts (le site charge Inter via fonts.googleapis / fonts.gstatic)
 //  - 'unsafe-inline' pour les styles/scripts inline de Next et Framer Motion
-//    (pas de nonce middleware ici) ; PAS de 'unsafe-eval' (inutile en prod)
+//    (pas de nonce middleware ici) ; PAS de 'unsafe-eval' en production
 //  - images en data:/blob: (SVG, rapport ouvert en Blob URL)
 //  - frame-ancestors 'none' : le site ne doit jamais être mis en iframe
+//
+// Exception développement : webpack enveloppe chaque module dans un eval()
+// pour les source maps, et le Fast Refresh de React fait de même. Sans
+// 'unsafe-eval' en dev, tout le JavaScript client est refusé par le
+// navigateur : la page s'affiche vide (seul le HTML rendu côté serveur
+// reste visible, sans aucune animation ni formulaire fonctionnel).
+// La CSP de production, elle, ne change pas d'un caractère.
+const isDev = process.env.NODE_ENV !== "production";
+const scriptSrc = isDev
+  ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+  : "script-src 'self' 'unsafe-inline'";
+
 const csp = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -17,8 +29,8 @@ const csp = [
   "img-src 'self' data: blob:",
   "font-src 'self' https://fonts.gstatic.com data:",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "script-src 'self' 'unsafe-inline'",
-  "connect-src 'self'",
+  scriptSrc,
+  isDev ? "connect-src 'self' ws: wss:" : "connect-src 'self'",
   "worker-src 'self' blob:",
   "manifest-src 'self'",
 ].join("; ");

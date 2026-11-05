@@ -16,18 +16,23 @@ type Node = {
   kind: string;
   check: string;
   risk: Risk;
+  // Côté où poser l'étiquette : le point mesure ~13 px de rayon plus son halo,
+  // donc une étiquette centrée sur le point devient illisible.
+  labelAt?: "top" | "bottom";
 };
 
 // Les 6 dimensions réellement analysées par SentinelScope à partir de l'URL
 // saisie, disposées autour du site — c'est ce qui alimente le rapport.
+// La bande basse de la carte (~24 %) est occupée par l'encart d'alerte :
+// aucun point n'y est placé, sinon il reste caché en permanence.
 const NODES: Node[] = [
-  { id: "core", x: 50, y: 50, label: "votre-site.fr", kind: "Site analysé", check: "L'adresse que vous saisissez", risk: "safe" },
-  { id: "ssl", x: 20, y: 22, label: "SSL / TLS", kind: "Connexion sécurisée", check: "Certificat valide et chiffrement à jour", risk: "safe" },
-  { id: "headers", x: 82, y: 28, label: "En-têtes", kind: "Protection du site", check: "HSTS, CSP, X-Frame-Options…", risk: "medium" },
-  { id: "files", x: 15, y: 72, label: "Fichiers exposés", kind: "Fichiers privés", check: ".env, .git, sauvegardes accessibles", risk: "high" },
-  { id: "reputation", x: 85, y: 70, label: "Réputation", kind: "Réputation en ligne", check: "Listes noires et signalements", risk: "safe" },
-  { id: "cve", x: 50, y: 13, label: "Failles (CVE)", kind: "Vulnérabilités connues", check: "Technologies obsolètes ou vulnérables", risk: "medium" },
-  { id: "rgpd", x: 50, y: 88, label: "RGPD", kind: "Protection des données", check: "Cookies et consentement (RGPD)", risk: "medium" },
+  { id: "core", x: 50, y: 46, label: "votre-site.fr", kind: "Site analysé", check: "L'adresse que vous saisissez", risk: "safe" },
+  { id: "cve", x: 50, y: 12, label: "Failles (CVE)", kind: "Vulnérabilités connues", check: "Technologies obsolètes ou vulnérables", risk: "medium", labelAt: "bottom" },
+  { id: "ssl", x: 17, y: 20, label: "SSL / TLS", kind: "Connexion sécurisée", check: "Certificat valide et chiffrement à jour", risk: "safe", labelAt: "top" },
+  { id: "headers", x: 83, y: 20, label: "En-têtes", kind: "Protection du site", check: "HSTS, CSP, X-Frame-Options…", risk: "medium", labelAt: "top" },
+  { id: "files", x: 13, y: 55, label: "Fichiers exposés", kind: "Fichiers privés", check: ".env, .git, sauvegardes accessibles", risk: "high", labelAt: "bottom" },
+  { id: "reputation", x: 87, y: 55, label: "Réputation", kind: "Réputation en ligne", check: "Listes noires et signalements", risk: "safe", labelAt: "bottom" },
+  { id: "rgpd", x: 50, y: 70, label: "RGPD", kind: "Protection des données", check: "Cookies et consentement (RGPD)", risk: "medium", labelAt: "top" },
 ];
 
 const EDGES: [string, string][] = [
@@ -39,10 +44,14 @@ const EDGES: [string, string][] = [
   ["core", "rgpd"],
 ];
 
+// Quatre teintes franchement distinctes : la légende sous le titre ne veut
+// rien dire si « faible » et « élevé » se ressemblent. Elles reprennent
+// l'échelle sev.* de tailwind.config.ts (valeurs en dur ici car injectées
+// dans un attribut style SVG, hors portée des classes utilitaires).
 const RISK_META: Record<Risk, { color: string; label: string }> = {
-  safe: { color: "#8D7CFF", label: "Risque faible" },
-  medium: { color: "#A78BFA", label: "Risque moyen" },
-  high: { color: "#A855F7", label: "Risque élevé" },
+  safe: { color: "#3DDC97", label: "Risque faible" },
+  medium: { color: "#FFD166", label: "Risque moyen" },
+  high: { color: "#FF5B5B", label: "Risque élevé" },
   unknown: { color: "#8B98A8", label: "Non classé" },
 };
 
@@ -55,7 +64,7 @@ export default function Problem() {
   const active = useInView(mapRef);
 
   return (
-    <section id="problem" className="relative py-20 sm:py-28">
+    <section id="problem" className="relative py-14 sm:py-20">
       <Container className="grid items-center gap-14 lg:grid-cols-2">
         {/* copy */}
         <Reveal>
@@ -65,10 +74,11 @@ export default function Problem() {
             <span className="text-gradient-violet">chaque jour.</span>
           </h2>
           <p className="mt-5 max-w-lg text-lg leading-relaxed text-muted">
-            Entrez l&apos;adresse de votre site : SentinelScope analyse votre
-            connexion, vos en-têtes de sécurité, vos fichiers exposés, votre
-            réputation, les failles connues et le RGPD — puis vous remet un
-            rapport clair de ce qui est exposé.
+            Un certificat qui arrive à expiration, une mise à jour repoussée, un
+            fichier de sauvegarde oublié en ligne : ce qui était propre le mois
+            dernier ne l&apos;est plus forcément aujourd&apos;hui. SentinelScope
+            regarde votre site depuis l&apos;extérieur, exactement comme le
+            ferait quelqu&apos;un qui le vise.
           </p>
 
           <div className="mt-8 flex flex-wrap gap-4">
@@ -167,8 +177,16 @@ export default function Problem() {
             {NODES.filter((n) => n.id !== "core").map((n) => (
               <span
                 key={n.id}
-                className="pointer-events-none absolute -translate-x-1/2 translate-y-2 whitespace-nowrap font-mono text-[9px] text-muted"
-                style={{ left: `${n.x}%`, top: `${n.y}%` }}
+                className="pointer-events-none absolute whitespace-nowrap rounded bg-bg/75 px-1.5 py-0.5 font-mono text-[9px] text-muted"
+                style={{
+                  left: `${n.x}%`,
+                  top: `${n.y}%`,
+                  // 18 px dégagent le rayon du point (~13 px) et son halo.
+                  transform:
+                    n.labelAt === "top"
+                      ? "translate(-50%, calc(-100% - 18px))"
+                      : "translate(-50%, 18px)",
+                }}
               >
                 {n.label}
               </span>

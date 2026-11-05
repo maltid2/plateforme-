@@ -70,7 +70,7 @@ export default function FinalCTA() {
   const ref = useRef<HTMLElement | null>(null);
   const active = useInView(ref);
   return (
-    <section ref={ref} id="cta" className="relative overflow-hidden py-24 sm:py-32">
+    <section ref={ref} id="cta" className="relative overflow-hidden py-16 sm:py-24">
       {/* background */}
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-grid-fade opacity-70" />

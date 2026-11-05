@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { Button } from "./ui";
@@ -14,14 +15,62 @@ const LINKS = [
   { label: "Contact", href: CONTACT_HREF },
 ];
 
+// Ancres internes, dans l'ordre du document : c'est ce qui permet de
+// départager deux sections visibles en même temps. « Contact » n'en est pas
+// une (lien mailto), donc elle ne s'allume jamais.
+const SECTION_IDS = LINKS.filter((l) => l.href.startsWith("#")).map((l) =>
+  l.href.slice(1)
+);
+
+/**
+ * Renvoie l'identifiant de la section actuellement lue, ou null quand aucune
+ * ne l'est (hero en haut de page, pied de page en bas) — dans ce cas aucun
+ * lien n'est allumé, ce qui vaut mieux qu'un lien faussement actif.
+ */
+function useActiveSection(): string | null {
+  const [active, setActive] = useState<string | null>(null);
+  // Chaque entrée de l'observateur ne concerne qu'une section ; on garde
+  // donc l'état de toutes pour pouvoir choisir la première du document.
+  const visible = useRef<Record<string, boolean>>({});
+
+  useEffect(() => {
+    const els = SECTION_IDS.map((id) => document.getElementById(id)).filter(
+      (el): el is HTMLElement => el !== null
+    );
+    if (els.length === 0) return;
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) visible.current[e.target.id] = e.isIntersecting;
+        setActive(SECTION_IDS.find((id) => visible.current[id]) ?? null);
+      },
+      // Zone de lecture : sous la barre fixe (64 px) et jusqu'à mi-écran.
+      // Une section compte comme lue quand elle y entre, pas dès qu'elle
+      // pointe en bas de l'écran.
+      { rootMargin: "-80px 0px -50% 0px", threshold: 0 }
+    );
+
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
+
+  return active;
+}
+
 export function Logo() {
   return (
     <Link href="#top" className="flex items-center" aria-label="SentinelScope">
-      <img
+      {/* Le fichier source fait 1600x288 px pour 492 Ko, alors qu'il s'affiche
+          sur 40 px de haut. next/image sert la taille réellement utile, en
+          WebP quand le navigateur l'accepte : environ 7 Ko en 1x, 14 Ko en 2x.
+          priority : le logo est au-dessus de la ligne de flottaison, il ne
+          doit pas être chargé paresseusement. */}
+      <Image
         src="/logo-full.png"
         alt="SentinelScope — Sécurité, Analyse, Surveillance"
-        width={1600}
-        height={288}
+        width={444}
+        height={80}
+        priority
         className="h-9 w-auto sm:h-10"
       />
     </Link>
@@ -31,6 +80,7 @@ export function Logo() {
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const active = useActiveSection();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -51,15 +101,23 @@ export default function Navbar() {
         <Logo />
 
         <div className="hidden items-center gap-1 md:flex">
-          {LINKS.map((l) => (
-            <Link
-              key={l.label}
-              href={l.href}
-              className="rounded-full px-4 py-2 text-sm font-medium text-muted transition-colors hover:text-ink"
-            >
-              {l.label}
-            </Link>
-          ))}
+          {LINKS.map((l) => {
+            const on = l.href === `#${active}`;
+            return (
+              <Link
+                key={l.label}
+                href={l.href}
+                aria-current={on ? "true" : undefined}
+                className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                  on
+                    ? "bg-acc-violet/10 text-acc-violet"
+                    : "text-muted hover:text-ink"
+                }`}
+              >
+                {l.label}
+              </Link>
+            );
+          })}
         </div>
 
         <div className="hidden items-center gap-3 md:flex">
@@ -88,16 +146,24 @@ export default function Navbar() {
             className="overflow-hidden border-t border-line bg-bg md:hidden"
           >
             <div className="flex flex-col gap-1 px-5 py-4">
-              {LINKS.map((l) => (
-                <Link
-                  key={l.label}
-                  href={l.href}
-                  onClick={() => setOpen(false)}
-                  className="rounded-lg px-3 py-3 text-base font-medium text-muted hover:bg-white/[0.04] hover:text-ink"
-                >
-                  {l.label}
-                </Link>
-              ))}
+              {LINKS.map((l) => {
+                const on = l.href === `#${active}`;
+                return (
+                  <Link
+                    key={l.label}
+                    href={l.href}
+                    onClick={() => setOpen(false)}
+                    aria-current={on ? "true" : undefined}
+                    className={`rounded-lg px-3 py-3 text-base font-medium ${
+                      on
+                        ? "bg-acc-violet/10 text-acc-violet"
+                        : "text-muted hover:bg-white/[0.04] hover:text-ink"
+                    }`}
+                  >
+                    {l.label}
+                  </Link>
+                );
+              })}
               <div className="mt-2 flex flex-col gap-2 border-t border-line pt-4">
                 <Button href="#audit-hero" className="w-full" onClick={() => setOpen(false)}>
                   Analyser mon site

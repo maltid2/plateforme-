@@ -92,6 +92,7 @@ Statuts : `vu` · `à revoir` · `acquis`. Mis à jour à chaque fiche.
 | Étiquette 802.1Q et VLAN natif (trame, TPID, désaccord de VLAN natif) | 2 | 2026-11-02 | vu (fiche rédigée, en attente de lecture) |
 | NTLM ou Kerberos : lire l'événement 4624 (Active Directory) | AD | 2026-11-03 | vu (fiche rédigée, en attente de lecture) ; calibrage AD toujours sans réponse |
 | SQL : jointures et EXPLAIN (ordre de jointure, eq_ref, ALL sur table jointe) | SQL | 2026-11-04 | vu (fiche rédigée, en attente de lecture) ; calibrage SQL toujours sans réponse |
+| WordPress : fenêtre de mise à jour, TOCTOU (CVE-2026-119977), lecture du correctif 7.1.3 → 7.1.4 | 3 | 2026-11-05 | vu (fiche rédigée, en attente de lecture) |
 
 ## Calibrage
 

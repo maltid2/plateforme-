@@ -386,3 +386,23 @@ Ivanti Connect Secure (chaîne CVE-2026-104935 / 118527 / 111357, voir 2026-10-3
 
 ### Pile de production du projet
 `main` contient désormais la PR **#53** (« perf(ui) : défilement et pop-up de résultat fluides… ») fusionnée ; **non lue**. Issues #48, #49, #51 sans nouvelle réponse connue. Pas de nouvelle issue : WordPress n'est pas dans la pile de SentinelScope.
+
+---
+
+## 2026-11-05 (jeudi)
+
+Sources consultées le 2026-11-05 : catalogue CISA KEV (`catalogVersion` **2026.11.04**, 1 768 entrées : **une** nouvelle entrée depuis hier). Aucun PSIRT d'éditeur de ta liste relu aujourd'hui : le catalogue ne dit rien des avis non exploités. `main` : seulement des mises à jour automatiques de signatures d'audit.
+
+### 1. Apple (iOS, iPadOS, macOS, Safari, tvOS, watchOS) — CVE-2024-27834 — **exploitation active constatée par la CISA** (hors de ta liste d'éditeurs)
+- Ajoutée au catalogue le **2026-11-04**, échéance CISA **2026-11-18**.
+- Selon la description du catalogue : défaut d'authentification (contournement de l'authentification de pointeurs) pour un attaquant qui dispose déjà d'une capacité de lecture et d'écriture arbitraires ; le catalogue cite les versions « 10.5 » pour ces produits.
+- **Je n'ai lu ni l'avis Apple ni la fiche NVD** : pas de score, pas de liste de versions corrigées par produit consignés. Si tu as des iPhone, iPad ou Mac à gérer, la source à lire est l'avis de sécurité d'Apple ; la vérification utile est la version du système sur ces appareils.
+
+### Suivi : WordPress CVE-2026-119977 (entrée du 2026-11-04)
+Rien de nouveau dans le catalogue. J'ai lu le **diff réel** entre WordPress 7.1.3 et 7.1.4 : trois changements (nom du répertoire de travail rendu aléatoire, `index.php` dans `wp-content/upgrade/`, `wp-config.php` exclu de la copie). Détail et déduction clairement séparés dans la fiche `2026-11-05-wordpress-fenetre-de-mise-a-jour-toctou.md`. Échéance CISA : **demain, 2026-11-06**. Rappel : les correctifs pour les branches anciennes sont, d'après l'annonce, **en cours de publication**.
+
+### Autres suivis
+Ivanti Connect Secure (chaîne de trois CVE, voir 2026-10-31) et Cisco ASA/FTD CVE-2026-76418 : aucune lecture nouvelle. Patch Tuesday Microsoft : 2026-11-10 (calcul de ma part).
+
+### Pile de production du projet
+Rien de nouveau lu. PR #53 fusionnée mais non lue. Issues #48, #49, #51 sans nouvelle réponse connue de ma part. Pas de nouvelle issue.

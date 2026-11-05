@@ -136,8 +136,10 @@ async function run(targetUrl, options = {}) {
           (s.threats ? ' (' + s.threats.join(', ') + ')' : '') +
           (s.malicious != null ? ' (' + s.malicious + ' moteurs)' : '') +
           '.',
+        why:
+          'Un domaine signalé comme malveillant par ces bases est bloqué par les navigateurs et les filtres de messagerie : le site devient inaccessible pour une partie des visiteurs et sa réputation est durablement affectée.',
         recommendation:
-          'Investiguer une éventuelle compromission ; demander un réexamen après nettoyage.',
+          'Investiguer une éventuelle compromission (fichiers modifiés, scripts injectés), nettoyer, puis demander un réexamen auprès de la source qui a signalé le domaine.',
       });
     }
   }

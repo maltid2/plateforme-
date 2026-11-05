@@ -5,11 +5,13 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { Button } from "./ui";
+import { CONTACT_HREF } from "@/lib/contact";
 
 const LINKS = [
   { label: "Produit", href: "#features" },
   { label: "Sécurité", href: "#security" },
   { label: "FAQ", href: "#faq" },
+  { label: "Contact", href: CONTACT_HREF },
 ];
 
 export function Logo() {
@@ -41,7 +43,7 @@ export default function Navbar() {
     <header
       className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "border-b border-line bg-bg/70 backdrop-blur-xl"
+          ? "border-b border-line bg-bg/90"
           : "border-b border-transparent bg-transparent"
       }`}
     >
@@ -83,7 +85,7 @@ export default function Navbar() {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3, ease: [0.2, 0.7, 0.2, 1] }}
-            className="overflow-hidden border-t border-line bg-bg/95 backdrop-blur-xl md:hidden"
+            className="overflow-hidden border-t border-line bg-bg md:hidden"
           >
             <div className="flex flex-col gap-1 px-5 py-4">
               {LINKS.map((l) => (

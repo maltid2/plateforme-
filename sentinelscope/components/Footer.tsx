@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Container } from "./ui";
+import { CONTACT_EMAIL, CONTACT_HREF } from "@/lib/contact";
 
 const COLUMNS = [
   {
@@ -27,7 +28,7 @@ export default function Footer() {
   return (
     <footer className="relative border-t border-line bg-bg2/40">
       <Container className="py-16">
-        <div className="grid gap-12 md:grid-cols-[1.6fr_1fr_1fr]">
+        <div className="grid gap-12 md:grid-cols-[1.6fr_1fr_1fr_1fr]">
           {/* brand */}
           <div className="max-w-xs">
             <Link href="/#top" className="flex items-center gap-2.5 text-lg font-bold">
@@ -66,6 +67,22 @@ export default function Footer() {
               </ul>
             </div>
           ))}
+
+          {/* contact */}
+          <div>
+            <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-ink/80">
+              Contact
+            </h3>
+            <p className="mt-4 text-sm leading-relaxed text-muted">
+              Une question sur votre audit ou sur la sécurité de votre site ?
+            </p>
+            <a
+              href={CONTACT_HREF}
+              className="mt-3 inline-block break-all text-sm font-medium text-acc-violet transition-colors hover:text-ink"
+            >
+              {CONTACT_EMAIL}
+            </a>
+          </div>
         </div>
 
         <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-line pt-8 sm:flex-row">

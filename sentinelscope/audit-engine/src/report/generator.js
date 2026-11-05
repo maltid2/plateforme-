@@ -201,6 +201,24 @@ function buildHtml(report) {
       + ' à renforcer.'
     : 'Aucun point majeur à renforcer sur votre site.';
 
+  // Bloc « Aller plus loin » : transforme le rapport en prise de contact.
+  let cleanHost = target;
+  try { cleanHost = new (require('url').URL)(target).hostname; } catch (e) { /* garde target */ }
+  const mailSubject = 'Audit de sécurité — ' + cleanHost;
+  const mailBody = [
+    'Bonjour,',
+    '',
+    'J\'ai réalisé l\'audit de ' + cleanHost + ' (score ' + scoring.score + '/100).',
+    '',
+    'Je souhaite aller plus loin pour corriger les points détectés et sécuriser mon infrastructure. Pouvez-vous me recontacter ?',
+    '',
+    'Merci.',
+  ].join('\n');
+  const contactMailto =
+    'mailto:' + brand.CONTACT +
+    '?subject=' + encodeURIComponent(mailSubject) +
+    '&body=' + encodeURIComponent(mailBody);
+
   return `<!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -229,6 +247,7 @@ function buildHtml(report) {
   .orb.o1{width:340px;height:340px;left:-120px;top:120px;background:radial-gradient(circle at 35% 30%,rgba(139,92,246,.5),rgba(91,33,182,.18) 60%,transparent 72%)}
   .orb.o2{width:300px;height:300px;right:-110px;top:480px;background:radial-gradient(circle at 60% 40%,rgba(167,139,250,.4),transparent 68%)}
   .orb.o3{width:260px;height:260px;left:30%;bottom:-90px;background:radial-gradient(circle at 50% 50%,rgba(91,33,182,.4),transparent 70%)}
+  .netcanvas{position:absolute;inset:0;width:100%;height:100%;opacity:.55;-webkit-mask-image:radial-gradient(120% 90% at 60% 12%,#000 30%,transparent 80%);mask-image:radial-gradient(120% 90% at 60% 12%,#000 30%,transparent 80%)}
   .page{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:44px 24px 60px}
   a{color:inherit}
   /* Marque */
@@ -339,6 +358,12 @@ function buildHtml(report) {
   .reco.act{border-left-color:rgba(167,139,250,.55);color:#A78BFA;background:rgba(167,139,250,.08)}
   .reco strong{color:var(--ink)}
   .ok{color:#A78BFA;font-size:14px}
+  .cta{margin-top:44px;border-radius:18px;border:1px solid rgba(141,124,255,.28);background:linear-gradient(135deg,rgba(141,124,255,.14),rgba(91,33,182,.08));box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 30px 70px -40px rgba(141,124,255,.6);padding:28px 26px;text-align:center}
+  .cta h2{font-size:21px;margin:0 0 8px;color:var(--ink)}
+  .cta p{margin:0 auto 18px;max-width:520px;font-size:14px;line-height:1.65;color:var(--ink2)}
+  .cta a.btn{display:inline-flex;align-items:center;gap:8px;padding:13px 26px;border-radius:999px;background:linear-gradient(180deg,#9a8cff,#6b5cff);color:#fff;font-weight:700;font-size:14px;text-decoration:none;box-shadow:0 16px 40px -16px rgba(141,124,255,.9)}
+  .cta .mail{display:block;margin-top:14px;font-size:12.5px;color:var(--ink2)}
+  .cta .mail a{color:#A78BFA;text-decoration:none}
   footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--line);font-size:12px;color:var(--ink2);text-align:center;line-height:1.7}
   /* Révélation au scroll — masquée uniquement si le JS est actif (progressif) */
   .reveal{transition:opacity .25s ease,transform .25s ease}
@@ -368,6 +393,7 @@ function buildHtml(report) {
 <body>
   <div class="bg" aria-hidden="true">
     <div class="rad"></div><div class="grid"></div>
+    <canvas class="netcanvas"></canvas>
     <div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
   </div>
   <div class="page">
@@ -410,6 +436,13 @@ function buildHtml(report) {
     ${modules.map(renderModuleCard).join('\n')}
   </div>
 
+  <div class="cta reveal">
+    <h2>Passez à l'action</h2>
+    <p>Ce rapport montre <b>où</b> votre site est exposé. L'étape suivante : corriger ces points et sécuriser votre infrastructure durablement. Décrivez votre besoin, je vous recontacte pour poursuivre l'audit et mettre en place les correctifs.</p>
+    <a class="btn" href="${contactMailto}">Me faire recontacter</a>
+    <span class="mail">Ou écrivez directement à <a href="${contactMailto}">${escapeHtml(brand.CONTACT)}</a></span>
+  </div>
+
   <footer>Vérification passive et non intrusive — aucune requête agressive n'a été effectuée sur votre site.<br>
     Rapport fourni à titre informatif ; il ne constitue pas une garantie d'absence de vulnérabilité.</footer>
   </div>
@@ -417,6 +450,73 @@ function buildHtml(report) {
 (function(){
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var fine = window.matchMedia && window.matchMedia('(pointer: fine)').matches;
+
+  // Fond « constellation » (canvas) — cohérent avec le site.
+  (function(){
+    var canvas = document.querySelector('.netcanvas');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    var COLORS = ['141,124,255','141,124,255','141,124,255','141,124,255','245,169,59','232,121,201','79,209,197','120,150,255'];
+    var ACC = '141,124,255', LINK = 150, w=0, h=0, dpr=1, nodes=[], mouse={x:-9999,y:-9999}, raf=0;
+    function build(){
+      w = window.innerWidth; h = window.innerHeight;
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      canvas.width = Math.floor(w*dpr); canvas.height = Math.floor(h*dpr);
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+      var count = Math.max(22, Math.min(72, Math.round(w*h*0.00009)));
+      nodes = [];
+      for (var i=0;i<count;i++) nodes.push({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-.5)*.22,vy:(Math.random()-.5)*.22,r:Math.random()*1.6+1,c:COLORS[(Math.random()*COLORS.length)|0],tw:Math.random()*Math.PI*2,ts:0.6+Math.random()*1.8});
+    }
+    function core(){ return {x:w*0.6,y:h*0.18}; }
+    function draw(){
+      ctx.clearRect(0,0,w,h);
+      var c = core();
+      var g = ctx.createRadialGradient(c.x,c.y,0,c.x,c.y,300);
+      g.addColorStop(0,'rgba('+ACC+',0.22)'); g.addColorStop(1,'rgba('+ACC+',0)');
+      ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+      for (var i=0;i<nodes.length;i++){ var a=nodes[i];
+        for (var j=i+1;j<nodes.length;j++){ var b=nodes[j];
+          var dx=a.x-b.x, dy=a.y-b.y, d=Math.sqrt(dx*dx+dy*dy);
+          if (d<LINK){ var o=(1-d/LINK)*0.5; ctx.strokeStyle='rgba('+ACC+','+o.toFixed(3)+')'; ctx.lineWidth=0.8; ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); }
+        }
+        var cd=Math.sqrt((a.x-c.x)*(a.x-c.x)+(a.y-c.y)*(a.y-c.y));
+        if (cd<250){ var oc=(1-cd/250)*0.45; ctx.strokeStyle='rgba('+ACC+','+oc.toFixed(3)+')'; ctx.lineWidth=0.7; ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(c.x,c.y); ctx.stroke(); }
+      }
+      var now = (typeof performance!=='undefined'?performance.now():Date.now());
+      for (var k=0;k<nodes.length;k++){ var n=nodes[k];
+        var al=0.5+0.45*Math.sin(now*0.001*n.ts+n.tw);
+        ctx.fillStyle='rgba('+n.c+','+(0.3+al*0.6).toFixed(3)+')';
+        ctx.beginPath(); ctx.arc(n.x,n.y,n.r*(0.8+al*0.4),0,Math.PI*2); ctx.fill();
+      }
+      ctx.fillStyle='rgba('+ACC+',1)'; ctx.shadowColor='rgba('+ACC+',1)'; ctx.shadowBlur=26; ctx.beginPath(); ctx.arc(c.x,c.y,4,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
+    }
+    var animate = !reduce && fine; // desktop uniquement ; sinon statique
+    var running=false, scrolling=false, lastT=0, FRAME=1000/30;
+    function step(t){
+      if (t-lastT>=FRAME){ lastT=t;
+        for (var i=0;i<nodes.length;i++){ var n=nodes[i]; n.x+=n.vx; n.y+=n.vy;
+          if (n.x<0||n.x>w) n.vx*=-1; if (n.y<0||n.y>h) n.vy*=-1;
+          var dx=n.x-mouse.x, dy=n.y-mouse.y, d=Math.sqrt(dx*dx+dy*dy);
+          if (d<90 && d>0.01){ n.x+=(dx/d)*0.5; n.y+=(dy/d)*0.5; }
+        }
+        draw();
+      }
+      raf=requestAnimationFrame(step);
+    }
+    function startNet(){ if (running||!animate||scrolling||document.hidden) return; running=true; raf=requestAnimationFrame(step); }
+    function stopNet(){ running=false; cancelAnimationFrame(raf); }
+    build();
+    if (!animate) draw(); else startNet();
+    window.addEventListener('resize', function(){ build(); if (!animate) draw(); }, {passive:true});
+    document.addEventListener('visibilitychange', function(){ if (document.hidden) stopNet(); else startNet(); });
+    if (animate){
+      var sT=null;
+      window.addEventListener('scroll', function(){ scrolling=true; stopNet(); if (sT) clearTimeout(sT); sT=setTimeout(function(){ scrolling=false; startNet(); },220); }, {passive:true});
+      window.addEventListener('mousemove', function(e){ mouse.x=e.clientX; mouse.y=e.clientY; }, {passive:true});
+    }
+  })();
+
   // Anneau : animation unique au chargement
   var prog = document.querySelector('.ringsvg .prog');
   if (prog && !reduce) { requestAnimationFrame(function(){ prog.classList.add('animate'); }); }

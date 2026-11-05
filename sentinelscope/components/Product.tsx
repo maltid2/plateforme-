@@ -91,7 +91,7 @@ export default function Product() {
             whileInView={{ opacity: 1, clipPath: "inset(0 0 0% 0)" }}
             viewport={viewport}
             transition={{ duration: 0.8, ease }}
-            className="rounded-[20px] border border-white/[0.07] bg-card/70 p-6 shadow-glow backdrop-blur-xl"
+            className="rounded-[20px] border border-white/[0.07] bg-card/70 p-6 shadow-glow"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm font-medium text-muted">

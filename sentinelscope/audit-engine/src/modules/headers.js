@@ -21,52 +21,52 @@ const HEADER_CHECKS = [
     label: 'Strict-Transport-Security (HSTS)',
     weight: 25,
     severity: 'high',
-    why: 'Force le navigateur à toujours utiliser HTTPS, empêchant les attaques de downgrade.',
+    why: 'Sans HSTS, un attaquant présent sur le réseau (Wi-Fi public, box compromise) peut forcer la connexion en HTTP non chiffré et intercepter identifiants et données — c\'est l\'attaque « SSL stripping ». HSTS oblige le navigateur à n\'utiliser que HTTPS, même si l\'utilisateur tape l\'adresse sans « https:// ».',
     recommendation:
-      'Ajouter : Strict-Transport-Security: max-age=31536000; includeSubDomains',
+      'Ajouter l\'en-tête : Strict-Transport-Security: max-age=31536000; includeSubDomains; preload — puis inscrire le domaine sur hstspreload.org pour une protection dès la toute première visite.',
   },
   {
     key: 'content-security-policy',
     label: 'Content-Security-Policy (CSP)',
     weight: 25,
     severity: 'high',
-    why: 'Réduit fortement la surface d\'attaque XSS et l\'injection de ressources.',
+    why: 'La CSP indique au navigateur quelles ressources (scripts, styles, images) il a le droit de charger. C\'est la défense la plus efficace contre les attaques XSS : même si un script malveillant est injecté dans la page, le navigateur refuse de l\'exécuter s\'il n\'est pas autorisé par la politique.',
     recommendation:
-      'Définir une politique CSP restrictive (ex: default-src \'self\').',
+      'Définir une politique restrictive, ex. : default-src \'self\'; object-src \'none\'; base-uri \'self\'. Déployer d\'abord en mode Content-Security-Policy-Report-Only pour la tester sans rien casser.',
   },
   {
     key: 'x-frame-options',
     label: 'X-Frame-Options',
     weight: 15,
     severity: 'medium',
-    why: 'Protège contre le clickjacking en empêchant l\'affichage en iframe.',
-    recommendation: 'Ajouter : X-Frame-Options: SAMEORIGIN (ou via CSP frame-ancestors).',
+    why: 'Sans cette protection, un site malveillant peut afficher votre page dans une iframe invisible et piéger vos utilisateurs pour qu\'ils cliquent à leur insu sur des boutons sensibles (attaque de type clickjacking).',
+    recommendation: 'Ajouter : X-Frame-Options: SAMEORIGIN. Pour un contrôle plus fin, préférer la directive CSP frame-ancestors \'self\'.',
   },
   {
     key: 'x-content-type-options',
     label: 'X-Content-Type-Options',
     weight: 15,
     severity: 'medium',
-    why: 'Empêche le MIME-sniffing du navigateur.',
-    recommendation: 'Ajouter : X-Content-Type-Options: nosniff',
+    why: 'Sans « nosniff », le navigateur peut deviner (MIME-sniffing) le type d\'un fichier et l\'exécuter comme du script alors qu\'il était servi comme une image ou du texte — une porte d\'entrée pour du code malveillant.',
+    recommendation: 'Ajouter : X-Content-Type-Options: nosniff (une seule ligne, aucun effet de bord).',
   },
   {
     key: 'referrer-policy',
     label: 'Referrer-Policy',
     weight: 10,
     severity: 'low',
-    why: 'Contrôle les informations de provenance envoyées aux tiers.',
+    why: 'Par défaut, le navigateur transmet l\'URL complète de votre page — qui peut contenir des identifiants ou des informations privées — aux sites tiers que vous chargez. Referrer-Policy limite cette fuite d\'informations.',
     recommendation:
-      'Ajouter : Referrer-Policy: strict-origin-when-cross-origin',
+      'Ajouter : Referrer-Policy: strict-origin-when-cross-origin (bon compromis entre vie privée et outils d\'analyse).',
   },
   {
     key: 'permissions-policy',
     label: 'Permissions-Policy',
     weight: 10,
     severity: 'low',
-    why: 'Restreint l\'accès aux API sensibles du navigateur (caméra, micro, géoloc...).',
+    why: 'Cet en-tête déclare quelles API sensibles du navigateur (caméra, micro, géolocalisation, paiement…) le site est autorisé à utiliser. Les restreindre limite ce qu\'un script injecté pourrait activer à l\'insu de l\'utilisateur.',
     recommendation:
-      'Ajouter une Permissions-Policy limitant les fonctionnalités inutilisées.',
+      'Désactiver explicitement les fonctionnalités inutilisées, ex. : Permissions-Policy: camera=(), microphone=(), geolocation=().',
   },
 ];
 
@@ -141,9 +141,9 @@ async function run(targetUrl, options = {}) {
           ': ' +
           String(value),
         why:
-          'Révéler la version exacte de votre serveur ou de votre framework aide un attaquant à cibler les failles connues de cette version précise.',
+          'Révéler la version exacte de votre serveur ou framework (ex. « nginx/1.18.0 », « PHP/7.4 ») permet à un attaquant de rechercher directement les failles connues de cette version précise et d\'automatiser son attaque.',
         recommendation:
-          'Masquer ou retirer cet en-tête pour ne pas révéler la stack technique.',
+          'Masquer ou neutraliser cet en-tête côté serveur : « server_tokens off; » sur nginx, « ServerTokens Prod » sur Apache, et retirer X-Powered-By au niveau applicatif.',
       });
     }
   }

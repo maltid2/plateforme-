@@ -97,10 +97,10 @@ const ASSETS: (View & {
   {
     sev: "Critique",
     color: "#A855F7",
-    asset: "Fichiers exposés",
+    asset: "Fichiers sensibles exposés",
     tag: "À corriger",
     tagCls: "bg-acc-violet/15 text-acc-violet",
-    label: "Fichiers exposés",
+    label: "Fichiers sensibles exposés",
     score: 45,
     delta: -18,
     path: "M0,20 C24,24 34,30 56,30 C80,30 92,26 116,34 C140,42 150,44 176,48 C198,51 210,54 220,56",
@@ -119,10 +119,10 @@ const ASSETS: (View & {
   {
     sev: "Moyen",
     color: "#A78BFA",
-    asset: "Protection RGPD",
+    asset: "Réputation, failles & RGPD",
     tag: "À voir",
     tagCls: "bg-white/[0.06] text-muted",
-    label: "Protection RGPD",
+    label: "Réputation, failles & RGPD",
     score: 70,
     delta: -4,
     path: "M0,28 C24,30 34,34 56,34 C80,34 92,38 116,38 C140,38 150,44 176,44 C198,44 210,48 220,48",
@@ -153,7 +153,7 @@ export default function HeroDashboard() {
       style={{ perspective: 1200 }}
       className="relative"
     >
-      <div className="animate-float rounded-[22px] border border-white/[0.07] bg-card/80 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_40px_90px_-45px_rgba(0,0,0,0.95),0_0_70px_-24px_rgba(141,124,255,0.45)] backdrop-blur-xl sm:p-5">
+      <div className="rounded-[22px] border border-white/[0.07] bg-card p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_40px_90px_-45px_rgba(0,0,0,0.95),0_0_70px_-24px_rgba(141,124,255,0.45)] sm:p-5">
         {/* window bar */}
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-muted">
@@ -162,11 +162,11 @@ export default function HeroDashboard() {
               <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
               <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
             </span>
-            <span className="ml-2 font-medium">Aperçu de votre audit</span>
+            <span className="ml-2 font-medium">Exemple de rapport</span>
           </div>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-acc-violet/10 px-2.5 py-1 text-[11px] font-semibold text-acc-violet">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-acc-violet" />
-            En direct
+            Exemple
           </span>
         </div>
 
@@ -192,7 +192,7 @@ export default function HeroDashboard() {
                   {up ? "+" : "−"}
                   {Math.abs(view.delta)} pts
                 </div>
-                cette semaine
+                sur l&apos;exemple
               </div>
             </div>
           </div>
@@ -274,7 +274,7 @@ Touchez un contrôle pour le détail
         initial={{ opacity: 0, scale: 0.9, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 1.1, ease }}
-        className="absolute -right-3 -top-4 hidden rounded-xl border border-line bg-card/90 px-3 py-2 shadow-glow backdrop-blur-xl sm:block"
+        className="absolute -right-3 -top-4 hidden rounded-xl border border-line bg-card px-3 py-2 shadow-glow sm:block"
       >
         <div className="text-[11px] text-muted">Point détecté</div>
         <div className="text-sm font-semibold text-acc-violet">fichier .env exposé</div>

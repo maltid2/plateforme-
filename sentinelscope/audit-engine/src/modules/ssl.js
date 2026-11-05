@@ -114,8 +114,10 @@ async function run(targetUrl, options = {}) {
       id: 'no-tls',
       severity: 'high',
       message: 'Le site est servi en HTTP sans chiffrement TLS.',
+      why:
+        'En HTTP pur, tout le trafic (mots de passe, formulaires, cookies de session) circule en clair et peut être lu ou modifié par n\'importe quel intermédiaire réseau.',
       recommendation:
-        'Mettre en place un certificat TLS (Let\'s Encrypt gratuit) et forcer HTTPS.',
+        'Installer un certificat TLS gratuit (Let\'s Encrypt via Certbot) et forcer la redirection de tout le trafic HTTP vers HTTPS.',
     });
     result.score = 0;
     return result;
@@ -130,8 +132,10 @@ async function run(targetUrl, options = {}) {
       id: 'tls-connect-failed',
       severity: 'high',
       message: 'Impossible d\'établir une connexion TLS : ' + err.message,
+      why:
+        'Si aucune connexion sécurisée ne peut être établie, les visiteurs ne peuvent pas accéder au site en HTTPS ou reçoivent un avertissement de sécurité bloquant.',
       recommendation:
-        'Vérifier que le port 443 est ouvert et qu\'un certificat valide est présenté.',
+        'Vérifier que le port 443 est ouvert, que le service web écoute bien en HTTPS et qu\'un certificat valide (avec sa chaîne intermédiaire complète) est présenté.',
     });
     result.score = 0;
     return result;
@@ -151,8 +155,10 @@ async function run(targetUrl, options = {}) {
         'Protocole obsolète négocié : ' +
         protocol +
         '. Ces versions présentent des vulnérabilités connues.',
+      why:
+        'Les anciennes versions SSL/TLS (SSLv3, TLS 1.0/1.1) contiennent des failles cryptographiques documentées (POODLE, BEAST) qui permettent de déchiffrer les échanges. Les navigateurs récents les refusent déjà.',
       recommendation:
-        'Désactiver SSLv3/TLS 1.0/1.1 côté serveur et n\'autoriser que TLS 1.2 et 1.3.',
+        'Désactiver SSLv3, TLS 1.0 et 1.1 côté serveur et n\'autoriser que TLS 1.2 et TLS 1.3 (voir le générateur de configuration Mozilla SSL Config).',
     });
   }
 
@@ -178,7 +184,10 @@ async function run(targetUrl, options = {}) {
         id: 'cert-expired',
         severity: 'high',
         message: 'Le certificat TLS a expiré (' + validTo.toISOString() + ').',
-        recommendation: 'Renouveler immédiatement le certificat.',
+        why:
+          'Un certificat expiré déclenche une page d\'avertissement rouge dans tous les navigateurs : les visiteurs ne peuvent plus accéder au site et la confiance est rompue.',
+        recommendation:
+          'Renouveler immédiatement le certificat et automatiser le renouvellement (ACME/Certbot) pour que cela ne se reproduise plus.',
       });
     } else if (daysLeft < 15) {
       expiryScore = 50;
@@ -186,8 +195,10 @@ async function run(targetUrl, options = {}) {
         id: 'cert-expiring-soon',
         severity: 'medium',
         message: 'Le certificat expire dans ' + daysLeft + ' jours.',
+        why:
+          'À moins de 15 jours de l\'expiration, le risque d\'interruption de service devient concret si le renouvellement échoue ou est oublié.',
         recommendation:
-          'Renouveler le certificat sans tarder et automatiser le renouvellement.',
+          'Renouveler le certificat sans tarder et mettre en place un renouvellement automatique (ACME/Certbot) avec une alerte de supervision.',
       });
     } else if (daysLeft < 30) {
       expiryScore = 80;
@@ -195,7 +206,9 @@ async function run(targetUrl, options = {}) {
         id: 'cert-expiring',
         severity: 'low',
         message: 'Le certificat expire dans ' + daysLeft + ' jours.',
-        recommendation: 'Prévoir le renouvellement (idéalement automatisé).',
+        why:
+          'Anticiper le renouvellement évite tout risque de coupure liée à un certificat expiré au plus mauvais moment.',
+        recommendation: 'Prévoir le renouvellement, idéalement automatisé (ACME/Certbot).',
       });
     }
   } else {
@@ -204,7 +217,9 @@ async function run(targetUrl, options = {}) {
       id: 'cert-no-date',
       severity: 'medium',
       message: 'Impossible de lire la date d\'expiration du certificat.',
-      recommendation: 'Vérifier la chaîne de certification présentée.',
+      why:
+        'Une chaîne de certification illisible ou incomplète peut trahir une mauvaise configuration, source d\'avertissements pour certains navigateurs ou clients.',
+      recommendation: 'Vérifier la chaîne de certification présentée (certificat + intermédiaires) et sa validité.',
     });
   }
 
@@ -216,8 +231,10 @@ async function run(targetUrl, options = {}) {
       message:
         'La chaîne de certification n\'est pas validée par le magasin de confiance système' +
         (authorizationError ? ' (' + authorizationError + ').' : '.'),
+      why:
+        'Un certificat non validé par les autorités reconnues (auto-signé ou chaîne incomplète) provoque un avertissement de sécurité dans le navigateur, que les visiteurs interprètent comme un site dangereux et quittent aussitôt.',
       recommendation:
-        'Installer un certificat émis par une autorité reconnue et fournir la chaîne intermédiaire complète.',
+        'Installer un certificat émis par une autorité reconnue (ex. Let\'s Encrypt) et fournir la chaîne intermédiaire complète (fichier « fullchain »).',
     });
   }
 

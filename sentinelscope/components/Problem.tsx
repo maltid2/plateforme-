@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { useRef, useState } from "react";
+import { AnimatePresence, motion, useInView } from "framer-motion";
 import { AlertTriangle, Check, Eye, X } from "lucide-react";
 import { Container, Reveal, SectionLabel } from "./ui";
 import { viewport } from "@/lib/motion";
@@ -50,6 +50,9 @@ export default function Problem() {
   const [dismissed, setDismissed] = useState(false);
   const [solved, setSolved] = useState(false);
   const [hovered, setHovered] = useState<string | null>(null);
+  // Les impulsions en boucle ne tournent que lorsque la carte est visible.
+  const mapRef = useRef<HTMLDivElement | null>(null);
+  const active = useInView(mapRef);
 
   return (
     <section id="problem" className="relative py-20 sm:py-28">
@@ -90,7 +93,7 @@ export default function Problem() {
 
         {/* interactive asset map */}
         <Reveal delay={0.15}>
-          <div className="relative aspect-square w-full max-w-lg rounded-[20px] border border-white/[0.07] bg-card/50 p-4 shadow-soft backdrop-blur-sm">
+          <div ref={mapRef} className="relative aspect-square w-full max-w-lg rounded-[20px] border border-white/[0.07] bg-card/50 p-4 shadow-soft">
             <div className="absolute inset-0 rounded-2xl bg-grid-fade opacity-40" />
             <div className="absolute left-4 top-4 z-10 flex items-center gap-2 text-xs text-muted">
               <Eye className="h-3.5 w-3.5 text-acc-violet" /> Analyse de votre site en direct
@@ -137,7 +140,7 @@ export default function Problem() {
                         stroke={color}
                         strokeWidth="0.5"
                         initial={{ scale: 1, opacity: 0.7 }}
-                        animate={{ scale: [1, 2.4], opacity: [0.6, 0] }}
+                        animate={active ? { scale: [1, 2.4], opacity: [0.6, 0] } : undefined}
                         transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }}
                         style={{ transformOrigin: `${n.x}px ${n.y}px` }}
                       />
@@ -180,7 +183,7 @@ export default function Problem() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 4, scale: 0.96 }}
                   transition={{ duration: 0.18 }}
-                  className="pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-[140%] rounded-lg border border-line bg-bg2/95 px-3 py-2 shadow-glow backdrop-blur-xl"
+                  className="pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-[140%] rounded-lg border border-line bg-bg2/95 px-3 py-2 shadow-glow"
                   style={{
                     left: `${NODES.find((n) => n.id === hovered)!.x}%`,
                     top: `${NODES.find((n) => n.id === hovered)!.y}%`,
@@ -216,7 +219,7 @@ export default function Problem() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 8, scale: 0.96 }}
                   transition={{ duration: 0.4 }}
-                  className="absolute bottom-4 left-4 right-4 z-30 rounded-xl border border-sev-critical/30 bg-bg2/95 p-3.5 shadow-glow backdrop-blur-xl"
+                  className="absolute bottom-4 left-4 right-4 z-30 rounded-xl border border-sev-critical/30 bg-bg2/95 p-3.5 shadow-glow"
                 >
                   <div className="flex items-start gap-3">
                     <span className="mt-0.5 grid h-7 w-7 flex-none place-items-center rounded-lg bg-sev-critical/15 text-sev-critical">
@@ -251,7 +254,7 @@ export default function Problem() {
                 <motion.div
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="absolute bottom-4 left-4 right-4 z-30 flex items-center gap-2.5 rounded-xl border border-acc-green/30 bg-bg2/95 p-3.5 text-sm font-semibold text-acc-green shadow-glow-green backdrop-blur-xl"
+                  className="absolute bottom-4 left-4 right-4 z-30 flex items-center gap-2.5 rounded-xl border border-acc-green/30 bg-bg2/95 p-3.5 text-sm font-semibold text-acc-green shadow-glow-green"
                 >
                   <Check className="h-4 w-4" /> Exposition corrigée et vérifiée.
                 </motion.div>

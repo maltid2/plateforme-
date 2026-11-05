@@ -19,6 +19,8 @@ const TAGLINE =
   process.env.BRAND_TAGLINE ||
   'Entrez l\'adresse de votre site et obtenez en quelques minutes un audit de sécurité clair : un score, les vulnérabilités détectées et les actions à mener — sans installation.';
 const USER = process.env.BRAND_USER || 'Aymerick';
+// Email de contact affiché dans le rapport (bloc « Aller plus loin »).
+const CONTACT = process.env.CONTACT_EMAIL || 'contact@sentrylescope.fr';
 
 // Palette SentinelScope
 const C = {
@@ -638,4 +640,4 @@ function landingAltPage(fontKey) {
   return landingPage(fontKey);
 }
 
-module.exports = { NAME, HEADLINE, TAGLINE, GRADE, SEV, CATS, picto, logo, LOGO_URI, landingPage, landingAltPage, dashboardPage, escapeHtml };
+module.exports = { NAME, HEADLINE, TAGLINE, CONTACT, GRADE, SEV, CATS, picto, logo, LOGO_URI, landingPage, landingAltPage, dashboardPage, escapeHtml };

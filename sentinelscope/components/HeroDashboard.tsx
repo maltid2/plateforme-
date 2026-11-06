@@ -96,10 +96,10 @@ const ASSETS: (View & {
 })[] = [
   {
     sev: "Critique",
-    color: "#A855F7",
+    color: "#FF5B5B",
     asset: "Fichiers sensibles exposés",
     tag: "À corriger",
-    tagCls: "bg-acc-violet/15 text-acc-violet",
+    tagCls: "bg-sev-critical/15 text-sev-critical",
     label: "Fichiers sensibles exposés",
     score: 45,
     delta: -18,
@@ -107,10 +107,10 @@ const ASSETS: (View & {
   },
   {
     sev: "Élevé",
-    color: "#8B5CF6",
+    color: "#FF9F43",
     asset: "En-têtes de sécurité",
     tag: "À corriger",
-    tagCls: "bg-acc-violet/15 text-acc-violet",
+    tagCls: "bg-sev-high/15 text-sev-high",
     label: "En-têtes de sécurité",
     score: 58,
     delta: -10,
@@ -118,7 +118,7 @@ const ASSETS: (View & {
   },
   {
     sev: "Moyen",
-    color: "#A78BFA",
+    color: "#FFD166",
     asset: "Réputation, failles & RGPD",
     tag: "À voir",
     tagCls: "bg-white/[0.06] text-muted",
@@ -129,10 +129,10 @@ const ASSETS: (View & {
   },
   {
     sev: "Faible",
-    color: "#A78BFA",
+    color: "#3DDC97",
     asset: "Connexion SSL/TLS",
     tag: "OK",
-    tagCls: "bg-acc-violet/15 text-acc-violet",
+    tagCls: "bg-sev-low/15 text-sev-low",
     label: "Connexion SSL/TLS",
     score: 96,
     delta: 6,
@@ -181,7 +181,7 @@ export default function HeroDashboard() {
               <div className="text-xs text-muted">
                 <div
                   className={`mb-1 flex items-center gap-1 font-semibold ${
-                    up ? "text-acc-violet" : "text-sev-high"
+                    up ? "text-sev-low" : "text-sev-high"
                   }`}
                 >
                   {up ? (

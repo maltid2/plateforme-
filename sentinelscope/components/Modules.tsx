@@ -2,15 +2,8 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  FileText,
-  Gauge,
-  ListChecks,
-  Radar,
-  ShieldCheck,
-  type LucideIcon,
-} from "lucide-react";
-import { Container, Reveal, SectionLabel } from "./ui";
+import { FileText, Gauge, ListChecks, type LucideIcon } from "lucide-react";
+import { Reveal } from "./ui";
 import { viewport } from "@/lib/motion";
 
 type Module = {
@@ -22,20 +15,17 @@ type Module = {
   cards: { title: string; body: string }[];
 };
 
+// Détail de la troisième étape de « Comment ça marche » : ce que le rapport
+// contient une fois l'analyse finie. Ce bloc n'a volontairement ni section ni
+// grand titre propres — il vit à l'intérieur de <Product>, qui raconte déjà
+// le parcours de l'URL au rapport. Le découper en une section séparée
+// revenait à annoncer deux fois la même promesse.
+//
+// Il ne redit pas non plus les six contrôles analysés : c'est le rôle de la
+// section « L'audit » (Features). L'onglet « Analyse » a été retiré pour
+// cette raison, et l'onglet « Confiance » parce que la section « En toute
+// confiance » (Security) dit déjà la même chose.
 const MODULES: Module[] = [
-  {
-    id: "analyse",
-    label: "Analyse",
-    icon: Radar,
-    accent: "#8D7CFF",
-    headline: "Voyez votre site comme le ferait un attaquant",
-    cards: [
-      { title: "Connexion & certificat (SSL/TLS)", body: "Vérifie votre HTTPS, la validité du certificat et la solidité du chiffrement." },
-      { title: "En-têtes de sécurité", body: "Contrôle HSTS, CSP, X-Frame-Options et les protections contre les attaques courantes." },
-      { title: "Fichiers sensibles exposés", body: "Détecte les fichiers privés (.env, .git, sauvegardes) accessibles publiquement." },
-      { title: "Réputation, failles & RGPD", body: "Vérifie les listes noires, les vulnérabilités connues et la conformité RGPD/cookies." },
-    ],
-  },
   {
     id: "score",
     label: "Score",
@@ -66,7 +56,7 @@ const MODULES: Module[] = [
     id: "priorites",
     label: "Priorités",
     icon: ListChecks,
-    accent: "#A78BFA",
+    accent: "#8D7CFF",
     headline: "Les bonnes actions d'abord",
     cards: [
       { title: "Tri par gravité", body: "Les points classés du plus critique au moins urgent." },
@@ -75,111 +65,93 @@ const MODULES: Module[] = [
       { title: "État des fichiers", body: "Pour chaque fichier sensible : accessible ou non depuis Internet." },
     ],
   },
-  {
-    id: "confiance",
-    label: "Confiance",
-    icon: ShieldCheck,
-    accent: "#8D7CFF",
-    headline: "Une analyse respectueuse de votre site",
-    cards: [
-      { title: "Sans installation", body: "Rien à installer : vous entrez simplement l'adresse de votre site." },
-      { title: "Sans compte", body: "Aucune inscription nécessaire pour lancer une analyse." },
-      { title: "Non intrusif", body: "Une analyse passive, sans requête agressive sur votre site." },
-      { title: "Aucune donnée revendue", body: "Vos résultats restent les vôtres." },
-    ],
-  },
 ];
 
-export default function Modules() {
+export default function ModulesTabs() {
   const [active, setActive] = useState(MODULES[0].id);
   const current = MODULES.find((m) => m.id === active)!;
 
   return (
-    <section id="modules" className="relative py-20 sm:py-28">
-      <Container>
-        <Reveal className="mx-auto max-w-2xl text-center">
-          <div className="flex justify-center">
-            <SectionLabel>Ce que vous obtenez</SectionLabel>
-          </div>
-          <h2 className="mt-5 text-3xl font-bold leading-[1.12] tracking-tight sm:text-[2.6rem] lg:text-[3.25rem]">
-            De l&apos;analyse au rapport, tout est clair.
-          </h2>
-          <p className="mt-4 text-lg text-muted">
-            Un seul audit de votre site vous donne un score, un rapport lisible
-            et des priorités concrètes — sans jargon.
-          </p>
-        </Reveal>
+    <div id="modules" className="scroll-mt-24">
+      <Reveal className="mx-auto max-w-2xl text-center">
+        <h3 className="text-xl font-semibold tracking-tight sm:text-2xl">
+          Ce que contient le rapport
+        </h3>
+        <p className="mt-3 text-base text-muted">
+          Un score, un rapport lisible et des priorités — dans quel ordre
+          traiter ce que l&apos;analyse a trouvé.
+        </p>
+      </Reveal>
 
-        {/* tabs */}
-        <div className="mt-12 flex flex-wrap items-center justify-center gap-2">
-          {MODULES.map((m) => {
-            const Icon = m.icon;
-            const on = m.id === active;
-            return (
-              <button
-                key={m.id}
-                onClick={() => setActive(m.id)}
-                aria-pressed={on}
-                className={`inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-acc-violet/60 ${
-                  on
-                    ? "border-acc-violet/40 bg-acc-violet/15 text-ink"
-                    : "border-line bg-white/[0.02] text-muted hover:border-white/15 hover:text-ink"
-                }`}
-              >
-                <Icon className="h-4 w-4" strokeWidth={1.8} />
-                {m.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* panel */}
-        <div className="mt-10 overflow-hidden rounded-[20px] border border-white/[0.07] bg-card/50 p-6 sm:p-8">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={current.id}
-              initial={{ opacity: 0, x: 24 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -24 }}
-              transition={{ duration: 0.4, ease: [0.2, 0.7, 0.2, 1] }}
+      {/* tabs */}
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
+        {MODULES.map((m) => {
+          const Icon = m.icon;
+          const on = m.id === active;
+          return (
+            <button
+              key={m.id}
+              onClick={() => setActive(m.id)}
+              aria-pressed={on}
+              className={`inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-acc-violet/60 ${
+                on
+                  ? "border-acc-violet/40 bg-acc-violet/15 text-ink"
+                  : "border-line bg-white/[0.02] text-muted hover:border-white/15 hover:text-ink"
+              }`}
             >
-              <div className="flex items-center gap-3">
-                <span
-                  className="grid h-10 w-10 place-items-center rounded-xl"
-                  style={{ background: `${current.accent}1f`, color: current.accent }}
+              <Icon className="h-4 w-4" strokeWidth={1.8} />
+              {m.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* panel */}
+      <div className="mt-10 overflow-hidden rounded-[20px] border border-white/[0.07] bg-card/50 p-6 sm:p-8">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={current.id}
+            initial={{ opacity: 0, x: 24 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -24 }}
+            transition={{ duration: 0.4, ease: [0.2, 0.7, 0.2, 1] }}
+          >
+            <div className="flex items-center gap-3">
+              <span
+                className="grid h-10 w-10 place-items-center rounded-xl"
+                style={{ background: `${current.accent}1f`, color: current.accent }}
+              >
+                <current.icon className="h-5 w-5" strokeWidth={1.8} />
+              </span>
+              <h4 className="max-w-2xl text-lg font-semibold tracking-tight sm:text-xl">
+                {current.headline}
+              </h4>
+            </div>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {current.cards.map((c, i) => (
+                <motion.div
+                  key={c.title}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: i * 0.08 }}
+                  className="rounded-xl border border-line bg-bg2/40 p-5 transition-colors hover:border-white/15"
                 >
-                  <current.icon className="h-5 w-5" strokeWidth={1.8} />
-                </span>
-                <h3 className="max-w-2xl text-xl font-semibold tracking-tight sm:text-2xl">
-                  {current.headline}
-                </h3>
-              </div>
-              <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {current.cards.map((c, i) => (
-                  <motion.div
-                    key={c.title}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: i * 0.08 }}
-                    className="rounded-xl border border-line bg-bg2/40 p-5 transition-colors hover:border-white/15"
-                  >
-                    <span
-                      className="mb-3 block h-1 w-8 rounded-full"
-                      style={{ background: current.accent }}
-                    />
-                    <h4 className="text-sm font-semibold tracking-tight text-ink">
-                      {c.title}
-                    </h4>
-                    <p className="mt-2 text-sm leading-relaxed text-muted">
-                      {c.body}
-                    </p>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      </Container>
-    </section>
+                  <span
+                    className="mb-3 block h-1 w-8 rounded-full"
+                    style={{ background: current.accent }}
+                  />
+                  <h5 className="text-sm font-semibold tracking-tight text-ink">
+                    {c.title}
+                  </h5>
+                  <p className="mt-2 text-sm leading-relaxed text-muted">
+                    {c.body}
+                  </p>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        </AnimatePresence>
+    </div>
+    </div>
   );
 }

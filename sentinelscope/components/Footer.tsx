@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Container } from "./ui";
 import { CONTACT_EMAIL, CONTACT_HREF } from "@/lib/contact";
 
@@ -9,7 +10,7 @@ const COLUMNS = [
       { label: "Analyse de sécurité", href: "/#features" },
       { label: "Score & note", href: "/#product" },
       { label: "Rapport détaillé", href: "/#product" },
-      { label: "Contrôles vérifiés", href: "/#modules" },
+      { label: "Contrôles vérifiés", href: "/#features" },
       { label: "Questions fréquentes", href: "/#faq" },
     ],
   },
@@ -32,7 +33,9 @@ export default function Footer() {
           {/* brand */}
           <div className="max-w-xs">
             <Link href="/#top" className="flex items-center gap-2.5 text-lg font-bold">
-              <img
+              {/* 300x300 px pour 138 Ko affichés sur 34 px : next/image sert
+                  la taille utile. */}
+              <Image
                 src="/logo-mark.png"
                 alt="SentinelScope"
                 width={34}

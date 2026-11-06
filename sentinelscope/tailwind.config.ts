@@ -14,15 +14,26 @@ const config: Config = {
         ink: "#F5F7FA",
         muted: "#8B98A8",
         line: "rgba(255,255,255,0.08)",
+        // Accent de marque : un seul violet, celui du logo.
+        // Les trois noms sont conservés car 91 occurrences les utilisent ;
+        // ils pointent volontairement vers la même teinte.
         acc: {
           green: "#8D7CFF",
           cyan: "#8D7CFF",
           violet: "#8D7CFF",
         },
+        // Échelle de sévérité : elle doit rester lisible d'un coup d'œil sur
+        // le fond #07090D. Ces teintes ne servent QU'À qualifier un risque,
+        // jamais à décorer — sinon le code couleur perd son sens.
+        // Chaque usage reste accompagné de son libellé texte (Critique,
+        // Élevé, Moyen, Faible) pour rester compréhensible en cas de
+        // daltonisme deutan/protan, où rouge et vert se confondent.
         sev: {
-          critical: "#A855F7",
-          high: "#8B5CF6",
-          medium: "#A78BFA",
+          critical: "#FF5B5B",
+          high: "#FF9F43",
+          medium: "#FFD166",
+          low: "#3DDC97",
+          unknown: "#8B98A8",
         },
       },
       fontFamily: {

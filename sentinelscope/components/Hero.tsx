@@ -26,7 +26,7 @@ const CONTROLS = [
 
 export default function Hero() {
   return (
-    <section id="top" className="relative overflow-hidden pt-32 pb-24 sm:pt-40 sm:pb-32">
+    <section id="top" className="relative overflow-hidden pt-32 pb-16 sm:pt-36 sm:pb-20">
       {/* fond : aurore + grille + constellation */}
       <div className="pointer-events-none absolute inset-0 -z-10">
         {/* fond animé (canvas) + fondu fixe vers le noir, sans masque recomposé à chaque image */}

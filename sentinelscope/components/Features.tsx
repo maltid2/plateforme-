@@ -2,7 +2,6 @@
 
 import type React from "react";
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
 import { Container, Reveal, SectionLabel } from "./ui";
 import {
   PictoAlertBell,
@@ -79,15 +78,9 @@ const borderHover = {
   green: "hover:border-acc-green/40",
 };
 
-const linkColor = {
-  cyan: "text-acc-cyan",
-  violet: "text-acc-violet",
-  green: "text-acc-green",
-};
-
 export default function Features() {
   return (
-    <section id="features" className="relative py-20 sm:py-28">
+    <section id="features" className="relative py-14 sm:py-20">
       <Container>
         <Reveal className="mx-auto max-w-2xl text-center">
           <div className="flex justify-center">
@@ -112,11 +105,10 @@ export default function Features() {
           {FEATURES.map((f) => {
             const Picto = f.Picto;
             return (
-              <motion.a
-                href="#modules"
+              <motion.article
                 key={f.title}
                 variants={fadeUp}
-                className={`group relative flex flex-col overflow-hidden rounded-[20px] border border-white/[0.07] bg-card/60 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition-all duration-[450ms] ease-[cubic-bezier(.32,.72,0,1)] hover:-translate-y-1.5 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_30px_60px_-30px_rgba(141,124,255,0.4)] focus:outline-none focus-visible:ring-2 focus-visible:ring-acc-violet/60 ${borderHover[f.glow]}`}
+                className={`group relative flex flex-col overflow-hidden rounded-[20px] border border-white/[0.07] bg-card/60 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition-all duration-[450ms] ease-[cubic-bezier(.32,.72,0,1)] hover:-translate-y-1.5 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_30px_60px_-30px_rgba(141,124,255,0.4)] ${borderHover[f.glow]}`}
               >
                 {/* decorative animated glow blob */}
                 <span
@@ -139,13 +131,7 @@ export default function Features() {
                 <p className="mt-2.5 flex-1 text-sm leading-relaxed text-muted">
                   {f.body}
                 </p>
-                <span
-                  className={`mt-5 inline-flex items-center gap-1.5 text-sm font-semibold ${linkColor[f.glow]}`}
-                >
-                  En savoir plus
-                  <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-                </span>
-              </motion.a>
+              </motion.article>
             );
           })}
         </motion.div>

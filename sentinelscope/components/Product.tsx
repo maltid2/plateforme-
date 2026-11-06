@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { CheckCircle2, Globe, ListChecks, ScanLine } from "lucide-react";
 import { Container, Reveal, SectionLabel } from "./ui";
+import ModulesTabs from "./Modules";
 import { viewport, ease } from "@/lib/motion";
 
 const STEPS = [
@@ -29,9 +30,14 @@ const META = [
   { l: "Détecté", v: "il y a 4 min", c: "text-acc-cyan" },
 ];
 
+// Une seule section pour tout le parcours : on entre une URL, l'analyse
+// tourne, et voici ce que le rapport contient. Le détail du rapport
+// (ModulesTabs) était auparavant une section à part, « Un score, un rapport,
+// des priorités » — soit la troisième étape de cette page-ci racontée une
+// deuxième fois, avec sa propre pastille et son propre grand titre.
 export default function Product() {
   return (
-    <section id="product" className="relative border-y border-line bg-bg2/30 py-20 sm:py-28">
+    <section id="product" className="relative border-y border-line bg-bg2/30 py-14 sm:py-20">
       <Container className="grid items-center gap-16 lg:grid-cols-2">
         {/* steps */}
         <Reveal>
@@ -137,6 +143,11 @@ export default function Product() {
             </button>
           </motion.div>
         </Reveal>
+      </Container>
+
+      {/* Détail de la 3e étape : ce que le rapport contient. */}
+      <Container className="mt-16 sm:mt-20">
+        <ModulesTabs />
       </Container>
     </section>
   );

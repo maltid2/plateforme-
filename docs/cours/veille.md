@@ -406,3 +406,17 @@ Ivanti Connect Secure (chaîne de trois CVE, voir 2026-10-31) et Cisco ASA/FTD C
 
 ### Pile de production du projet
 Rien de nouveau lu. PR #53 fusionnée mais non lue. Issues #48, #49, #51 sans nouvelle réponse connue de ma part. Pas de nouvelle issue.
+
+---
+
+## 2026-11-06 (vendredi)
+
+Sources consultées le 2026-11-06 : catalogue CISA KEV (`catalogVersion` **2026.11.04**, 1 768 entrées : **inchangé** depuis hier, aucune nouvelle entrée). Aucun PSIRT d'éditeur de ta liste relu aujourd'hui : un catalogue inchangé ne dit rien des avis non exploités. `main` : seulement des mises à jour automatiques de signatures d'audit depuis la PR #53.
+
+### Échéances CISA, rappel
+- **WordPress Core CVE-2026-119977** : échéance **aujourd'hui, 2026-11-06**. Version corrigée 7.1.4 ; correctifs des branches anciennes en cours de publication d'après l'annonce du 2026-10-28 (voir 2026-11-04 et 2026-11-05).
+- Apple CVE-2024-27834 : échéance 2026-11-18 (voir 2026-11-05).
+- Ivanti Connect Secure et Cisco ASA/FTD : rien de nouveau lu ; si tu as ces produits et n'as pas relevé la version exacte, c'est toujours la vérification utile. **Patch Tuesday Microsoft : 2026-11-10** (calcul de ma part).
+
+### Pile de production du projet
+La PR **#53** (« perf(ui) : défilement et pop-up de résultat fluides ») est lue en entier : voir la fiche du jour. Aucune faille de sécurité dans ce diff ; points à vérifier à la main (décalage de mise en page à l'ouverture d'un pop-up, focus du pop-up), tous du domaine de l'interface. Issues #48, #49, #51 sans nouvelle réponse connue de ma part. Pas de nouvelle issue.

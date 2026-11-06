@@ -10,7 +10,7 @@ const COLUMNS = [
       { label: "Analyse de sécurité", href: "/#features" },
       { label: "Score & note", href: "/#product" },
       { label: "Rapport détaillé", href: "/#product" },
-      { label: "Contrôles vérifiés", href: "/#modules" },
+      { label: "Contrôles vérifiés", href: "/#features" },
       { label: "Questions fréquentes", href: "/#faq" },
     ],
   },

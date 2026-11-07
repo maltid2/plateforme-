@@ -94,6 +94,7 @@ Statuts : `vu` · `à revoir` · `acquis`. Mis à jour à chaque fiche.
 | SQL : jointures et EXPLAIN (ordre de jointure, eq_ref, ALL sur table jointe) | SQL | 2026-11-04 | vu (fiche rédigée, en attente de lecture) ; calibrage SQL toujours sans réponse |
 | WordPress : fenêtre de mise à jour, TOCTOU (CVE-2026-119977), lecture du correctif 7.1.3 → 7.1.4 | 3 | 2026-11-05 | vu (fiche rédigée, en attente de lecture) |
 | Relire la PR #53 : isoler un coût de rendu, lire les « contrôles non effectués » | 1 | 2026-11-06 | vu (fiche rédigée, en attente de lecture) |
+| DNS côté poste Windows : cache résolveur, ordre d'interrogation, cache négatif (poste de travail et support) | 2 | 2026-11-07 | vu (fiche rédigée, en attente de lecture) |
 
 ## Calibrage
 

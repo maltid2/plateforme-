@@ -420,3 +420,25 @@ Sources consultées le 2026-11-06 : catalogue CISA KEV (`catalogVersion` **2026.
 
 ### Pile de production du projet
 La PR **#53** (« perf(ui) : défilement et pop-up de résultat fluides ») est lue en entier : voir la fiche du jour. Aucune faille de sécurité dans ce diff ; points à vérifier à la main (décalage de mise en page à l'ouverture d'un pop-up, focus du pop-up), tous du domaine de l'interface. Issues #48, #49, #51 sans nouvelle réponse connue de ma part. Pas de nouvelle issue.
+
+---
+
+## 2026-11-07 (samedi)
+
+Sources consultées le 2026-11-07 : catalogue CISA KEV (`catalogVersion` **2026.11.06**, 1 769 entrées : **une** nouvelle entrée depuis le 2026-11-05), API NVD (CVE-2026-19868), article de BleepingComputer du 2026-11-06 (source **secondaire**). La page de l'avis SonicWall (SNWLID-2026-0014) **n'a pas pu être lue** : elle se charge par script et la lecture ne renvoie que le titre « Security Advisory ». Aucun autre PSIRT d'éditeur de ta liste relu aujourd'hui : le catalogue ne dit rien des avis non exploités.
+
+### 1. SonicWall SonicOS, VPN SSL (SSLVPN) : contournement de l'authentification SAML — CVE-2026-19868 — **exploitation active constatée par la CISA, équipement exposé sur Internet**
+- **Exploitation :** ajoutée au catalogue le **2026-11-06**, échéance CISA **2026-11-20**. D'après BleepingComputer, l'avis de SonicWall dit que son PSIRT « a enquêté sur un signalement indiquant une exploitation potentielle » et presse les clients de mettre à jour ; le détail de l'exploitation n'est pas publié (rapporté par la presse, **avis éditeur non lu**).
+- **Nature :** un utilisateur qui dispose d'identifiants valides pour **une autre méthode d'authentification** peut contourner les contrôles SAML du service SSLVPN, **y compris l'authentification multifacteur imposée par SAML** (description NVD). CWE-308 (« single-factor authentication »). La presse précise que seuls les SSLVPN **configurés avec SAML** sont concernés.
+- **Score :** NVD affiche **7,5** avec le vecteur `AV:N/AC:H/PR:N/UI:N/S:C/C:H/I:L/A:N` (j'ai recalculé : ce vecteur donne bien 7,5). **BleepingComputer écrit 7,1.** Écart non résolu faute d'avoir pu lire l'avis éditeur.
+- **Versions (d'après BleepingComputer uniquement, à confirmer sur l'avis SonicWall) :** affectées : SonicOS **Gen7 7.3.3-7015 et antérieures**, **Gen8 8.2.2-8015 et antérieures**. Corrigées : **7.3.4-7013** (Gen7) et **8.2.3-8015** (Gen8). Aucun contournement (« no workarounds »), toujours d'après l'article.
+- **Même avis :** l'article cite six autres failles corrigées (deux failles de l'interface de gestion notées 8,8 permettant à des attaquants non authentifiés d'effectuer des opérations non autorisées dans certaines conditions ; des dépassements de tampon avant authentification dans SSL-VPN et TACACS+ pouvant causer un déni de service ; un hachage de mot de passe faible sur appliance virtuelle). **Numéros de CVE non lus.**
+- **Ce que tu vérifies chez toi (si tu as un pare-feu SonicWall) :** (1) la **version exacte de SonicOS** (Gen7 ou Gen8) comparée à l'avis SonicWall, pas à ce journal ; (2) si le **VPN SSL est activé**, **joignable depuis Internet** et **configuré avec SAML** ; quelles **autres méthodes d'authentification** sont aussi activées sur le même service (le contournement suppose des identifiants valides pour l'une d'elles) ; (3) que l'**interface de gestion** n'est pas joignable depuis Internet (deux autres failles de cet avis la concernent, d'après la presse) ; et les **journaux de connexion VPN** depuis le 2026-11-06 (sessions authentifiées par une méthode autre que SAML ; ce dernier point est ma déduction de la description, pas une consigne de l'éditeur).
+- Sources : https://nvd.nist.gov/vuln/detail/CVE-2026-19868 ; https://psirt.global.sonicwall.com/vuln-detail/SNWLID-2026-0014 (non lisible) ; catalogue CISA ; https://www.bleepingcomputer.com/news/security/sonicwall-warns-of-new-ssl-vpn-mfa-bypass-flaw-exploited-in-attacks/ (secondaire) (consultés le 2026-11-07).
+
+### Échéances CISA, rappel
+- WordPress Core CVE-2026-119977 : échéance passée hier (2026-11-06).
+- Apple CVE-2024-27834 : 2026-11-18. Ivanti Connect Secure, Cisco ASA/FTD : rien de nouveau lu. **Patch Tuesday Microsoft : 2026-11-10** (calcul de ma part).
+
+### Pile de production du projet
+`main` contient une fusion récente (« refonte visuelle SentinelScope + compétences unslop et ui-ux-pro-max », `24810c1`) et une PR de refonte de sections ; **non lues**, aucune lecture de sécurité faite. Issues #48, #49, #51 sans nouvelle réponse connue. Pas de nouvelle issue.

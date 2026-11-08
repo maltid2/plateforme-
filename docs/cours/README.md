@@ -1,6 +1,6 @@
 # Cours MINERVE — plan de montée en compétence
 
-Synthèses : [22-25 octobre](2026-10-25-synthese-de-la-semaine.md) · [26 octobre - 1er novembre](2026-11-01-synthese-de-la-semaine.md).
+Synthèses : [22-25 octobre](2026-10-25-synthese-de-la-semaine.md) · [26 octobre - 1er novembre](2026-11-01-synthese-de-la-semaine.md) · [2-8 novembre](2026-11-08-synthese-de-la-semaine.md).
 
 Analyse de l'examen FEDE (janvier 2025) : [`anglais-examen-fede-cu-b4-analyse.md`](anglais-examen-fede-cu-b4-analyse.md).
 
@@ -95,6 +95,7 @@ Statuts : `vu` · `à revoir` · `acquis`. Mis à jour à chaque fiche.
 | WordPress : fenêtre de mise à jour, TOCTOU (CVE-2026-119977), lecture du correctif 7.1.3 → 7.1.4 | 3 | 2026-11-05 | vu (fiche rédigée, en attente de lecture) |
 | Relire la PR #53 : isoler un coût de rendu, lire les « contrôles non effectués » | 1 | 2026-11-06 | vu (fiche rédigée, en attente de lecture) |
 | DNS côté poste Windows : cache résolveur, ordre d'interrogation, cache négatif (poste de travail et support) | 2 | 2026-11-07 | vu (fiche rédigée, en attente de lecture) |
+| Synthèse de la semaine 2-8 novembre + bloc d'anglais (15 termes, texte à trous) | 1/2/3/4/AD/SQL | 2026-11-08 | à revoir (aucune réponse ni copie reçue) |
 
 ## Calibrage
 

@@ -442,3 +442,17 @@ Sources consultées le 2026-11-07 : catalogue CISA KEV (`catalogVersion` **2026.
 
 ### Pile de production du projet
 `main` contient une fusion récente (« refonte visuelle SentinelScope + compétences unslop et ui-ux-pro-max », `24810c1`) et une PR de refonte de sections ; **non lues**, aucune lecture de sécurité faite. Issues #48, #49, #51 sans nouvelle réponse connue. Pas de nouvelle issue.
+
+---
+
+## 2026-11-08 (dimanche)
+
+Sources consultées le 2026-11-08 : catalogue CISA KEV (`catalogVersion` **2026.11.06**, 1 769 entrées : **inchangé** depuis hier, aucune nouvelle entrée). Aucun PSIRT d'éditeur de ta liste relu aujourd'hui : un catalogue inchangé ne dit rien des avis non exploités.
+
+### Suivis (rien de nouveau lu, rien de répété)
+- **SonicWall SonicOS SSLVPN CVE-2026-19868** (entrée du 2026-11-07) : échéance CISA 2026-11-20. L'avis de l'éditeur reste à lire directement ; versions et score non confirmés par la source éditeur.
+- **Patch Tuesday Microsoft : demain+1, 2026-11-10** (calcul de ma part, règle du deuxième mardi).
+- Apple CVE-2024-27834 : échéance 2026-11-18. Ivanti Connect Secure, Cisco ASA/FTD, WordPress : aucune lecture nouvelle.
+
+### Pile de production du projet
+PR #47 (la mienne) ouverte ; PR #50, #52, #53 fusionnées ; fusion « refonte visuelle SentinelScope » dans `main` : **non lue**. Issues #48, #49, #51 ouvertes, sans nouvelle réponse. Aucun commentaire de ta part sur la PR #47 (calibrages). Pas de nouvelle issue.

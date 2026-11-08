@@ -71,15 +71,15 @@ Priorité de ton plan : l'anglais écrit B2 pour le 4 janvier 2027. La rotation 
 | délai dépassé | *timeout* | |
 | vider le cache | *to flush the cache* | piège : *flush* ≠ rincer |
 
-### 4.2 Un mini texte à trous (10 trous) — réponses à écrire, puis vérifier
-Le texte reprend la **description NVD réelle** de CVE-2026-19868 (lue le 2026-11-07), dont j'ai ôté dix mots. Écris le mot qui manque (ou deux mots au plus).
+### 4.2 Un mini texte à trous (9 trous) — écris les mots, puis vérifie
+Le début reprend la **description NVD réelle** de CVE-2026-19868 (lue le 2026-11-07), dont j'ai ôté quatre mots. La suite est **ma paraphrase** de l'article de presse, pas une citation. Écris le mot qui manque.
 
 > An authentication (1)\_\_\_\_\_ vulnerability in the SonicOS SSLVPN service may allow a user with valid credentials for an (2)\_\_\_\_\_ authentication method to (3)\_\_\_\_\_ SAML authentication controls. Successful (4)\_\_\_\_\_ may also bypass SAML-enforced multi-factor authentication (MFA).
-> SonicWall has released updates and says that (5)\_\_\_\_\_ are no (6)\_\_\_\_\_. Customers are strongly urged to (7)\_\_\_\_\_ to the latest release as soon as (8)\_\_\_\_\_. The flaw has been added to CISA's Known (9)\_\_\_\_\_ Vulnerabilities catalog, which means it has been (10)\_\_\_\_\_ in the wild.
+> SonicWall says that no (5)\_\_\_\_\_ are available, so customers are urged to (6)\_\_\_\_\_ to the latest release as soon as (7)\_\_\_\_\_. CISA has added the flaw to its Known (8)\_\_\_\_\_ Vulnerabilities catalog, which means it has been exploited (9)\_\_\_\_\_ the wild.
 
 <details><summary>Réponses</summary>
 
-(1) enforcement · (2) alternate · (3) bypass · (4) exploitation · (5) workarounds (ou : there are no workarounds) · (6) workarounds (sens : *there are no workarounds*, adaptation de la presse : « says no workarounds are available ») · (7) upgrade · (8) possible · (9) Exploited · (10) exploited. Les trous 1 à 4 reprennent la description NVD ; les phrases 5 à 8 sont **paraphrasées** à partir de l'article de presse et de la citation de l'avis rapportée par BleepingComputer (« Customers are strongly urged to upgrade to the latest release as soon as possible ») ; la phrase 9-10 est de moi. Pour (5)-(6), l'important est la forme : *there are no workarounds*, pas *they are no workarounds*. Si ta réponse est différente mais correcte, note-la.
+(1) enforcement · (2) alternate · (3) bypass · (4) exploitation (trous 1 à 4 : mots de la description NVD) · (5) workarounds · (6) upgrade (ou *update*) · (7) possible · (8) Exploited · (9) in. Pièges : *workaround* (solution de contournement) et *bypass* (contourner une protection) ne sont pas synonymes ; *as soon as possible*, pas *as soon as possibly*. Si ta réponse diffère mais reste correcte, note-la.
 </details>
 
 ### 4.3 Consigne de rédaction (pour le test blanc n°1 d'aujourd'hui)

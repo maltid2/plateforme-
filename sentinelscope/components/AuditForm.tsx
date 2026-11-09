@@ -46,19 +46,24 @@ const CONSENT_KEY = "ss-audit-consent-v1";
 const CONTACT_EMAIL =
   process.env.NEXT_PUBLIC_CONTACT_EMAIL || "contact@sentrylescope.fr";
 
+// Échelle de la note globale. Elle doit se lire sans le libellé : un F ne
+// peut pas avoir la même couleur qu'un A. Les cinq teintes reprennent
+// l'échelle sev.* de tailwind.config.ts, avec un palier intermédiaire pour
+// le B. Le libellé de la note reste affiché partout, pour rester
+// compréhensible en cas de daltonisme.
 const gradeColor: Record<string, string> = {
-  A: "#8D7CFF",
-  B: "#8D7CFF",
-  C: "#A78BFA",
-  D: "#8B5CF6",
-  F: "#A855F7",
+  A: "#3DDC97",
+  B: "#A3D94B",
+  C: "#FFD166",
+  D: "#FF9F43",
+  F: "#FF5B5B",
 };
 
 // Gravité d'une alerte : libellé + couleur (rouge = vraiment grave).
 const SEV_META: Record<Sev, { label: string; color: string; bg: string }> = {
-  high: { label: "Élevé", color: "#F87171", bg: "rgba(248,113,113,0.14)" },
-  medium: { label: "Moyen", color: "#F0A93B", bg: "rgba(240,169,59,0.14)" },
-  low: { label: "Faible", color: "#A78BFA", bg: "rgba(167,139,250,0.16)" },
+  high: { label: "Élevé", color: "#FF5B5B", bg: "rgba(255,91,91,0.14)" },
+  medium: { label: "Moyen", color: "#FF9F43", bg: "rgba(255,159,67,0.14)" },
+  low: { label: "Faible", color: "#FFD166", bg: "rgba(255,209,102,0.14)" },
   info: { label: "Info", color: "#8B98A8", bg: "rgba(139,152,168,0.14)" },
 };
 
@@ -67,8 +72,8 @@ const STATUS_META: Record<
   Section["status"],
   { label: string; color: string; bg: string }
 > = {
-  ok: { label: "Conforme", color: "#5FD68A", bg: "rgba(95,214,138,0.14)" },
-  warn: { label: "À corriger", color: "#F0A93B", bg: "rgba(240,169,59,0.14)" },
+  ok: { label: "Conforme", color: "#3DDC97", bg: "rgba(61,220,151,0.14)" },
+  warn: { label: "À corriger", color: "#FF9F43", bg: "rgba(255,159,67,0.14)" },
   error: { label: "Non vérifié", color: "#8B98A8", bg: "rgba(139,152,168,0.14)" },
 };
 
@@ -99,7 +104,7 @@ function ScoreRing({
   const stroke = 7;
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
-  const color = gradeColor[grade] || "#8B5CF6";
+  const color = gradeColor[grade] || "#8B98A8";
   const offset = c * (1 - Math.max(0, Math.min(100, score)) / 100);
   return (
     <div className="relative flex-none" style={{ width: size, height: size }}>
@@ -471,8 +476,8 @@ export default function AuditForm({
                         <span
                           className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
                           style={{
-                            background: `${gradeColor[result.grade] || "#8B5CF6"}22`,
-                            color: gradeColor[result.grade] || "#8B5CF6",
+                            background: `${gradeColor[result.grade] || "#8B98A8"}22`,
+                            color: gradeColor[result.grade] || "#8B98A8",
                           }}
                         >
                           {result.score}/100

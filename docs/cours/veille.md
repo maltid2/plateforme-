@@ -469,3 +469,32 @@ Sources consultées le 2026-11-09 : catalogue CISA KEV (`catalogVersion` **2026.
 
 ### Pile de production du projet
 Rien de nouveau lu. Fusion « refonte visuelle SentinelScope » toujours non lue. Issues #48, #49, #51 sans nouvelle réponse connue. Pas de nouvelle issue.
+
+---
+
+## 2026-11-10 (mardi)
+
+Sources consultées le 2026-11-10 : catalogue CISA KEV (`catalogVersion` **2026.11.09**, 1 773 entrées : **quatre** nouvelles entrées depuis le 2026-11-09), API NVD (CVE-2026-123158), notes de version OpenSSH 10.6p2, avis Alpine Linux du 2026-11-05, API MSRC (document « 2026-Nov »). Aucun autre PSIRT d'éditeur de ta liste relu aujourd'hui : un catalogue qui bouge peu ne dit rien des avis non exploités.
+
+### 1. OpenSSH (sshd) sur Linux avec musl libc et sans PAM : contournement de l'authentification par mot de passe — CVE-2026-123158 — **exploitation active constatée par la CISA, service exposé sur Internet si sshd l'est**
+- **Exploitation :** ajoutée au catalogue le **2026-11-09**, échéance CISA **2026-11-12** (dans deux jours). Les références NVD citent une page de suivi d'événements GreyNoise : **non lue**.
+- **Périmètre exact (à lire avant de s'inquiéter) :** NVD : « sshd in OpenSSH before **10.6p2** on Linux, when **musl libc** is used **without PAM**, lacks a workaround for a password authentication bypass … any password between 256 and 1024 characters succeeds » pour certaines configurations de comptes ; exemple cité : Alpine Linux. Les notes de version OpenSSH 10.6p2 (2026-11-05) parlent d'une « critical security workaround » pour les **systèmes Linux qui utilisent musl libc avec PAM désactivé**, et précisent que la cause racine est jugée **hors de sshd** mais exploitable via sshd. **Ni NVD ni les notes ne désignent les distributions à glibc ; je n'en déduis rien pour elles.**
+- **Nature (avis Alpine, 2026-11-05) :** un attaquant qui peut joindre le port SSH peut s'authentifier **sans connaître de mot de passe**, en une connexion. Conditions listées par Alpine : sshd sans PAM (paquet `openssh-server`, ou `openssh-server-pam` avec `UsePAM no`) ; `PasswordAuthentication yes` (valeur par défaut) ; un compte dont le champ de mot de passe vaut `*` (compte sans mot de passe, normal pour des comptes à clé seule, `root` dans les images de base depuis environ Alpine 3.16) ; **et** au moins un autre compte local avec un hachage `$5$` ou `$6$`. Le mot de passe envoyé doit être très long (Alpine : 257 à 1024 octets ; NVD : 256 à 1024 caractères : léger écart non résolu).
+- **Score :** CVSS 3.1 de **8,1** (NVD, source `cve@mitre.org`), `AV:N/AC:H/PR:N/UI:N`.
+- **Versions corrigées :** OpenSSH portable **10.6p2**. Pour Alpine, paquets corrigés : edge 10.6_p2-r0 ; 3.24 : 10.3_p1-r2 ; 3.23 : 10.2_p1-r1 ; 3.22 : 10.0_p1-r11 ; 3.21 : 9.9_p2-r1 ; 3.20 : 9.7_p1-r6 ; 3.19 : 9.6_p1-r3 ; 3.18 : 9.3_p2-r4 ; 3.17 : 9.1_p1-r7 ; 3.16 : 9.0_p1-r6 (avis Alpine). **Redémarrer sshd après la mise à jour** : le paquet seul ne remplace pas le démon en cours.
+- **Contournement officiel (avis Alpine) :** `PasswordAuthentication no` puis redémarrage de sshd ; mettre à jour **ou** désactiver l'authentification par mot de passe ferme le trou.
+- **Non concernés (avis Alpine) :** conteneurs sans sshd ; `PasswordAuthentication no` ; `openssh-server-pam` avec `UsePAM yes` ; comptes verrouillés (`!`) ; systèmes sans compte à hachage `$`.
+- **Ce que tu vérifies chez toi (si tu exploites sshd) :** (1) **sur quel système tourne sshd** : Alpine, autre distribution musl, image de conteneur ou boîtier embarqué ? C'est cela qui décide si tu es concerné ; (2) la valeur effective de `PasswordAuthentication` (lecture seule, par exemple `sshd -T`) et si sshd est joignable depuis Internet ; (3) la version d'OpenSSH et les comptes à champ `*` à côté d'au moins un compte à mot de passe ; puis, dans les journaux, des connexions par **mot de passe** réussies pour des comptes qui n'en ont pas (ce dernier point est ma déduction, pas une consigne de l'éditeur).
+- Sources : https://nvd.nist.gov/vuln/detail/CVE-2026-123158 ; https://www.openssh.com/releasenotes.html (10.6p2) ; https://alpinelinux.org/posts/2026-11-05-openssh-password-authentication-bypass/ ; catalogue CISA (consultés le 2026-11-10).
+
+### 2. Microsoft : le Patch Tuesday d'aujourd'hui n'est **pas encore lisible ce matin**
+Le document « 2026-Nov » de l'API MSRC porte, à cette heure, le titre « **November 2026 Early Security Updates** » (publication initiale 2026-11-04, 93 entrées, dont des composants tiers comme Git for Windows, Elasticsearch, rsync ; aucune marquée « Exploited:Yes » dans ce document). Le jeu mensuel complet n'est pas encore dans ce document : Microsoft publie d'ordinaire dans la journée (heure exacte non vérifiée par moi). **Je n'ai donc rien à dire aujourd'hui des correctifs Windows de novembre.** À relire demain.
+
+### Vu, hors de ta liste d'éditeurs (catalogue CISA du 2026-11-09, échéance 2026-11-12)
+GPUStack (authentification, accès administrateur), SignalWire FreeSwitch (injection de code), IBM Aspera Faspex (autorisation). **Non lus au-delà de la description du catalogue** : si tu as l'un de ces produits, lis l'avis de l'éditeur.
+
+### Suivis
+SonicWall SSLVPN CVE-2026-19868 (échéance 2026-11-20), Apple CVE-2024-27834 (2026-11-18), Ivanti Connect Secure, Cisco ASA/FTD, WordPress : aucune lecture nouvelle.
+
+### Pile de production du projet
+Rien de nouveau lu. Issues #48, #49, #51 sans nouvelle réponse connue. Pas de nouvelle issue : OpenSSH/musl ne concerne pas la pile Next.js du projet d'après `docker-compose.yml` (pas de sshd), mais je ne connais pas l'image de production.

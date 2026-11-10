@@ -97,6 +97,7 @@ Statuts : `vu` · `à revoir` · `acquis`. Mis à jour à chaque fiche.
 | DNS côté poste Windows : cache résolveur, ordre d'interrogation, cache négatif (poste de travail et support) | 2 | 2026-11-07 | vu (fiche rédigée, en attente de lecture) |
 | Synthèse de la semaine 2-8 novembre + bloc d'anglais (15 termes, texte à trous) | 1/2/3/4/AD/SQL | 2026-11-08 | à revoir (aucune réponse ni copie reçue) |
 | STP : élection du pont racine (BID, BPDU, coût de chemin, rôles des ports) | 2 | 2026-11-09 | vu (fiche rédigée, en attente de lecture) |
+| Active Directory : DC locator, enregistrements SRV, site le plus proche | AD | 2026-11-10 | vu (fiche rédigée, en attente de lecture) ; calibrage AD toujours sans réponse |
 
 ## Calibrage
 

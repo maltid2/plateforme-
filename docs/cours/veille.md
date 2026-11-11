@@ -498,3 +498,41 @@ SonicWall SSLVPN CVE-2026-19868 (échéance 2026-11-20), Apple CVE-2024-27834 (2
 
 ### Pile de production du projet
 Rien de nouveau lu. Issues #48, #49, #51 sans nouvelle réponse connue. Pas de nouvelle issue : OpenSSH/musl ne concerne pas la pile Next.js du projet d'après `docker-compose.yml` (pas de sshd), mais je ne connais pas l'image de production.
+
+---
+
+## 2026-11-11 (mercredi)
+
+Sources consultées le 2026-11-11 : catalogue CISA KEV (`catalogVersion` **2026.11.10**, 1 779 entrées : **six** nouvelles entrées depuis le 2026-11-10), API MSRC (document « November 2026 Security Updates », publié le **2026-11-10**, 1 342 entrées dont des composants tiers comme Chromium), API NVD (CVE-2026-20320, CVE-2026-111560, CVE-2026-116606). Les avis détaillés des éditeurs eux-mêmes (pages Cisco, Barracuda) n'ont **pas** été lus : la description vient de NVD et du catalogue.
+
+### 1. Microsoft : Patch Tuesday de novembre 2026 — **une exploitation active constatée**
+- **Exploité :** **CVE-2026-124194, Microsoft Outlook, usurpation** (*spoofing*), CVSS 6,5 ; MSRC : « Exploited:Yes », « Exploitation Detected » ; ajoutée au catalogue CISA le **2026-11-10**, échéance **2026-11-24**. Selon la FAQ MSRC : un attaquant non authentifié peut envoyer un **fichier de message** forgé et convaincre un utilisateur de l'ouvrir ; Outlook peut alors se connecter à **un emplacement réseau contrôlé par l'attaquant** sans afficher l'avertissement habituel ; le **volet de lecture n'est pas un vecteur**. Produits listés : Microsoft 365 Apps, Office LTSC 2021 (liste complète non relevée). **KB et versions de correctif pour Outlook : non extraits.**
+- **Non exploités au moment de la publication, mais classés « Critical » et proches de ton domaine** (MSRC) :
+  - **CVE-2026-119958, Windows LDAP, exécution de code à distance, 9,8**, attaquant **non authentifié**, écriture hors limites, « Exploitation Less Likely ».
+  - **CVE-2026-118146, Active Directory Domain Services, exécution de code, 8,8**, attaquant authentifié à faible privilège, « Exploitation **More** Likely ».
+  - **CVE-2026-118148, Active Directory Domain Services, élévation de privilège, 7,5**, jusqu'à SYSTEM, nécessite de gagner une condition de concurrence (`AC:H`), « Exploitation **More** Likely ».
+  - **CVE-2026-118207, Microsoft Exchange Server, exécution de code, 8,8**, attaquant authentifié, « Exploitation **More** Likely ».
+  - Autres « Critical » du même jeu, **non détaillés** : Message Queuing (plusieurs), SMB Server (srvnet.sys, 7,5), TCP/IP (7,5), Print Spooler (7,5), Schannel (8,1), CredSSP (8,1), RPC Runtime (8,1), Windows Search (9,8), IIS (8,1), Entra Device Registration (10,0, élévation de privilège ; produit en ligne).
+- **Comptes :** sur les 1 342 entrées, MSRC en classe **68 « Critical »**, 1 117 « Important », 110 « Moderate », 47 « Low ». **Une seule** est marquée exploitée, aucune « publiquement divulguée ».
+- **Windows Server : mises à jour qui corrigent CVE-2026-119958 (colonne « fixed build » de MSRC) :** Server 2016 → **10.0.14393.9688** (KB5131291) ; Server 2019 → **10.0.17763.9487** (KB5131085) ; Server 2022 → **10.0.20348.5870** (KB5131090) ; Server 2025 → **10.0.26100.33730** (KB5131077). Pour CVE-2026-118146 et CVE-2026-118148, Server 2019 : même build 9487, même KB5131085.
+- **Ce que tu vérifies chez toi :** (1) le **build (révision) des contrôleurs de domaine et serveurs** comparé à ceux-ci (méthode : fiche du 2026-10-31) ; priorité aux **contrôleurs de domaine** (LDAP et AD DS) ; (2) Exchange si tu en as un : version et mise à jour ; (3) pour Outlook : la version de Microsoft 365 Apps / Office déployée, et la politique d'ouverture de fichiers de message reçus.
+- Sources : https://api.msrc.microsoft.com/cvrf/v3.0/cvrf/2026-Nov ; https://nvd.nist.gov/ (pour CISA) ; catalogue CISA (consultés le 2026-11-11). Le guide MSRC (page web) n'a pas été lu.
+
+### 2. Cisco BroadWorks : XXE sans authentification — CVE-2026-20320 — **exploitation active constatée par la CISA**
+- Ajoutée au catalogue le **2026-11-10**, échéance **2026-11-24**. NVD : faille de l'analyseur XML de l'interface OCI de BroadWorks ; un attaquant distant **non authentifié** peut lire des informations de configuration sensibles ; CVSS 3.1 de **7,5**, `AV:N/AC:L/PR:N/UI:N`. Publiée dans NVD le 2026-08-19.
+- **Versions affectées et corrigées : non lues** (l'avis Cisco `cisco-sa-bworks-xxe-uwUd7CEt` n'a pas été lu ; NVD liste plusieurs composants BroadWorks sans bornes lisibles pour toi). Si tu as **Cisco BroadWorks** (plateforme de téléphonie d'opérateur, rare en parc d'entreprise), lis l'avis Cisco.
+- Une des références NVD est un article d'un tiers sur une « campagne d'intrusion » : **non lu**, je n'en tire rien.
+
+### 3. Hors de ta liste d'éditeurs mais avec exposition probable : Barracuda — **exploitation active constatée par la CISA, échéance 2026-11-13**
+- **CVE-2026-116606 (Email Security Gateway)** : contournement d'authentification ; un attaquant distant **non authentifié** peut invoquer une fonction d'import de configuration et restaurer une archive de sauvegarde forgée, modifiant la **configuration globale** ; NVD : « versions earlier than **9.4.0.030** » ; CVSS 4.0 de **9,3**.
+- **CVE-2026-111560 (plusieurs produits Barracuda : ESG, Load Balancer, ADC, Message Archiver, WAF Control Center, WAF, Web Security Gateway)** : injection de commandes via le champ de fuseau horaire par un **administrateur authentifié**, exécution avec les droits root ; CVSS 4.0 de **8,6**.
+- Ajoutées au catalogue le 2026-11-10. **Avis Barracuda non lu**, ainsi que les rapports Mandiant cités par NVD : correctifs pour les autres produits non consignés. Si tu as un produit Barracuda, lis l'avis de l'éditeur aujourd'hui (échéance CISA dans deux jours).
+
+### Vu, hors de ta liste (catalogue du 2026-11-10)
+Chromium (CVE-2026-125350, use-after-free, exécution de code dans le bac à sable ; échéance 2026-11-24) et Openwave Webtop Media Transcoder (CVE-2026-111793) : **descriptions du catalogue seulement**.
+
+### Suivis
+OpenSSH musl (CVE-2026-123158) : **échéance CISA demain, 2026-11-12** (voir 2026-11-10). SonicWall CVE-2026-19868 (2026-11-20), Apple CVE-2024-27834 (2026-11-18), Ivanti, Cisco ASA/FTD, WordPress : rien de nouveau lu.
+
+### Pile de production du projet
+Rien de nouveau lu. Issues #48, #49, #51 sans nouvelle réponse connue. Pas de nouvelle issue : les trouvailles du jour ne concernent pas la pile Next.js/Node d'après mes lectures (Chromium est un navigateur, non lu dans la pile).

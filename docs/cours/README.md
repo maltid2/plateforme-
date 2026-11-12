@@ -99,6 +99,7 @@ Statuts : `vu` · `à revoir` · `acquis`. Mis à jour à chaque fiche.
 | STP : élection du pont racine (BID, BPDU, coût de chemin, rôles des ports) | 2 | 2026-11-09 | vu (fiche rédigée, en attente de lecture) |
 | Active Directory : DC locator, enregistrements SRV, site le plus proche | AD | 2026-11-10 | vu (fiche rédigée, en attente de lecture) ; calibrage AD toujours sans réponse |
 | SQL : GROUP BY, tri et colonne Extra (Using temporary, Using filesort, Using index for group-by) | SQL | 2026-11-11 | vu (fiche rédigée, en attente de lecture) ; calibrage SQL toujours sans réponse |
+| OpenSSH sur musl sans PAM : quand un champ « pas de mot de passe » est accepté (CVE-2026-123158, lecture du diff 10.6p1 → 10.6p2) | 3 | 2026-11-12 | vu (fiche rédigée, en attente de lecture) |
 
 ## Calibrage
 

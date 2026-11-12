@@ -536,3 +536,27 @@ OpenSSH musl (CVE-2026-123158) : **échéance CISA demain, 2026-11-12** (voir 20
 
 ### Pile de production du projet
 Rien de nouveau lu. Issues #48, #49, #51 sans nouvelle réponse connue. Pas de nouvelle issue : les trouvailles du jour ne concernent pas la pile Next.js/Node d'après mes lectures (Chromium est un navigateur, non lu dans la pile).
+
+---
+
+## 2026-11-12 (jeudi)
+
+Sources consultées le 2026-11-12 : catalogue CISA KEV (`catalogVersion` **2026.11.10**, 1 779 entrées : **inchangé** depuis hier, aucune nouvelle entrée), avis Barracuda (page lue), code source OpenSSH 10.6p1 / 10.6p2 (voir la fiche du jour). Aucun autre PSIRT d'éditeur de ta liste relu aujourd'hui : un catalogue inchangé ne dit rien des avis non exploités.
+
+### 1. OpenSSH sur Linux musl sans PAM — CVE-2026-123158 — **échéance CISA aujourd'hui, 2026-11-12**
+Rien de nouveau à ajouter aux faits consignés le 2026-11-10 (périmètre, conditions, correctifs, contournement). Le mécanisme est expliqué dans `2026-11-12-openssh-musl-quand-un-champ-mot-de-passe-vaut-etoile.md`, à partir du **diff réel** : OpenSSH 10.6p2 ajoute une garde `strlen(pw_password) >= 4` avant d'accepter une comparaison de mots de passe hachés. Si tu exploites sshd sur Alpine ou une autre distribution musl sans PAM, la vérification utile reste : système, version, `PasswordAuthentication`, **redémarrage de sshd** après mise à jour.
+
+### 2. Barracuda (hors de ta liste d'éditeurs) — suivi et **correction de ma note du 2026-11-11** — échéance CISA **demain, 2026-11-13**
+J'ai lu l'**avis de l'éditeur** (page « Pre-Authentication Authorization Bypass and Command Injection Vulnerabilities in Certain Barracuda Products », mise à jour le 2026-11-09 à 21 h, heure de New York).
+- **Exploitation :** l'éditeur écrit avoir identifié une activité d'exploitation affectant **un petit nombre d'organisations**.
+- **Correction :** le 2026-11-05, Barracuda a modifié le champ « Authentication Required » de CVE-2026-116606 de « Yes, administrative access » à **« No (Administrative UI Access Required) »** : **pas d'authentification requise, mais l'interface d'administration doit être accessible à l'attaquant**. Mon entrée du 2026-11-11 écrivait « attaquant distant non authentifié » d'après NVD sans cette précision. Les deux failles, **combinées**, peuvent permettre de contourner les contrôles d'autorisation et d'obtenir un **accès root**.
+- **Produits et correctifs nommés par l'éditeur :** Email Security Gateway (ESG) : concerné par les deux CVE ; correctifs BNSF-40425 (9.4.017 et plus) et BNSF-40430 (avant 9.4.017). Load Balancer ADC : CVE-2026-111560 seulement ; BNADC-16586. Message Archiver : BNMA-32468. WAF Control Center : BNWF-60060. Web Application Firewall : BNADC-16586. Web Security Gateway : BNYF-24789.
+- **Parade (éditeur) :** les organisations dont **l'interface d'administration n'est pas joignable depuis Internet** sont moins exposées ; restreindre l'accès aux réseaux internes de confiance. Vérifier le micrologiciel (« le périphérique affiche la dernière version disponible »), activer les correctifs automatiques ; si le micrologiciel a plusieurs versions de retard, plusieurs mises à jour peuvent être nécessaires.
+- **Ce que tu vérifies (si tu as un produit Barracuda) :** (1) que l'**interface d'administration n'est pas exposée sur Internet** ; (2) le micrologiciel et le correctif appliqué, d'après le tableau ci-dessus ; (3) des signes de modification de configuration ou de restauration de sauvegarde inattendue (**déduction** de ma part à partir de la description NVD).
+- Source : https://trust.barracuda.com/security/pre-authentication-authorization-bypass-command-injection (consultée le 2026-11-12). Les rapports Mandiant cités par NVD ne sont pas lus.
+
+### Suivis
+Microsoft (Outlook CVE-2026-124194, AD DS, LDAP, Exchange : voir 2026-11-11, échéance Outlook 2026-11-24), SonicWall CVE-2026-19868 (2026-11-20), Apple CVE-2024-27834 (2026-11-18), Cisco BroadWorks (2026-11-24), Ivanti, Cisco ASA/FTD, WordPress : rien de nouveau lu.
+
+### Pile de production du projet
+Rien de nouveau lu. Issues #48, #49, #51 sans nouvelle réponse connue. Pas de nouvelle issue.

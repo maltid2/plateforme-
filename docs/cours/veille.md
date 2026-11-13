@@ -560,3 +560,16 @@ Microsoft (Outlook CVE-2026-124194, AD DS, LDAP, Exchange : voir 2026-11-11, éc
 
 ### Pile de production du projet
 Rien de nouveau lu. Issues #48, #49, #51 sans nouvelle réponse connue. Pas de nouvelle issue.
+
+---
+
+## 2026-11-13 (vendredi)
+
+Sources consultées le 2026-11-13 : catalogue CISA KEV (`catalogVersion` **2026.11.10**, 1 779 entrées : **inchangé** depuis le 2026-11-11, aucune nouvelle entrée). Aucun PSIRT d'éditeur de ta liste relu aujourd'hui : un catalogue inchangé ne dit rien des avis non exploités.
+
+### Échéances CISA, rappel (rien de nouveau, rien de répété)
+- **Barracuda** (CVE-2026-116606 et CVE-2026-111560) : échéance **aujourd'hui, 2026-11-13** ; voir l'entrée du 2026-11-12 (avis de l'éditeur lu).
+- OpenSSH musl CVE-2026-123158 : échéance passée hier. SonicWall CVE-2026-19868 : 2026-11-20. Microsoft Outlook CVE-2026-124194 et Cisco BroadWorks CVE-2026-20320 : 2026-11-24. Apple CVE-2024-27834 : 2026-11-18.
+
+### Pile de production du projet
+Lecture de la fusion « refonte visuelle SentinelScope » (voir la fiche du jour `2026-11-13-relire-une-refonte-csp-competences-tierces.md`). Aucune faille de dépendance lue. Trois observations de **conception**, pas des failles confirmées : (1) `next.config.mjs` : la CSP de développement est servie pour toute valeur de `NODE_ENV` autre que `production` (condition qui s'ouvre par défaut) ; (2) deux compétences tierces importées dans `.claude/skills/` sans fichier de licence ; (3) `wiki_sync.py` (compétence `unslop`) documente un enchaînement qui envoie du texte externe à un agent muni de `Bash`. **Pas d'issue ouverte** : aucun de ces points n'est une faille avérée dans la production ; ils sont dans la fiche et le compte-rendu pour ta décision. Issues #48, #49, #51 sans nouvelle réponse connue.

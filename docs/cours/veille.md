@@ -573,3 +573,27 @@ Sources consultées le 2026-11-13 : catalogue CISA KEV (`catalogVersion` **2026.
 
 ### Pile de production du projet
 Lecture de la fusion « refonte visuelle SentinelScope » (voir la fiche du jour `2026-11-13-relire-une-refonte-csp-competences-tierces.md`). Aucune faille de dépendance lue. Trois observations de **conception**, pas des failles confirmées : (1) `next.config.mjs` : la CSP de développement est servie pour toute valeur de `NODE_ENV` autre que `production` (condition qui s'ouvre par défaut) ; (2) deux compétences tierces importées dans `.claude/skills/` sans fichier de licence ; (3) `wiki_sync.py` (compétence `unslop`) documente un enchaînement qui envoie du texte externe à un agent muni de `Bash`. **Pas d'issue ouverte** : aucun de ces points n'est une faille avérée dans la production ; ils sont dans la fiche et le compte-rendu pour ta décision. Issues #48, #49, #51 sans nouvelle réponse connue.
+
+---
+
+## 2026-11-14 (samedi)
+
+Sources consultées le 2026-11-14 : catalogue CISA KEV (`catalogVersion` **2026.11.13**, 1 781 entrées : **deux** nouvelles entrées depuis le 2026-11-13), API NVD (CVE-2026-123039), page de l'avis Check Point `sk1000362` (**titre seulement lisible**, le contenu se charge par script). Aucun autre PSIRT d'éditeur de ta liste relu aujourd'hui : un catalogue qui bouge peu ne dit rien des avis non exploités.
+
+### 1. Check Point Gaia OS : élévation de privilèges locale vers root par le démon DynamicCLI — CVE-2026-123039 — **exploitation active constatée par la CISA, échéance lundi 2026-11-16**
+- **Exploitation :** ajoutée au catalogue le **2026-11-13**, échéance **2026-11-16**.
+- **Nature :** d'après NVD, le démon DynamicCLI de Gaia OS « runs as root and listens on a world-writable local socket (`/tmp/dynamic_socket`) without authenticating connecting processes. An authenticated **local** user can send a command to the socket and have it executed as root. » CWE-732 et CWE-862. Le catalogue CISA liste : Check Point Firewall, Multi-Domain Security Management Server, Scalable Platforms, Security Gateway, Security Management Server.
+- **Score :** CVSS 3.1 de **7,8**, `AV:L/AC:L/PR:L/UI:N` (source `cve@checkpoint.com`).
+- **Lecture du vecteur :** il faut **déjà** un accès local authentifié à l'équipement ; ce n'est pas une porte d'entrée depuis Internet. Mais l'accès local peut venir d'une autre faille ou d'un compte à faibles privilèges (**déduction**, c'est le même schéma « chaîne » que les fiches du 29 octobre et du 31 octobre). Le catalogue ne précise pas par quel chemin l'exploitation a eu lieu.
+- **Versions affectées et corrigées, correctif (hotfix), contournement : non lus.** L'avis Check Point (`https://support.checkpoint.com/results/sk/sk1000362`) ne s'affiche pas à la lecture ; une recherche n'a trouvé **aucune source secondaire** sur cette CVE. **Lis l'avis directement.**
+- **Ce que tu vérifies chez toi (si tu as Check Point Gaia) :** (1) le **modèle et la version de Gaia** de tes passerelles et serveurs de gestion, à comparer à l'avis ; (2) **qui a un compte** sur ces équipements (comptes d'administration et comptes à privilèges réduits) et que l'**accès de gestion** n'est pas joignable depuis Internet ; (3) des **comptes ou connexions inhabituels** sur ces équipements (**déduction**, pas une consigne de l'éditeur).
+- Sources : https://nvd.nist.gov/vuln/detail/CVE-2026-123039 ; https://support.checkpoint.com/results/sk/sk1000362 (titre seulement) ; catalogue CISA (consultés le 2026-11-14).
+
+### Vu, hors de ta liste d'éditeurs (catalogue du 2026-11-13, échéance 2026-11-16)
+UnrealIRCd CVE-2026-114713 (injection de commandes serveur à serveur sur un réseau avec deux serveurs liés ou plus). **Description du catalogue seulement.**
+
+### Échéances CISA, rappel
+Barracuda (2026-11-13, passée). SonicWall CVE-2026-19868 : 2026-11-20. Apple CVE-2024-27834 : 2026-11-18. Microsoft Outlook CVE-2026-124194 et Cisco BroadWorks CVE-2026-20320 : 2026-11-24. Rien de nouveau lu sur les autres suivis.
+
+### Pile de production du projet
+Rien de nouveau lu. Issues #48, #49, #51 sans nouvelle réponse connue. Pas de nouvelle issue.

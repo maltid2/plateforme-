@@ -597,3 +597,16 @@ Barracuda (2026-11-13, passée). SonicWall CVE-2026-19868 : 2026-11-20. Apple CV
 
 ### Pile de production du projet
 Rien de nouveau lu. Issues #48, #49, #51 sans nouvelle réponse connue. Pas de nouvelle issue.
+
+---
+
+## 2026-11-15 (dimanche)
+
+Sources consultées le 2026-11-15 : catalogue CISA KEV (`catalogVersion` **2026.11.13**, 1 781 entrées : **inchangé** depuis hier, aucune nouvelle entrée). Aucun PSIRT d'éditeur de ta liste relu aujourd'hui : un catalogue inchangé ne dit rien des avis non exploités.
+
+### Suivis (rien de nouveau lu, rien de répété)
+- **Check Point Gaia CVE-2026-123039** (entrée du 2026-11-14) : échéance CISA **demain, 2026-11-16**. Avis de l'éditeur toujours à lire directement (`sk1000362`).
+- Apple CVE-2024-27834 : 2026-11-18. SonicWall CVE-2026-19868 : 2026-11-20. Microsoft Outlook CVE-2026-124194 et Cisco BroadWorks CVE-2026-20320 : 2026-11-24.
+
+### Pile de production du projet
+PR #47 (la mienne) ouverte ; aucune nouvelle PR de la part de tes agents depuis la #53 d'après la liste lue aujourd'hui. Issues #48, #49, #51 ouvertes, sans nouvelle réponse. Aucun commentaire de ta part sur la PR #47. Pas de nouvelle issue.

@@ -1,6 +1,6 @@
 # Cours MINERVE — plan de montée en compétence
 
-Synthèses : [22-25 octobre](2026-10-25-synthese-de-la-semaine.md) · [26 octobre - 1er novembre](2026-11-01-synthese-de-la-semaine.md) · [2-8 novembre](2026-11-08-synthese-de-la-semaine.md).
+Synthèses : [22-25 octobre](2026-10-25-synthese-de-la-semaine.md) · [26 octobre - 1er novembre](2026-11-01-synthese-de-la-semaine.md) · [2-8 novembre](2026-11-08-synthese-de-la-semaine.md) · [9-15 novembre](2026-11-15-synthese-de-la-semaine.md).
 
 Analyse de l'examen FEDE (janvier 2025) : [`anglais-examen-fede-cu-b4-analyse.md`](anglais-examen-fede-cu-b4-analyse.md).
 
@@ -102,6 +102,7 @@ Statuts : `vu` · `à revoir` · `acquis`. Mis à jour à chaque fiche.
 | OpenSSH sur musl sans PAM : quand un champ « pas de mot de passe » est accepté (CVE-2026-123158, lecture du diff 10.6p1 → 10.6p2) | 3 | 2026-11-12 | vu (fiche rédigée, en attente de lecture) |
 | Relire une refonte : CSP conditionnelle, compétences tierces dans `.claude/skills/`, fichier `AGENTS.md` | 1/3 | 2026-11-13 | vu (fiche rédigée, en attente de lecture) |
 | Stratégies de groupe côté poste : portée, moment, `gpresult` et `gpupdate` (poste de travail et support) | 2/AD | 2026-11-14 | vu (fiche rédigée, en attente de lecture) |
+| Synthèse de la semaine 9-15 novembre + bloc d'anglais (15 termes, texte à trous Barracuda) | 1/2/3/4/AD/SQL | 2026-11-15 | à revoir (aucune réponse ni copie reçue) |
 
 ## Calibrage
 

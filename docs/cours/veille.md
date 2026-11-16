@@ -624,3 +624,22 @@ Sources consultées le 2026-11-16 : catalogue CISA KEV (`catalogVersion` **2026.
 
 ### Pile de production du projet
 Rien de nouveau lu. Issues #48, #49, #51 sans nouvelle réponse connue. Pas de nouvelle issue.
+
+---
+
+## 2026-11-16 (lundi), ajout du soir : incident majeur que j'avais manqué — panne Microsoft Outlook / Microsoft 365 des 12 et 13 novembre
+
+**Pourquoi cet ajout :** tu m'as signalé la panne et demandé si elle figurait dans la veille. **Non** : ma veille de la semaine ne suivait que les failles (catalogue CISA, NVD, avis d'éditeurs). Je n'ai donc rien consigné sur cette panne avant ta remarque. Je l'ajoute maintenant et j'élargis le périmètre (voir la fin de l'entrée).
+
+Sources lues le 2026-11-16 : Al Jazeera (explication publiée le 13 novembre) et ABC News (publié le 16 novembre). Les deux sont des **médias**, pas des documents de Microsoft : je n'ai **pas** lu le rapport d'incident de Microsoft lui-même.
+
+- **Début et durée :** les problèmes ont commencé vers **16 h GMT le jeudi 12 novembre** ; en une heure, Downdetector avait enregistré des signalements dans **74 pays et territoires** (Al Jazeera). L'incident a duré **deux jours ouvrés** (ABC) ; en Europe, vendredi matin, la panne n'était **pas résolue** et des serveurs remis en service retombaient. **Heure de fin : non lue** (une recherche a cité un rapport préliminaire de Microsoft mentionnant la fin vendredi 13 novembre vers 11 h 10, heure de New York ; je ne l'ai pas vérifié à la source).
+- **Services touchés :** Outlook le plus durement (boîtes inaccessibles par le web, l'application et le mobile, courriers en retard) ; Teams et Copilot partiellement ; des intégrations tierces dont celles d'OpenAI et d'Anthropic (Al Jazeera). Plus de **43 000** signalements Downdetector pour Outlook vendredi à 7 h GMT, dans 72 pays ; chiffre **partiel** par nature.
+- **Cyberattaque ?** Microsoft a déclaré **qu'il n'y a pas d'indication d'activité malveillante** (Charles Lamanna, vice-président exécutif, le jeudi soir).
+- **Cause annoncée par Microsoft le lundi 16 novembre (rapportée par ABC) :** trois éléments combinés : (1) un **défaut latent**, issu d'un **correctif « préparé spécifiquement pour les serveurs passerelles réseau de Microsoft 365 »** (ABC parle d'un « bug latent de juillet ») ; (2) une **hausse de charge** sur la passerelle ; (3) une **capacité de serveurs réduite**, qui « n'a eu aucun impact à elle seule ». Les deux derniers ont fait que la passerelle a rencontré le défaut ; des requêtes se sont accumulées jusqu'à ce que les serveurs ne répondent plus, **pendant le pic de trafic aux États-Unis**.
+- **Pourquoi c'était si long (même source) :** « à mesure que les serveurs revenaient en service, ils étaient **immédiatement submergés par le trafic en attente** et cessaient de répondre » : c'est un **effet de rafale à la reprise** (*retry storm* / *thundering herd*, termes de ma part, pas de Microsoft).
+- **Ce que tu retiens en tant qu'exploitant (déduction de ma part) :** (1) ta messagerie en ligne peut tomber **sans aucune faille ni attaque** ; (2) un **plan de repli de communication** (téléphone, messagerie secondaire, canal d'astreinte) se prépare **avant** la panne ; (3) une panne se suit sur la **page d'état du service** de l'éditeur, pas seulement sur les sites de signalement ; (4) à la reprise, **les files d'attente peuvent rejouer** (courriers en retard, doublons).
+- **Statut :** le rapport définitif de Microsoft n'est **pas lu** ; la cause peut être précisée ou corrigée. Sources : https://www.aljazeera.com/news/2026/11/13/microsoft-hit-by-global-outages-what-happened-and-why ; https://abcnews.com/US/outlook-outage-cause-microsoft-reason-teams-down/story?id=138174626 (consultés le 2026-11-16).
+
+### Périmètre élargi de la veille (à ta demande)
+À partir de maintenant, en plus des failles, je cherche **chaque jour** les **pannes et incidents majeurs** des services qui comptent pour toi : messagerie et cloud (Microsoft 365, Azure, Google), accès distant et VPN, DNS et opérateurs, hébergeurs, éditeurs de sauvegarde. Pour chacun : quoi, quand, durée, cause **annoncée** (distincte de la cause **réelle**), source lue, et ce que tu en retiens. **Limite :** je lis des **médias et pages d'état** que le moteur de recherche me remonte ; je peux **en manquer**. Dis-moi quand je rate un incident, ou quels services tu veux que je surveille en priorité.

@@ -643,3 +643,41 @@ Sources lues le 2026-11-16 : Al Jazeera (explication publiée le 13 novembre) et
 
 ### Périmètre élargi de la veille (à ta demande)
 À partir de maintenant, en plus des failles, je cherche **chaque jour** les **pannes et incidents majeurs** des services qui comptent pour toi : messagerie et cloud (Microsoft 365, Azure, Google), accès distant et VPN, DNS et opérateurs, hébergeurs, éditeurs de sauvegarde. Pour chacun : quoi, quand, durée, cause **annoncée** (distincte de la cause **réelle**), source lue, et ce que tu en retiens. **Limite :** je lis des **médias et pages d'état** que le moteur de recherche me remonte ; je peux **en manquer**. Dis-moi quand je rate un incident, ou quels services tu veux que je surveille en priorité.
+
+---
+
+## 2026-11-16 (lundi), ajout du soir n°2 : outils cyber et informatiques (nouveau périmètre, à ta demande)
+
+Périmètre ajouté : les **dernières versions d'outils** de cybersécurité et d'administration, en plus des failles et des pannes. **Rappel de règle :** les outils d'analyse ci-dessous (scanners de ports, d'XSS, de partages) ne s'utilisent que **sur tes laboratoires ou des systèmes dont tu es responsable**, jamais sur un système tiers ni sur le réseau de ton employeur à titre d'apprentissage.
+
+Sources lues le 2026-11-16 : blog officiel de Kali, page « News » de Wireshark, notes de version de Zabbix 8.0.0, pages Microsoft Learn sur PowerShell, article de Cybersecurity News. Les points non lus sont **marqués comme tels**.
+
+### 1. Kali Linux 2026.3 — publiée le **2026-10-26** (blog officiel, lu)
+- **Nouveaux outils** (réseaux dépôts Kali) : `dalfox` (scanner XSS automatisé), `katana` (explorateur / « crawler » de sites), `qsreplace` (remplace les valeurs des paramètres d'URL lues sur l'entrée standard), `rustscan` (scanner de ports), `sdrangel` (interface pour la radio logicielle), `snaffler-ng` (recherche d'identifiants et de données sensibles sur des partages SMB).
+- **Système :** 126 mises à jour de paquets ; noyau Kali de **6.19 à 7.1.5** ; bureau KDE Plasma 6.7 ; réécriture des scripts de construction d'images (« build-scripts refresh »).
+- **NetHunter** (Kali sur téléphone / montre) : prise en charge de la montre TicWatch Pro 3 pour le « wardriving », accès NFC dans le chroot Kali, KernelSU.
+- **Ce que ça change pour toi :** utile pour monter un **laboratoire** (une machine d'attaque pour t'entraîner contre **tes propres** VM). Une date divergente (5 novembre) apparaît dans un site tiers ; le **blog officiel dit le 26 octobre**.
+
+### 2. Wireshark 5.0.0rc1 — publiée le **2026-11-11** (page News de Wireshark, lue)
+- Version de développement (« release candidate »). Nouveautés listées : éditeur de thèmes (View › Internals › Theme Designer), thèmes adaptés au daltonisme, aide associée à chaque boîte de dialogue, graphiques E/S avec moyennes mobiles exponentielles (EWMA), **premier support des empreintes TCP nDPI**, étiquetage de paquets (texte, emoji, lien), icônes rafraîchies, application macOS signée avec un nouveau certificat (l'ancien expire début 2027).
+- **Non lu :** la date de sortie de la version stable 5.0.0 (une liste de diffusion citait 21 octobre comme date prévue ; la page News lue montre une **version candidate** au 11 novembre, donc la stable n'est **pas** confirmée). Les branches **4.6** (4.6.9 listée comme dernière) et **4.7** (4.7.4) coexistent.
+- **Ce que ça change pour toi :** outil central de diagnostic réseau (tu vois les trames de tes fiches sur 802.1Q, STP, DNS) ; la 5.0 apporte surtout de l'ergonomie. **Pas de raison de migrer** un poste de production vers une version candidate.
+
+### 3. Zabbix 8.0.0 — publiée le **2026-11-05** (notes de version officielles, lues) — Zabbix est sur ta liste d'éditeurs
+- Première version **8.0.0** annoncée par l'équipe Zabbix (licence AGPLv3). Parmi les nouveautés lues : prise en charge d'un **cluster ClickHouse** et d'**Elasticsearch 8.x / 9.x**, « traces APM » à racine manquante, longueur maximale des données opérationnelles d'un déclencheur portée à 2048 caractères, versions maximales prises en charge relevées (MariaDB 12.3, MySQL 9.7, TimescaleDB 2.29).
+- **Non confirmé :** que 8.0 soit une version « LTS » (les notes lues ne le disent pas dans les extraits que j'ai vus) ; calendrier de support ; avis de sécurité liés. **Si tu exploites Zabbix**, ne mets pas à jour sans lire la procédure de mise à niveau de l'éditeur.
+
+### 4. OpenAI « Daybreak Red Team » et « Daybreak Defense Factory » — annoncés le **2026-11-12** (presse spécialisée, lue ; pages de l'éditeur **non lues**)
+- **Red Team** (accès anticipé) : examen automatisé d'applications web, avec des agents qui testent si une faille signalée est **atteignable et exploitable**, y compris pour des signalements de scanners, de programmes de primes aux bogues ou de divulgations. **Defense Factory** : trouve, valide et **corrige** des failles dans le code ; les ingénieurs **relisent et approuvent** une demande de fusion avec correctif et test. D'après l'article, ces produits utilisent des modèles de cybersécurité d'OpenAI.
+- **Ce que ça change pour ton projet (déduction) :** c'est un produit **voisin de SentinelScope** (audit de sécurité web). À suivre comme **concurrence ou complément**, pas comme fait établi ; je n'ai lu ni les tarifs ni les conditions.
+
+### 5. PowerShell — **information contradictoire, rien d'établi**
+- Les pages Microsoft que j'ai lues indiquent : version stable courante **7.5.11**, version LTS courante **7.6.6** (page sans date lisible) ; la page « Nouveautés de PowerShell 7.7 » décrit une version **préliminaire** (7.7.0-preview.5, sur .NET 11 RC1) avec un changement notable : `New-Guid` produirait des identifiants **version 7** (triables dans le temps) par défaut. Wikipédia (non lue directement) annoncerait « 7.7.0 » le 10 novembre : **non confirmé** par les pages Microsoft lues.
+- **Ce que ça change pour toi :** rien d'urgent ; vérifie la version installée sur tes serveurs de lab avant tout script.
+
+### 6. À vérifier (signalé par la recherche, **non lu**)
+- **ARTEX** : outil open source d'attaque assistée par IA ; un avis du FBI (« FLASH ») le dirait utilisé dans des attaques (résultat de recherche ; l'article de BleepingComputer n'a pas pu être ouvert, **403**). Aucune version ni détail consigné.
+- **Proxmox, Windows Server** : aucune nouveauté de novembre trouvée (Wikipédia cite Proxmox VE 9.2 en mai 2026) : **rien lu** de plus.
+
+### Comment je suivrai ce périmètre
+Chaque lundi, un point **« Outils »** (3 à 5 entrées : outil, version, date, source lue, ce que ça change pour toi). Les autres jours, une seule ligne si un outil de ta liste sort. **Dis-moi quels outils te comptent** (par exemple Wireshark, Nmap, Metasploit, PowerShell, Proxmox, Zabbix, Veeam, PRTG) et je les suis nommément.

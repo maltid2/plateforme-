@@ -750,3 +750,38 @@ Chaque jour, **une ligne** « IA et cyber » dans le bloc « À FAIRE » seuleme
 ## 2026-11-16 (lundi), ajout du soir n°5 : veille « métier » (évolution de carrière)
 
 À ta demande (« savoir si je dois évoluer avec mon métier vers de nouvelles technologies »), un document dédié : `evolution-du-metier-reseau-2026-11-16.md`. En résumé : **solide (lu)** : la pénurie d'ingénieurs réseau s'aggrave (EMA : 26 % en 2022, 41 % en 2024, 52 % en 2026 déclarent avoir du mal à recruter ; sécurité réseau, automatisation et réseau pour l'IA sont les compétences les plus rares) ; l'IA et l'automatisation touchent surtout les **postes d'entrée** ; NIS 2 est un moteur de conformité (ANSSI, page non datée). **Plausible mais non vérifié :** demande forte en GRC et en automatisation, chiffres d'emploi et salaires (sources contradictoires, non reprises). **Aucun verdict.** Point « Métier » mensuel, premier lundi du mois.
+
+---
+
+## 2026-11-16 (lundi), ajout du soir n°6 : tendances et découvertes en IA (précision de périmètre)
+
+**Précision reçue :** tu ne parlais pas de TikTok comme plateforme, mais des **tendances et découvertes en IA** (où qu'on les voie, y compris sur TikTok). J'avais lu « TikTok » trop littéralement ; je corrige. **Ce que je ne vois pas :** le fil TikTok lui-même (non lisible, voir l'ajout n°3). **Ce que je lis à la place :** les **lettres d'information spécialisées** qui relaient les tendances, et les **pages officielles** quand elles sont lisibles.
+
+Sources lues le 2026-11-16 : **The Neuron** (« Everything That Happened in AI Today », 16 novembre, journaliste citée : Marianne Sison) et **Bad Good Better** (« AI Weekly Update, semaine du 15 novembre ») : ce sont des **lettres d'information** (sources **secondaires**) ; je n'ai **pas** ouvert les pages des éditeurs cités, sauf la page d'Anthropic lue précédemment. Un autre résumé (Annielytics) est **bloqué (403)**. Tout ce qui suit est **« selon la lettre »**.
+
+### A. Tendance n° 1 : les agents d'IA reçoivent des moyens d'agir (paiement, permissions) — et la gouvernance suit
+- **ChatGPT Wallet** (OpenAI, selon The Neuron) : un agent peut **acheter** pour toi ; tu ajoutes une carte une fois, tu **approuves chaque achat** par vérification biométrique ; le réseau de paiement fournit un **substitut temporaire** des données de carte, donc l'agent et le commerçant ne voient pas ta vraie carte. Développé avec American Express, Mastercard et Visa ; **déploiement initial limité aux abonnés ChatGPT Pro aux États-Unis** ; les autorisations préalables dans des limites de dépense sont des **projets**, pas une réalité.
+- **United Airlines** restreint les agents de réservation non autorisés ; **Poppy 1.0** (Sierra, selon la lettre) est un protocole par lequel une entreprise indique **quelles actions un agent a le droit de faire** ; Shopify l'aurait activé sur ses boutiques et plus de 100 entreprises y participeraient.
+- **Uber** (selon la lettre) a conçu un cadre qui vérifie, **avant les actions sensibles**, si l'action proposée par un agent correspond à la demande de l'utilisateur, avec **journalisation** pour les revues de sécurité.
+- **Pourquoi c'est de la cyber (déduction) :** « qui a le droit de faire quoi, au nom de qui, avec quelle preuve » est exactement le terrain de **l'identité et des droits** : jetons temporaires, approbation humaine, journaux. C'est aussi ce que tu apprends côté AD (authentification, autorisation).
+
+### B. Tendance n° 2 : l'IA qui tourne chez toi (modèles ouverts, agents locaux)
+- **Rakazo** (selon la lettre) : alternative **libre** aux agents hébergés ; des « coéquipiers » IA tournent **sur ton ordinateur**, avec **tes** modèles et clés ; règles d'approbation ; identifiants et journaux **restent dans ton environnement**.
+- **Edge0-145B** (selon la lettre) : modèle ouvert de 145 milliards de paramètres pour PC compatibles ; l'éditeur annonce plus de 80 jetons par seconde avec environ 29 Go de mémoire de pointe : **chiffres de l'éditeur, non vérifiés**.
+- **Meituan LongCat-2.5** (selon la lettre) : modèle à poids ouverts de 1,6 billion de paramètres pour agents de programmation, « entraîné entièrement sur du matériel chinois » ; un déploiement d'exemple exige **194 puces Huawei Ascend** : donc **pas à portée d'un poste de travail**.
+- **Ce que ça change pour toi (déduction) :** « l'IA qui tourne chez moi » est une piste crédible pour des **agents de lab**, mais **toute application d'IA que tu héberges est une surface d'attaque** (voir l'ajout n°4 sur les agents qui chassent les passerelles d'IA exposées). Je n'ai testé aucun de ces outils.
+
+### C. Découvertes et recherche
+- **OpenAI** a lancé un **blog scientifique** (publication des résultats de chercheurs utilisant l'IA, avec leurs limites) ; un article de physique, développé avec **GPT-6 Astra** selon la lettre, propose une définition mathématique du Modèle standard sur une grille d'espace-temps ; un physicien cité dit qu'Astra a aidé la preuve, mais le résultat reste **une contribution de recherche**, pas un problème résolu.
+- **Google Gemini 4 Carbon** « prend la première place » de MathArena devant « GPT-6.1 Sol » d'OpenAI, mais la configuration testée coûte environ **15 fois plus** par évaluation et dépasse souvent le temps limite (selon la lettre).
+- **Ce que j'en retiens (prudence) :** ce sont des **résultats annoncés** ; « premier d'un classement » ne dit rien de **ton** cas d'usage. Je ne les ai pas lus à la source.
+
+### D. Le contexte (pour savoir pourquoi ça bouge)
+- **Anthropic** : page officielle lue (voir l'ajout n°4) : dépôt d'une demande d'introduction en bourse et lancement de la tournée de présentation (« roadshow »). **Je suis un modèle d'Anthropic : lis une source indépendante.**
+- **Nvidia** : démission de Jensen Huang annoncée (selon la lettre, enquête sur un possible lien avec une opération de renseignement étrangère ; l'avis du conseil dit n'avoir **aucune raison de croire** que la sécurité nationale ou les secrets de Nvidia ont été compromis) ; une autre section de la lettre évoque un retour envisagé : **informations qui bougent vite et se contredisent, rien d'établi**.
+- **Réserve fédérale (États-Unis)** : l'IA devient la préoccupation de stabilité financière la plus citée (87 % des répondants contre 50 % en mai, selon la lettre). **Chaîne d'approvisionnement de l'IA** : les États-Unis et leurs alliés annoncent une protection commune des chaînes critiques (selon la lettre).
+- **Avertissement d'un chercheur d'alignement** (Paul Christiano, selon les deux lettres) sur un « risque élevé de prise de contrôle par l'IA dans les trois ans » : **opinion**, qu'il reconnaît sans modèle quantitatif.
+- **Pannes de la semaine :** Bad Good Better note que **ni** la panne Microsoft **ni** l'arrêt des vols aux États-Unis n'ont été **reliés à l'IA** ni à une cyberattaque d'après la FAA et d'autres sources citées.
+
+### Comment je suivrai ce thème
+Chaque **lundi** : un point « IA : tendances et découvertes » (3 à 5 entrées, chacune avec **la source lue** et la mention **« selon la lettre »** quand je n'ai pas lu la page de l'éditeur). Chaque jour : une ligne **seulement** si un fait **te concerne** (outil que tu utilises, faille d'un logiciel d'IA, annonce touchant tes agents). **Dis-moi quels sujets te donnent le plus envie** : agents et permissions, IA locale, recherche, ou création (vidéo, image, motion).

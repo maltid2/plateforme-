@@ -610,3 +610,17 @@ Sources consultées le 2026-11-15 : catalogue CISA KEV (`catalogVersion` **2026.
 
 ### Pile de production du projet
 PR #47 (la mienne) ouverte ; aucune nouvelle PR de la part de tes agents depuis la #53 d'après la liste lue aujourd'hui. Issues #48, #49, #51 ouvertes, sans nouvelle réponse. Aucun commentaire de ta part sur la PR #47. Pas de nouvelle issue.
+
+---
+
+## 2026-11-16 (lundi)
+
+Sources consultées le 2026-11-16 : catalogue CISA KEV (`catalogVersion` **2026.11.13**, 1 781 entrées : **inchangé** depuis le 2026-11-14, aucune nouvelle entrée). Aucun PSIRT d'éditeur de ta liste relu aujourd'hui : un catalogue inchangé ne dit rien des avis non exploités.
+
+### Échéances CISA du jour et à venir (rien de nouveau lu, rien de répété)
+- **Check Point Gaia CVE-2026-123039 : échéance aujourd'hui, 2026-11-16** (entrée du 2026-11-14). Avis de l'éditeur (`sk1000362`) toujours non lu : la page ne montre que son titre à la lecture. Si tu as du Check Point : version de Gaia, comptes sur les équipements, exposition de l'accès de gestion.
+- UnrealIRCd CVE-2026-114713 (hors de ta liste) : échéance aujourd'hui.
+- Apple CVE-2024-27834 : 2026-11-18. SonicWall CVE-2026-19868 : 2026-11-20. Microsoft Outlook CVE-2026-124194 et Cisco BroadWorks CVE-2026-20320 : 2026-11-24.
+
+### Pile de production du projet
+Rien de nouveau lu. Issues #48, #49, #51 sans nouvelle réponse connue. Pas de nouvelle issue.

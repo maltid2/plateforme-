@@ -713,3 +713,34 @@ Périmètre ajouté à ta demande : (a) dépôts GitHub utiles pour améliorer t
 
 ### Comment je les suivrai
 Chaque lundi : un point « Outils et dépôts » (3 à 5 entrées). Chaque jour : une ligne s'il y a un incident, une panne ou une annonce d'un service de ta liste. **Dis-moi** quels thèmes tu veux plus gros : sécurité, interface et motion, réseaux sociaux, IA.
+
+---
+
+## 2026-11-16 (lundi), ajout du soir n°4 : l'IA et la cybersécurité (nouveau périmètre, à ta demande)
+
+Périmètre ajouté : **tout ce qui touche à l'IA, y compris côté cyber** : attaques assistées par IA, failles découvertes par IA, outils de défense, sorties de modèles, régulation. Pour chaque point : **ce que j'ai lu** (source, date) et **ce que je n'ai pas lu**. **Transparence :** je suis un modèle d'**Anthropic** ; pour tout ce qui touche à Anthropic, croise avec une source indépendante.
+
+Sources lues le 2026-11-16 : notes de version OpenSSH 10.6p2 (déjà lues le 12), page « News » d'Anthropic, article de Cybersecurity News (déjà cité), liste d'articles de Malwarebytes Labs. **Beaucoup d'autres points viennent d'extraits de résultats de recherche (articles de presse non ouverts ou bloqués)** : je les marque « non lu ».
+
+### 1. Ce qui a changé pour toi dans les faits (lu)
+- **Les éditeurs reçoivent beaucoup plus de rapports de failles trouvées par IA.** Notes de version OpenSSH 10.6p2 (2026-11-05), lues : l'équipe écrit avoir reçu « un grand nombre de rapports de bogues de sécurité, dont beaucoup sont des découvertes de modèles d'IA ou faites avec leur aide » ; elle a vu des cas où une faille trouvée par IA est **retrouvée indépendamment par un autre chercheur**, ce qui, écrit-elle, « suggère que des adversaires qui ne signalent pas les bogues aux projets libres sont probablement capables de les découvrir aussi ». **Conséquence annoncée : « des versions plus fréquentes »** au lieu d'attendre la prochaine version planifiée. **Ce que ça change pour toi (déduction) :** le rythme des correctifs de logiciels libres (OpenSSH, mais pas seulement) va probablement **s'accélérer** ; ton processus de mise à jour doit absorber plus de petites versions.
+- **OpenAI « Daybreak Red Team » et « Defense Factory »** (annoncés le 2026-11-12, déjà consignés ce soir) : test automatisé d'applications web et production de correctifs relus par des humains. Source : presse spécialisée, pages de l'éditeur non lues.
+
+### 2. Attaques assistées par IA (presse ; **sources primaires non lues**)
+- **ARTEX** (cadre libre d'attaque autonome, déjà signalé ce soir) : d'après plusieurs articles issus d'une recherche, l'**FBI** a publié le **2026-11-13** un avis **FLASH-20261113-001** ; selon ces articles : utilisation par des acteurs malveillants **depuis août**, certaines intrusions atteignant des **droits privilégiés en moins de trois heures**, **plus de 1 600 consoles ARTEX exposées** sur Internet début novembre, **aucune CVE citée**, indicateurs de **comportement** (portes dérobées web à des emplacements d'application inhabituels, appels sortants inattendus vers des API de modèles du commerce) et recommandations sur les **connexions de comptes de service et les nouveaux identifiants OAuth**. Un titre de Malwarebytes du 2026-11-16 confirme l'existence de l'alerte (« Criminals are using ARTEX AI agents to speed up cyberattacks, FBI warns », lu). **L'avis du FBI lui-même n'est pas lu**, et les détails ci-dessus sont ceux de la presse : **vérifie dans l'avis**. **Ce que ça change pour toi (déduction) :** ce qui se détecte, c'est le **comportement** (web shells, sorties vers des API de modèles), pas une CVE ; et la **rapidité** d'une intrusion se compte en heures.
+- **Google** : un article cité par la recherche (BleepingComputer, **bloqué en 403, non lu**) dit que Google avertit que des **attaques entièrement automatisées par IA** approchent et que des acteurs abusent d'outils libres de test d'intrusion.
+- **Amazon** : un extrait de recherche (**non lu**) dit que des agents d'IA chassent des failles dans des applications d'IA **exposées sur Internet** (LiteLLM, One API, Dify) pour **voler des clés de fournisseurs de modèles**. **Si tu exposes une passerelle ou une application d'IA**, c'est un point à vérifier : version, exposition, clés stockées.
+- **SGLang** (moteur d'inférence libre) : un extrait (**non lu**) cite une faille d'exécution de code exploitée le 2026-11-09, avec exposition de comptes d'environ 100 utilisateurs d'un service. À confirmer à la source.
+
+### 3. Découvertes par IA (extraits non lus : à confirmer avant de les citer)
+- Google DeepMind (6 novembre) : des agents supervisés auraient trouvé deux façons de **réduire le coût d'attaque contre RSA 1024 bits** (extrait de recherche, **non lu**). Un titre sur « 948 failles du noyau Linux » attribué à OpenAI est **un titre seul**, je n'en tire rien.
+
+### 4. Modèles (page officielle lue, détails non lus)
+- La page « News » d'Anthropic, lue, liste en tête, daté du **2026-11-16**, « **Introducing Claude Fable 5.2 and Claude Mythos 5.2** » (« nos modèles les plus performants pour les travaux techniques difficiles ») ; plus bas : « **Claude Opus 5.5** » (annoncé « 40 % moins coûteux que Opus 5 sur des charges typiques ») et « **Claude Haiku 5.5** » (« petit modèle le plus rapide et le plus performant », cité pour « sous-agents et navigation »), ainsi qu'un dépôt de demande d'introduction en bourse (« Form S-1 ») et une feuille de route de lancement. **Une lettre d'information citée par la recherche donnait le 9 novembre pour Fable 5.2 : la page officielle dit le 16 novembre**, je retiens la page officielle.
+- **Ce que ça change pour ta flotte d'agents (question que tu poses) :** je **n'ai pas lu** les articles de lancement, donc je ne donne **ni tarif, ni limite, ni capacité**. À lire avant tout changement de modèle sur tes agents. Pour les autres éditeurs (OpenAI, Google, etc.), la recherche mentionne « GPT-6 Cyber » et une autre appellation : **sources contradictoires, rien d'établi**.
+
+### 5. Régulation et gouvernance (extraits non lus)
+- « Paris Call for AI Safety and Security » signé par dix entreprises d'IA lors d'une réunion du 9 novembre ; l'Australie envisagerait un régulateur de sécurité de l'IA (extraits de recherche). **À confirmer.**
+
+### Comment je les suivrai
+Chaque jour, **une ligne** « IA et cyber » dans le bloc « À FAIRE » seulement si un point te **concerne directement** (outil que tu utilises, avis du FBI ou de la CISA sur l'IA, faille d'un logiciel d'IA exposé). Chaque lundi, un point **« IA et cyber »** de 3 à 5 entrées avec **source lue** ou la mention **non lu**. **Dis-moi** quels aspects te comptent : attaques, défense, modèles pour tes agents, régulation, outils d'IA que tu héberges.

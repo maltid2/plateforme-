@@ -744,3 +744,9 @@ Sources lues le 2026-11-16 : notes de version OpenSSH 10.6p2 (déjà lues le 12)
 
 ### Comment je les suivrai
 Chaque jour, **une ligne** « IA et cyber » dans le bloc « À FAIRE » seulement si un point te **concerne directement** (outil que tu utilises, avis du FBI ou de la CISA sur l'IA, faille d'un logiciel d'IA exposé). Chaque lundi, un point **« IA et cyber »** de 3 à 5 entrées avec **source lue** ou la mention **non lu**. **Dis-moi** quels aspects te comptent : attaques, défense, modèles pour tes agents, régulation, outils d'IA que tu héberges.
+
+---
+
+## 2026-11-16 (lundi), ajout du soir n°5 : veille « métier » (évolution de carrière)
+
+À ta demande (« savoir si je dois évoluer avec mon métier vers de nouvelles technologies »), un document dédié : `evolution-du-metier-reseau-2026-11-16.md`. En résumé : **solide (lu)** : la pénurie d'ingénieurs réseau s'aggrave (EMA : 26 % en 2022, 41 % en 2024, 52 % en 2026 déclarent avoir du mal à recruter ; sécurité réseau, automatisation et réseau pour l'IA sont les compétences les plus rares) ; l'IA et l'automatisation touchent surtout les **postes d'entrée** ; NIS 2 est un moteur de conformité (ANSSI, page non datée). **Plausible mais non vérifié :** demande forte en GRC et en automatisation, chiffres d'emploi et salaires (sources contradictoires, non reprises). **Aucun verdict.** Point « Métier » mensuel, premier lundi du mois.

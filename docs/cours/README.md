@@ -4,6 +4,8 @@ Synthèses : [22-25 octobre](2026-10-25-synthese-de-la-semaine.md) · [26 octobr
 
 Analyse de l'examen FEDE (janvier 2025) : [`anglais-examen-fede-cu-b4-analyse.md`](anglais-examen-fede-cu-b4-analyse.md).
 
+État général des CVE (vue d'ensemble, sans détail technique) : [`etat-general-des-cve-2026-11-16.md`](etat-general-des-cve-2026-11-16.md).
+
 Plans et calendriers : [`parcours-en-parallele.md`](parcours-en-parallele.md) (toutes les pistes) et [`anglais-plan-a2-b2-janvier.md`](anglais-plan-a2-b2-janvier.md) (examen du 4 janvier 2027).
 
 Objectif : savoir **juger un diff** produit par ATLAS, GHOST, SIMBA ou le CEO sur SentinelScope, pas réciter du vocabulaire.

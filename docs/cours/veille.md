@@ -681,3 +681,35 @@ Sources lues le 2026-11-16 : blog officiel de Kali, page « News » de Wireshark
 
 ### Comment je suivrai ce périmètre
 Chaque lundi, un point **« Outils »** (3 à 5 entrées : outil, version, date, source lue, ce que ça change pour toi). Les autres jours, une seule ligne si un outil de ta liste sort. **Dis-moi quels outils te comptent** (par exemple Wireshark, Nmap, Metasploit, PowerShell, Proxmox, Zabbix, Veeam, PRTG) et je les suis nommément.
+
+---
+
+## 2026-11-16 (lundi), ajout du soir n°3 : dépôts GitHub pour tes agents, TikTok, et limites de la lecture de X (Twitter)
+
+Périmètre ajouté à ta demande : (a) dépôts GitHub utiles pour améliorer tes agents (motion design, interface…), (b) TikTok et les nouveautés d'outils d'IA, (c) X (Twitter). Sources lues le 2026-11-16 : les fichiers `README.md` et `LICENSE` des dépôts (lus via `raw.githubusercontent.com`), des articles de presse. **Les nombres d'étoiles et d'installations cités par des sites agrégateurs ne sont pas vérifiés** : je ne les reprends pas.
+
+### 1. Dépôts GitHub pour agents, interface et motion design (README et licence lus)
+| Dépôt | Ce que c'est (d'après son README) | Licence (fichier lu) | Pour toi |
+|---|---|---|---|
+| `LottieFiles/motion-design-skill` | Principes de **motion design** pour agents : durées, courbes d'accélération, chorégraphie, adaptés des 12 principes de Disney pour l'interface ; « agnostique de l'implémentation » (CSS, Framer Motion…) ; commande d'installation `npx skills add LottieFiles/motion-design-skill` | **MIT** (« Copyright (c) 2025 LottieFiles ») | Cadre de réflexion pour les animations de SentinelScope (cf. fiches du 22 octobre et du 6 novembre). |
+| `emilkowalski/skills` | Compétences pour concepteurs et ingénieurs d'interface (auteur ayant travaillé chez Vercel et Linear d'après son README) ; l'auteur écrit que les agents choisissent parfois de mauvaises courbes (par exemple `ease-in` à l'entrée au lieu de `ease-out`) | **MIT** (« Copyright (c) 2026 Emil Kowalski ») | Règles d'animation « d'opinion » : à lire avant de les traiter comme des lois. |
+| `heygen-com/hyperframes` | « Write HTML. Render video. Built for agents. » : écrire du HTML qui se rend en **vidéo** ; nécessite Node ≥ 22 d'après ses badges | **Apache 2.0** | Pour des vidéos de démonstration du produit (idée, non testée). |
+| `wilwaldon/Claude-Code-Frontend-Design-Toolkit` | **Liste commentée** (« awesome list », 70+ outils, date indiquée avril 2026) de compétences, extensions et astuces pour de meilleures interfaces | **Aucun fichier `LICENSE` trouvé** | Utile comme **annuaire** ; je ne copierais pas son contenu sans licence. |
+| `imMamdouhaboammar/motion-graphics-skills` | Compétences « motion graphics » pour agents (annoncées : 64) | **« PROPRIETARY AND CONFIDENTIAL LICENSE (ALL RIGHTS RESERVED) »** | **Ne pas importer dans ton dépôt** : licence propriétaire, tous droits réservés. |
+
+**Avant d'installer quoi que ce soit (rappel de la fiche du 13 novembre) :** une « compétence » est un ensemble d'instructions et de scripts qu'un agent suit ou exécute. `npx skills add …` **télécharge du code**. Règles : (1) lis le dépôt avant ; (2) vérifie la **licence** et copie le **fichier de licence** avec le contenu ; (3) **épingle un commit** (comme le font les `ORIGINE.md` de ton dépôt) ; (4) essaie d'abord dans un **dossier de test**, pas dans le dépôt de production ; (5) ne lance jamais d'enchaînement qui envoie du texte externe à un agent muni de `Bash`.
+
+### 2. TikTok
+- **Publicité et création par IA (lu) :** le 9 novembre, d'après Social Media Today (journaliste cité : Andrew Hutchinson), TikTok a mis à jour **Symphony** : accès au dernier modèle **Dreamina Seedance**, jusqu'à **50 références** multimodales (contre 9), vidéos de **30 secondes** par requête (contre 15), **API Symphony** mise à jour pour générer dans ses propres outils, et achat de jetons **BytePlus** ouvert hors Amérique du Nord à partir du 9 novembre. L'article ne présente ceci que comme un outil à **tester**.
+- **Plus ancien (lu) :** « TikTok World '26 » (13 mai 2026) : annonces d'outils d'IA pour annonceurs (page du Newsroom TikTok).
+- **Ce que je ne peux pas faire :** lire les **tendances en temps réel** de la plateforme (sons, hashtags, formats en vogue). Le **Creative Center** de TikTok se charge par script : la lecture ne renvoie que le menu. **Je ne te donne donc aucune tendance de plateforme.** Ce que je peux suivre : les **annonces d'outils** (Newsroom, presse spécialisée).
+- **Ce que ça change pour toi (déduction) :** utile si tu veux produire des vidéos courtes autour de SentinelScope ; je n'ai pas lu les tarifs ni les conditions.
+
+### 3. X (Twitter) — ce que je peux et ne peux pas faire
+- **Je ne peux pas lire le fil d'actualité de X** : le site exige une connexion et bloque la lecture automatique ; je n'ai **pas** testé d'outil de contournement et je n'en utiliserai pas pour passer une protection.
+- **Ce que je peux faire à la place (et qui est souvent mieux) :** suivre **les sources primaires** que ces comptes relaient : les PSIRT des éditeurs, les blogs officiels, le catalogue CISA, le CERT-FR, les dépôts GitHub (notes de version). Et **lire les pages publiques** que la recherche me remonte (articles qui citent un message d'un compte).
+- **Ce que je ne peux pas garantir :** la vitesse (l'annonce sur X précède souvent la page officielle) ni l'exhaustivité (une rumeur ou un message supprimé m'échappe).
+- **Proposition :** donne-moi **les comptes qui comptent pour toi** (éditeurs, chercheurs, médias cyber) : je cherche leurs **annonces relayées dans des sources lisibles** et je note **toujours** la différence entre **rumeur / annonce / disponibilité réelle**.
+
+### Comment je les suivrai
+Chaque lundi : un point « Outils et dépôts » (3 à 5 entrées). Chaque jour : une ligne s'il y a un incident, une panne ou une annonce d'un service de ta liste. **Dis-moi** quels thèmes tu veux plus gros : sécurité, interface et motion, réseaux sociaux, IA.

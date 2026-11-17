@@ -106,6 +106,7 @@ Statuts : `vu` · `à revoir` · `acquis`. Mis à jour à chaque fiche.
 | Stratégies de groupe côté poste : portée, moment, `gpresult` et `gpupdate` (poste de travail et support) | 2/AD | 2026-11-14 | vu (fiche rédigée, en attente de lecture) |
 | Synthèse de la semaine 9-15 novembre + bloc d'anglais (15 termes, texte à trous Barracuda) | 1/2/3/4/AD/SQL | 2026-11-15 | à revoir (aucune réponse ni copie reçue) |
 | Agrégat de liens (EtherChannel) : hachage déterministe, répartition 0-7, modes PAgP | 2 | 2026-11-16 | vu (fiche rédigée, en attente de lecture) |
+| Active Directory : réplication, USN, vecteur d'à-jour, notification | AD | 2026-11-17 | vu (fiche rédigée, en attente de lecture) ; calibrage AD toujours sans réponse |
 
 ## Calibrage
 

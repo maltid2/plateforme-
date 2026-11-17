@@ -785,3 +785,13 @@ Sources lues le 2026-11-16 : **The Neuron** (« Everything That Happened in AI T
 
 ### Comment je suivrai ce thème
 Chaque **lundi** : un point « IA : tendances et découvertes » (3 à 5 entrées, chacune avec **la source lue** et la mention **« selon la lettre »** quand je n'ai pas lu la page de l'éditeur). Chaque jour : une ligne **seulement** si un fait **te concerne** (outil que tu utilises, faille d'un logiciel d'IA, annonce touchant tes agents). **Dis-moi quels sujets te donnent le plus envie** : agents et permissions, IA locale, recherche, ou création (vidéo, image, motion).
+
+---
+
+## 2026-11-17 (mardi)
+
+**Catalogue CISA (KEV) :** flux relu le 2026-11-17 : version **2026.11.13**, **1781** entrées, **identique à celui du 16 novembre** : aucune nouvelle entrée détectée ; je ne conclus rien d'un éventuel retard de publication du flux.
+**Avis éditeurs :** aucun nouvel avis daté d'aujourd'hui trouvé et lu. Une recherche web n'a renvoyé que des éléments antérieurs (Palo Alto CVE-2026-0300, Fortinet, Cisco) **déjà hors de ce cycle** et que je n'ai pas relus : non repris.
+**Incidents/pannes :** rien de daté du 17 novembre trouvé (recherche limitée, pas de source de statut lue).
+**Échéances :** Apple CVE-2024-27834 demain 18/11 ; SonicWall CVE-2026-19868 le 20/11 ; Microsoft Outlook, Cisco BroadWorks, Chromium le 24/11.
+**Fiche :** réplication Active Directory (USN, vecteur d'à-jour, notification). Pas d'issue ATLAS (pile de production non concernée).

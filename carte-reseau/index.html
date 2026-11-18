@@ -39,7 +39,7 @@
           <button id="b-enregistrer" type="button">Exporter cette topologie (.txt)</button>
           <button id="b-ouvrir" type="button">Ouvrir une topologie (.txt)</button>
           <hr />
-          <button id="b-pdf" type="button">Dossier imprimable · PDF (plan 2D + tableau)</button>
+          <button id="b-pdf" type="button">Dossier imprimable · PDF (plan 2D, baies, tableau)</button>
           <button id="b-visionneuse" type="button">Visionneuse interactive 2D + 3D (.html)</button>
           <button id="b-glb" type="button">Maquette 3D (.glb · Visionneuse 3D Windows, Blender…)</button>
           <button id="b-svg" type="button">Plan 2D vectoriel (.svg)</button>
@@ -81,6 +81,7 @@
       <div class="outils">
         <div class="onglets" role="tablist">
           <button role="tab" id="v-2d" aria-selected="true">Plan 2D</button>
+          <button role="tab" id="v-baies" aria-selected="false">Baies</button>
           <button role="tab" id="v-3d" aria-selected="false">Vue 3D</button>
         </div>
         <select id="filtre-site" aria-label="Site affiché"></select>
@@ -92,6 +93,7 @@
       <div class="vue" id="vue">
         <div id="hote-2d" class="hote"></div>
         <div id="hote-3d" class="hote" hidden></div>
+        <div id="hote-baies" class="hote baies" hidden></div>
         <aside class="fiche" id="fiche" hidden></aside>
         <div class="legende" id="legende"></div>
       </div>

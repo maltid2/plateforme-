@@ -7,6 +7,8 @@ plans** :
 - un **plan 2D professionnel** : vrais switchs en façade (ports numérotés,
   câble qui part du bon port), fibre et cuivre en deux couleurs, trunks et
   VLAN étiquetés, chaque site dans son cadre et chaque lieu dans son site ;
+- une **vue « Baies »** : les baies de chaque lieu vues de face, côte à côte,
+  chaque équipement à sa hauteur (numéros d'U), caméras sur leurs plateaux ;
 - une **vue 3D interactive** : une salle par lieu, des baies avec les
   équipements montés dedans, les caméras rangées sur des plateaux en bas de
   baie et câblées au port de leur switch, les liaisons entre sites en arc.
@@ -87,7 +89,7 @@ L'éditeur colore la syntaxe, souligne les erreurs et propose les sites, les
 
 | Export | S'ouvre avec |
 | --- | --- |
-| **Dossier imprimable · PDF** — plan 2D A3 avec cartouche et légende, puis tableau des équipements par site | tout lecteur PDF ; choisir l'imprimante « Enregistrer au format PDF » |
+| **Dossier imprimable · PDF** — plan 2D A3 avec cartouche et légende, les baies vues de face côte à côte, puis le tableau des équipements par site | tout lecteur PDF ; choisir l'imprimante « Enregistrer au format PDF » |
 | **Visionneuse interactive (.html)** — 2D + 3D, topologie incluse, lecture seule | n'importe quel navigateur, hors ligne |
 | **Maquette 3D (.glb)** | Visionneuse 3D de Windows, PowerPoint, Blender… |
 | **Plan 2D (.svg)** | navigateur, Inkscape, Illustrator, Visio, Word |

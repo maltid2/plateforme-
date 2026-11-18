@@ -149,8 +149,8 @@ kbd { border: 1px solid var(--trait); }
 #recherche { flex: 1; min-width: 180px; }
 .vue { position: relative; flex: 1; min-height: 0; background: var(--bg); overflow: hidden; }
 .hote { position: absolute; inset: 0; }
-.hote svg { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
-.hote svg.saisi { cursor: grabbing; }
+.hote > svg { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+.hote > svg.saisi { cursor: grabbing; }
 .noeud { cursor: pointer; }
 .noeud:focus { outline: none; }
 .noeud:hover .corps, .noeud.choisi .corps { stroke: var(--acc); stroke-width: 0.1; }
@@ -321,4 +321,23 @@ body.lecture .local::after { content: " · lecture seule"; }
   .i-tableau td.m { font-family: Consolas, monospace; }
   .i-tableau small { color: #555; }
   .i-svg svg, .i-svg svg * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+/* ---------- baies vues de face ---------- */
+.hote.baies { overflow: auto; padding: 18px 22px 70px; }
+.b-site { margin-bottom: 26px; }
+.b-site h3 { margin: 0 0 6px; font-size: 18px; }
+.b-site h4 { margin: 12px 0 8px; font-size: 13px; color: #a7f0cf; font-weight: 600; }
+.b-rangee { display: flex; flex-wrap: wrap; gap: 26px; align-items: flex-end; }
+.b-baie { flex: none; }
+.b-eq { cursor: pointer; }
+.b-eq:hover > svg, .b-eq:hover > rect { filter: brightness(1.25); }
+.b-eq.choisi > svg { outline: 2px solid var(--acc); }
+.b-vide { color: var(--sourd); }
+@media print {
+  .i-baies .b-site h3 { font-size: 13pt; margin: 6px 0 2px; color: #111; }
+  .i-baies .b-site h4 { font-size: 10pt; margin: 4px 0; color: #0d4f33; }
+  .i-baies .b-rangee { gap: 8mm; }
+  .i-titre-baies { font-size: 14pt; margin: 4px 0; }
+  .i-baies .b-site { break-inside: avoid; }
 }

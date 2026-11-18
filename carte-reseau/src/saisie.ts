@@ -352,9 +352,11 @@ site Nanterre
 baie A1
   parefeu FW-SIEGE | 10.14.0.1 | FortiGate 100F | ports=8
   switch SW-CORE | 10.14.0.2 | Cisco Catalyst 9300-24T | ports=24 | sfp=4
+  onduleur UPS-A1 | APC Smart-UPS 3000
+
+baie A2
   switch SW-CAM | 10.14.0.4 | Aruba 2930F-24G PoE+ | ports=24 | sfp=4
   nvr NVR-SIEGE | 10.14.0.40 | Hikvision 32 voies
-  onduleur UPS-A1 | APC Smart-UPS 3000
 
 FW-SIEGE:LAN1 -> SW-CORE:Te1 | fibre | trunk | vlan=10,20,30
 SW-CORE:Te3 -> SW-CAM:Te1 | fibre | trunk | vlan=30

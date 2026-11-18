@@ -15,6 +15,7 @@ import { APPARENCE, COULEUR_MEDIA } from "./apparence.ts";
 import type { Disposition } from "./disposition.ts";
 import { FH, type Facade } from "./facade.ts";
 import { svgFacade } from "./plan2d.ts";
+import { CAM_PAR_PLATEAU, EN_BAIE, HAUTEUR_U, svgSimple, U_PLATEAU } from "./baies.ts";
 import type { Equipement, Genre, Inventaire } from "./saisie.ts";
 
 type Rappels = { choisir: (nom: string | null) => void };
@@ -29,37 +30,10 @@ export type Vue3D = {
 const U = 0.3;              // hauteur d'un U
 const RL = 2.2, RD = 2.0;   // largeur et profondeur d'un équipement 19"
 const BW = 2.9, BD = 2.6;   // encombrement d'une baie
-const EN_BAIE = new Set<Genre>(["passerelle", "parefeu", "switch", "serveur", "nas", "nvr", "onduleur"]);
-const HAUTEUR_U: Partial<Record<Genre, number>> = { serveur: 2, nas: 2, nvr: 2, onduleur: 2 };
-const CAM_PAR_PLATEAU = 6, U_PLATEAU = 2;
 const MEDIAS_COURTS = { fibre: "fibre", cuivre: "RJ45", radio: "radio", vpn: "VPN" } as const;
 
 /** Réglages de la vue, modifiables depuis l'interface. */
 export const options = { camerasEnBaie: true };
-
-/* ---------- façades simples (serveur, NVR, onduleur) ---------- */
-function svgSimple(e: Equipement, u: number): string {
-  const w = 22, h = 3 * u, c = APPARENCE[e.genre].couleur;
-  const nom = e.nom.replace(/&/g, "&amp;").replace(/</g, "&lt;");
-  let detail = "";
-  if (e.genre === "serveur" || e.genre === "nas") {
-    for (let i = 0; i < 8; i++)
-      detail += `<rect x="${8 + i * 1.6}" y="0.5" width="1.4" height="${h - 1}" rx="0.1" fill="#161b22" stroke="#4a5361" stroke-width="0.06"/>
-        <rect x="${8.4 + i * 1.6}" y="${h - 1.1}" width="0.3" height="0.18" fill="${i < 6 ? "#3DDC97" : "#2a313b"}"/>`;
-  } else if (e.genre === "onduleur") {
-    detail = `<rect x="8" y="${h / 2 - 1}" width="5" height="2" rx="0.2" fill="#0d2a1f" stroke="#3DDC97" stroke-width="0.08"/>
-      <text x="10.5" y="${h / 2 + 0.35}" font-size="1" text-anchor="middle" fill="#3DDC97" font-family="monospace">100%</text>
-      <circle cx="15" cy="${h / 2}" r="0.4" fill="#3DDC97"/><circle cx="16.4" cy="${h / 2}" r="0.4" fill="#FFD166"/>`;
-  } else {
-    detail = `<rect x="8" y="${h / 2 - 0.5}" width="10" height="1" rx="0.2" fill="#0b0e12"/>` +
-      Array.from({ length: 4 }, (_, i) => `<circle cx="${19 + i * 0.7}" cy="${h / 2}" r="0.2" fill="#3DDC97"/>`).join("");
-  }
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="1024" height="${Math.round((1024 * h) / w)}" font-family="Arial, sans-serif">
-    <defs><linearGradient id="c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a4350"/><stop offset="1" stop-color="#181d24"/></linearGradient></defs>
-    <rect width="${w}" height="${h}" fill="url(#c)"/><rect x="0.3" y="0.3" width="0.25" height="${h - 0.6}" fill="${c}"/>
-    <text x="0.9" y="${h / 2 - 0.1}" font-size="1.05" font-weight="700" fill="#F5F7FA">${nom}</text>
-    <text x="0.9" y="${h / 2 + 1}" font-size="0.75" fill="#B9C3CF" font-family="monospace">${e.ip ?? ""}</text>${detail}</svg>`;
-}
 
 export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
   const scene = new THREE.Scene();

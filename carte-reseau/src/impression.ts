@@ -13,7 +13,7 @@ const echap = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").repl
 
 export const CLASSIFICATION = "Document interne — diffusion restreinte";
 
-export function imprimer(inv: Inventaire, svgPlan: string, titre: string, site: string | null) {
+export function imprimer(inv: Inventaire, svgPlan: string, titre: string, site: string | null, baies = "") {
   document.getElementById("impression")?.remove();
   const date = new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
   const sites = inv.sites.filter((s) => !site || s.nom === site);
@@ -73,6 +73,10 @@ export function imprimer(inv: Inventaire, svgPlan: string, titre: string, site: 
         <span><i class="t epais"></i>Trunk</span>
       </footer>
     </section>
+    ${baies && !baies.includes("b-vide") ? `<section class="i-page i-baies">
+      <div class="i-classif">${echap(CLASSIFICATION)} · ${echap(titre)} · ${date}</div>
+      <h2 class="i-titre-baies">Baies — vue de face</h2>${baies}
+    </section>` : ""}
     <section class="i-page i-tableau">
       <div class="i-classif">${echap(CLASSIFICATION)} · ${echap(titre)} · ${date}</div>
       ${tableau}${tableInter}

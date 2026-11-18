@@ -2,6 +2,7 @@ import { APPARENCE, COULEUR_MEDIA, COULEUR_TRUNK } from "./apparence.ts";
 import { disposer, type Disposition } from "./disposition.ts";
 import { creerEditeur } from "./editeur.ts";
 import { cheminPasserelle } from "./facade.ts";
+import { elevations } from "./elevation.ts";
 import { creerFormulaire } from "./formulaire.ts";
 import { CLASSIFICATION, imprimer } from "./impression.ts";
 import { creerPlan2D } from "./plan2d.ts";
@@ -34,7 +35,7 @@ let inv: Inventaire = analyser("");
 let disp: Disposition = disposer(inv);
 let site: string | null = null;
 let choisi: string | null = null;
-let vue: "2d" | "3d" = "2d";
+let vue: "2d" | "3d" | "baies" = "2d";
 let v3: Vue3D | null = null;
 
 const active = () => classeur.topologies.find((t) => t.id === classeur.active)!;
@@ -190,6 +191,7 @@ function dessiner() {
   }
   plan.afficher(inv, disp, site);
   plan.selectionner(choisi);
+  if (vue === "baies") dessinerBaies();
   v3?.afficher(inv, disp, site);
   v3?.selectionner(choisi);
 }
@@ -296,13 +298,28 @@ function remplirFiche() {
 
 /* ---------------- vues ---------------- */
 
-async function montrer(v: "2d" | "3d") {
+/** Les baies vues de face, côte à côte, par site et par lieu. */
+function dessinerBaies() {
+  const h = $("hote-baies");
+  h.innerHTML = elevations(inv, disp, { site, camerasEnBaie: $<HTMLInputElement>("o-cams").checked });
+  h.querySelectorAll(".b-eq").forEach((g) => g.classList.toggle("choisi", (g as SVGElement).dataset.nom === choisi));
+}
+$("hote-baies").addEventListener("click", (e) => {
+  const g = (e.target as Element).closest<SVGElement>(".b-eq");
+  choisir(g?.dataset.nom ?? null);
+  $("hote-baies").querySelectorAll(".b-eq").forEach((x) => x.classList.toggle("choisi", (x as SVGElement).dataset.nom === choisi));
+});
+
+async function montrer(v: "2d" | "3d" | "baies") {
   vue = v;
   $("v-2d").setAttribute("aria-selected", String(v === "2d"));
   $("v-3d").setAttribute("aria-selected", String(v === "3d"));
+  $("v-baies").setAttribute("aria-selected", String(v === "baies"));
   hote2d.hidden = v !== "2d";
   hote3d.hidden = v !== "3d";
-  $("l-cams").hidden = v !== "3d";
+  $("hote-baies").hidden = v !== "baies";
+  if (v === "baies") dessinerBaies();
+  $("l-cams").hidden = v === "2d";
   if (v === "3d" && !v3) {
     const m = await import("./vue3d.ts");
     m.options.camerasEnBaie = $<HTMLInputElement>("o-cams").checked;
@@ -326,6 +343,8 @@ recherche.addEventListener("change", () => {
 });
 $("v-2d").addEventListener("click", () => montrer("2d"));
 $("v-3d").addEventListener("click", () => montrer("3d"));
+$("v-baies").addEventListener("click", () => montrer("baies"));
+$<HTMLInputElement>("o-cams").addEventListener("change", () => { if (vue === "baies") dessinerBaies(); });
 $("b-cadrer").addEventListener("click", () => (vue === "2d" ? plan.cadrer() : v3?.cadrer()));
 $("b-aide").addEventListener("click", (e) => {
   const aide = $("aide");
@@ -386,7 +405,8 @@ $("b-png").addEventListener("click", async () => {
   };
   img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
 });
-$("b-pdf").addEventListener("click", () => { fermerMenu(); imprimer(inv, plan.exporter(true), active().nom, site); });
+$("b-pdf").addEventListener("click", () => { fermerMenu(); imprimer(inv, plan.exporter(true), active().nom, site,
+  elevations(inv, disp, { site, clair: true, camerasEnBaie: $<HTMLInputElement>("o-cams").checked })); });
 $("b-glb").addEventListener("click", async () => {
   fermerMenu();
   if (!v3) await montrer("3d");

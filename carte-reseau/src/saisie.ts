@@ -246,6 +246,7 @@ export function analyser(texte: string): Inventaire {
       alertes.push({ ligne, niveau: "attention", msg: `« ${x} » contient des espaces : préférez CAM-ENTREE à « CAM ENTREE », c'est le nom qu'on réutilise dans les liaisons.` }));
 
     let ip: string | undefined;
+    let ips: string[] | undefined;   // « 10.0.0.5, 10.0.0.9 » : une IP par équipement, dans l'ordre
     const infos: string[] = [];
     const kv: [string, string][] = [];
     let versInline: string | undefined;
@@ -257,6 +258,7 @@ export function analyser(texte: string): Inventaire {
     for (const c of champs) {
       if (!c) continue;
       if (IP.test(c)) ip = c;
+      else if (c.includes(",") && c.split(",").every((x) => IP.test(x.trim()))) ips = c.split(",").map((x) => x.trim());
       else if (/^trunk$/i.test(c)) optsInline.mode = "trunk";
       else if (/^access$/i.test(c)) optsInline.mode = "access";
       else if (/^vlans?\s*[=: ]\s*\S/i.test(c)) {
@@ -288,6 +290,10 @@ export function analyser(texte: string): Inventaire {
       if (!connu) sites.push({ nom: siteLigne, infos: [], ligne });
       site = connu?.nom ?? siteLigne;
     } else site = assurerSite(ligne);
+    if (ips && ips.length !== noms.length)
+      alertes.push({ ligne, niveau: "attention", msg: ips.length > noms.length
+        ? `${ips.length} IP pour ${noms.length} équipement${noms.length > 1 ? "s" : ""} : les IP en trop sont ignorées.`
+        : `${ips.length} IP pour ${noms.length} équipements : les suivantes continuent à partir de ${ips[ips.length - 1]}.` });
     for (let k = 0; k < noms.length; k++) {
       const n = noms[k];
       if (equipements.some((e) => simple(e.nom) === simple(n))) {
@@ -296,7 +302,9 @@ export function analyser(texte: string): Inventaire {
       }
       // Un « @Site » explicite remet le lieu à zéro, sauf s'il en donne un.
       const point = pointLigne ?? (siteLigne ? undefined : pointCourant);
-      equipements.push({ nom: n, genre, site, ...(point ? { point } : {}), baie: baieLigne ?? baieCourante, ip: ip && ipPlus(ip, k), ...(passerelleLigne ? { passerelleIp: passerelleLigne } : {}), infos, kv, ligne });
+      // IP de la liste à son rang ; au-delà, on continue à partir de la dernière.
+      const ipK = ips ? (k < ips.length ? ips[k] : ipPlus(ips[ips.length - 1], k - ips.length + 1)) : ip && ipPlus(ip, k);
+      equipements.push({ nom: n, genre, site, ...(point ? { point } : {}), baie: baieLigne ?? baieCourante, ip: ipK, ...(passerelleLigne ? { passerelleIp: passerelleLigne } : {}), infos, kv, ligne });
       if (versInline) {
         const v = lireExtremite(versInline);
         brutes.push({ de: n, vers: v.port ? `${v.nom}:${portPlus(v.port, k)}` : v.nom, ligne, ...optsInline });

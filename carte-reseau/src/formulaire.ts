@@ -61,7 +61,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
         <label class="etroit">Nombre<input data-f="qte" type="number" min="1" max="200" value="1" /></label>
       </div>
       <div class="f-ligne">
-        <label>Adresse IP <small>(la 1re si plusieurs)</small><input data-f="ip" placeholder="10.0.0.2" autocomplete="off" spellcheck="false" /></label>
+        <label>Adresse IP <small>(plusieurs : une par équipement, séparées par des virgules)</small><input data-f="ip" placeholder="10.0.0.2" autocomplete="off" spellcheck="false" /></label>
         <label>Modèle<input data-f="modele" placeholder="Cisco 9200, Dôme 4 MP…" autocomplete="off" /></label>
       </div>
       <div class="f-ligne">
@@ -277,6 +277,10 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
       const manquants = m ? Array.from({ length: qte }, (_, k) => `${m[1]}${Number(m[2]) + k}`).filter((p) => !libres.has(p)) : [];
       if (manquants.length) alerte = `<b class="f-alerte">⚠ Ports ${echap(manquants.join(", "))} déjà pris ou inexistants sur ${echap(vers)}.</b> `;
     }
+    // Liste d'IP : autant que d'équipements ?
+    const listeIp = champ("ip").value.split(",").map((x) => x.trim()).filter(Boolean);
+    if (listeIp.length > 1 && listeIp.length !== combien())
+      alerte += `<b class="f-alerte">⚠ ${listeIp.length} IP pour ${combien()} équipement${combien() > 1 ? "s" : ""}${listeIp.length < combien() ? " : les suivantes continueront après la dernière" : " : les IP en trop seront ignorées"}.</b> `;
     $(".f-apercu").innerHTML = alerte + (l ? `<span>Ligne écrite :</span> <code>${echap(l.join("  ⏎  "))}</code>` : `<span>Donnez un nom pour ajouter.</span>`);
   }
 
@@ -491,7 +495,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
         const l = inv.liaisons.find((x) => x.ligne === n && (x.a === e.nom || x.b === e.nom));
         const sur = l ? (l.a === e.nom ? `sur ${l.b}${l.portB ? `:${l.portB}` : ""}` : `sur ${l.a}${l.portA ? `:${l.portA}` : ""}`) : "";
         const ch = champs.map((c) => {
-          if (/^\d{1,3}(\.\d{1,3}){3}(\/\d{1,2})?$/.test(c)) return e.ip ?? c;
+          if (c.split(",").every((x) => /^\d{1,3}(\.\d{1,3}){3}(\/\d{1,2})?$/.test(x.trim()))) return e.ip ?? c;
           if (/^sur\s+/i.test(c)) return sur || c;
           return c;
         });

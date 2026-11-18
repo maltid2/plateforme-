@@ -37,7 +37,7 @@ function colorer(ligne: string): string {
     if (i === 0) { html += colorerTete(p); return; }
     const t = p.trim();
     if (!t) { html += echap(p); return; }
-    if (IP.test(t)) html += `<span class="c-ip">${echap(p)}</span>`;
+    if (IP.test(t) || (t.includes(",") && t.split(",").every((x) => IP.test(x.trim())))) html += `<span class="c-ip">${echap(p)}</span>`;
     else if (/^@/.test(t) || /^site\s*=/i.test(t)) html += `<span class="c-site">${echap(p)}</span>`;
     else if (/^(trunk|access)$/i.test(t)) html += `<span class="c-mode">${echap(p)}</span>`;
     else if (/^vlans?\s*[=: ]/i.test(t)) html += `<span class="c-vlan">${echap(p)}</span>`;

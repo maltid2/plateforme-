@@ -225,3 +225,19 @@ test("plusieurs noms différents sur une ligne : IP et ports qui se suivent", ()
   assert.deepEqual(inv.liaisons.map((l) => l.portB), ["5", "6", "7"]);
   assert.deepEqual(inv.alertes.filter((a) => a.niveau === "erreur"), []);
 });
+
+test("liste d'IP : une par équipement, dans l'ordre", () => {
+  const inv = analyser("switch SW-A, SW-B, SW-C | 10.0.0.5, 10.0.0.9, 10.0.0.20");
+  assert.deepEqual(inv.equipements.map((e) => e.ip), ["10.0.0.5", "10.0.0.9", "10.0.0.20"]);
+  assert.deepEqual(inv.alertes.filter((a) => /IP/.test(a.msg)), []);
+  // Moins d'IP que d'équipements : on continue à partir de la dernière.
+  const moins = analyser("camera CAM x4 | 10.0.30.10, 10.0.30.50");
+  assert.deepEqual(moins.equipements.map((e) => e.ip), ["10.0.30.10", "10.0.30.50", "10.0.30.51", "10.0.30.52"]);
+  assert.ok(moins.alertes.some((a) => /continuent à partir de 10\.0\.30\.50/.test(a.msg)));
+  // Trop d'IP : signalé, les dernières ignorées.
+  const trop = analyser("switch S1, S2 | 10.0.0.1, 10.0.0.2, 10.0.0.3");
+  assert.deepEqual(trop.equipements.map((e) => e.ip), ["10.0.0.1", "10.0.0.2"]);
+  assert.ok(trop.alertes.some((a) => /en trop/.test(a.msg)));
+  // La liste n'est pas prise pour un modèle.
+  assert.deepEqual(inv.equipements[0].infos, []);
+});

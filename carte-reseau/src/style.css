@@ -380,3 +380,8 @@ body.lecture .local::after { content: " · lecture seule"; }
 /* ---------- signature ---------- */
 .signature { font-size: 12px; padding: 3px 10px; border-radius: 999px; color: #d9d2ff; background: rgba(141, 124, 255, 0.12); border-color: rgba(141, 124, 255, 0.35); }
 .signature:disabled { cursor: default; opacity: 0.9; }
+
+/* Le bouton « Ajouter » reste visible en bas du formulaire, sans défiler. */
+.f-ajout .f-apercu, .f-ajout .f-boutons { position: sticky; z-index: 3; background: var(--carte); }
+.f-ajout .f-boutons { bottom: -14px; margin: 10px -14px -14px; padding: 10px 14px 14px; border-top: 1px solid var(--trait); border-radius: 0 0 14px 14px; box-shadow: 0 -10px 18px -12px rgba(0, 0, 0, 0.8); }
+.f-ajout .f-apercu { bottom: 44px; padding-top: 6px; }

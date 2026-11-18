@@ -178,8 +178,17 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
       avant || (cs[0]?.site === ctx.site ? cs[0].nom : ""));
     remplirPorts(garderPort);
   }
+  /** En modification, le port actuel de l'équipement sur ce switch : on le garde. */
+  function portEnEdition(vers: string) {
+    const l = edition?.lien;
+    if (!l || !edition) return undefined;
+    if (l.a === vers && l.b === edition.eq.nom) return l.portA;
+    if (l.b === vers && l.a === edition.eq.nom) return l.portB;
+    return undefined;
+  }
   function remplirPorts(garderPort?: string) {
     const vers = champ<HTMLSelectElement>("vers").value;
+    garderPort ??= portEnEdition(vers);
     const port = champ<HTMLSelectElement>("port");
     const libres = vers ? portsLibres(vers, garderPort) : [];
     const qte = combien();
@@ -419,8 +428,15 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     const { inv, disp } = acces.donnees();
     const e = inv.equipements.find((x) => x.nom === nom);
     if (!e) return;
-    const groupe = inv.equipements.filter((x) => x.ligne === e.ligne).length > 1;
-    if (groupe) { acces.versTexte(e.ligne); return; }  // un groupe « x6 » se modifie dans le texte
+    const groupe = inv.equipements.filter((x) => x.ligne === e.ligne);
+    if (groupe.length > 1) {
+      // Un équipement créé avec d'autres sur une même ligne (« SW-A, SW-B » ou
+      // « x6 ») : on sépare la ligne en une ligne par équipement, chacun avec
+      // son IP et son port, puis on modifie celui-là seul.
+      eclater(groupe, inv);
+      modifier(nom);
+      return;
+    }
     const lien = inv.liaisons.find((l) => (l.a === e.nom || l.b === e.nom) && disp.facades.has(l.a === e.nom ? l.b : l.a) &&
       !(A_FACADE.has(e.genre) && inv.equipements.find((x) => x.nom === (l.a === e.nom ? l.b : l.a))?.site !== e.site));
     edition = { eq: e, lien };
@@ -451,6 +467,29 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     $<HTMLButtonElement>('[data-a="annuler"]').hidden = false;
     apercu();
     $(".f-ajout").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  /** Remplace la ligne d'un groupe par une ligne par équipement, valeurs comprises. */
+  function eclater(groupe: Equipement[], inv: Inventaire) {
+    const n = groupe[0].ligne;
+    modifierTexte((lignes) => {
+      const brut = lignes[n - 1] ?? "";
+      const retrait = brut.match(/^\s*/)?.[0] ?? "";
+      const [tete, ...champs] = brut.trim().split(/\s*\|\s*/);
+      const mot = tete.split(/\s+/)[0];
+      const nouvelles = groupe.map((e) => {
+        // Le branchement que cette ligne a créé pour cet équipement.
+        const l = inv.liaisons.find((x) => x.ligne === n && (x.a === e.nom || x.b === e.nom));
+        const sur = l ? (l.a === e.nom ? `sur ${l.b}${l.portB ? `:${l.portB}` : ""}` : `sur ${l.a}${l.portA ? `:${l.portA}` : ""}`) : "";
+        const ch = champs.map((c) => {
+          if (/^\d{1,3}(\.\d{1,3}){3}(\/\d{1,2})?$/.test(c)) return e.ip ?? c;
+          if (/^sur\s+/i.test(c)) return sur || c;
+          return c;
+        });
+        return retrait + [`${mot} ${e.nom}`, ...ch].join(" | ");
+      });
+      lignes.splice(n - 1, 1, ...nouvelles);
+    });
   }
 
   function supprimer(nom: string) {

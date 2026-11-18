@@ -13,7 +13,7 @@ import { APPARENCE } from "./apparence.ts";
 import { lirePort } from "./facade.ts";
 import type { Disposition } from "./disposition.ts";
 import { PICTOS } from "./pictos.ts";
-import { GENRES, MEDIAS, type Equipement, type Genre, type Inventaire, type Liaison, type Media } from "./saisie.ts";
+import { GENRES, MEDIAS, ipPlus, type Equipement, type Genre, type Inventaire, type Liaison, type Media } from "./saisie.ts";
 
 type Acces = {
   donnees: () => { inv: Inventaire; disp: Disposition };
@@ -75,12 +75,16 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
         <datalist id="l-rj45"><option value="2"><option value="4"><option value="5"><option value="8"><option value="10"><option value="16"><option value="24"><option value="48"></datalist>
         <datalist id="l-sfp"><option value="0"><option value="1"><option value="2"><option value="4"><option value="8"></datalist>
       </div>
-      <fieldset class="f-branche f-raccord">
-        <legend><span class="f-pastille">A</span> Où est branché l'équipement que vous ajoutez ?</legend>
+      <div class="f-detail" hidden>
+        <p class="f-quand">Une ligne par équipement : changez l'IP ou les ports de chacun ici (ou avec des virgules dans les cases au-dessus).</p>
+        <table><thead></thead><tbody></tbody></table>
+      </div>
+      <fieldset class="f-branche f-raccord" hidden>
+        <legend>Câble de cet équipement</legend>
         <p class="f-quand">Son câble à lui, vers son switch : une caméra sur son switch, un switch d'étage sur le switch principal. Il est enregistré en même temps que l'équipement.</p>
         <p class="f-aide-branche"></p>
         <div class="f-phrase">
-          <span>Le câble part de</span> <b class="f-moi">cet équipement</b>
+          <span>Le câble part de</span> <b class="f-moi">cet équipement</b> <small class="f-nouveau"></small>
           <label class="f-monport">port <select data-f="monport"></select></label>
         </div>
         <div class="f-phrase">
@@ -103,8 +107,8 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     </section>
 
     <section class="f-bloc f-liaison">
-      <h3><span class="f-pastille">B</span> Câble en plus entre deux équipements déjà créés</h3>
-      <p class="f-quand">Pour relier deux emplacements entre eux : trunk entre deux switchs, lien entre deux lieux ou deux sites, VPN ou lien de secours. Inutile pour brancher un nouvel équipement : faites-le dans <b>A</b> en l'ajoutant.</p>
+      <h3>Relier deux équipements</h3>
+      <p class="f-quand">Tous les câbles se font ici, une fois les équipements ajoutés : deux switchs (trunk), deux lieux, deux sites, une caméra sur son switch, un VPN ou un lien de secours.</p>
       <p class="f-aide-branche">Choisissez les deux bouts du câble : un équipement de chaque côté et son port.</p>
       <div class="f-phrase">
         <span>Relier</span>
@@ -219,7 +223,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     const aide = racine.querySelector<HTMLElement>(".f-aide-branche")!;
     const nCibles = champ<HTMLSelectElement>("vers").options.length - 1;
     aide.textContent = nCibles === 0
-      ? "Rien où le brancher pour l'instant : c'est normal pour le premier équipement d'un site. Ajoutez-le, puis branchez les suivants dessus (ou reliez-les après avec le cadre B plus bas)."
+      ? "Rien où le brancher pour l'instant : c'est normal pour le premier équipement d'un site. Ajoutez-le, puis branchez les suivants dessus (ou reliez-les après avec « Relier deux équipements » plus bas)."
       : vers ? `Choisissez le port de ${vers} où arrive le câble. Seuls les ports encore libres sont proposés.`
         : "Choisissez le switch ou la passerelle sur lequel cet équipement est branché, puis son port.";
     // Suggestions pour « son port à lui » : ses propres ports d'après RJ45 / SFP.
@@ -239,10 +243,10 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
   }
 
   /** Le dernier nom proposé : on ne remplace que lui, jamais un nom tapé. */
-  let nomAuto = "";
+  // Le nom proposé reste en grisé dans la case (jamais écrit à votre place) :
+  // il ne sert que si vous laissez la case vide.
   function proposerNom() {
-    const v = champ("nom").value.trim();
-    if (!v || v === nomAuto) { nomAuto = nomPropose(); champ("nom").value = nomAuto; }
+    champ<HTMLInputElement>("nom").placeholder = `${nomPropose()}  (nom proposé, tapez le vôtre)`;
   }
   function nomPropose() {
     const { inv } = acces.donnees();
@@ -253,7 +257,15 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
   }
 
   /** Les noms tapés : un seul, ou une liste séparée par des virgules. */
-  const listeNoms = () => champ("nom").value.split(",").map((x) => nomPropre(x)).filter(Boolean);
+  const nomsTapes = () => champ("nom").value.split(",").map((x) => nomPropre(x)).filter(Boolean);
+  const listeNoms = () => { const n = nomsTapes(); return n.length ? n : edition ? [] : [nomPropose()]; };
+  /** Le nom de chacun des équipements qui seront créés (liste, ou NOM-1…NOM-n). */
+  const nomsCrees = () => {
+    const n = listeNoms();
+    if (n.length > 1) return n;
+    const q = combien();
+    return q > 1 ? Array.from({ length: q }, (_, k) => `${n[0]}-${k + 1}`) : n;
+  };
   /** Combien d'équipements seront créés : la liste de noms, sinon « Nombre ». */
   const combien = () => (listeNoms().length > 1 ? listeNoms().length : Math.max(1, Math.min(200, Number(champ("qte").value) || 1)));
 
@@ -311,7 +323,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
   function lignesAAjouter(): string[] | null {
     const l = ligneEquipement();
     if (!l) return null;
-    const vers = champ<HTMLSelectElement>("vers").value;
+    const vers = raccordVisible() ? champ<HTMLSelectElement>("vers").value : "";
     if (!vers) return [l];
     const mon = propre(champ("monport").value);
     // Le port de l'équipement lui-même ne s'écrit que pour un seul équipement.
@@ -321,9 +333,48 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
       ...optionsLien(champ<HTMLSelectElement>("media").value, champ("vlan").value, champ<HTMLInputElement>("trunk").checked)].join(" | ")];
   }
 
+  /* ---------- une case par équipement ---------- */
+  const liste = (k: string) => champ(k).value.split(",").map((x) => x.trim());
+  function tableau() {
+    const box = $(".f-detail");
+    const noms = nomsCrees();
+    if (noms.length < 2 || noms.length > 60 || edition) { box.hidden = true; return; }
+    box.hidden = false;
+    const ports = A_FACADE.has(genre);
+    const ips = liste("ip").filter(Boolean), rj = liste("ports").filter(Boolean), sfp = liste("sfp").filter(Boolean);
+    const ipDe = (k: number) => ips.length > 1 ? (ips[k] ?? (ips.length ? ipPlus(ips[ips.length - 1], k - ips.length + 1) : "")) : ips[0] ? ipPlus(ips[0], k) : "";
+    const de = (l: string[], k: number) => l[Math.min(k, l.length - 1)] ?? "";
+    box.querySelector("thead")!.innerHTML = `<tr><th>Nom</th><th>IP</th>${ports ? "<th>Ports RJ45</th><th>Cages SFP</th>" : ""}</tr>`;
+    box.querySelector("tbody")!.innerHTML = noms.map((n, k) => `<tr>
+      <td><input data-d="nom" data-k="${k}" value="${echap(n)}" spellcheck="false" autocomplete="off" aria-label="Nom n°${k + 1}" /></td>
+      <td><input data-d="ip" data-k="${k}" value="${echap(ipDe(k))}" placeholder="—" spellcheck="false" autocomplete="off" aria-label="IP de ${echap(n)}" /></td>
+      ${ports ? `<td><input data-d="ports" data-k="${k}" inputmode="numeric" value="${echap(de(rj, k))}" aria-label="Ports RJ45 de ${echap(n)}" /></td>
+      <td><input data-d="sfp" data-k="${k}" inputmode="numeric" value="${echap(de(sfp, k))}" aria-label="Cages SFP de ${echap(n)}" /></td>` : ""}
+    </tr>`).join("");
+  }
+  /** Une case du tableau a changé : on réécrit les champs à virgules au-dessus. */
+  function depuisTableau() {
+    const col = (d: string) => [...racine.querySelectorAll<HTMLInputElement>(`.f-detail [data-d="${d}"]`)].map((i) => i.value.trim());
+    const noms = col("nom").map((x) => nomPropre(x));
+    if (noms.every(Boolean)) { champ("nom").value = noms.join(", "); champ("qte").value = String(noms.length); champ<HTMLInputElement>("qte").disabled = true; }
+    const ips = col("ip");
+    champ("ip").value = ips.every(Boolean) ? ips.join(", ") : ips.filter(Boolean).join(", ");
+    for (const d of ["ports", "sfp"]) {
+      const v = col(d); if (!v.length) continue;
+      const pleins = v.map((x) => x || v.find(Boolean) || "0");
+      champ(d).value = pleins.every((x) => x === pleins[0]) ? pleins[0] : pleins.join(", ");
+      champ(d).dataset.touche = "1";
+    }
+    remplirPorts();
+    apercu();
+  }
+
   function apercu() {
     const noms = listeNoms();
-    racine.querySelector(".f-moi")!.textContent = noms.length > 1 ? `chacun de ces ${noms.length} équipements` : noms[0] || "cet équipement";
+    const moi = racine.querySelector<HTMLElement>(".f-moi")!;
+    moi.textContent = noms.length > 1 ? `chacun de ces ${noms.length} équipements` : noms[0] || "cet équipement";
+    moi.title = "L'équipement que vous êtes en train d'ajouter (son nom se tape en haut, case « Nom »).";
+    racine.querySelector<HTMLElement>(".f-nouveau")!.textContent = edition ? "(en modification)" : nomsTapes().length ? (nomsTapes().length > 1 ? "(les nouveaux équipements)" : "(le nouvel équipement)") : "(nom proposé, pas encore créé)";
     schema("branche", noms.length > 1 ? `${noms[0]} …` : noms[0] ?? "", champ<HTMLSelectElement>("monport").value,
       champ<HTMLSelectElement>("vers").value, champ<HTMLSelectElement>("port").value, champ<HTMLSelectElement>("media").value,
       champ<HTMLInputElement>("trunk").checked, champ("vlan").value);
@@ -342,13 +393,13 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     const listeIp = champ("ip").value.split(",").map((x) => x.trim()).filter(Boolean);
     if (listeIp.length > 1 && listeIp.length !== combien())
       alerte += `<b class="f-alerte">⚠ ${listeIp.length} IP pour ${combien()} équipement${combien() > 1 ? "s" : ""}${listeIp.length < combien() ? " : les suivantes continueront après la dernière" : " : les IP en trop seront ignorées"}.</b> `;
-    $(".f-apercu").innerHTML = alerte + (l ? `<span>Ligne écrite :</span> <code>${echap(l.join("  ⏎  "))}</code>` : `<span>Donnez un nom pour ajouter.</span>`);
+    $(".f-apercu").innerHTML = alerte + (l ? `<span>Ligne écrite :</span> <code>${echap(l.join("  ⏎  "))}</code>` : "");
   }
 
   function vider() {
     edition = null;
-    nomAuto = nomPropose();
-    champ("nom").value = nomAuto;
+    champ("nom").value = "";
+    proposerNom();
     champ("qte").value = "1";
     champ("ip").value = "";
     champ("modele").value = "";
@@ -364,7 +415,13 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     actualiserType();
   }
 
+  /** Le cadre « branché sur » n'apparaît plus qu'en modifiant un équipement
+   *  qui a déjà son câble sur sa ligne (pour ne pas le perdre). Sinon, tous
+   *  les câbles se font dans « Relier deux équipements ». */
+  function raccordVisible() { return !!edition?.lien && edition.lien.ligne === edition.eq.ligne; }
   function actualiserType() {
+    queueMicrotask(tableau);
+    $(".f-raccord").hidden = !raccordVisible();
     racine.querySelectorAll<HTMLElement>(".f-types [data-g]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.g === genre)));
     racine.querySelector<HTMLElement>(".f-switch")!.hidden = !A_FACADE.has(genre);
     racine.querySelector<HTMLElement>(".f-wan")!.hidden = genre === "switch";
@@ -410,6 +467,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
       champ("nom").focus();
       return;
     }
+    if (!edition) aRelier = crees[0];
     if (edition) {
       const { eq, lien } = edition;
       modifierTexte((lignes) => {
@@ -419,9 +477,9 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
         const rEq = retrait(eq.ligne);
         // Le branchement écrit sur une autre ligne est remplacé à sa place.
         if (lien && lien.ligne !== eq.ligne) {
-          const nouvelle = ligneBranche(nom);
+          // Câble écrit à part (« A -> B ») : il reste tel quel ; un
+          // renommage le met à jour plus bas.
           lignes[eq.ligne - 1] = rEq + ligneEquipement()!;
-          if (nouvelle) lignes[lien.ligne - 1] = retrait(lien.ligne) + nouvelle; else lignes.splice(lien.ligne - 1, 1);
         } else {
           lignes.splice(eq.ligne - 1, 1, ...l.map((x) => rEq + x));
         }
@@ -474,12 +532,16 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
       <div class="sc-boite"><b>${echap(b)}</b><span>${pb ? `port ${echap(pb)}` : "port ?"}</span></div>`;
   }
 
+  // Après un ajout, le nouvel équipement est déjà choisi dans « Relier ».
+  let aRelier = "";
   function remplirRelier() {
     const { inv } = acces.donnees();
     const tous = [...inv.equipements].sort((x, y) => Number(A_FACADE.has(y.genre)) - Number(A_FACADE.has(x.genre)) || x.site.localeCompare(y.site));
     const opts = [{ v: "", t: "— choisir —" }, ...tous.map((e) => ({ v: e.nom, t: `${e.nom} · ${e.site}${e.point ? ` / ${e.point}` : ""}` }))];
     (["a", "b"] as const).forEach((k) => {
-      const sel = lienC(k), avant = sel.value;
+      const sel = lienC(k);
+      const avant = k === "a" && aRelier && inv.equipements.some((e) => e.nom === aRelier) ? aRelier : sel.value;
+      if (k === "a" && avant === aRelier) aRelier = "";
       options(sel, opts, avant);
       const port = lienC(k === "a" ? "pa" : "pb"), pav = port.value;
       const libres = sel.value ? portsLibres(sel.value) : [];
@@ -667,6 +729,8 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
   racine.addEventListener("input", (ev) => {
     const t = ev.target as HTMLElement;
     if (t.dataset.f === "filtre") { remplirInventaire(); return; }
+    if (t.dataset.d) { depuisTableau(); return; }
+    if (["nom", "qte", "ip", "ports", "sfp"].includes(t.dataset.f ?? "")) queueMicrotask(tableau);
     if (t.dataset.f === "ports" || t.dataset.f === "sfp") { t.dataset.touche = "1"; remplirPorts(); }
     if (t.dataset.f === "qte") remplirPorts();
     if (t.dataset.f === "nom") {

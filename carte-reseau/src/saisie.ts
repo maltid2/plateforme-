@@ -73,7 +73,7 @@ const GENRE_PAR_MOT = new Map<string, Genre>();
 const IP = /^\d{1,3}(\.\d{1,3}){3}(\/\d{1,2})?$/;
 const FLECHE = /\s*(?:->|<->|<-|—|–|--|=>|→)\s*/;
 
-function ipPlus(ip: string, k: number) {
+export function ipPlus(ip: string, k: number) {
   const [adr, masque] = ip.split("/");
   const o = adr.split(".").map(Number);
   const n = (((o[0] << 24) >>> 0) + (o[1] << 16) + (o[2] << 8) + o[3] + k) >>> 0;

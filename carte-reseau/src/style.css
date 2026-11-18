@@ -429,3 +429,12 @@ body.lecture .local::after { content: " · lecture seule"; }
 .f-liaison .f-pastille { background: #8D7CFF; }
 .f-liaison h3 { color: #c9c1ff; }
 .f-liaison .f-aide-branche { color: #c9c1ff; }
+
+/* Une case par équipement (plusieurs switchs / caméras d'un coup). */
+.f-detail { margin: 8px 0 0; }
+.f-detail table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.f-detail th { text-align: left; font-weight: 500; color: var(--sourd); padding: 2px 4px; }
+.f-detail td { padding: 2px 4px; }
+.f-detail input { width: 100%; min-width: 0; box-sizing: border-box; }
+.f-detail td:nth-child(n+3) { width: 64px; }
+.f-nouveau { color: var(--sourd); font-size: 11px; }

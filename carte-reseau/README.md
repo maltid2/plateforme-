@@ -59,11 +59,12 @@ de compte, pas de serveur.
    ou un nombre, **une ligne par équipement** apparaît : nom, IP, ports RJ45
    et cages SFP de chacun. On peut aussi taper `24, 8, 48` dans les cases.
    Si la case Nom reste vide, le nom proposé en grisé est utilisé.
-4. **Relier deux équipements** — tous les câbles se font ici, une fois les
-   équipements ajoutés : deux switchs (trunk), deux lieux, deux sites, une
-   caméra sur son switch, un VPN ou un lien de secours. Seuls les ports libres
-   sont proposés ; RJ45 ou fibre ; le dernier équipement ajouté est déjà
-   choisi.
+   **Cadre A (vert) : où est branché l'équipement que vous ajoutez** — son
+   câble à lui, enregistré en même temps que lui. Seuls les ports libres sont
+   proposés ; câble automatique (SFP = fibre, sinon RJ45) ou forcé.
+4. **Cadre B (violet) : câble en plus entre deux équipements déjà créés** —
+   trunk entre deux switchs, lien entre deux lieux ou deux sites, VPN ou lien
+   de secours. Deux switchs se relient en RJ45 comme en fibre.
 5. **Inventaire** — la liste de tout ce qui est saisi, par site et par lieu ;
    ✎ pour modifier, ✕ pour supprimer, clic pour voir sur la carte.
 

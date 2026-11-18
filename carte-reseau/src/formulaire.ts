@@ -79,8 +79,8 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
         <p class="f-quand">Une ligne par équipement : changez l'IP ou les ports de chacun ici (ou avec des virgules dans les cases au-dessus).</p>
         <table><thead></thead><tbody></tbody></table>
       </div>
-      <fieldset class="f-branche f-raccord" hidden>
-        <legend>Câble de cet équipement</legend>
+      <fieldset class="f-branche f-raccord">
+        <legend><span class="f-pastille">A</span> Où est branché l'équipement que vous ajoutez ?</legend>
         <p class="f-quand">Son câble à lui, vers son switch : une caméra sur son switch, un switch d'étage sur le switch principal. Il est enregistré en même temps que l'équipement.</p>
         <p class="f-aide-branche"></p>
         <div class="f-phrase">
@@ -107,8 +107,8 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     </section>
 
     <section class="f-bloc f-liaison">
-      <h3>Relier deux équipements</h3>
-      <p class="f-quand">Tous les câbles se font ici, une fois les équipements ajoutés : deux switchs (trunk), deux lieux, deux sites, une caméra sur son switch, un VPN ou un lien de secours.</p>
+      <h3><span class="f-pastille">B</span> Câble en plus entre deux équipements déjà créés</h3>
+      <p class="f-quand">Pour relier deux emplacements entre eux : trunk entre deux switchs, lien entre deux lieux ou deux sites, VPN ou lien de secours. Inutile pour brancher un nouvel équipement : faites-le dans <b>A</b> en l'ajoutant.</p>
       <p class="f-aide-branche">Choisissez les deux bouts du câble : un équipement de chaque côté et son port.</p>
       <div class="f-phrase">
         <span>Relier</span>
@@ -223,7 +223,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     const aide = racine.querySelector<HTMLElement>(".f-aide-branche")!;
     const nCibles = champ<HTMLSelectElement>("vers").options.length - 1;
     aide.textContent = nCibles === 0
-      ? "Rien où le brancher pour l'instant : c'est normal pour le premier équipement d'un site. Ajoutez-le, puis branchez les suivants dessus (ou reliez-les après avec « Relier deux équipements » plus bas)."
+      ? "Rien où le brancher pour l'instant : c'est normal pour le premier équipement d'un site. Ajoutez-le, puis branchez les suivants dessus (ou reliez-les après avec le cadre B plus bas)."
       : vers ? `Choisissez le port de ${vers} où arrive le câble. Seuls les ports encore libres sont proposés.`
         : "Choisissez le switch ou la passerelle sur lequel cet équipement est branché, puis son port.";
     // Suggestions pour « son port à lui » : ses propres ports d'après RJ45 / SFP.
@@ -323,7 +323,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
   function lignesAAjouter(): string[] | null {
     const l = ligneEquipement();
     if (!l) return null;
-    const vers = raccordVisible() ? champ<HTMLSelectElement>("vers").value : "";
+    const vers = champ<HTMLSelectElement>("vers").value;
     if (!vers) return [l];
     const mon = propre(champ("monport").value);
     // Le port de l'équipement lui-même ne s'écrit que pour un seul équipement.
@@ -415,13 +415,8 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     actualiserType();
   }
 
-  /** Le cadre « branché sur » n'apparaît plus qu'en modifiant un équipement
-   *  qui a déjà son câble sur sa ligne (pour ne pas le perdre). Sinon, tous
-   *  les câbles se font dans « Relier deux équipements ». */
-  function raccordVisible() { return !!edition?.lien && edition.lien.ligne === edition.eq.ligne; }
   function actualiserType() {
     queueMicrotask(tableau);
-    $(".f-raccord").hidden = !raccordVisible();
     racine.querySelectorAll<HTMLElement>(".f-types [data-g]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.g === genre)));
     racine.querySelector<HTMLElement>(".f-switch")!.hidden = !A_FACADE.has(genre);
     racine.querySelector<HTMLElement>(".f-wan")!.hidden = genre === "switch";
@@ -467,7 +462,6 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
       champ("nom").focus();
       return;
     }
-    if (!edition) aRelier = crees[0];
     if (edition) {
       const { eq, lien } = edition;
       modifierTexte((lignes) => {
@@ -477,9 +471,9 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
         const rEq = retrait(eq.ligne);
         // Le branchement écrit sur une autre ligne est remplacé à sa place.
         if (lien && lien.ligne !== eq.ligne) {
-          // Câble écrit à part (« A -> B ») : il reste tel quel ; un
-          // renommage le met à jour plus bas.
+          const nouvelle = ligneBranche(nom);
           lignes[eq.ligne - 1] = rEq + ligneEquipement()!;
+          if (nouvelle) lignes[lien.ligne - 1] = retrait(lien.ligne) + nouvelle; else lignes.splice(lien.ligne - 1, 1);
         } else {
           lignes.splice(eq.ligne - 1, 1, ...l.map((x) => rEq + x));
         }
@@ -532,16 +526,12 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
       <div class="sc-boite"><b>${echap(b)}</b><span>${pb ? `port ${echap(pb)}` : "port ?"}</span></div>`;
   }
 
-  // Après un ajout, le nouvel équipement est déjà choisi dans « Relier ».
-  let aRelier = "";
   function remplirRelier() {
     const { inv } = acces.donnees();
     const tous = [...inv.equipements].sort((x, y) => Number(A_FACADE.has(y.genre)) - Number(A_FACADE.has(x.genre)) || x.site.localeCompare(y.site));
     const opts = [{ v: "", t: "— choisir —" }, ...tous.map((e) => ({ v: e.nom, t: `${e.nom} · ${e.site}${e.point ? ` / ${e.point}` : ""}` }))];
     (["a", "b"] as const).forEach((k) => {
-      const sel = lienC(k);
-      const avant = k === "a" && aRelier && inv.equipements.some((e) => e.nom === aRelier) ? aRelier : sel.value;
-      if (k === "a" && avant === aRelier) aRelier = "";
+      const sel = lienC(k), avant = sel.value;
       options(sel, opts, avant);
       const port = lienC(k === "a" ? "pa" : "pb"), pav = port.value;
       const libres = sel.value ? portsLibres(sel.value) : [];

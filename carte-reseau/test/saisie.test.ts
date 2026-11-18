@@ -7,16 +7,16 @@ import { cheminPasserelle, facade, lirePort } from "../src/facade.ts";
 test("l'exemple se lit sans erreur ni remarque", () => {
   const inv = analyser(EXEMPLE);
   assert.deepEqual(inv.alertes, []);
-  assert.deepEqual(inv.sites.map((s) => s.nom), ["Nanterre", "Lyon"]);
-  assert.equal(inv.equipements.filter((e) => e.genre === "switch").length, 5);
+  assert.deepEqual(inv.sites.map((s) => s.nom), ["Nanterre", "Lyon", "Lille"]);
+  assert.equal(inv.equipements.filter((e) => e.genre === "switch").length, 8);
 });
 
 test("caméras en groupe : ports et IP qui se suivent, VLAN porté par le lien", () => {
   const inv = analyser(EXEMPLE);
-  const l = inv.liaisons.filter((x) => x.a.startsWith("CAM-PARKING"));
-  assert.deepEqual(l.map((x) => x.portB), ["3", "4", "5", "6", "7", "8"]);
-  assert.ok(l.every((x) => x.vlans === "30"));
-  assert.equal(inv.equipements.find((e) => e.nom === "CAM-PARKING-6")?.ip, "10.14.30.16");
+  const l = inv.liaisons.filter((x) => x.a.startsWith("CAM-SIEGE"));
+  assert.deepEqual(l.map((x) => x.portB), ["2", "3", "4", "5", "6", "7", "8", "9"]);
+  assert.ok(l.every((x) => x.vlans === "30" && x.media === "cuivre"));
+  assert.equal(inv.equipements.find((e) => e.nom === "CAM-SIEGE-8")?.ip, "10.14.30.18");
 });
 
 test("trunk : écrit, déduit des VLAN multiples, ou entre deux switchs", () => {
@@ -72,19 +72,20 @@ test("façade : sans « ports= », la taille se déduit du plus grand port utili
 test("passerelle d'un switch : trouvée de proche en proche, avec le port de sortie", () => {
   const inv = analyser(EXEMPLE);
   const c = cheminPasserelle("SW-CAM", inv)!;
-  assert.equal(c.passerelle.nom, "FW-NANTERRE");
+  assert.equal(c.passerelle.nom, "FW-SIEGE");
   assert.equal(c.via, "Te1");
-  assert.deepEqual(c.sauts, ["SW-CORE", "FW-NANTERRE"]);
-  assert.equal(cheminPasserelle("CAM-LYON-2", inv)?.passerelle.nom, "GW-LYON");
+  assert.deepEqual(c.sauts, ["SW-CORE", "FW-SIEGE"]);
+  // Lille n'a pas de pare-feu : on ne va pas chercher celui d'un autre site.
+  assert.equal(cheminPasserelle("SW-LILLE-2", inv), null);
 });
 
 test("chaque équipement est placé ; la tête du site est au-dessus de ses switchs", () => {
   const inv = analyser(EXEMPLE);
   const d = disposer(inv);
   assert.equal(d.pos.size, inv.equipements.length);
-  assert.ok(d.pos.get("FW-NANTERRE")!.y < d.pos.get("SW-CORE")!.y);
+  assert.ok(d.pos.get("FW-SIEGE")!.y < d.pos.get("SW-CORE")!.y);
   assert.ok(d.pos.get("SW-CORE")!.y < d.pos.get("SW-CAM")!.y);
-  assert.ok(d.pos.get("SW-CAM")!.y < d.pos.get("CAM-ACCUEIL")!.y);
+  assert.ok(d.pos.get("SW-CAM")!.y < d.pos.get("CAM-SIEGE-1")!.y);
 });
 
 test("une caméra se place sous le port où elle est branchée", () => {
@@ -115,8 +116,9 @@ test("20 sites et 40 switchs : chaque site a son cadre, sans chevauchement", () 
   const inv = analyser(lignes.join("\n"));
   assert.deepEqual(inv.alertes.filter((a) => a.niveau === "erreur"), []);
   const d = disposer(inv);
-  assert.equal(d.cadres.length, 20);
-  for (const a of d.cadres) for (const b of d.cadres) {
+  const sites = d.cadres.filter((c) => c.type === "site");
+  assert.equal(sites.length, 20);
+  for (const a of sites) for (const b of sites) {
     if (a === b) continue;
     const separes = a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y;
     assert.ok(separes, `${a.nom} chevauche ${b.nom}`);
@@ -127,4 +129,49 @@ test("seules les lignes en retrait sont dans la baie", () => {
   const inv = analyser("baie A1\n  switch SW1\ncamera C1 | sur SW1:1");
   assert.equal(inv.equipements[0].baie, "A1");
   assert.equal(inv.equipements[1].baie, undefined);
+});
+
+test("support : écrit, ou déduit des ports (SFP = fibre, caméra = cuivre)", () => {
+  const inv = analyser([
+    "switch A | ports=24 | sfp=4", "switch B", "camera C", "passerelle GW",
+    "A:Te1 -> B:Te1", "C -> A:3", "A:24 -> B:24 | fibre", "GW:WAN -> A:23 | vpn | secours", "B:5 -> A:5 | radio",
+  ].join("\n"));
+  const m = inv.liaisons.map((l) => l.media);
+  assert.deepEqual(m, ["fibre", "cuivre", "fibre", "vpn", "radio"]);
+  assert.equal(inv.liaisons[3].libelle, "secours");
+});
+
+test("lieux dans un site : « point », « @Site/Lieu », et cadres rangés dans le site", () => {
+  const inv = analyser([
+    "site Lyon", "point Mairie", "switch SW-M | ports=24 | sfp=4",
+    "point École A", "switch SW-A | sur SW-M:Te1", "camera CA x2 | sur SW-A:1",
+    "switch SW-B | @Lyon/École B | sur SW-M:Te2",
+    "switch SW-X | @Paris",
+  ].join("\n"));
+  const pt = (n: string) => inv.equipements.find((e) => e.nom === n)?.point;
+  assert.equal(pt("SW-M"), "Mairie");
+  assert.equal(pt("CA-2"), "École A");
+  assert.equal(pt("SW-B"), "École B");
+  assert.equal(pt("SW-X"), undefined);
+  const d = disposer(inv);
+  const lyon = d.cadres.find((c) => c.type === "site" && c.site === "Lyon")!;
+  const lieux = d.cadres.filter((c) => c.type === "point");
+  assert.deepEqual(lieux.map((c) => c.nom).sort(), ["Mairie", "École A", "École B"].sort());
+  for (const c of lieux) assert.ok(c.x >= lyon.x && c.y >= lyon.y && c.x + c.w <= lyon.x + lyon.w && c.y + c.h <= lyon.y + lyon.h);
+  // Chaque switch est dans le cadre de son lieu.
+  const cadre = lieux.find((c) => c.nom === "École B")!, p = d.pos.get("SW-B")!;
+  assert.ok(p.x > cadre.x && p.x < cadre.x + cadre.w && p.y > cadre.y && p.y < cadre.y + cadre.h);
+});
+
+test("rien n'est obligatoire : un site avec un seul switch, sans pare-feu ni onduleur", () => {
+  const inv = analyser("switch SEUL | @Petit site");
+  assert.deepEqual(inv.alertes.filter((a) => a.niveau === "erreur"), []);
+  assert.equal(disposer(inv).pos.size, 1);
+});
+
+test("un port au-delà de ce que le switch déclare est signalé", () => {
+  const inv = analyser("switch SW | ports=8 | sfp=2\ncamera C x3 | sur SW:7\nswitch SW2 | sur SW:Te3");
+  const msgs = inv.alertes.map((a) => a.msg).join("\n");
+  assert.match(msgs, /port 9 n'existe pas sur SW : 8 ports RJ45/);
+  assert.match(msgs, /port Te3 n'existe pas sur SW : 2 cages SFP/);
 });

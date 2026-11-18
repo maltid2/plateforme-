@@ -9,7 +9,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "node --experimental-strip-types --test test/*.test.ts",
-    "fichier": "npm run build && cp dist/index.html carte-reseau.html"
+    "fichier": "npm run build && cp dist/index.html carte-reseau.html && node -e \"const c=require('crypto'),f=require('fs');const h=c.createHash('sha256').update(f.readFileSync('carte-reseau.html')).digest('hex');f.writeFileSync('carte-reseau.html.sha256',h+'  carte-reseau.html\\n');console.log('SHA-256',h)\""
   },
   "dependencies": {
     "three": "^0.182.0"

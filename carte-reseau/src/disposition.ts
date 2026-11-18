@@ -17,7 +17,8 @@ import { aFacade, facade, FH, type Facade } from "./facade.ts";
 import type { Equipement, Genre, Inventaire } from "./saisie.ts";
 
 export type Point = { x: number; y: number };
-export type Cadre = { nom: string; x: number; y: number; w: number; h: number };
+/** Le cadre d'un site, ou d'un lieu dans un site (point : "" pour le lieu central). */
+export type Cadre = { type: "site" | "point"; nom: string; site: string; point?: string; x: number; y: number; w: number; h: number };
 export type Disposition = {
   pos: Map<string, Point>;            // centre de chaque équipement
   facades: Map<string, Facade>;       // switchs, passerelles, pare-feu
@@ -36,7 +37,7 @@ const NIVEAU_DEFAUT: Record<Genre, number> = {
 type Local = { pos: Map<string, Point>; w: number; h: number };
 
 /** Dispose un site seul, origine en haut à gauche de son cadre. */
-function disposerSite(eqs: Equipement[], inv: Inventaire, siteDe: Map<string, string>, facades: Map<string, Facade>): Local {
+function disposerSite(eqs: Equipement[], inv: Inventaire, siteDe: Map<string, unknown>, facades: Map<string, Facade>): Local {
   const largeurDe = (e: Equipement) => facades.get(e.nom)?.w ?? CARTE_W;
   const hauteurDe = (e: Equipement) => (facades.has(e.nom) ? FH + 0.7 : CARTE_H + NOM_H);
   const noms = new Set(eqs.map((e) => e.nom));
@@ -147,55 +148,103 @@ function disposerSite(eqs: Equipement[], inv: Inventaire, siteDe: Map<string, st
   return { pos, w, h };
 }
 
-export function disposer(inv: Inventaire): Disposition {
-  const siteDe = new Map(inv.equipements.map((e) => [e.nom, e.site]));
-  const facades = new Map<string, Facade>();
-  inv.equipements.forEach((e) => { if (aFacade(e)) facades.set(e.nom, facade(e, inv)); });
-  const locaux = inv.sites.map((s) => disposerSite(inv.equipements.filter((e) => e.site === s.nom), inv, siteDe, facades));
-  const n = inv.sites.length;
-
-  // Le site le plus relié aux autres prend la case centrale.
-  const liensSite = new Map(inv.sites.map((s) => [s.nom, 0]));
-  inv.liaisons.forEach((l) => {
-    const a = siteDe.get(l.a), b = siteDe.get(l.b);
-    if (a && b && a !== b) { liensSite.set(a, liensSite.get(a)! + 1); liensSite.set(b, liensSite.get(b)! + 1); }
-  });
+/**
+ * Range des blocs (sites, ou lieux d'un site) en grille. Le bloc le plus
+ * relié aux autres prend la case centrale : les liaisons rayonnent depuis
+ * lui au lieu de traverser toute la carte.
+ */
+function ranger(blocs: { cle: string; w: number; h: number }[], liens: Map<string, number>, ecart: number, prefere?: string) {
+  const n = blocs.length;
   const cols = Math.max(1, Math.min(n, Math.ceil(Math.sqrt(n * 1.3))));
   const rows = Math.max(1, Math.ceil(n / cols));
-  const cases = Array.from({ length: rows * cols }, (_, k) => ({ r: Math.floor(k / cols), c: k % cols }));
-  let hub = -1;
-  if (n > 2) {
-    const max = Math.max(...liensSite.values());
-    if (max >= 2) hub = inv.sites.findIndex((s) => liensSite.get(s.nom) === max);
+  const cases = Array.from({ length: rows * cols }, (_, k) => ({ r: Math.floor(k / cols), c: k % cols })).slice(0, n);
+  let hub = prefere !== undefined ? blocs.findIndex((b) => b.cle === prefere) : -1;
+  if (hub < 0 && n > 2) {
+    const max = Math.max(...blocs.map((b) => liens.get(b.cle) ?? 0));
+    if (max >= 2) hub = blocs.findIndex((b) => (liens.get(b.cle) ?? 0) === max);
   }
   const caseDe: { r: number; c: number }[] = new Array(n);
-  if (hub >= 0) {
-    // Case centrale de la grille (en restant dans les cases occupées).
+  if (hub >= 0 && n > 2) {
     const cr = (rows - 1) / 2, cc = (cols - 1) / 2;
-    const libres = cases.slice(0, n);
-    const centre = libres.reduce((m, k) => (Math.hypot(k.r - cr, k.c - cc) < Math.hypot(m.r - cr, m.c - cc) ? k : m));
+    const centre = cases.reduce((m, k) => (Math.hypot(k.r - cr, k.c - cc) < Math.hypot(m.r - cr, m.c - cc) ? k : m));
     caseDe[hub] = centre;
-    const autres = libres.filter((k) => k !== centre);
-    inv.sites.forEach((_, i) => { if (i !== hub) caseDe[i] = autres.shift()!; });
-  } else inv.sites.forEach((_, i) => { caseDe[i] = cases[i]; });
+    const autres = cases.filter((k) => k !== centre);
+    blocs.forEach((_, i) => { if (i !== hub) caseDe[i] = autres.shift()!; });
+  } else blocs.forEach((_, i) => { caseDe[i] = cases[i]; });
 
-  // Largeur de chaque colonne, hauteur de chaque rangée.
   const largCol = new Array(cols).fill(0), hautRang = new Array(rows).fill(0);
-  locaux.forEach((l, i) => {
-    largCol[caseDe[i].c] = Math.max(largCol[caseDe[i].c], l.w);
-    hautRang[caseDe[i].r] = Math.max(hautRang[caseDe[i].r], l.h);
+  blocs.forEach((b, i) => {
+    largCol[caseDe[i].c] = Math.max(largCol[caseDe[i].c], b.w);
+    hautRang[caseDe[i].r] = Math.max(hautRang[caseDe[i].r], b.h);
   });
-  const x0 = largCol.map((_, c) => largCol.slice(0, c).reduce((t, v) => t + v + ECART_SITES, 0));
-  const y0 = hautRang.map((_, r) => hautRang.slice(0, r).reduce((t, v) => t + v + ECART_SITES, 0));
+  const x0 = largCol.map((_, c) => largCol.slice(0, c).reduce((t, v) => t + v + ecart, 0));
+  const y0 = hautRang.map((_, r) => hautRang.slice(0, r).reduce((t, v) => t + v + ecart, 0));
+  const place = new Map<string, Point>();
+  // Centré dans sa case : les colonnes n'ont pas toutes la même largeur.
+  blocs.forEach((b, i) => {
+    const { r, c } = caseDe[i];
+    place.set(b.cle, { x: x0[c] + (largCol[c] - b.w) / 2, y: y0[r] + (hautRang[r] - b.h) / 2 });
+  });
+  const w = largCol.reduce((t, v) => t + v, 0) + ecart * (cols - 1);
+  const h = hautRang.reduce((t, v) => t + v, 0) + ecart * (rows - 1);
+  return { place, w, h };
+}
 
+const MARGE_SITE = 1.6, ENTETE_SITE = 2.4, ECART_POINTS = 4;
+
+export function disposer(inv: Inventaire): Disposition {
+  const tous = new Map(inv.equipements.map((e) => [e.nom, e]));
+  const facades = new Map<string, Facade>();
+  inv.equipements.forEach((e) => { if (aFacade(e)) facades.set(e.nom, facade(e, inv)); });
   const pos = new Map<string, Point>();
-  const cadres: Cadre[] = inv.sites.map((s, i) => {
-    const l = locaux[i], { r, c } = caseDe[i];
-    // Centré dans sa case : les colonnes n'ont pas toutes la même largeur.
-    const x = x0[c] + (largCol[c] - l.w) / 2, y = y0[r] + (hautRang[r] - l.h) / 2;
-    l.pos.forEach((p, nom) => pos.set(nom, { x: x + p.x, y: y + p.y }));
-    return { nom: s.nom, x, y, w: l.w, h: l.h };
+  const cadres: Cadre[] = [];
+
+  // Chaque site : soit un seul bloc, soit plusieurs lieux (écoles, bâtiments)
+  // rangés dans le cadre du site, le lieu central au milieu.
+  const sites = inv.sites.map((s) => {
+    const eqs = inv.equipements.filter((e) => e.site === s.nom);
+    const points = [...new Set(eqs.map((e) => e.point ?? ""))];
+    if (points.length <= 1 && !points[0]) {
+      const l = disposerSite(eqs, inv, tous, facades);
+      return {
+        cle: s.nom, w: l.w, h: l.h,
+        poser: (x: number, y: number) => {
+          l.pos.forEach((p, nom) => pos.set(nom, { x: x + p.x, y: y + p.y }));
+          cadres.push({ type: "site", nom: s.nom, site: s.nom, x, y, w: l.w, h: l.h });
+        },
+      };
+    }
+    const locaux = new Map(points.map((p) => [p, disposerSite(eqs.filter((e) => (e.point ?? "") === p), inv, tous, facades)]));
+    const liens = new Map<string, number>();
+    inv.liaisons.forEach((l) => {
+      const a = tous.get(l.a), b = tous.get(l.b);
+      if (a?.site !== s.nom || b?.site !== s.nom || (a.point ?? "") === (b.point ?? "")) return;
+      [a.point ?? "", b.point ?? ""].forEach((k) => liens.set(k, (liens.get(k) ?? 0) + 1));
+    });
+    const r = ranger(points.map((p) => ({ cle: p, w: locaux.get(p)!.w, h: locaux.get(p)!.h })), liens, ECART_POINTS,
+      points.includes("") ? "" : undefined);
+    const w = r.w + MARGE_SITE * 2, h = r.h + MARGE_SITE * 2 + ENTETE_SITE;
+    return {
+      cle: s.nom, w, h,
+      poser: (x: number, y: number) => {
+        cadres.push({ type: "site", nom: s.nom, site: s.nom, x, y, w, h });
+        points.forEach((p) => {
+          const l = locaux.get(p)!, o = r.place.get(p)!;
+          const px = x + MARGE_SITE + o.x, py = y + ENTETE_SITE + MARGE_SITE + o.y;
+          l.pos.forEach((q, nom) => pos.set(nom, { x: px + q.x, y: py + q.y }));
+          cadres.push({ type: "point", nom: p || "Central", point: p, site: s.nom, x: px, y: py, w: l.w, h: l.h });
+        });
+      },
+    };
   });
+
+  const liensSite = new Map<string, number>();
+  inv.liaisons.forEach((l) => {
+    const a = tous.get(l.a)?.site, b = tous.get(l.b)?.site;
+    if (a && b && a !== b) { liensSite.set(a, (liensSite.get(a) ?? 0) + 1); liensSite.set(b, (liensSite.get(b) ?? 0) + 1); }
+  });
+  const r = ranger(sites, liensSite, ECART_SITES);
+  sites.forEach((s) => { const o = r.place.get(s.cle)!; s.poser(o.x, o.y); });
 
   const largeur = Math.max(1, ...cadres.map((c) => c.x + c.w));
   const hauteur = Math.max(1, ...cadres.map((c) => c.y + c.h));

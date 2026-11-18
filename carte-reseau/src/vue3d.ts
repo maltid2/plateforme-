@@ -10,7 +10,8 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { CSS2DObject, CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRenderer.js";
-import { APPARENCE, COULEUR_INTERSITE, COULEUR_TRUNK } from "./apparence.ts";
+import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
+import { APPARENCE, COULEUR_MEDIA } from "./apparence.ts";
 import type { Disposition } from "./disposition.ts";
 import { FH, type Facade } from "./facade.ts";
 import { svgFacade } from "./plan2d.ts";
@@ -21,6 +22,8 @@ export type Vue3D = {
   afficher: (inv: Inventaire, d: Disposition, site: string | null) => void;
   selectionner: (nom: string | null, centrer?: boolean) => void;
   cadrer: () => void;
+  /** La scène en .glb : s'ouvre dans la Visionneuse 3D de Windows, Blender, PowerPoint… */
+  exporterGLB: () => Promise<Blob>;
 };
 
 const U = 0.3;              // hauteur d'un U
@@ -28,6 +31,11 @@ const RL = 2.2, RD = 2.0;   // largeur et profondeur d'un équipement 19"
 const BW = 2.9, BD = 2.6;   // encombrement d'une baie
 const EN_BAIE = new Set<Genre>(["passerelle", "parefeu", "switch", "serveur", "nas", "nvr", "onduleur"]);
 const HAUTEUR_U: Partial<Record<Genre, number>> = { serveur: 2, nas: 2, nvr: 2, onduleur: 2 };
+const CAM_PAR_PLATEAU = 6, U_PLATEAU = 2;
+const MEDIAS_COURTS = { fibre: "fibre", cuivre: "RJ45", radio: "radio", vpn: "VPN" } as const;
+
+/** Réglages de la vue, modifiables depuis l'interface. */
+export const options = { camerasEnBaie: true };
 
 /* ---------- façades simples (serveur, NVR, onduleur) ---------- */
 function svgSimple(e: Equipement, u: number): string {
@@ -243,6 +251,28 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     return { g, prise };
   }
 
+  /** Une caméra en miniature, posée sur un plateau de la baie, objectif vers l'avant. */
+  function miniCamera(e: Equipement) {
+    const g = new THREE.Group();
+    const clair = std(0xd9dee5, { roughness: 0.4 }), noir = std(0x111418);
+    const accent = std(APPARENCE.camera.couleur, { emissive: new THREE.Color(APPARENCE.camera.couleur), emissiveIntensity: 0.7 });
+    if (e.infos.some((i) => /d[oô]me/i.test(i))) {
+      g.add(P(cyl(0.13, 0.13, 0.04, clair, 20), 0, 0.02, 0));
+      const coque = new THREE.Mesh(geo(new THREE.SphereGeometry(0.11, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2)),
+        std(0x0d1117, { transparent: true, opacity: 0.85, metalness: 0.6, roughness: 0.1 }));
+      g.add(P(coque, 0, 0.04, 0));
+      g.add(P(cyl(0.02, 0.02, 0.02, accent, 10), 0, 0.12, 0.05));
+    } else {
+      g.add(P(boite(0.05, 0.12, 0.05, clair), 0, 0.06, 0));
+      const corps = P(cyl(0.07, 0.07, 0.32, clair, 16), 0, 0.17, 0.08);
+      corps.rotation.x = Math.PI / 2; g.add(corps);
+      g.add(P(boite(0.17, 0.02, 0.36, clair), 0, 0.25, 0.08));
+      const obj = P(cyl(0.05, 0.05, 0.02, noir, 14), 0, 0.17, 0.245); obj.rotation.x = Math.PI / 2; g.add(obj);
+      g.add(P(cyl(0.015, 0.015, 0.01, accent, 8), 0.035, 0.19, 0.25));
+    }
+    return g;
+  }
+
   /* ---------- la scène ---------- */
   function afficher(inv: Inventaire, d: Disposition, site: string | null) {
     generation++;
@@ -258,13 +288,31 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
 
     const parNom = new Map(inv.equipements.map((e) => [e.nom, e]));
     const visibles = new Set(inv.equipements.filter((e) => !site || e.site === site).map((e) => e.nom));
-    const cadres = d.cadres.filter((c) => !site || c.nom === site);
+    const cadres = d.cadres.filter((c) => !site || c.site === site);
+    const avecPoints = new Set(cadres.filter((c) => c.type === "point").map((c) => c.site));
+    // Une salle par lieu ; un site sans lieux est lui-même une salle.
+    const salles = cadres.filter((c) => c.type === "point" || !avecPoints.has(c.site));
+    const salleDe = new Map<string, string>();
+    type Prise = { port: (id?: string) => THREE.Vector3; enBaie: boolean; plateau?: boolean; hautBaie?: THREE.Vector3; baie?: string };
     /** Où se branche un câble : le port sur la façade, ou la prise d'un équipement. */
-    const prises = new Map<string, { port: (id?: string) => THREE.Vector3; enBaie: boolean; hautBaie?: THREE.Vector3 }>();
+    const prises = new Map<string, Prise>();
 
-    cadres.forEach((c) => {
+    // Le terrain d'un site à plusieurs lieux : une dalle plus sombre dessous.
+    cadres.filter((c) => c.type === "site" && avecPoints.has(c.site)).forEach((c) => {
+      const dalle = boite(c.w, 0.2, c.h, std(0x0a0d12, { roughness: 1, metalness: 0 }));
+      dalle.position.set(c.x + c.w / 2, -0.32, c.y + c.h / 2);
+      racine.add(dalle);
+      // Nom du site devant, au bord : celui des lieux est au fond de chaque salle.
+      const t = etiquette(c.nom, "etiquette3d site");
+      t.position.set(c.x + 1.2, 0, c.y + c.h - 0.8);
+      t.center.set(0, 0.5);
+      racine.add(t);
+    });
+
+    salles.forEach((c) => {
+      const cle = `${c.site}§${c.type === "point" ? c.point : ""}`;
       // Le sol de la salle.
-      const sol = boite(c.w, 0.2, c.h, std(0x10151c, { roughness: 0.9, metalness: 0 }));
+      const sol = boite(c.w, 0.2, c.h, std(c.type === "point" ? 0x121a22 : 0x10151c, { roughness: 0.9, metalness: 0 }));
       sol.position.set(c.x + c.w / 2, -0.1, c.y + c.h / 2);
       racine.add(sol);
       const cote = Math.max(c.w, c.h);
@@ -273,31 +321,50 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
       grille.scale.set(c.w / cote, 1, c.h / cote);
       jetables.push(grille.geometry, grille.material as THREE.Material);
       racine.add(grille);
-      const t = etiquette(c.nom, "etiquette3d site");
+      const t = etiquette(c.type === "point" ? `⌖ ${c.nom}` : c.nom, c.type === "point" ? "etiquette3d site point" : "etiquette3d site");
       t.position.set(c.x + 1.2, 0.3, c.y + 0.9);
       t.center.set(0, 0.5);
       racine.add(t);
 
-      // Les baies, alignées au fond de la salle.
-      const eqs = inv.equipements.filter((e) => e.site === c.nom);
+      const eqs = inv.equipements.filter((e) => e.site === c.site && (c.type === "site" || (e.point ?? "") === c.point));
+      eqs.forEach((e) => salleDe.set(e.nom, cle));
       const groupes = new Map<string, Equipement[]>();
       eqs.filter((e) => EN_BAIE.has(e.genre)).forEach((e) => {
         const k = e.baie ?? "Baie";
         if (!groupes.has(k)) groupes.set(k, []);
         groupes.get(k)!.push(e);
       });
+      const baieDe = new Map<string, string>();
+      groupes.forEach((liste, k) => liste.forEach((e) => baieDe.set(e.nom, k)));
+
+      // Les caméras rangées sous les switchs de leur baie, sur des plateaux.
+      const camerasDe = new Map<string, Equipement[]>();
+      if (options.camerasEnBaie) {
+        eqs.filter((e) => e.genre === "camera").forEach((e) => {
+          const l = inv.liaisons.find((x) => (x.a === e.nom && baieDe.has(x.b)) || (x.b === e.nom && baieDe.has(x.a)));
+          if (!l) return;
+          const k = baieDe.get(l.a === e.nom ? l.b : l.a)!;
+          if (!camerasDe.has(k)) camerasDe.set(k, []);
+          camerasDe.get(k)!.push(e);
+        });
+      }
+
+      // Les baies, alignées au fond de la salle.
       const nb = groupes.size;
       let k = 0;
       groupes.forEach((liste, nomBaie) => {
         const x = c.x + c.w / 2 + (k++ - (nb - 1) / 2) * (BW + 1.2);
         const z = c.y + 3.2;
-        const nbU = Math.max(12, liste.reduce((t, e) => t + (HAUTEUR_U[e.genre] ?? 1), 0) + 4);
+        const cams = camerasDe.get(nomBaie) ?? [];
+        const plateaux = Math.ceil(cams.length / CAM_PAR_PLATEAU);
+        const nbU = Math.max(12, liste.reduce((t, e) => t + (HAUTEUR_U[e.genre] ?? 1), 0) + plateaux * U_PLATEAU + 3);
         const { g, H } = baie(nbU);
         g.position.set(x, 0, z);
         racine.add(g);
         const lb = etiquette(`▤ ${nomBaie}`, "etiquette3d baie");
         lb.position.set(x, H + 0.35, z);
         racine.add(lb);
+        const avant = z + RD / 2 + 0.03;
         // Du haut vers le bas, dans l'ordre de la saisie, avec un U d'air sous le toit.
         let y = H - 0.3 - U;
         liste.forEach((e) => {
@@ -311,9 +378,8 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
           if (!visibles.has(e.nom)) return;
           cliquables.push(gm.children[0]);
           objets.set(e.nom, gm);
-          const avant = z + RD / 2 + 0.03;
           prises.set(e.nom, {
-            enBaie: true,
+            enBaie: true, baie: `${cle}§${nomBaie}`,
             hautBaie: new THREE.Vector3(x, H + 0.1, z),
             port: (id) => {
               const p = f && id ? f.parId.get(id) : undefined;
@@ -322,10 +388,41 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
             },
           });
         });
+        // Plateaux à caméras, en bas de la baie : autant qu'il en faut.
+        for (let i = 0; i < plateaux; i++) {
+          const base = 0.36 + i * U_PLATEAU * U;
+          const gp = new THREE.Group();
+          gp.position.set(x, base, z);
+          gp.add(P(boite(RL, 0.04, RD - 0.2, std(0x2b323c, { metalness: 0.6 })), 0, 0, 0));
+          gp.add(P(boite(RL, 0.12, 0.03, std(0x3a4350, { metalness: 0.6 })), 0, 0.04, RD / 2 - 0.1));
+          racine.add(gp);
+          const lot = cams.slice(i * CAM_PAR_PLATEAU, (i + 1) * CAM_PAR_PLATEAU);
+          if (i === 0) {
+            const et = etiquette(`◉ ${cams.length} caméra${cams.length > 1 ? "s" : ""}`, "etiquette3d plateau");
+            et.position.set(x - RL / 2 - 0.2, base + 0.25, avant + 0.1);
+            et.center.set(1, 0.5);
+            racine.add(et);
+          }
+          lot.forEach((e, j) => {
+            const mc = miniCamera(e);
+            const cx = x - RL / 2 + 0.22 + (j * (RL - 0.44)) / (CAM_PAR_PLATEAU - 1);
+            mc.position.set(cx, base + 0.02, z + 0.25);
+            mc.userData.nom = e.nom;
+            racine.add(mc);
+            if (!visibles.has(e.nom)) return;
+            cliquables.push(mc);
+            objets.set(e.nom, mc);
+            const lbc = etiquette(e.nom, "etiquette3d petite");
+            lbc.position.set(0, 0.42, 0.2);
+            mc.add(lbc);
+            const prise = new THREE.Vector3(cx, base + 0.08, z + 0.6);
+            prises.set(e.nom, { enBaie: true, plateau: true, baie: `${cle}§${nomBaie}`, port: () => prise.clone() });
+          });
+        }
       });
 
       // Le reste, posé dans la salle à la même place que sur le plan 2D.
-      eqs.filter((e) => !EN_BAIE.has(e.genre)).forEach((e) => {
+      eqs.filter((e) => !EN_BAIE.has(e.genre) && !prises.has(e.nom)).forEach((e) => {
         if (!visibles.has(e.nom)) return;
         const p = d.pos.get(e.nom)!;
         const { g, prise } = modele(e);
@@ -342,29 +439,33 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
       });
     });
 
-    // Les câbles.
+    // Les câbles, à la couleur de leur support.
     inv.liaisons.forEach((l) => {
       if (!visibles.has(l.a) || !visibles.has(l.b)) return;
       const A = prises.get(l.a), B = prises.get(l.b);
       if (!A || !B) return;
       const ea = parNom.get(l.a)!, eb = parNom.get(l.b)!;
       const trunk = l.mode === "trunk";
-      if (ea.site !== eb.site) {
+      const couleur = COULEUR_MEDIA[l.media ?? "inconnu"];
+      if (salleDe.get(l.a) !== salleDe.get(l.b)) {
+        // Entre deux lieux d'un site : arc bas. Entre deux sites : arc haut.
         const a = A.hautBaie ?? A.port(l.portA), b = B.hautBaie ?? B.port(l.portB);
         const dist = a.distanceTo(b);
-        const m = a.clone().lerp(b, 0.5); m.y = Math.max(a.y, b.y) + dist * 0.28;
-        racine.add(cable([a, a.clone().lerp(m, 0.5).setY(m.y * 0.85), m, b.clone().lerp(m, 0.5).setY(m.y * 0.85), b], COULEUR_INTERSITE, 0.09, 0.9));
-        if (l.libelle) { const t = etiquette(l.libelle, "etiquette3d lien"); t.position.copy(m).add(new THREE.Vector3(0, 0.6, 0)); racine.add(t); }
+        const m = a.clone().lerp(b, 0.5); m.y = Math.max(a.y, b.y) + dist * (ea.site === eb.site ? 0.14 : 0.28);
+        racine.add(cable([a, a.clone().lerp(m, 0.5).setY(m.y * 0.85), m, b.clone().lerp(m, 0.5).setY(m.y * 0.85), b], couleur,
+          l.media === "vpn" ? 0.06 : 0.09, l.media === "vpn" ? 0.6 : 0.95));
+        const t = [l.libelle, l.media ? MEDIAS_COURTS[l.media] : ""].filter(Boolean).join(" · ");
+        if (t) { const e = etiquette(t, "etiquette3d lien"); e.position.copy(m).add(new THREE.Vector3(0, 0.6, 0)); racine.add(e); }
         return;
       }
       const pa = A.port(l.portA), pb = B.port(l.portB);
-      const couleur = trunk ? COULEUR_TRUNK : APPARENCE[(A.enBaie && !B.enBaie ? eb : ea).genre].couleur;
-      const r = trunk ? 0.026 : 0.014;
-      if (A.enBaie && B.enBaie && Math.abs(pa.x - pb.x) < BW && Math.abs(pa.z - pb.z) < 0.1) {
-        // Cordon de brassage dans la même baie : une boucle devant la façade.
-        const avance = 0.35 + Math.abs(pa.y - pb.y) * 0.15;
-        racine.add(cable([pa, pa.clone().setZ(pa.z + 0.12), new THREE.Vector3((pa.x + pb.x) / 2 + 0.25, (pa.y + pb.y) / 2, pa.z + avance),
-          pb.clone().setZ(pb.z + 0.12), pb], couleur, r));
+      const r = trunk ? 0.03 : 0.014;
+      if (A.enBaie && B.enBaie && A.baie === B.baie) {
+        // Dans la même baie : cordon de brassage devant la façade, ou jusqu'au plateau des caméras.
+        const [h, bas] = pa.y > pb.y ? [pa, pb] : [pb, pa];
+        const avance = 0.3 + Math.min(0.6, Math.abs(pa.y - pb.y) * 0.12);
+        racine.add(cable([h, h.clone().setZ(h.z + 0.12), new THREE.Vector3(h.x + 0.05, (h.y + bas.y) / 2, h.z + avance),
+          new THREE.Vector3(bas.x, bas.y + 0.15, bas.z + 0.15), bas], couleur, r));
         return;
       }
       // Sortie du port, descente devant la baie, course au sol, remontée.
@@ -432,9 +533,24 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     etiq.render(scene, cam);
   });
 
+  async function exporterGLB(): Promise<Blob> {
+    // La surbrillance de sélection n'a rien à faire dans le fichier.
+    const sb = surbrillance;
+    if (sb) racine.remove(sb);
+    racine.name = "Carte réseau";
+    racine.traverse((o) => { if (o.userData.nom && !o.name) o.name = String(o.userData.nom); });
+    try {
+      const res = await new GLTFExporter().parseAsync(racine, { binary: true, onlyVisible: true });
+      return new Blob([res as ArrayBuffer], { type: "model/gltf-binary" });
+    } finally {
+      if (sb) racine.add(sb);
+    }
+  }
+
   return {
     afficher,
     cadrer,
+    exporterGLB,
     selectionner(nom, centrer = false) {
       if (surbrillance) { racine.remove(surbrillance); surbrillance.dispose(); surbrillance = null; }
       if (!nom) return;

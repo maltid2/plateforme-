@@ -1,89 +1,118 @@
-# Carte réseau — outil interne, 100 % local
+# Carte réseau — outil interne, 100 % hors ligne
 
-On écrit à la main ses sites, ses baies, ses switchs et ce qui est branché
-dessus, port par port. L'outil dessine la carte : un **plan 2D** avec de vrais
-switchs en façade (ports numérotés, câbles qui partent du bon port, trunks
-étiquetés) et une **vue 3D** avec les baies, les équipements montés dedans et
-les câbles jusqu'aux caméras, bornes et postes.
+On renseigne ses sites, ses lieux (écoles, bâtiments…), ses baies, ses
+switchs et ce qui est branché dessus, port par port. L'outil produit **deux
+plans** :
+
+- un **plan 2D professionnel** : vrais switchs en façade (ports numérotés,
+  câble qui part du bon port), fibre et cuivre en deux couleurs, trunks et
+  VLAN étiquetés, chaque site dans son cadre et chaque lieu dans son site ;
+- une **vue 3D interactive** : une salle par lieu, des baies avec les
+  équipements montés dedans, les caméras rangées sur des plateaux en bas de
+  baie et câblées au port de leur switch, les liaisons entre sites en arc.
 
 Ce n'est pas de la découverte automatique : la carte est exactement ce que
-vous avez renseigné.
+vous avez renseigné. Rien n'est obligatoire : un site peut n'avoir qu'un
+switch, sans pare-feu ni onduleur.
 
-## Utiliser l'outil : un seul fichier
+## Installer : un seul fichier, rien d'autre
 
-**`carte-reseau.html`** contient tout l'outil (three.js compris). On le copie
-sur un PC, on l'ouvre en double-cliquant dans Chrome, Edge ou Firefox.
+**`carte-reseau.html`** contient tout l'outil. On le copie sur le poste et on
+l'ouvre en double-cliquant (Edge, Chrome ou Firefox). Pas d'installation, pas
+de compte, pas de serveur.
 
-- **Aucune connexion internet** : le fichier interdit lui-même toute connexion
-  sortante (politique de sécurité intégrée). Rien n'est envoyé, nulle part.
-- **Les données restent sur le PC**, dans le navigateur qui a ouvert le fichier.
-- **Sauvegarde** : menu *Fichiers › Sauvegarder toutes les topologies (.json)*.
-  C'est ce fichier `.json` qu'on classe avec ses documents ; il se recharge
-  avec *Restaurer une sauvegarde*. Faites-en une régulièrement : un nettoyage
-  du navigateur efface le stockage local.
+### Sécurité (esprit ISO 27001)
 
-## Plusieurs topologies
+- **Aucune connexion sortante possible** : le fichier embarque une politique de
+  sécurité (`connect-src 'none'`, aucune ressource externe) ; le navigateur
+  bloque toute tentative d'envoi. Vérifié : zéro requête réseau en usage.
+- **Les données restent sur le poste**, dans le navigateur qui ouvre le fichier.
+- **Intégrité** : `carte-reseau.html.sha256` donne l'empreinte du fichier
+  livré. Avant de le déployer, vérifiez-la :
+  ```powershell
+  Get-FileHash .\carte-reseau.html -Algorithm SHA256
+  ```
+- **Marquage** : le dossier imprimé porte « Document interne — diffusion
+  restreinte » sur chaque page.
+- **Sauvegarde** : *Fichiers › Sauvegarder toutes les topologies (.json)*. C'est
+  ce fichier qu'on classe dans vos logiciels / votre GED ; il se recharge avec
+  *Restaurer une sauvegarde*. Un nettoyage du navigateur efface le stockage
+  local : sauvegardez régulièrement.
 
-La liste en haut de l'écran permet d'avoir autant de cartes qu'il faut (un
-client, un bâtiment, une version « avant / après »…) : *Nouvelle*, *Renommer*,
-*Dupliquer*, *Supprimer*. Chaque topologie s'exporte aussi seule en `.txt`.
+## Saisir : le formulaire (pour tout le monde)
 
-## Écrire une topologie
+1. **Où ?** — choisir le site, le lieu (facultatif) et la baie (facultatif).
+   Ils restent sélectionnés : on ne les ressaisit pas à chaque équipement.
+2. **Ajouter** — cliquer le type (Switch, Caméra, Passerelle…), donner un nom
+   (un nom est proposé), l'IP, le modèle. Pour plusieurs caméras d'un coup,
+   mettre le **nombre** : les IP et les ports se suivent.
+3. **Branché sur** — choisir le switch, puis le port : **seuls les ports
+   libres** sont proposés. Câble automatique (SFP = fibre, sinon cuivre) ou
+   forcé (fibre, RJ45, radio, VPN). Trunk coché d'office entre deux switchs.
+4. **Relier deux équipements** — pour un trunk entre switchs, une liaison entre
+   deux agences, un VPN de secours…
+5. **Inventaire** — la liste de tout ce qui est saisi, par site et par lieu ;
+   ✎ pour modifier, ✕ pour supprimer, clic pour voir sur la carte.
+
+Le formulaire écrit des lignes de texte : l'onglet **Texte** les montre et
+permet d'aller plus vite quand on a l'habitude.
+
+## Saisir : le texte (pour aller vite)
 
 ```text
-site Nanterre | Siège
+site Lyon                         # les lignes suivantes sont à Lyon
+point École Jaurès                # … dans ce lieu
+baie B1                           # … et dans cette baie (lignes en retrait)
+  switch SW-JAURES | 10.20.1.2 | Netgear GS110TP | ports=8 | sfp=2 | sur SW-MAIRIE:Te1 | fibre
+camera CAM-JAURES x4 | 10.20.31.10 | Dôme 4 MP | sur SW-JAURES:1 | vlan=30
 
-baie A1
-  parefeu FW-NANTERRE | 10.14.0.1 | FortiGate 100F | ports=8
-  switch SW-CORE  | 10.14.0.2 | Cisco Catalyst 9300-24T | ports=24 | sfp=4
-  switch SW-CAM   | 10.14.0.4 | Aruba 2930F PoE+        | ports=24 | sfp=4
-
-FW-NANTERRE:LAN1 -> SW-CORE:Te1 | trunk | vlan=10,20,30
-SW-CORE:Te3 -> SW-CAM:Te1 | trunk | vlan=30
-
-camera CAM-PARKING x6 | 10.14.30.11 | Bullet 8 MP | sur SW-CAM:3 | vlan=30
-
-switch SW-LYON-1 | 10.20.0.2 | @Lyon | ports=24 | sur GW-LYON:LAN1
+SW-MAIRIE:Te3 -> SW-LILLE-1:Te2 | fibre | trunk | vlan=10,30
+FW-SIEGE:WAN2 -> SW-LILLE-1:24 | vpn | secours
 ```
 
 | Quoi | Comment |
 | --- | --- |
-| Équipement | `type NOM \| IP \| modèle \| @Site \| sur SWITCH:port \| vlan=20` |
+| Équipement | `type NOM \| IP \| modèle \| @Site/Lieu \| baie=A1 \| sur SWITCH:port \| vlan=30` |
 | Types | passerelle, parefeu, switch, camera, nvr, borne, serveur, nas, poste, imprimante, telephone, onduleur, autre |
-| Switch | `ports=24` (RJ45) et `sfp=4` (cages SFP) dessinent la façade ; sans eux, la taille se déduit des ports utilisés |
-| Liaison | `SW-1:24 -> SW-2:Te1 \| trunk \| vlan=10,20` |
-| Trunk | écrit `trunk`, ou plusieurs VLAN, ou deux switchs reliés entre eux |
-| Plusieurs d'un coup | `camera CAM x6 \| 10.0.30.11 \| sur SW:3` → CAM-1 à CAM-6, IP et ports qui se suivent |
-| Site | `site Lyon` en bloc, ou `@Lyon` sur la ligne (ordre libre) |
-| Baie | `baie A1`, puis les lignes **en retrait** en dessous |
-| Ports | `5`, `Gi1/0/5`, `Te1`, `SFP2`, `LAN1`, `WAN` |
+| Switch | `ports=24` (RJ45) et `sfp=4` (cages fibre) dessinent la façade |
+| Liaison | `SW-1:24 -> SW-2:Te1 \| fibre \| trunk \| vlan=10,20 \| remarque` |
+| Câble | `fibre`, `rj45` (ou `cuivre`), `radio`, `vpn` — sinon déduit (SFP = fibre) |
+| Plusieurs d'un coup | `camera CAM x6 \| 10.0.30.11 \| sur SW:3` → CAM-1 à CAM-6, ports 3 à 8 |
+| Site / lieu | `site Lyon`, `point École A` en blocs, ou `@Lyon/École A` sur la ligne |
 
-**L'éditeur aide à bien écrire** : coloration, numéros de ligne, erreurs
-soulignées en direct, et suggestions pendant la frappe. Après `@` il propose
-les sites, après `sur` ou `->` les équipements, et après `SWITCH:` **les ports
-encore libres** de ce switch. `↑ ↓` pour choisir, `Entrée`/`Tab` pour valider,
-`Ctrl+Espace` pour rouvrir.
+L'éditeur colore la syntaxe, souligne les erreurs et propose les sites, les
+équipements et **les ports libres** pendant la frappe (`Ctrl+Espace`).
 
-**La fiche d'un équipement** (clic sur la carte) donne son IP, son site, sa
-baie, **sa passerelle et le port par lequel il y remonte**, une mini-façade
-des ports utilisés et la table des liaisons. Cliquer un port branché ouvre
-l'équipement au bout du câble.
+## Exporter (s'ouvre partout)
 
-## Modifier l'outil
+| Export | S'ouvre avec |
+| --- | --- |
+| **Dossier imprimable · PDF** — plan 2D A3 avec cartouche et légende, puis tableau des équipements par site | tout lecteur PDF ; choisir l'imprimante « Enregistrer au format PDF » |
+| **Visionneuse interactive (.html)** — 2D + 3D, topologie incluse, lecture seule | n'importe quel navigateur, hors ligne |
+| **Maquette 3D (.glb)** | Visionneuse 3D de Windows, PowerPoint, Blender… |
+| **Plan 2D (.svg)** | navigateur, Inkscape, Illustrator, Visio, Word |
+| **Image (.png)** | tout |
+
+Le PDF et le SVG sont produits en version claire (fond blanc) pour
+l'impression ; les façades de switch restent réalistes.
+
+## Modifier l'outil (développeurs)
 
 ```bash
 npm install
 npm run dev        # http://localhost:5173
-npm test           # analyseur, façades, placement
-npm run fichier    # reconstruit carte-reseau.html
+npm test           # analyseur, façades, placement, lieux, supports
+npm run fichier    # reconstruit carte-reseau.html et son empreinte SHA-256
 ```
 
 | Fichier | Rôle |
 | --- | --- |
-| `src/saisie.ts` | lecture du texte, liaisons, trunks, alertes |
+| `src/saisie.ts` | lecture du texte : sites, lieux, liaisons, câbles, trunks, alertes |
 | `src/facade.ts` | ports d'un switch et leur place, chemin vers la passerelle |
-| `src/disposition.ts` | placement automatique, chaque équipement sous son port |
-| `src/plan2d.ts` | plan 2D en SVG (façades réalistes) |
-| `src/vue3d.ts` | baies et câbles en 3D (three.js) |
-| `src/editeur.ts` | éditeur avec coloration et suggestions |
+| `src/disposition.ts` | placement automatique : sites › lieux › équipements sous leur port |
+| `src/plan2d.ts` | plan 2D en SVG (façades réalistes, version claire pour l'export) |
+| `src/vue3d.ts` | salles, baies, plateaux à caméras, câbles ; export .glb |
+| `src/formulaire.ts` | saisie simple par listes |
+| `src/editeur.ts` | éditeur texte avec coloration et suggestions |
+| `src/impression.ts` | dossier imprimable / PDF |
 | `src/projets.ts` | topologies multiples, sauvegarde et import |

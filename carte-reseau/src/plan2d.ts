@@ -9,7 +9,7 @@
  * Molette : zoom. Glisser : déplacement. Clic : fiche. Survol d'un port :
  * ce qui y est branché.
  */
-import { APPARENCE, COULEUR_INTERSITE, COULEUR_TRUNK } from "./apparence.ts";
+import { APPARENCE, COULEUR_MEDIA } from "./apparence.ts";
 import { CARTE_H, CARTE_W, type Disposition, type Point } from "./disposition.ts";
 import { FH, PH, PW, type Facade, type Port } from "./facade.ts";
 import { PICTOS } from "./pictos.ts";
@@ -22,7 +22,8 @@ export type Plan2D = {
   afficher: (inv: Inventaire, d: Disposition, site: string | null) => void;
   selectionner: (nom: string | null, centrer?: boolean) => void;
   cadrer: () => void;
-  exporter: () => string;
+  /** Le plan en SVG autonome ; « clair » : fond blanc pour l'impression et les documents. */
+  exporter: (clair?: boolean) => string;
 };
 
 function el<K extends keyof SVGElementTagNameMap>(nom: K, attrs: Record<string, string | number> = {}, parent?: Element) {
@@ -99,7 +100,9 @@ function dessinerFacade(g: SVGGElement, e: Equipement, f: Facade, inv: Inventair
     const px = x0 + p.x, py = y0 + p.y;
     const gp = el("g", br ? { class: "port", "data-vers": br.vers } : { class: "port" }, g);
     const trunk = br?.liaison.mode === "trunk";
-    const couleur = br ? (trunk ? COULEUR_TRUNK : APPARENCE[parNom.get(br.vers)?.genre ?? "autre"].couleur) : "";
+    // Fiche branchée : couleur du support pour un trunk (fibre orange, cuivre
+    // bleu), sinon couleur de ce qui est au bout (caméra, poste…).
+    const couleur = br ? (trunk ? COULEUR_MEDIA[br.liaison.media ?? "inconnu"] : APPARENCE[parNom.get(br.vers)?.genre ?? "autre"].couleur) : "";
     if (p.type === "sfp") {
       el("rect", { x: px - (PW + 0.1) / 2, y: py - PH / 2 - 0.02, width: PW + 0.1, height: PH + 0.04, rx: 0.03, fill: "url(#g-sfp)" }, gp);
       el("rect", { x: px - PW / 2 + 0.02, y: py - PH / 2 + 0.07, width: PW - 0.04, height: PH - 0.14, fill: br ? couleur : "#0b0e12" }, gp);
@@ -145,7 +148,7 @@ function dessinerCarte(g: SVGGElement, e: Equipement) {
   texte(g, e.ip ?? "", { x: x0 + 1.55, y: y0 + 1.05, "font-size": 0.22, fill: "#B9C3CF", "font-family": "ui-monospace, monospace" });
   const vlan = e.kv.find(([k]) => /^vlan$/i.test(k))?.[1];
   if (vlan) texte(g, `VLAN ${vlan}`, { x: x0 + 1.55, y: y0 + 1.36, "font-size": 0.2, fill: "#8B98A8" });
-  texte(g, court(e.nom), { x: 0, y: y0 + CARTE_H + 0.5, "text-anchor": "middle", "font-size": 0.38, "font-weight": 600, fill: "#F5F7FA",
+  texte(g, court(e.nom), { class: "nom-carte", x: 0, y: y0 + CARTE_H + 0.5, "text-anchor": "middle", "font-size": 0.38, "font-weight": 600, fill: "#F5F7FA",
     stroke: "#0D1118", "stroke-width": 0.14, "paint-order": "stroke" });
 }
 
@@ -161,6 +164,31 @@ export function svgFacade(e: Equipement, f: Facade, inv: Inventaire, largeurPx =
   const g = el("g", {}, svg) as SVGGElement;
   dessinerFacade(g, e, f, inv);
   return new XMLSerializer().serializeToString(svg);
+}
+
+/**
+ * Version claire pour l'impression : fond blanc, cadres gris clair, textes
+ * sombres. Les façades et les cartes d'équipement gardent leur aspect
+ * (on reconnaît le matériel), seuls leurs noms passent en sombre.
+ */
+const CLAIR: Record<string, string> = {
+  "#07090d": "#ffffff", "#0d1118": "#f4f6f8", "#141922": "#ffffff", "#0a0e14": "#eef1f4", "#0f141c": "#ffffff",
+  "#f5f7fa": "#111418", "#8b98a8": "#56606c", "#e3f9ee": "#0d4f33", "#c2b9ff": "#4b3cc4",
+  "rgba(255,255,255,0.11)": "#c5ccd4", "rgba(255,255,255,0.12)": "#c5ccd4", "rgba(141,124,255,0.09)": "rgba(141,124,255,0.12)",
+  "rgba(61,220,151,0.28)": "#7fd6ae", "url(#g-grille)": "none",
+};
+function eclaircir(svg: SVGSVGElement) {
+  svg.querySelectorAll<SVGElement>("*").forEach((n) => {
+    const dansNoeud = !!n.closest(".noeud");
+    if (dansNoeud && !n.classList.contains("nom-carte")) return;
+    for (const a of ["fill", "stroke"]) {
+      const v = n.getAttribute(a)?.toLowerCase().replace(/\s+/g, "");
+      if (v && CLAIR[v]) n.setAttribute(a, CLAIR[v]);
+    }
+    // Gaine des câbles : sombre sur fond sombre, blanche sur fond blanc.
+    if (n.tagName === "path" && n.getAttribute("stroke")?.toLowerCase() === "#f4f6f8") n.setAttribute("stroke", "#ffffff");
+    if (n.classList.contains("nom-carte")) { n.setAttribute("fill", "#111418"); n.setAttribute("stroke", "#ffffff"); }
+  });
 }
 
 export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
@@ -228,17 +256,16 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
     liensDe.clear();
     pos = d.pos;
     const visibles = new Set(inv.equipements.filter((e) => !site || e.site === site).map((e) => e.nom));
-    const siteDe = new Map(inv.equipements.map((e) => [e.nom, e.site]));
-    const genreDe = new Map(inv.equipements.map((e) => [e.nom, e.genre]));
-    const cadres = d.cadres.filter((c) => !site || c.nom === site);
+    const parNom = new Map(inv.equipements.map((e) => [e.nom, e]));
+    const cadres = d.cadres.filter((c) => !site || c.site === site);
     if (!cadres.length) { bornes = { x: 0, y: 0, w: 10, h: 10 }; cadrer(); return; }
-    const cadreDe = new Map(cadres.map((c) => [c.nom, c]));
+    const cadreSite = new Map(cadres.filter((c) => c.type === "site").map((c) => [c.site, c]));
+    const cadrePoint = new Map(cadres.filter((c) => c.type === "point").map((c) => [`${c.site}§${c.point}`, c]));
+    /** Le cadre le plus proche d'un équipement : son lieu s'il en a un, sinon son site. */
+    const cadreDe = (nom: string) => { const e = parNom.get(nom)!; return cadrePoint.get(`${e.site}§${e.point ?? ""}`) ?? cadreSite.get(e.site)!; };
     const ajouterLien = (l: Liaison, e: SVGElement) => {
       [l.a, l.b].forEach((n) => { if (!liensDe.has(n)) liensDe.set(n, []); liensDe.get(n)!.push(e); });
     };
-
-    // Liaisons entre sites : sous les cadres, visibles seulement entre eux.
-    const gInter = el("g", {}, monde);
     const sortie = (p: Point, q: Point, c: { x: number; y: number; w: number; h: number }) => {
       const dx = q.x - p.x, dy = q.y - p.y;
       const tx = dx > 0 ? (c.x + c.w - p.x) / dx : dx < 0 ? (c.x - p.x) / dx : Infinity;
@@ -247,17 +274,38 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
       return { x: p.x + dx * t, y: p.y + dy * t };
     };
     const dedans = (p: Point) => cadres.some((c) => p.x > c.x && p.x < c.x + c.w && p.y > c.y && p.y < c.y + c.h);
+    const styleMedia = (l: Liaison) => {
+      const m = l.media ?? "inconnu";
+      return { stroke: COULEUR_MEDIA[m], ...(m === "vpn" ? { "stroke-dasharray": "0.7 0.35" } : m === "radio" ? { "stroke-dasharray": "0.25 0.2" } : {}) };
+    };
 
+    // Ordre des couches : liaisons entre sites, cadres des sites, liaisons
+    // entre lieux d'un site, cadres des lieux, câbles, équipements. Une
+    // liaison longue ne se voit ainsi qu'entre les cadres qu'elle relie.
+    const gInterSites = el("g", {}, monde);
     const gs = el("g", {}, monde);
+    const gInterPoints = el("g", {}, monde);
+    const gpt = el("g", {}, monde);
+    const avecPoints = new Set(cadres.filter((c) => c.type === "point").map((c) => c.site));
     cadres.forEach((c) => {
-      el("rect", { x: c.x, y: c.y, width: c.w, height: c.h, rx: 0.9, fill: "#0D1118", stroke: "rgba(255,255,255,0.11)", "stroke-width": 0.06 }, gs);
-      el("path", { d: `M ${c.x} ${c.y + 1.6} V ${c.y + 0.9} Q ${c.x} ${c.y} ${c.x + 0.9} ${c.y} H ${c.x + c.w - 0.9} Q ${c.x + c.w} ${c.y} ${c.x + c.w} ${c.y + 0.9} V ${c.y + 1.6} Z`,
-        fill: "rgba(141,124,255,0.08)" }, gs);
-      texte(gs, c.nom, { x: c.x + 0.9, y: c.y + 1.08, "font-size": 0.72, "font-weight": 800, fill: "#F5F7FA" });
-      const eqs = inv.equipements.filter((e) => e.site === c.nom);
+      const eqs = inv.equipements.filter((e) => e.site === c.site && (c.type === "site" || (e.point ?? "") === c.point));
       const nSw = eqs.filter((e) => e.genre === "switch").length;
-      texte(gs, `${eqs.length} équipements · ${nSw} switch${nSw > 1 ? "s" : ""}`,
-        { x: c.x + c.w - 0.9, y: c.y + 1.04, "text-anchor": "end", "font-size": 0.38, fill: "#8B98A8" });
+      const resume = `${eqs.length} équipement${eqs.length > 1 ? "s" : ""} · ${nSw} switch${nSw > 1 ? "s" : ""}`;
+      if (c.type === "site") {
+        el("rect", { x: c.x, y: c.y, width: c.w, height: c.h, rx: 0.9, fill: avecPoints.has(c.site) ? "#0A0E14" : "#0D1118",
+          stroke: "rgba(255,255,255,0.12)", "stroke-width": 0.06 }, gs);
+        el("path", { d: `M ${c.x} ${c.y + 1.6} V ${c.y + 0.9} Q ${c.x} ${c.y} ${c.x + 0.9} ${c.y} H ${c.x + c.w - 0.9} Q ${c.x + c.w} ${c.y} ${c.x + c.w} ${c.y + 0.9} V ${c.y + 1.6} Z`,
+          fill: "rgba(141,124,255,0.09)" }, gs);
+        texte(gs, c.nom, { x: c.x + 0.9, y: c.y + 1.08, "font-size": 0.72, "font-weight": 800, fill: "#F5F7FA" });
+        const nPts = cadres.filter((x) => x.type === "point" && x.site === c.site).length;
+        texte(gs, nPts ? `${nPts} lieux · ${resume}` : resume, { x: c.x + c.w - 0.9, y: c.y + 1.04, "text-anchor": "end", "font-size": 0.38, fill: "#8B98A8" });
+      } else {
+        el("rect", { x: c.x, y: c.y, width: c.w, height: c.h, rx: 0.7, fill: "#0F141C", stroke: "rgba(61,220,151,0.28)", "stroke-width": 0.05 }, gpt);
+        el("circle", { cx: c.x + 0.85, cy: c.y + 0.82, r: 0.2, fill: "none", stroke: "#3DDC97", "stroke-width": 0.07 }, gpt);
+        el("circle", { cx: c.x + 0.85, cy: c.y + 0.82, r: 0.06, fill: "#3DDC97" }, gpt);
+        texte(gpt, c.nom, { x: c.x + 1.25, y: c.y + 0.98, "font-size": 0.5, "font-weight": 700, fill: "#E3F9EE" });
+        texte(gpt, resume, { x: c.x + c.w - 0.7, y: c.y + 0.96, "text-anchor": "end", "font-size": 0.32, fill: "#8B98A8" });
+      }
     });
 
     const gl = el("g", {}, monde);
@@ -267,39 +315,54 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
     inv.liaisons.forEach((l) => {
       if (!visibles.has(l.a) || !visibles.has(l.b)) return;
       const trunk = l.mode === "trunk";
-      if (siteDe.get(l.a) !== siteDe.get(l.b)) {
+      const ea = parNom.get(l.a)!, eb = parNom.get(l.b)!;
+      const ca = cadreDe(l.a), cb2 = cadreDe(l.b);
+      const sm = styleMedia(l);
+      if (ca !== cb2) {
+        // Entre deux lieux ou deux sites.
         const A = attache(l.a, l.portA, false, d), B = attache(l.b, l.portB, false, d);
-        const trait = { stroke: COULEUR_INTERSITE, "stroke-width": 0.14, opacity: 0.85, "stroke-dasharray": "0.6 0.3" };
-        const plein = el("line", { class: "lien", x1: A.x, y1: A.y, x2: B.x, y2: B.y, ...trait }, gInter);
+        const trait = { ...sm, "stroke-width": trunk ? 0.2 : 0.15, opacity: 0.92 };
+        const memeSite = ea.site === eb.site;
+        const plein = el("line", { class: "lien", x1: A.x, y1: A.y, x2: B.x, y2: B.y, ...trait }, memeSite ? gInterPoints : gInterSites);
         el("title", {}, plein).textContent = decrireLien(l);
         ajouterLien(l, plein);
-        const sa = sortie(A, B, cadreDe.get(siteDe.get(l.a)!)!), sb = sortie(B, A, cadreDe.get(siteDe.get(l.b)!)!);
+        const sa = sortie(A, B, ca), sb = sortie(B, A, cb2);
         [[A, sa], [B, sb]].forEach(([p, s2]) => {
           const bout = el("line", { class: "lien", x1: p.x, y1: p.y, x2: s2.x, y2: s2.y, ...trait }, gl);
           el("title", {}, bout).textContent = decrireLien(l);
           ajouterLien(l, bout);
         });
+        if (!memeSite) {
+          // Du bord du lieu au bord du site : visible dans le site, entre ses lieux.
+          ([[A, ea], [B, eb]] as const).forEach(([p, e]) => {
+            const cs = cadreSite.get(e.site)!;
+            if (cadreDe(e.nom) === cs) return;
+            const q = p === A ? B : A;
+            const s2 = sortie(p, q, cs);
+            const seg = el("line", { class: "lien", x1: p.x, y1: p.y, x2: s2.x, y2: s2.y, ...trait }, gInterPoints);
+            ajouterLien(l, seg);
+          });
+        }
         const m = { x: (sa.x + sb.x) / 2, y: (sa.y + sb.y) / 2 };
-        if (l.libelle && !dedans(m))
-          texte(gp, l.libelle, { x: m.x, y: m.y - 0.3, "text-anchor": "middle", "font-size": 0.45, fill: "#C2B9FF", "font-weight": 700,
+        const t = [l.libelle, trunk ? `trunk${l.vlans ? ` ${l.vlans}` : ""}` : l.vlans ? `VLAN ${l.vlans}` : ""].filter(Boolean).join(" · ");
+        if (t && !dedans(m))
+          texte(gp, t, { x: m.x, y: m.y - 0.3, "text-anchor": "middle", "font-size": 0.42, fill: sm.stroke, "font-weight": 700,
             stroke: "#07090D", "stroke-width": 0.14, "paint-order": "stroke" });
         return;
       }
       const c = chemin(l, d);
-      const bout = d.facades.has(l.a) && !d.facades.has(l.b) ? l.b : l.a;
       // Gaine sombre plus large puis le câble : il se détache même quand il
-      // croise un autre câble.
-      el("path", { d: c.d, fill: "none", stroke: "#0D1118", "stroke-width": trunk ? 0.34 : 0.22 }, gl);
-      const p = el("path", { class: "lien", d: c.d, fill: "none",
-        stroke: trunk ? COULEUR_TRUNK : APPARENCE[genreDe.get(bout) ?? "autre"].couleur,
-        "stroke-width": trunk ? 0.17 : 0.085, opacity: trunk ? 0.95 : 0.7 }, gl);
+      // croise un autre câble. Un trunk est un câble épais à liseré central.
+      el("path", { d: c.d, fill: "none", stroke: "#0D1118", "stroke-width": trunk ? 0.38 : 0.22 }, gl);
+      const p = el("path", { class: "lien", d: c.d, fill: "none", ...sm, "stroke-width": trunk ? 0.2 : 0.085, opacity: trunk ? 1 : 0.8 }, gl);
       el("title", {}, p).textContent = decrireLien(l);
       ajouterLien(l, p);
       if (trunk) {
-        const t = `TRUNK${l.vlans ? ` · VLAN ${l.vlans}` : ""}`;
+        el("path", { d: c.d, fill: "none", stroke: "#0D1118", "stroke-width": 0.05, opacity: 0.85, "pointer-events": "none" }, gl);
+        const t = `TRUNK${l.vlans ? ` · VLAN ${l.vlans}` : ""}${l.media === "fibre" ? " · FIBRE" : ""}`;
         const w = t.length * 0.165 + 0.45;
-        el("rect", { x: c.milieu.x - w / 2, y: c.milieu.y - 0.25, width: w, height: 0.5, rx: 0.25, fill: "#1E1A3A", stroke: COULEUR_TRUNK, "stroke-width": 0.04 }, gp);
-        texte(gp, t, { x: c.milieu.x, y: c.milieu.y + 0.1, "text-anchor": "middle", "font-size": 0.27, "font-weight": 700, fill: "#D9D2FF" });
+        el("rect", { x: c.milieu.x - w / 2, y: c.milieu.y - 0.25, width: w, height: 0.5, rx: 0.25, fill: "#141922", stroke: sm.stroke, "stroke-width": 0.05 }, gp);
+        texte(gp, t, { x: c.milieu.x, y: c.milieu.y + 0.1, "text-anchor": "middle", "font-size": 0.27, "font-weight": 700, fill: "#F5F7FA" });
       } else if (l.libelle) {
         texte(gp, l.libelle, { x: c.milieu.x + 0.2, y: c.milieu.y, "font-size": 0.3, fill: "#8B98A8", "font-style": "italic",
           stroke: "#0D1118", "stroke-width": 0.1, "paint-order": "stroke" });
@@ -391,14 +454,18 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
       }
     },
     cadrer,
-    exporter() {
+    exporter(clair = false) {
       const c = svg.cloneNode(true) as SVGSVGElement;
+      if (clair) eclaircir(c);
       const m = 2;
       c.setAttribute("viewBox", `${bornes.x - m} ${bornes.y - m} ${bornes.w + 2 * m} ${bornes.h + 2 * m}`);
       c.setAttribute("width", String(Math.round((bornes.w + 2 * m) * 40)));
       c.setAttribute("height", String(Math.round((bornes.h + 2 * m) * 40)));
       c.setAttribute("font-family", "Inter, Segoe UI, sans-serif");
-      return new XMLSerializer().serializeToString(c);
+      // Identifiants propres à cet export : collé dans une page qui contient
+      // déjà le plan (impression), il ne doit pas emprunter ses dégradés.
+      const k = `e${Math.random().toString(36).slice(2, 7)}-`;
+      return new XMLSerializer().serializeToString(c).replace(/id="g-/g, `id="${k}`).replace(/url\(#g-/g, `url(#${k}`);
     },
   };
 }

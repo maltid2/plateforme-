@@ -1,11 +1,23 @@
-import { APPARENCE, COULEUR_TRUNK } from "./apparence.ts";
+import { APPARENCE, COULEUR_MEDIA, COULEUR_TRUNK } from "./apparence.ts";
 import { disposer, type Disposition } from "./disposition.ts";
 import { creerEditeur } from "./editeur.ts";
 import { cheminPasserelle } from "./facade.ts";
+import { creerFormulaire } from "./formulaire.ts";
+import { CLASSIFICATION, imprimer } from "./impression.ts";
 import { creerPlan2D } from "./plan2d.ts";
 import * as projets from "./projets.ts";
-import { analyser, EXEMPLE, GENRES, type Genre, type Inventaire } from "./saisie.ts";
+import { analyser, EXEMPLE, GENRES, MEDIAS, type Genre, type Inventaire, type Media } from "./saisie.ts";
 import type { Vue3D } from "./vue3d.ts";
+
+// Le modèle de la page, pris AVANT toute modification : il sert à produire
+// la visionneuse autonome (même fichier, données incluses, lecture seule).
+const MODELE = { head: document.head.innerHTML, body: document.body.innerHTML };
+const EMBARQUE = (() => {
+  const n = document.getElementById("carte-donnees");
+  if (!n) return null;
+  try { return JSON.parse(n.textContent ?? "") as { nom: string; texte: string; exporte: string }; } catch { return null; }
+})();
+if (EMBARQUE) document.body.classList.add("lecture");
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const etat = $("etat"), listeAlertes = $("alertes"), fiche = $("fiche"), legende = $("legende");
@@ -13,7 +25,11 @@ const filtre = $<HTMLSelectElement>("filtre-site"), recherche = $<HTMLInputEleme
 const selTopo = $<HTMLSelectElement>("topologie");
 const hote2d = $("hote-2d"), hote3d = $("hote-3d");
 
-let classeur = projets.charger();
+// En visionneuse, la topologie vient du fichier lui-même et rien n'est
+// écrit dans le navigateur.
+let classeur: projets.Classeur = EMBARQUE
+  ? { version: 1, active: "embarquee", topologies: [{ id: "embarquee", nom: EMBARQUE.nom, texte: EMBARQUE.texte, modifie: 0 }] }
+  : projets.charger();
 let inv: Inventaire = analyser("");
 let disp: Disposition = disposer(inv);
 let site: string | null = null;
@@ -30,8 +46,37 @@ const editeur = creerEditeur($("editeur"), () => ({ inv, disp }), (texte) => {
   enregistrer();
   recalculer();
 });
+/** Le formulaire écrit dans le texte : même chemin que la frappe. */
+function ecrireTexte(texte: string) {
+  editeur.definir(texte);
+  const t = active();
+  t.texte = texte;
+  t.modifie = Date.now();
+  enregistrer();
+  recalculer();
+}
+const formulaire = creerFormulaire($("formulaire"), {
+  donnees: () => ({ inv, disp }),
+  texte: () => editeur.valeur,
+  ecrire: ecrireTexte,
+  choisir: (nom) => choisir(nom, true),
+  versTexte: (ligne) => { mode("texte"); editeur.allerLigne(ligne); },
+});
+
+/* ---------------- formulaire / texte ---------------- */
+function mode(m: "form" | "texte") {
+  $("m-form").setAttribute("aria-selected", String(m === "form"));
+  $("m-texte").setAttribute("aria-selected", String(m === "texte"));
+  $("formulaire").hidden = m !== "form";
+  $("editeur").hidden = m !== "texte";
+  if (m === "texte") editeur.focus();
+  try { localStorage.setItem("carte-reseau:mode", m); } catch { /* sans importance */ }
+}
+$("m-form").addEventListener("click", () => mode("form"));
+$("m-texte").addEventListener("click", () => mode("texte"));
 
 function enregistrer() {
+  if (EMBARQUE) return;
   if (!projets.sauver(classeur)) etat.dataset.alerte = "Le navigateur refuse l'enregistrement local : pensez à « Sauvegarder (.json) ».";
 }
 
@@ -108,6 +153,7 @@ function recalculer() {
     return li;
   }));
   editeur.alertes(inv.alertes);
+  formulaire.actualiser();
 
   const presents = new Set(inv.equipements.map((e) => e.genre));
   legende.replaceChildren(...(Object.keys(APPARENCE) as Genre[]).filter((g) => presents.has(g)).map((g) => {
@@ -116,10 +162,17 @@ function recalculer() {
     s.append(GENRES[g].libelle);
     return s;
   }));
+  // Les supports présents : fibre, cuivre, radio, VPN.
+  (Object.keys(MEDIAS) as Media[]).filter((m) => inv.liaisons.some((l) => l.media === m)).forEach((m) => {
+    const s = document.createElement("span");
+    s.innerHTML = `<i class="trait ${m === "vpn" || m === "radio" ? "tirets" : ""}" style="background:${COULEUR_MEDIA[m]}"></i>`;
+    s.append(MEDIAS[m]);
+    legende.append(s);
+  });
   if (nTrunk) {
     const s = document.createElement("span");
-    s.innerHTML = `<i class="trait" style="background:${COULEUR_TRUNK}"></i>`;
-    s.append("Trunk");
+    s.innerHTML = `<i class="trait epais" style="background:${COULEUR_TRUNK}"></i>`;
+    s.append("Trunk (épais)");
     legende.append(s);
   }
 
@@ -249,9 +302,12 @@ async function montrer(v: "2d" | "3d") {
   $("v-3d").setAttribute("aria-selected", String(v === "3d"));
   hote2d.hidden = v !== "2d";
   hote3d.hidden = v !== "3d";
+  $("l-cams").hidden = v !== "3d";
   if (v === "3d" && !v3) {
-    const { creerVue3D } = await import("./vue3d.ts");
-    v3 = creerVue3D(hote3d, { choisir });
+    const m = await import("./vue3d.ts");
+    m.options.camerasEnBaie = $<HTMLInputElement>("o-cams").checked;
+    $<HTMLInputElement>("o-cams").onchange = (e) => { m.options.camerasEnBaie = (e.target as HTMLInputElement).checked; v3?.afficher(inv, disp, site); v3?.selectionner(choisi); };
+    v3 = m.creerVue3D(hote3d, { choisir });
     v3.afficher(inv, disp, site);
     v3.selectionner(choisi);
     v3.cadrer();
@@ -311,7 +367,7 @@ $<HTMLInputElement>("f-txt").addEventListener("change", async (e) => {
   (e.target as HTMLInputElement).value = "";
   if (f) creer(f.name.replace(/\.txt$/i, ""), await f.text());
 });
-$("b-svg").addEventListener("click", () => { fermerMenu(); telecharger(`${nomFichier(active().nom)}-plan.svg`, plan.exporter(), "image/svg+xml"); });
+$("b-svg").addEventListener("click", () => { fermerMenu(); telecharger(`${nomFichier(active().nom)}-plan.svg`, plan.exporter(true), "image/svg+xml"); });
 $("b-png").addEventListener("click", async () => {
   fermerMenu();
   if (vue === "3d") {
@@ -320,7 +376,7 @@ $("b-png").addEventListener("click", async () => {
     return;
   }
   // Le plan 2D est rasterisé en local, sans rien envoyer.
-  const svg = plan.exporter();
+  const svg = plan.exporter(true);
   const img = new Image();
   img.onload = () => {
     const k = Math.min(1, 8000 / Math.max(img.width, img.height));
@@ -329,6 +385,22 @@ $("b-png").addEventListener("click", async () => {
     c.toBlob((b) => b && telecharger(`${nomFichier(active().nom)}-plan.png`, b, "image/png"));
   };
   img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+});
+$("b-pdf").addEventListener("click", () => { fermerMenu(); imprimer(inv, plan.exporter(true), active().nom, site); });
+$("b-glb").addEventListener("click", async () => {
+  fermerMenu();
+  if (!v3) await montrer("3d");
+  const b = await v3!.exporterGLB();
+  telecharger(`${nomFichier(active().nom)}-3d.glb`, b, "model/gltf-binary");
+});
+$("b-visionneuse").addEventListener("click", () => {
+  fermerMenu();
+  // Le même outil, la topologie incluse, en lecture seule : il s'ouvre sur
+  // n'importe quel poste avec un navigateur, sans réseau ni installation.
+  const donnees = JSON.stringify({ nom: active().nom, texte: editeur.valeur, exporte: new Date().toISOString(), classification: CLASSIFICATION })
+    .replace(/</g, "\\u003c");
+  const html = `<!doctype html>\n<html lang="fr">\n<head>${MODELE.head.replace(/<title>[^<]*<\/title>/, `<title>${active().nom.replace(/</g, "")} · Carte réseau</title>`)}</head>\n<body>\n<script type="application/json" id="carte-donnees">${donnees}</script>\n${MODELE.body}\n</body>\n</html>\n`;
+  telecharger(`${nomFichier(active().nom)}-visionneuse.html`, html, "text/html;charset=utf-8");
 });
 $("b-exemple").addEventListener("click", () => { fermerMenu(); creer("Exemple · Siège et agence", EXEMPLE); });
 document.addEventListener("click", (e) => { if (!(e.target as Element).closest("details.menu")) fermerMenu(); });
@@ -339,3 +411,8 @@ listerTopologies();
 editeur.definir(active().texte);
 recalculer();
 plan.cadrer();
+try { if (localStorage.getItem("carte-reseau:mode") === "texte" && !EMBARQUE) mode("texte"); } catch { /* sans importance */ }
+if (EMBARQUE) {
+  document.title = `${EMBARQUE.nom} · Carte réseau (lecture seule)`;
+  $("etat").insertAdjacentHTML("afterbegin", `<span class="e">Lecture seule</span> · exporté le ${new Date(EMBARQUE.exporte).toLocaleString("fr-FR")} · `);
+}

@@ -81,7 +81,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
       </div>
       <fieldset class="f-branche f-raccord">
         <legend><span class="f-pastille">A</span> Où est branché l'équipement que vous ajoutez ?</legend>
-        <p class="f-quand">Son câble à lui, vers son switch : une caméra sur son switch, un switch d'étage sur le switch principal. Il est enregistré en même temps que l'équipement.</p>
+        <p class="f-quand">Une caméra, une borne, un poste… se branche sur <b>un port du switch</b>. Seuls deux switchs se relient port à port (choisir alors aussi le port du nouveau switch).</p>
         <p class="f-aide-branche"></p>
         <div class="f-phrase">
           <span>Branché sur</span>
@@ -90,7 +90,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
         </div>
         <div class="f-ports-groupe" hidden></div>
         <div class="f-phrase">
-          <span>câble vers</span> <b class="f-moi">cet équipement</b> <small class="f-nouveau"></small>
+          <span>pour</span> <b class="f-moi">cet équipement</b> <small class="f-nouveau"></small>
           <label class="f-monport">port <select data-f="monport"></select></label>
         </div>
         <div class="f-schema" data-schema="branche" aria-hidden="true"></div>
@@ -387,7 +387,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     const vers = champ<HTMLSelectElement>("vers").value;
     const actif = actifGroupe(noms.length, vers);
     box.hidden = !actif;
-    racine.querySelector<HTMLElement>(".f-monport")!.hidden = noms.length > 1;
+    racine.querySelector<HTMLElement>(".f-monport")!.hidden = noms.length > 1 || !A_FACADE.has(genre);
     racine.querySelector<HTMLElement>(".f-port1")!.hidden = actifGroupe(noms.length, vers);
     if (!actif) { box.innerHTML = ""; return; }
     const arrivee = portsDuGroupe(noms.length);
@@ -428,7 +428,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     const portsSw = nb > 1 ? portsDuGroupe(nb).filter(Boolean).join(", ") : champ<HTMLSelectElement>("port").value;
     const nomMoi = nb > 1 ? `les ${nb} nouveaux` : noms[0] ?? "";
     schema("branche", champ<HTMLSelectElement>("vers").value, portsSw,
-      nomMoi, champ<HTMLSelectElement>("monport").value || (A_FACADE.has(genre) ? "" : "réseau"), champ<HTMLSelectElement>("media").value,
+      nomMoi, A_FACADE.has(genre) ? champ<HTMLSelectElement>("monport").value : `=${GENRES[genre].libelle}`, champ<HTMLSelectElement>("media").value,
       champ<HTMLInputElement>("trunk").checked, champ("vlan").value);
     const l = lignesAAjouter();
     let alerte = "";
@@ -578,7 +578,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     const etiquette = [MEDIAS[m] ?? "", trunk ? "trunk" : "", vlan ? `VLAN ${vlan}` : ""].filter(Boolean).join(" · ");
     el.innerHTML = `<div class="sc-boite"><b>${echap(a)}</b><span>${pa ? `port ${echap(pa)}` : "port ?"}</span></div>
       <div class="sc-cable sc-${m}${trunk ? " sc-trunk" : ""}"><i></i><span>${echap(etiquette)}</span></div>
-      <div class="sc-boite"><b>${echap(b)}</b><span>${pb ? `port ${echap(pb)}` : "port ?"}</span></div>`;
+      <div class="sc-boite"><b>${echap(b)}</b><span>${pb.startsWith("=") ? echap(pb.slice(1)) : pb ? `port ${echap(pb)}` : "port ?"}</span></div>`;
     el.querySelectorAll("span").forEach((x) => { if (x.textContent?.includes(", ")) x.textContent = x.textContent.replace(/^port /, "ports "); });
   }
 

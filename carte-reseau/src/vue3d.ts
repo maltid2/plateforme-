@@ -269,6 +269,9 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
   rnd.setAnimationLoop(() => {
     if (!hote.offsetParent) return; // onglet caché : on ne dessine rien
     ctrl.update();
+    // Vue d'ensemble : seuls les noms de sites restent, sinon vingt sites
+    // d'étiquettes se recouvrent. Ils reviennent en zoomant.
+    etiq.domElement.classList.toggle("loin", cam.position.distanceTo(ctrl.target) > 70);
     rnd.render(scene, cam);
     etiq.render(scene, cam);
   });

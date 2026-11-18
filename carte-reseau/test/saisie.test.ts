@@ -38,3 +38,33 @@ test("seules les lignes en retrait sont dans la baie", () => {
   assert.equal(inv.equipements[0].baie, "A1");
   assert.equal(inv.equipements[1].baie, undefined);
 });
+
+test("le site peut se donner sur la ligne, dans n'importe quel ordre", () => {
+  const inv = analyser([
+    "switch SW-LYON-1 | site=Lyon | 10.20.0.2",
+    "switch SW-PARIS-1 | @Paris",
+    "switch SW-LYON-2 | @lyon | sur SW-LYON-1:24",
+    "camera CAM-L x3 | @Lyon | sur SW-LYON-2:1",
+  ].join("\n"));
+  assert.deepEqual(inv.sites.map((s) => s.nom), ["Lyon", "Paris"]);
+  assert.equal(inv.equipements.filter((e) => e.site === "Lyon").length, 5);
+  assert.deepEqual(inv.liaisons.map((l) => l.portB), ["24", "1", "2", "3"]);
+});
+
+test("20 sites et 40 switchs : chaque site a son cadre, sans chevauchement", () => {
+  const lignes: string[] = [];
+  for (let i = 1; i <= 20; i++) {
+    lignes.push(`switch SW-${i}-A | @Site ${i}`, `switch SW-${i}-B | @Site ${i} | sur SW-${i}-A:24`,
+      `camera CAM-${i} x4 | @Site ${i} | sur SW-${i}-B:1`);
+    if (i > 1) lignes.push(`SW-${i}-A:25 -> SW-1-A:${i} | fibre`);
+  }
+  const inv = analyser(lignes.join("\n"));
+  assert.deepEqual(inv.alertes.filter((a) => a.niveau === "erreur"), []);
+  const d = disposer(inv);
+  assert.equal(d.cadres.length, 20);
+  for (const a of d.cadres) for (const b of d.cadres) {
+    if (a === b) continue;
+    const separes = a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y;
+    assert.ok(separes, `${a.nom} chevauche ${b.nom}`);
+  }
+});

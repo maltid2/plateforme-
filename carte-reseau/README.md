@@ -47,6 +47,15 @@ GW-NANTERRE:WAN -> GW-LYON:WAN | VPN IPsec  # entre deux sites
 ```
 
 - **Équipement** : `type NOM | IP | infos libres | clé=valeur`
+- **Site sur la ligne** : `@Lyon` (ou `site=Lyon`) range l'équipement dans ce
+  site, sans ouvrir de bloc ; le site est créé au besoin et l'ordre des lignes
+  est libre :
+
+  ```text
+  switch SW-LYON-1 | @Lyon | 10.20.0.2 | sur SW-SIEGE:5 | fibre
+  switch SW-LYON-2 | @Lyon | 10.20.0.3 | sur SW-LYON-1:24
+  camera CAM-LYON x6 | @Lyon | 10.20.0.50 | sur SW-LYON-2:1
+  ```
 - **Types** : passerelle, parefeu, switch, camera, nvr, borne, serveur, nas,
   poste, imprimante, telephone, onduleur, autre
 - **Baie** : `baie A1`, puis les lignes **en retrait** qui suivent sont dans la baie
@@ -58,10 +67,15 @@ inconnu dans une liaison, port déjà pris, nom en double, équipement relié à
 
 ## Comment la carte est construite
 
-Dans chaque site, l'arbre part de la passerelle (ou du pare-feu) : les switchs
-en dessous, puis ce qui est branché dessus. Chaque équipement se range sous
-celui auquel il est relié. Les sites se posent côte à côte, et les liaisons
-entre sites passent en arc.
+Dans chaque site, l'arbre part de la passerelle ou du pare-feu ; sans eux, du
+switch qui remonte vers les autres sites. Les autres switchs viennent en
+dessous, puis ce qui est branché dessus. Chaque équipement se range sous celui
+auquel il est relié.
+
+Tous les sites sont sur une même carte, chacun dans son cadre. Le site le plus
+relié aux autres (le siège) se place au centre et les liaisons inter-sites
+rayonnent vers les agences. Testé avec 20 sites, 40 switchs et une centaine de
+caméras.
 
 ## Tests
 

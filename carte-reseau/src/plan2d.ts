@@ -90,6 +90,20 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
     const cadres = d.cadres.filter((c) => !site || c.nom === site);
     if (!cadres.length) { bornes = { x: 0, y: 0, w: 10, h: 10 }; cadrer(); return; }
 
+    // Liaisons entre sites : tracées SOUS les cadres. Elles ne se voient donc
+    // qu'entre les sites, et passent derrière ceux qu'elles traversent ; un
+    // segment par-dessus relie ensuite l'équipement au bord de son cadre.
+    const gInter = el("g", {}, monde);
+    const cadreDe = new Map(cadres.map((c) => [c.nom, c]));
+    const sortie = (p: Point, q: Point, c: { x: number; y: number; w: number; h: number }) => {
+      const dx = q.x - p.x, dy = q.y - p.y;
+      const tx = dx > 0 ? (c.x + c.w - p.x) / dx : dx < 0 ? (c.x - p.x) / dx : Infinity;
+      const ty = dy > 0 ? (c.y + c.h - p.y) / dy : dy < 0 ? (c.y - p.y) / dy : Infinity;
+      const t = Math.min(tx, ty, 1);
+      return { x: p.x + dx * t, y: p.y + dy * t, ux: dx / (Math.hypot(dx, dy) || 1), uy: dy / (Math.hypot(dx, dy) || 1) };
+    };
+    const dedans = (p: Point) => cadres.some((c) => p.x > c.x && p.x < c.x + c.w && p.y > c.y && p.y < c.y + c.h);
+
     // Sites
     const gs = el("g", {}, monde);
     cadres.forEach((c) => {
@@ -113,16 +127,27 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
       const inter = siteDe.get(l.a) !== siteDe.get(l.b);
       const g = el("g", {}, gl);
       if (inter) {
-        const ytop = Math.min(a.y, b.y) - 4;
-        const p = el("path", { class: "lien", d: `M ${a.x} ${a.y - H / 2} C ${a.x} ${ytop}, ${b.x} ${ytop}, ${b.x} ${b.y - H / 2}`,
-          stroke: COULEUR_INTERSITE, "stroke-width": 0.1, "stroke-dasharray": "0.5 0.3", opacity: 0.9 }, g);
-        ajouterLien(l, p);
-        if (l.libelle) {
-          const t = el("text", { x: (a.x + b.x) / 2, y: ytop + 0.9, "text-anchor": "middle", "font-size": 0.5, fill: "#C2B9FF", "font-weight": 600 }, gp);
+        const titre = `${l.a}${l.portA ? `:${l.portA}` : ""} ↔ ${l.b}${l.portB ? `:${l.portB}` : ""}${l.libelle ? ` · ${l.libelle}` : ""}`;
+        const trait = { stroke: COULEUR_INTERSITE, "stroke-width": 0.12, opacity: 0.75 };
+        const plein = el("line", { class: "lien", x1: a.x, y1: a.y, x2: b.x, y2: b.y, ...trait }, gInter);
+        el("title", {}, plein).textContent = titre;
+        ajouterLien(l, plein);
+        const ca = cadreDe.get(siteDe.get(l.a)!)!, cb2 = cadreDe.get(siteDe.get(l.b)!)!;
+        const sa = sortie(a, b, ca), sb = sortie(b, a, cb2);
+        [[a, sa], [b, sb]].forEach(([p, s2]) => {
+          const bout = el("line", { class: "lien", x1: p.x, y1: p.y, x2: s2.x, y2: s2.y, ...trait }, g);
+          el("title", {}, bout).textContent = titre;
+          ajouterLien(l, bout);
+        });
+        // Le port se lit au bord du cadre, là où le câble sort du site.
+        if (l.portA) etiquettePort(gp, { x: sa.x - sa.ux * 0.7, y: sa.y - sa.uy * 0.7 }, l.portA, COULEUR_INTERSITE);
+        if (l.portB) etiquettePort(gp, { x: sb.x - sb.ux * 0.7, y: sb.y - sb.uy * 0.7 }, l.portB, COULEUR_INTERSITE);
+        const m = { x: (sa.x + sb.x) / 2, y: (sa.y + sb.y) / 2 };
+        if (l.libelle && !dedans(m)) {
+          const t = el("text", { x: m.x, y: m.y - 0.25, "text-anchor": "middle", "font-size": 0.42, fill: "#C2B9FF",
+            "font-weight": 600, stroke: "#07090D", "stroke-width": 0.12, "paint-order": "stroke" }, gp);
           t.textContent = l.libelle;
         }
-        if (l.portA) etiquettePort(gp, { x: a.x, y: a.y - H / 2 - 0.6 }, l.portA, COULEUR_INTERSITE);
-        if (l.portB) etiquettePort(gp, { x: b.x, y: b.y - H / 2 - 0.6 }, l.portB, COULEUR_INTERSITE);
         return;
       }
       const c = courbe(a, b);

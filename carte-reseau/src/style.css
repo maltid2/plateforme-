@@ -93,6 +93,7 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1
   font: 600 11px Inter, system-ui, sans-serif; color: var(--encre);
   background: rgba(7, 9, 13, 0.75); padding: 1px 6px; border-radius: 5px; pointer-events: none; white-space: nowrap;
 }
+.loin .etiquette3d:not(.site) { display: none; }
 .etiquette3d.site { font-size: 14px; background: none; color: var(--sourd); letter-spacing: 0.04em; }
 
 .fiche {

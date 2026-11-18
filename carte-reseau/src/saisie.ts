@@ -160,16 +160,26 @@ export function analyser(texte: string): Inventaire {
     const infos: string[] = [];
     const kv: [string, string][] = [];
     let versInline: string | undefined;
+    let siteLigne: string | undefined;
     for (const c of champs) {
       if (!c) continue;
       if (IP.test(c)) ip = c;
       else if (FLECHE.test(` ${c}`) && /^(->|→|=>|--)/.test(c.trim())) versInline = c.trim().replace(/^(->|→|=>|--)\s*/, "");
       else if (/^sur\s+/i.test(c)) versInline = c.replace(/^sur\s+/i, "");
+      // « site=Lyon » ou « @Lyon » : le site se donne sur la ligne même,
+      // sans ouvrir de bloc. Le site est créé s'il n'existe pas encore.
+      else if (/^site\s*=/i.test(c)) siteLigne = c.replace(/^site\s*=\s*/i, "").trim();
+      else if (/^@\S/.test(c)) siteLigne = c.slice(1).trim();
       else if (c.includes("=")) { const k = c.indexOf("="); kv.push([c.slice(0, k).trim(), c.slice(k + 1).trim()]); }
       else infos.push(c);
     }
 
-    const site = assurerSite(ligne);
+    let site: string;
+    if (siteLigne) {
+      const connu = sites.find((x) => simple(x.nom) === simple(siteLigne!));
+      if (!connu) sites.push({ nom: siteLigne, infos: [], ligne });
+      site = connu?.nom ?? siteLigne;
+    } else site = assurerSite(ligne);
     for (let k = 0; k < qte; k++) {
       const n = qte > 1 ? `${nom}-${k + 1}` : nom;
       if (equipements.some((e) => simple(e.nom) === simple(n))) {

@@ -29,6 +29,7 @@
         <p><b>Une ligne par équipement</b> : <code>type NOM | IP | infos | clé=valeur</code></p>
         <p>Types : <code>passerelle</code> <code>parefeu</code> <code>switch</code> <code>camera</code> <code>nvr</code> <code>borne</code> <code>serveur</code> <code>nas</code> <code>poste</code> <code>imprimante</code> <code>telephone</code> <code>onduleur</code> <code>autre</code></p>
         <p><b>Regrouper</b> : <code>site Lyon</code> ouvre un site, <code>baie A1</code> range dans la baie les lignes <b>en retrait</b> qui suivent.</p>
+        <p><b>Site sur la ligne</b> : <code>switch SW-LYON-2 | @Lyon | sur SW-LYON-1:24</code> — pas besoin de bloc, l'ordre des lignes est libre.</p>
         <p><b>Plusieurs d'un coup</b> : <code>camera CAM-PARKING x4 | 10.0.0.51</code> crée CAM-PARKING-1 à 4, IP qui suivent.</p>
         <p><b>Liaison</b> : <code>CAM-1 -> SW-CAM:5</code> ou <code>SW-CORE:24 -> SW-CAM:16 | uplink</code></p>
         <p><b>Liaison d'un groupe</b> : <code>CAM-PARKING* -> SW-CAM:3</code> branche sur les ports 3, 4, 5, 6.</p>

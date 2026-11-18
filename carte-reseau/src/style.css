@@ -439,3 +439,8 @@ body.lecture .local::after { content: " · lecture seule"; }
 .f-detail td:nth-child(n+3) { width: 72px; }
 .f-detail select { width: 100%; min-width: 64px; }
 .f-nouveau { color: var(--sourd); font-size: 11px; }
+.f-ports-groupe { margin: 6px 0; display: grid; gap: 4px; }
+.f-pg { display: grid !important; grid-template-columns: minmax(0, 1fr) auto 80px; align-items: center; gap: 8px; flex-direction: row !important; font-size: 12px; }
+.f-pg span:first-child { color: var(--encre); font-family: ui-monospace, monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.f-fleche { color: var(--sourd); }
+.f-monport[hidden], .f-port1[hidden] { display: none !important; }

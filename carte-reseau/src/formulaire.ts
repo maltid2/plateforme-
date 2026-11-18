@@ -76,7 +76,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
         <datalist id="l-sfp"><option value="0"><option value="1"><option value="2"><option value="4"><option value="8"></datalist>
       </div>
       <div class="f-detail" hidden>
-        <p class="f-quand">Une ligne par équipement : changez l'IP, les ports, et le port où chacun est branché (une fois le switch choisi en dessous).</p>
+        <p class="f-quand">Une ligne par équipement : changez l'IP ou les ports de chacun ici (ou avec des virgules dans les cases au-dessus).</p>
         <table><thead></thead><tbody></tbody></table>
       </div>
       <fieldset class="f-branche f-raccord">
@@ -86,8 +86,9 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
         <div class="f-phrase">
           <span>Branché sur</span>
           <label class="large"><span class="sr">Switch où il est branché</span><select data-f="vers"></select></label>
-          <label>port <select data-f="port"></select></label>
+          <label class="f-port1">port <select data-f="port"></select></label>
         </div>
+        <div class="f-ports-groupe" hidden></div>
         <div class="f-phrase">
           <span>câble vers</span> <b class="f-moi">cet équipement</b> <small class="f-nouveau"></small>
           <label class="f-monport">port <select data-f="monport"></select></label>
@@ -258,7 +259,18 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
 
   /** Les noms tapés : un seul, ou une liste séparée par des virgules. */
   const nomsTapes = () => champ("nom").value.split(",").map((x) => nomPropre(x)).filter(Boolean);
-  const listeNoms = () => { const n = nomsTapes(); return n.length ? n : edition ? [] : [nomPropose()]; };
+  const listeNoms = () => { const n = nomsTapes(); return n.length ? n : edition ? [] : [Number(champ("qte").value) > 1 ? baseGroupe() : nomPropose()]; };
+  /** Nom de base d'un groupe sans nom tapé : CAM-ECOLE → CAM-ECOLE-1, -2… */
+  function baseGroupe() {
+    const { inv } = acces.donnees();
+    const base = `${PREFIXE[genre]}-${code(ctx.point || ctx.site) || "X"}`;
+    const pris = new Set(inv.equipements.map((e) => e.nom.toUpperCase()));
+    for (const suffixe of ["", ...Array.from({ length: 26 }, (_, i) => `-${String.fromCharCode(65 + i)}`)]) {
+      const c = base + suffixe;
+      if (!pris.has(c) && !pris.has(`${c}-1`)) return c;
+    }
+    return base;
+  }
   /** Le nom de chacun des équipements qui seront créés (liste, ou NOM-1…NOM-n). */
   const nomsCrees = () => {
     const n = listeNoms();
@@ -349,7 +361,8 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     return suite.map((p, k) => portsLigne?.[k] ?? p);
   }
   const liste = (k: string) => champ(k).value.split(",").map((x) => x.trim());
-  function tableau() {
+  function tableau() { tableauHaut(); portsGroupe(); }
+  function tableauHaut() {
     const box = $(".f-detail");
     const noms = nomsCrees();
     if (noms.length < 2 || noms.length > 60 || edition) { box.hidden = true; return; }
@@ -358,28 +371,38 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     const ips = liste("ip").filter(Boolean), rj = liste("ports").filter(Boolean), sfp = liste("sfp").filter(Boolean);
     const ipDe = (k: number) => ips.length > 1 ? (ips[k] ?? (ips.length ? ipPlus(ips[ips.length - 1], k - ips.length + 1) : "")) : ips[0] ? ipPlus(ips[0], k) : "";
     const de = (l: string[], k: number) => l[Math.min(k, l.length - 1)] ?? "";
-    const vers = champ<HTMLSelectElement>("vers").value;
-    const avecPort = !!vers && !!champ<HTMLSelectElement>("port").value;
-    const arrivee = avecPort ? portsDuGroupe(noms.length) : [];
-    const libres = avecPort ? portsLibres(vers) : [];
-    const choix = (k: number) => {
-      const v = arrivee[k];
-      const l = v && !libres.includes(v) ? [v, ...libres] : libres;
-      return `<select data-d="port" data-k="${k}" aria-label="Port de ${echap(noms[k])} sur ${echap(vers)}">${l.map((p) => `<option${p === v ? " selected" : ""}>${echap(p)}</option>`).join("")}</select>`;
-    };
-    box.querySelector("thead")!.innerHTML = `<tr><th>Nom</th><th>IP</th>${ports ? "<th>Ports RJ45</th><th>Cages SFP</th>" : ""}${avecPort ? `<th>Port sur ${echap(vers)}</th>` : ""}</tr>`;
+    box.querySelector("thead")!.innerHTML = `<tr><th>Nom</th><th>IP</th>${ports ? "<th>Ports RJ45</th><th>Cages SFP</th>" : ""}</tr>`;
     box.querySelector("tbody")!.innerHTML = noms.map((n, k) => `<tr>
       <td><input data-d="nom" data-k="${k}" value="${echap(n)}" spellcheck="false" autocomplete="off" aria-label="Nom n°${k + 1}" /></td>
       <td><input data-d="ip" data-k="${k}" value="${echap(ipDe(k))}" placeholder="—" spellcheck="false" autocomplete="off" aria-label="IP de ${echap(n)}" /></td>
       ${ports ? `<td><input data-d="ports" data-k="${k}" inputmode="numeric" value="${echap(de(rj, k))}" aria-label="Ports RJ45 de ${echap(n)}" /></td>
       <td><input data-d="sfp" data-k="${k}" inputmode="numeric" value="${echap(de(sfp, k))}" aria-label="Cages SFP de ${echap(n)}" /></td>` : ""}
-      ${avecPort ? `<td>${choix(k)}</td>` : ""}
     </tr>`).join("");
+  }
+  /** Dans le cadre A : le port de chacun quand on en branche plusieurs. */
+  const actifGroupe = (n: number, vers: string) => n > 1 && n <= 60 && !!vers && !edition;
+  function portsGroupe() {
+    const box = $(".f-ports-groupe");
+    const noms = nomsCrees();
+    const vers = champ<HTMLSelectElement>("vers").value;
+    const actif = actifGroupe(noms.length, vers);
+    box.hidden = !actif;
+    racine.querySelector<HTMLElement>(".f-monport")!.hidden = noms.length > 1;
+    racine.querySelector<HTMLElement>(".f-port1")!.hidden = actifGroupe(noms.length, vers);
+    if (!actif) { box.innerHTML = ""; return; }
+    const arrivee = portsDuGroupe(noms.length);
+    const libres = portsLibres(vers);
+    box.innerHTML = `<p class="f-quand">Le port de ${echap(vers)} pour chacun :</p>` + noms.map((n, k) => {
+      const v = arrivee[k] ?? "";
+      const l = v && !libres.includes(v) ? [v, ...libres] : libres;
+      return `<label class="f-pg"><span>${echap(n)}</span><span class="f-fleche">→ ${echap(vers)} port</span>
+        <select data-d="port" data-k="${k}" aria-label="Port de ${echap(n)} sur ${echap(vers)}"><option value="">—</option>${l.map((p) => `<option${p === v ? " selected" : ""}>${echap(p)}</option>`).join("")}</select></label>`;
+    }).join("");
   }
   /** Une case du tableau a changé : on réécrit les champs à virgules au-dessus. */
   function depuisTableau() {
     const col = (d: string) => [...racine.querySelectorAll<HTMLInputElement>(`.f-detail [data-d="${d}"]`)].map((i) => i.value.trim());
-    const ports = col("port");
+    const ports = [...racine.querySelectorAll<HTMLSelectElement>('.f-ports-groupe [data-d="port"]')].map((x) => x.value);
     if (ports.length) portsLigne = ports;
     const noms = col("nom").map((x) => nomPropre(x));
     if (noms.every(Boolean)) { champ("nom").value = noms.join(", "); champ("qte").value = String(noms.length); champ<HTMLInputElement>("qte").disabled = true; }

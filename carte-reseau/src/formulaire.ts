@@ -10,6 +10,7 @@
  * ou retirer des lignes. Les deux modes restent donc toujours d'accord.
  */
 import { APPARENCE } from "./apparence.ts";
+import { lirePort } from "./facade.ts";
 import type { Disposition } from "./disposition.ts";
 import { PICTOS } from "./pictos.ts";
 import { GENRES, MEDIAS, type Equipement, type Genre, type Inventaire, type Liaison, type Media } from "./saisie.ts";
@@ -68,8 +69,11 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
         <label>IP passerelle <small>(vide = celle du site)</small><input data-f="gw" autocomplete="off" spellcheck="false" /></label>
       </div>
       <div class="f-ligne f-switch">
-        <label>Ports RJ45<select data-f="ports"><option>8</option><option>12</option><option>16</option><option selected>24</option><option>48</option></select></label>
-        <label>Cages SFP (fibre)<select data-f="sfp"><option>0</option><option>2</option><option selected>4</option><option>8</option></select></label>
+        <label class="etroit">Ports RJ45<input data-f="ports" type="number" min="0" max="96" list="l-rj45" value="24" /></label>
+        <label class="etroit">Cages SFP <small>(fibre)</small><input data-f="sfp" type="number" min="0" max="48" list="l-sfp" value="4" /></label>
+        <label class="etroit f-wan">Ports WAN<input data-f="wan" type="number" min="0" max="8" value="1" /></label>
+        <datalist id="l-rj45"><option value="2"><option value="4"><option value="5"><option value="8"><option value="10"><option value="16"><option value="24"><option value="48"></datalist>
+        <datalist id="l-sfp"><option value="0"><option value="1"><option value="2"><option value="4"><option value="8"></datalist>
       </div>
       <fieldset class="f-branche">
         <legend>Branché sur</legend>
@@ -194,7 +198,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     const qte = combien();
     // Le port déjà choisi s'il est encore libre sur ce switch, sinon le
     // premier port RJ45 libre : on ne laisse jamais « sans port » par accident.
-    const voulu = garderPort ?? (libres.includes(port.value) ? port.value : libres.find((p) => /^\d+$/.test(p)) ?? libres[0] ?? "");
+    const voulu = garderPort ?? (libres.includes(port.value) ? port.value : (["rj45", "sfp", "autre", "wan"] as const).map((t) => libres.find((p) => lirePort(p).type === t)).find(Boolean) ?? "");
     options(port, vers ? [{ v: "", t: "— sans port —" }, ...libres.map((p) => ({ v: p, t: qte > 1 ? `${p} (et suivants)` : p }))] : [{ v: "", t: "—" }], voulu);
     port.disabled = !vers;
     // Deux switchs reliés : trunk coché par défaut.
@@ -233,7 +237,14 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     if (ctx.site) p.push(`@${propre(ctx.site)}${ctx.point ? `/${propre(ctx.point)}` : ""}`);
     if (ctx.baie) p.push(`baie=${propre(ctx.baie)}`);
     if (champ("gw").value.trim()) p.push(`passerelle=${propre(champ("gw").value)}`);
-    if (genre === "switch") p.push(`ports=${champ<HTMLSelectElement>("ports").value}`, `sfp=${champ<HTMLSelectElement>("sfp").value}`);
+    // Ports tapés librement (2 RJ45, 3 SFP…) ; vide = déduit des branchements.
+    if (A_FACADE.has(genre)) {
+      const n = (k: string, max: number) => { const v = parseInt(champ(k).value, 10); return Number.isFinite(v) && v >= 0 ? Math.min(v, max) : null; };
+      const rj = n("ports", 96), sfp = n("sfp", 48), wan = n("wan", 8);
+      if (rj !== null && rj > 0) p.push(`ports=${rj}`);
+      if (sfp !== null) p.push(`sfp=${sfp}`);
+      if (genre !== "switch" && wan !== null && wan > 0) p.push(`wan=${wan}`);
+    }
     return p.join(" | ");
   }
   function optionsLien(media: string, vlan: string, trunk: boolean) {
@@ -293,6 +304,8 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     champ("modele").value = "";
     champ("monport").value = "";
     champ("gw").value = "";
+    // Nouveau formulaire : les nombres de ports reprennent les valeurs du type.
+    (["ports", "sfp"] as const).forEach((k) => delete champ(k).dataset.touche);
     champ("vlan").value = genre === "camera" ? champ("vlan").value : "";
     $(".f-titre-ajout").textContent = "Ajouter un équipement";
     $('[data-a="ajouter"]').textContent = "Ajouter";
@@ -303,7 +316,15 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
 
   function actualiserType() {
     racine.querySelectorAll<HTMLElement>(".f-types [data-g]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.g === genre)));
-    racine.querySelector<HTMLElement>(".f-switch")!.hidden = genre !== "switch";
+    racine.querySelector<HTMLElement>(".f-switch")!.hidden = !A_FACADE.has(genre);
+    racine.querySelector<HTMLElement>(".f-wan")!.hidden = genre === "switch";
+    // Valeurs habituelles du type, tant qu'on ne les a pas modifiées.
+    if (!edition) {
+      const defaut = genre === "switch" ? { ports: "24", sfp: "4" } : { ports: "8", sfp: "0" };
+      (["ports", "sfp"] as const).forEach((k) => {
+        if (!champ(k).dataset.touche) champ(k).value = defaut[k];
+      });
+    }
     remplirBranche();
   }
 
@@ -462,9 +483,10 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     champ("ip").value = e.ip ?? "";
     champ("modele").value = e.infos[0] ?? "";
     champ("gw").value = e.passerelleHeritee ? "" : e.passerelleIp ?? "";
-    const ports = e.kv.find(([k]) => /^ports?$/i.test(k))?.[1], sfp = e.kv.find(([k]) => /^sfp$/i.test(k))?.[1];
-    if (ports) champ<HTMLSelectElement>("ports").value = ports;
-    if (sfp) champ<HTMLSelectElement>("sfp").value = sfp;
+    const kv = (re: RegExp) => e.kv.find(([k]) => re.test(k))?.[1] ?? "";
+    champ("ports").value = kv(/^ports?$/i);
+    champ("sfp").value = kv(/^sfp$/i);
+    champ("wan").value = kv(/^wan$/i) || (e.genre === "switch" ? "" : "1");
     actualiserType();
     if (lien) {
       const [v, p, mon] = lien.a === e.nom ? [lien.b, lien.portB, lien.portA] : [lien.a, lien.portA, lien.portB];
@@ -571,6 +593,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
   racine.addEventListener("input", (ev) => {
     const t = ev.target as HTMLElement;
     if (t.dataset.f === "filtre") { remplirInventaire(); return; }
+    if (t.dataset.f === "ports" || t.dataset.f === "sfp") t.dataset.touche = "1";
     if (t.dataset.f === "qte") remplirPorts();
     if (t.dataset.f === "nom") {
       // Une liste de noms fixe le nombre : le champ « Nombre » s'aligne dessus.

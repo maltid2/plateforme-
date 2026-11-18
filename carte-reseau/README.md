@@ -1,4 +1,4 @@
-# Carte réseau — outil interne, 100 % hors ligne
+# Topologie réseau v1 — outil interne, 100 % hors ligne
 
 On renseigne ses sites, ses lieux (écoles, bâtiments…), ses baies, ses
 switchs et ce qui est branché dessus, port par port. L'outil produit **deux
@@ -26,7 +26,7 @@ switch, sans pare-feu ni onduleur.
 
 ## Installer : un seul fichier, rien d'autre
 
-**`carte-reseau.html`** contient tout l'outil. On le copie sur le poste et on
+**`topologie-reseau-v1.html`** contient tout l'outil. On le copie sur le poste et on
 l'ouvre en double-cliquant (Edge, Chrome ou Firefox). Pas d'installation, pas
 de compte, pas de serveur.
 
@@ -36,10 +36,10 @@ de compte, pas de serveur.
   sécurité (`connect-src 'none'`, aucune ressource externe) ; le navigateur
   bloque toute tentative d'envoi. Vérifié : zéro requête réseau en usage.
 - **Les données restent sur le poste**, dans le navigateur qui ouvre le fichier.
-- **Intégrité** : `carte-reseau.html.sha256` donne l'empreinte du fichier
+- **Intégrité** : `topologie-reseau-v1.html.sha256` donne l'empreinte du fichier
   livré. Avant de le déployer, vérifiez-la :
   ```powershell
-  Get-FileHash .\carte-reseau.html -Algorithm SHA256
+  Get-FileHash .\topologie-reseau-v1.html -Algorithm SHA256
   ```
 - **Marquage** : le dossier imprimé porte « Document interne — diffusion
   restreinte » sur chaque page.
@@ -119,7 +119,7 @@ l'impression ; les façades de switch restent réalistes.
 npm install
 npm run dev        # http://localhost:5173
 npm test           # analyseur, façades, placement, lieux, supports
-npm run fichier    # reconstruit carte-reseau.html et son empreinte SHA-256
+npm run fichier    # reconstruit topologie-reseau-v1.html et son empreinte SHA-256
 ```
 
 | Fichier | Rôle |

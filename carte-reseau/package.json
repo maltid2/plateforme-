@@ -2,14 +2,14 @@
   "name": "carte-reseau",
   "version": "1.0.0",
   "private": true,
-  "description": "Outil interne : on écrit ses sites, équipements et liaisons à la main, l'outil dessine la carte 2D et 3D.",
+  "description": "Topologie réseau v1 — outil interne : on écrit ses sites, équipements et liaisons, l'outil dessine la carte 2D et 3D.",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "node --experimental-strip-types --test test/*.test.ts",
-    "fichier": "npm run build && cp dist/index.html carte-reseau.html && node -e \"const c=require('crypto'),f=require('fs');const h=c.createHash('sha256').update(f.readFileSync('carte-reseau.html')).digest('hex');f.writeFileSync('carte-reseau.html.sha256',h+'  carte-reseau.html\\n');console.log('SHA-256',h)\""
+    "fichier": "npm run build && cp dist/index.html topologie-reseau-v1.html && node -e \"const c=require('crypto'),f=require('fs');const h=c.createHash('sha256').update(f.readFileSync('topologie-reseau-v1.html')).digest('hex');f.writeFileSync('topologie-reseau-v1.html.sha256',h+'  topologie-reseau-v1.html\\n');console.log('SHA-256',h)\""
   },
   "dependencies": {
     "three": "^0.182.0"

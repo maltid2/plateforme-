@@ -62,7 +62,7 @@ export function exporter(c: Classeur, auteur = lireAuteur()): string {
 /** Ajoute les topologies d'un fichier de sauvegarde, sans écraser l'existant. */
 export function importer(c: Classeur, json: string): { ajoutees: number } {
   const d = JSON.parse(json);
-  if (!valide(d)) throw new Error("Ce fichier n'est pas une sauvegarde de Carte réseau.");
+  if (!valide(d)) throw new Error("Ce fichier n'est pas une sauvegarde de Topologie réseau v1.");
   let ajoutees = 0;
   d.topologies.forEach((t) => {
     const existe = c.topologies.find((x) => x.id === t.id);

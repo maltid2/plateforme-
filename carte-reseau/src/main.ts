@@ -87,7 +87,7 @@ function listerTopologies() {
   selTopo.replaceChildren(...[...classeur.topologies]
     .sort((a, b) => a.nom.localeCompare(b.nom, "fr"))
     .map((t) => new Option(t.nom, t.id, false, t.id === classeur.active)));
-  document.title = `${active().nom} · Carte réseau`;
+  document.title = `${active().nom} · Topologie réseau v1`;
 }
 function ouvrirTopologie(id: string) {
   classeur.active = id;
@@ -387,7 +387,7 @@ const nomFichier = (n: string) => n.normalize("NFD").replace(/[̀-ͯ]/g, "").rep
 const date = () => new Date().toISOString().slice(0, 10);
 const fermerMenu = () => document.querySelector("details.menu")?.removeAttribute("open");
 
-$("b-sauvegarde").addEventListener("click", () => { fermerMenu(); telecharger(`carte-reseau-sauvegarde-${date()}.json`, projets.exporter(classeur, auteur()), "application/json"); });
+$("b-sauvegarde").addEventListener("click", () => { fermerMenu(); telecharger(`topologie-reseau-sauvegarde-${date()}.json`, projets.exporter(classeur, auteur()), "application/json"); });
 
 /* ---------------- signature ---------------- */
 // En visionneuse, c'est la signature de celui qui l'a exportée ; sinon celle du poste.
@@ -456,7 +456,7 @@ $("b-visionneuse").addEventListener("click", () => {
   // n'importe quel poste avec un navigateur, sans réseau ni installation.
   const donnees = JSON.stringify({ nom: active().nom, texte: editeur.valeur, exporte: new Date().toISOString(), classification: CLASSIFICATION, auteur: auteur() })
     .replace(/</g, "\\u003c");
-  const html = `<!doctype html>\n<html lang="fr">\n<head>${MODELE.head.replace(/<title>[^<]*<\/title>/, `<title>${active().nom.replace(/</g, "")} · Carte réseau</title>`)}</head>\n<body>\n<script type="application/json" id="carte-donnees">${donnees}</script>\n${MODELE.body}\n</body>\n</html>\n`;
+  const html = `<!doctype html>\n<html lang="fr">\n<head>${MODELE.head.replace(/<title>[^<]*<\/title>/, `<title>${active().nom.replace(/</g, "")} · Topologie réseau v1</title>`)}</head>\n<body>\n<script type="application/json" id="carte-donnees">${donnees}</script>\n${MODELE.body}\n</body>\n</html>\n`;
   telecharger(`${nomFichier(active().nom)}-visionneuse.html`, html, "text/html;charset=utf-8");
 });
 document.addEventListener("click", (e) => { if (!(e.target as Element).closest("details.menu")) fermerMenu(); });
@@ -469,6 +469,6 @@ recalculer();
 plan.cadrer();
 try { if (localStorage.getItem("carte-reseau:mode") === "texte" && !EMBARQUE) mode("texte"); } catch { /* sans importance */ }
 if (EMBARQUE) {
-  document.title = `${EMBARQUE.nom} · Carte réseau (lecture seule)`;
+  document.title = `${EMBARQUE.nom} · Topologie réseau v1 (lecture seule)`;
   $("etat").insertAdjacentHTML("afterbegin", `<span class="e">Lecture seule</span> · exporté le ${new Date(EMBARQUE.exporte).toLocaleString("fr-FR")}${EMBARQUE.auteur ? ` par ${EMBARQUE.auteur.replace(/[<>&]/g, "")}` : ""} · `);
 }

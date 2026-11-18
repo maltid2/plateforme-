@@ -855,7 +855,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     if (sb) racine.remove(sb);
     const vu = apercu.visible;
     apercu.visible = false; // les pastilles n'ont de sens qu'à l'écran
-    racine.name = "Carte réseau";
+    racine.name = "Topologie réseau v1";
     racine.traverse((o) => { if (o.userData.nom && !o.name) o.name = String(o.userData.nom); });
     try {
       const res = await new GLTFExporter().parseAsync(racine, { binary: true, onlyVisible: true });

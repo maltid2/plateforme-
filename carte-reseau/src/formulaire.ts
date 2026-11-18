@@ -84,13 +84,13 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
         <p class="f-quand">Son câble à lui, vers son switch : une caméra sur son switch, un switch d'étage sur le switch principal. Il est enregistré en même temps que l'équipement.</p>
         <p class="f-aide-branche"></p>
         <div class="f-phrase">
-          <span>Le câble part de</span> <b class="f-moi">cet équipement</b> <small class="f-nouveau"></small>
-          <label class="f-monport">port <select data-f="monport"></select></label>
+          <span>Branché sur</span>
+          <label class="large"><span class="sr">Switch où il est branché</span><select data-f="vers"></select></label>
+          <label>port <select data-f="port"></select></label>
         </div>
         <div class="f-phrase">
-          <span>et arrive sur</span>
-          <label class="large"><span class="sr">Équipement d'arrivée</span><select data-f="vers"></select></label>
-          <label>port <select data-f="port"></select></label>
+          <span>câble vers</span> <b class="f-moi">cet équipement</b> <small class="f-nouveau"></small>
+          <label class="f-monport">port <select data-f="monport"></select></label>
         </div>
         <div class="f-schema" data-schema="branche" aria-hidden="true"></div>
         <div class="f-ligne">
@@ -217,7 +217,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     // Le port déjà choisi s'il est encore libre sur ce switch, sinon le
     // premier port RJ45 libre : on ne laisse jamais « sans port » par accident.
     const voulu = garderPort ?? (libres.includes(port.value) ? port.value : (["rj45", "sfp", "autre", "wan"] as const).map((t) => libres.find((p) => lirePort(p).type === t)).find(Boolean) ?? "");
-    options(port, vers ? [{ v: "", t: "— sans port —" }, ...libres.map((p) => ({ v: p, t: qte > 1 ? `${p} (et suivants)` : p }))] : [{ v: "", t: "—" }], voulu);
+    options(port, vers ? [{ v: "", t: "— sans port —" }, ...libres.map((p) => ({ v: p, t: qte > 1 ? `${p} (pour le 1er)` : p }))] : [{ v: "", t: "—" }], voulu);
     port.disabled = !vers;
     // Explication selon le cas : rien où se brancher, ou choix à faire.
     const aide = racine.querySelector<HTMLElement>(".f-aide-branche")!;
@@ -401,8 +401,11 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     moi.textContent = noms.length > 1 ? `chacun de ces ${noms.length} équipements` : noms[0] || "cet équipement";
     moi.title = "L'équipement que vous êtes en train d'ajouter (son nom se tape en haut, case « Nom »).";
     racine.querySelector<HTMLElement>(".f-nouveau")!.textContent = edition ? "(en modification)" : nomsTapes().length ? (nomsTapes().length > 1 ? "(les nouveaux équipements)" : "(le nouvel équipement)") : "(nom proposé, pas encore créé)";
-    schema("branche", noms.length > 1 ? `${noms[0]} …` : noms[0] ?? "", champ<HTMLSelectElement>("monport").value,
-      champ<HTMLSelectElement>("vers").value, champ<HTMLSelectElement>("port").value, champ<HTMLSelectElement>("media").value,
+    const nb = combien();
+    const portsSw = nb > 1 ? portsDuGroupe(nb).filter(Boolean).join(", ") : champ<HTMLSelectElement>("port").value;
+    const nomMoi = nb > 1 ? `les ${nb} nouveaux` : noms[0] ?? "";
+    schema("branche", champ<HTMLSelectElement>("vers").value, portsSw,
+      nomMoi, champ<HTMLSelectElement>("monport").value || (A_FACADE.has(genre) ? "" : "réseau"), champ<HTMLSelectElement>("media").value,
       champ<HTMLInputElement>("trunk").checked, champ("vlan").value);
     const l = lignesAAjouter();
     let alerte = "";
@@ -553,6 +556,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     el.innerHTML = `<div class="sc-boite"><b>${echap(a)}</b><span>${pa ? `port ${echap(pa)}` : "port ?"}</span></div>
       <div class="sc-cable sc-${m}${trunk ? " sc-trunk" : ""}"><i></i><span>${echap(etiquette)}</span></div>
       <div class="sc-boite"><b>${echap(b)}</b><span>${pb ? `port ${echap(pb)}` : "port ?"}</span></div>`;
+    el.querySelectorAll("span").forEach((x) => { if (x.textContent?.includes(", ")) x.textContent = x.textContent.replace(/^port /, "ports "); });
   }
 
   function remplirRelier() {

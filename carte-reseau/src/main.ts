@@ -4,6 +4,7 @@ import { creerEditeur } from "./editeur.ts";
 import { cheminPasserelle } from "./facade.ts";
 import { elevations } from "./elevation.ts";
 import { creerFormulaire } from "./formulaire.ts";
+import { EXEMPLE_COMPLET, MODELES } from "./modeles.ts";
 import { CLASSIFICATION, imprimer } from "./impression.ts";
 import { creerPlan2D } from "./plan2d.ts";
 import * as projets from "./projets.ts";
@@ -70,10 +71,27 @@ function mode(m: "form" | "texte") {
   $("m-texte").setAttribute("aria-selected", String(m === "texte"));
   $("formulaire").hidden = m !== "form";
   $("editeur").hidden = m !== "texte";
+  $("modeles").hidden = m !== "texte";
   if (m === "texte") editeur.focus();
   try { localStorage.setItem("carte-reseau:mode", m); } catch { /* sans importance */ }
 }
 $("m-form").addEventListener("click", () => mode("form"));
+
+/* ---------------- modèles à insérer (onglet Texte) ---------------- */
+{
+  const barre = $("modeles");
+  MODELES.forEach((m) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.textContent = m.titre; b.title = `Insérer : ${m.detail}`;
+    b.addEventListener("click", () => editeur.inserer(m.texte));
+    barre.append(b);
+  });
+  const ex = document.createElement("button");
+  ex.type = "button"; ex.className = "exemple"; ex.textContent = "Exemple complet ↗";
+  ex.title = "Ouvre un exemple de tout le langage dans une carte à part (votre carte n'est pas touchée)";
+  ex.addEventListener("click", () => creer("Exemple (à supprimer)", EXEMPLE_COMPLET));
+  barre.append(ex);
+}
 
 /* ---------------- largeur de la saisie ---------------- */
 // Barre à glisser entre la saisie et la carte, mémorisée sur le poste.

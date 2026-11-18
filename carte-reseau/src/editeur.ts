@@ -270,5 +270,18 @@ export function creerEditeur(racine: HTMLElement, contexte: Contexte, surChange:
       synchro();
     },
     focus() { ta.focus(); },
+    /** Insère un bloc au curseur (annulable avec Ctrl+Z), sur des lignes à lui. */
+    inserer(bloc: string) {
+      ta.focus();
+      const pos = ta.selectionEnd;
+      const avant = ta.value.slice(0, pos);
+      let t = bloc.replace(/^\n+/, "");
+      if (avant && !avant.endsWith("\n")) t = "\n" + t;
+      if (avant && !/\n\s*\n$/.test(avant + (t.startsWith("\n") ? "\n" : ""))) t = "\n" + t;
+      ta.setSelectionRange(pos, pos);
+      if (!document.execCommand("insertText", false, t)) ta.setRangeText(t, pos, pos, "end");
+      changer();
+      synchro();
+    },
   };
 }

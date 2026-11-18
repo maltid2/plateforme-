@@ -387,3 +387,10 @@ body.lecture .local::after { content: " · lecture seule"; }
 .f-ajout .f-apercu { bottom: 44px; padding-top: 6px; }
 
 .f-ligne label[hidden] { display: none; }
+
+/* ---------- modèles à insérer ---------- */
+.modeles { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; padding: 7px 10px; border-bottom: 1px solid var(--trait); background: var(--bg2); font-size: 12px; }
+.modeles[hidden] { display: none; }
+.modeles > span { color: var(--sourd); margin-right: 2px; }
+.modeles button { padding: 3px 9px; font-size: 12px; border-radius: 999px; }
+.modeles button.exemple { margin-left: auto; border-color: rgba(141, 124, 255, 0.45); color: #d9d2ff; }

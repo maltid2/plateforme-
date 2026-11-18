@@ -241,3 +241,11 @@ test("liste d'IP : une par équipement, dans l'ordre", () => {
   // La liste n'est pas prise pour un modèle.
   assert.deepEqual(inv.equipements[0].infos, []);
 });
+
+test("l'exemple complet de l'onglet Texte se lit sans erreur ni remarque", async () => {
+  const { EXEMPLE_COMPLET, MODELES } = await import("../src/modeles.ts");
+  assert.deepEqual(analyser(EXEMPLE_COMPLET).alertes, []);
+  // Les modèles assemblés (site + switchs + caméras + lieu) forment une carte valide.
+  const assemble = ["site", "switchs", "cameras", "lieu"].map((id) => MODELES.find((m) => m.id === id)!.texte).join("\n");
+  assert.deepEqual(analyser(assemble).alertes.filter((a) => a.niveau === "erreur"), []);
+});

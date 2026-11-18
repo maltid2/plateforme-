@@ -95,6 +95,11 @@ FW-SIEGE:WAN2 -> SW-LILLE-1:24 | vpn | secours
 | Site / lieu | `site Lyon`, `point École A` en blocs, ou `@Lyon/École A` sur la ligne |
 | IP passerelle | `passerelle=10.20.0.1` sur l'équipement ; ou `site Lyon \| passerelle=…` / `point École A \| passerelle=…` pour tous les équipements du site ou du lieu (l'équipement garde la sienne s'il en a une) |
 
+Au-dessus de l'éditeur, **« Insérer : »** écrit au curseur un bloc prêt à
+adapter (Site, Switchs, Caméras, Trunk, Lieu, Entre sites), avec des noms
+neutres à remplacer ; **« Exemple complet »** ouvre tout le langage dans une
+carte à part (à supprimer ensuite), sans toucher à la vôtre.
+
 L'éditeur colore la syntaxe, souligne les erreurs et propose les sites, les
 équipements et **les ports libres** pendant la frappe (`Ctrl+Espace`).
 

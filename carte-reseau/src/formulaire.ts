@@ -57,7 +57,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
       <h3 class="f-titre-ajout">Ajouter un équipement</h3>
       <div class="f-types" role="radiogroup" aria-label="Type d'équipement"></div>
       <div class="f-ligne">
-        <label class="large">Nom<input data-f="nom" autocomplete="off" spellcheck="false" /></label>
+        <label class="large">Nom <small>(plusieurs noms : séparez-les par des virgules)</small><input data-f="nom" autocomplete="off" spellcheck="false" placeholder="SW-ACCUEIL, SW-ETAGE1, SW-ETAGE2" /></label>
         <label class="etroit">Nombre<input data-f="qte" type="number" min="1" max="200" value="1" /></label>
       </div>
       <div class="f-ligne">
@@ -182,7 +182,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     const vers = champ<HTMLSelectElement>("vers").value;
     const port = champ<HTMLSelectElement>("port");
     const libres = vers ? portsLibres(vers, garderPort) : [];
-    const qte = Number(champ("qte").value) || 1;
+    const qte = combien();
     // Le port déjà choisi s'il est encore libre sur ce switch, sinon le
     // premier port RJ45 libre : on ne laisse jamais « sans port » par accident.
     const voulu = garderPort ?? (libres.includes(port.value) ? port.value : libres.find((p) => /^\d+$/.test(p)) ?? libres[0] ?? "");
@@ -208,12 +208,17 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     return base;
   }
 
+  /** Les noms tapés : un seul, ou une liste séparée par des virgules. */
+  const listeNoms = () => champ("nom").value.split(",").map((x) => nomPropre(x)).filter(Boolean);
+  /** Combien d'équipements seront créés : la liste de noms, sinon « Nombre ». */
+  const combien = () => (listeNoms().length > 1 ? listeNoms().length : Math.max(1, Math.min(200, Number(champ("qte").value) || 1)));
+
   /* ---------- écriture des lignes ---------- */
   function ligneEquipement(): string | null {
-    const nom = nomPropre(champ("nom").value);
-    if (!nom) return null;
+    const noms = listeNoms();
+    if (!noms.length) return null;
     const qte = Math.max(1, Math.min(200, Number(champ("qte").value) || 1));
-    const p: string[] = [`${genre} ${nom}${qte > 1 ? ` x${qte}` : ""}`];
+    const p: string[] = [noms.length > 1 ? `${genre} ${noms.join(", ")}` : `${genre} ${noms[0]}${qte > 1 ? ` x${qte}` : ""}`];
     if (champ("ip").value.trim()) p.push(propre(champ("ip").value));
     if (champ("modele").value.trim()) p.push(propre(champ("modele").value));
     if (ctx.site) p.push(`@${propre(ctx.site)}${ctx.point ? `/${propre(ctx.point)}` : ""}`);
@@ -244,7 +249,8 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     const vers = champ<HTMLSelectElement>("vers").value;
     if (!vers) return [l];
     const mon = propre(champ("monport").value);
-    if (mon) return [l, ligneBranche(nomPropre(champ("nom").value))!];
+    // Le port de l'équipement lui-même ne s'écrit que pour un seul équipement.
+    if (mon && combien() === 1) return [l, ligneBranche(listeNoms()[0])!];
     const port = champ<HTMLSelectElement>("port").value;
     return [[l, `sur ${vers}${port ? `:${port}` : ""}`,
       ...optionsLien(champ<HTMLSelectElement>("media").value, champ("vlan").value, champ<HTMLInputElement>("trunk").checked)].join(" | ")];
@@ -255,7 +261,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     let alerte = "";
     // Plusieurs caméras sur un switch : y a-t-il assez de ports qui se suivent ?
     const vers = champ<HTMLSelectElement>("vers").value, port = champ<HTMLSelectElement>("port").value;
-    const qte = Number(champ("qte").value) || 1;
+    const qte = combien();
     if (vers && port && qte > 1) {
       const libres = new Set(portsLibres(vers, edition ? undefined : undefined));
       const m = port.match(/^(.*?)(\d+)$/);
@@ -309,12 +315,14 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     if (!demanderSite()) return;
     const l = lignesAAjouter();
     if (!l) { champ("nom").focus(); return; }
-    const nom = nomPropre(champ("nom").value);
+    const noms = listeNoms(), nom = noms[0];
     const qte = Number(champ("qte").value) || 1;
-    const premier = qte > 1 ? `${nom}-1` : nom;
+    // Les noms qui seront créés, pour vérifier qu'aucun n'existe déjà.
+    const crees = noms.length > 1 ? noms : qte > 1 ? Array.from({ length: qte }, (_, k) => `${nom}-${k + 1}`) : [nom];
     const { inv } = acces.donnees();
-    if (!edition && inv.equipements.some((e) => e.nom.toLowerCase() === premier.toLowerCase() || e.nom.toLowerCase() === nom.toLowerCase())) {
-      alert(`« ${nom} » existe déjà. Choisissez un autre nom.`);
+    const doublons = crees.filter((n, i) => crees.indexOf(n) !== i || (!edition && inv.equipements.some((e) => e.nom.toLowerCase() === n.toLowerCase())));
+    if (doublons.length) {
+      alert(`Ces noms existent déjà : ${[...new Set(doublons)].join(", ")}. Choisissez d'autres noms.`);
       champ("nom").focus();
       return;
     }
@@ -340,7 +348,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
         lignes.push(...l, "");
       });
     }
-    const vise = qte > 1 ? `${nom}-1` : nom;
+    const vise = crees[0];
     vider();
     acces.choisir(vise);
   }
@@ -512,6 +520,13 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     const t = ev.target as HTMLElement;
     if (t.dataset.f === "filtre") { remplirInventaire(); return; }
     if (t.dataset.f === "qte") remplirPorts();
+    if (t.dataset.f === "nom") {
+      // Une liste de noms fixe le nombre : le champ « Nombre » s'aligne dessus.
+      const n = listeNoms().length;
+      champ<HTMLInputElement>("qte").disabled = n > 1 || !!edition;
+      if (n > 1) champ("qte").value = String(n);
+      remplirPorts();
+    }
     if (t.dataset.f) apercu();
   });
   racine.addEventListener("click", (ev) => {

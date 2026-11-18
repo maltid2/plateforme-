@@ -65,10 +65,17 @@ kbd { border: 1px solid var(--trait); }
 .menu-corps hr { border: 0; border-top: 1px solid var(--trait); margin: 4px 2px; }
 
 /* ---------- mise en page ---------- */
-.atelier { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(360px, 38%) 1fr; }
+/* La saisie a une largeur réglable (barre à glisser entre saisie et carte). */
+.atelier { --largeur-saisie: 38%; flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(300px, var(--largeur-saisie)) 7px 1fr; }
+.separateur { cursor: col-resize; background: var(--bg2); border-left: 1px solid var(--trait); border-right: 1px solid var(--trait); position: relative; touch-action: none; }
+.separateur::after { content: ""; position: absolute; left: 2px; top: 50%; width: 1px; height: 36px; margin-top: -18px; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18); border-radius: 2px; }
+.separateur:hover, .separateur:focus-visible, .separateur.actif { background: rgba(141, 124, 255, 0.35); outline: none; }
+body.redim { cursor: col-resize; user-select: none; }
+body.redim iframe, body.redim canvas, body.redim svg { pointer-events: none; }
 @media (max-width: 900px) {
   body { overflow: auto; }
   .atelier { grid-template-columns: 1fr; grid-template-rows: 60vh 75vh; }
+  .separateur { display: none; }
 }
 .saisie { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--trait); background: var(--bg); }
 .aide { padding: 10px 16px 12px; border-bottom: 1px solid var(--trait); font-size: 12.5px; color: var(--sourd); max-height: 46%; overflow: auto; background: var(--bg2); }
@@ -286,6 +293,7 @@ body.lecture .saisie, body.lecture #t-nouvelle, body.lecture #t-renommer, body.l
 body.lecture #b-sauvegarde, body.lecture #b-restaurer, body.lecture #b-enregistrer, body.lecture #b-ouvrir, body.lecture #b-exemple,
 body.lecture #b-visionneuse, body.lecture #b-aide, body.lecture .menu-corps hr, body.lecture .fiche .modifier { display: none; }
 body.lecture .atelier { grid-template-columns: 1fr; }
+body.lecture .separateur { display: none; }
 body.lecture .local::after { content: " · lecture seule"; }
 
 /* ---------- impression / PDF ---------- */

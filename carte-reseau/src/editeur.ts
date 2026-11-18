@@ -62,10 +62,10 @@ function colorerTete(p: string): string {
   const mot = m[2].toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
   if (mot === "site" || mot === "baie" || mot === "rack") return `${m[1]}<span class="c-type">${echap(m[2])}</span><span class="c-site">${echap(m[3])}</span>`;
   if (MOTS_TYPES.has(mot)) {
-    const r = m[3].match(/^(\s*:?\s*)(\S*)(.*)$/)!;
-    const q = r[3].match(/^(\s+x\d+)(.*)$/i);
+    // Le nom, ou une liste de noms « SW-A, SW-B », puis un éventuel « x6 ».
+    const r = m[3].match(/^(\s*:?\s*)(.*?)(\s+x\d+)?(\s*)$/i)!;
     return `${m[1]}<span class="c-type">${echap(m[2])}</span>${echap(r[1])}<span class="c-nom">${echap(r[2])}</span>` +
-      (q ? `<span class="c-qte">${echap(q[1])}</span>${echap(q[2])}` : echap(r[3]));
+      (r[3] ? `<span class="c-qte">${echap(r[3])}</span>` : "") + echap(r[4]);
   }
   return `${m[1]}<span class="c-inconnu">${echap(m[2])}</span>${echap(m[3])}`;
 }

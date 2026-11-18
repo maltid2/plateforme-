@@ -216,3 +216,12 @@ test("un site créé par @ puis déclaré par « site » ne compte pas comme un 
   assert.deepEqual(inv.alertes.filter((a) => /deux fois/.test(a.msg)), []);
   assert.equal(inv.equipements[0].passerelleIp, "10.30.0.1");
 });
+
+test("plusieurs noms différents sur une ligne : IP et ports qui se suivent", () => {
+  const inv = analyser("switch SW-CORE | ports=24\nswitch SW-ACCUEIL, SW-ETAGE1 , SW-ETAGE2 | 10.0.0.10 | sur SW-CORE:5");
+  const sw = inv.equipements.filter((e) => e.nom !== "SW-CORE");
+  assert.deepEqual(sw.map((e) => e.nom), ["SW-ACCUEIL", "SW-ETAGE1", "SW-ETAGE2"]);
+  assert.deepEqual(sw.map((e) => e.ip), ["10.0.0.10", "10.0.0.11", "10.0.0.12"]);
+  assert.deepEqual(inv.liaisons.map((l) => l.portB), ["5", "6", "7"]);
+  assert.deepEqual(inv.alertes.filter((a) => a.niveau === "erreur"), []);
+});

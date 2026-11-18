@@ -235,8 +235,15 @@ export function analyser(texte: string): Inventaire {
       alertes.push({ ligne, niveau: "erreur", msg: `Il manque le nom : écrire  ${mots[0]} NOM | adresse IP | infos` });
       return;
     }
-    if (/\s/.test(nom))
-      alertes.push({ ligne, niveau: "attention", msg: `« ${nom} » contient des espaces : préférez CAM-ENTREE à « CAM ENTREE », c'est le nom qu'on réutilise dans les liaisons.` });
+    // « switch SW-ACCUEIL, SW-ETAGE1, SW-ETAGE2 » : plusieurs noms différents
+    // sur une ligne ; IP et ports se suivent comme pour « x3 ».
+    let noms: string[];
+    if (nom.includes(",")) {
+      noms = nom.split(",").map((x) => x.trim()).filter(Boolean);
+      if (mq) alertes.push({ ligne, niveau: "attention", msg: `Une liste de noms et « x${qte} » sur la même ligne : c'est la liste qui compte (${noms.length} équipements).` });
+    } else noms = Array.from({ length: qte }, (_, k) => (qte > 1 ? `${nom}-${k + 1}` : nom));
+    noms.filter((x) => /\s/.test(x)).forEach((x) =>
+      alertes.push({ ligne, niveau: "attention", msg: `« ${x} » contient des espaces : préférez CAM-ENTREE à « CAM ENTREE », c'est le nom qu'on réutilise dans les liaisons.` }));
 
     let ip: string | undefined;
     const infos: string[] = [];
@@ -281,8 +288,8 @@ export function analyser(texte: string): Inventaire {
       if (!connu) sites.push({ nom: siteLigne, infos: [], ligne });
       site = connu?.nom ?? siteLigne;
     } else site = assurerSite(ligne);
-    for (let k = 0; k < qte; k++) {
-      const n = qte > 1 ? `${nom}-${k + 1}` : nom;
+    for (let k = 0; k < noms.length; k++) {
+      const n = noms[k];
       if (equipements.some((e) => simple(e.nom) === simple(n))) {
         alertes.push({ ligne, niveau: "erreur", msg: `« ${n} » existe déjà : chaque équipement doit avoir un nom unique (il sert dans les liaisons).` });
         continue;

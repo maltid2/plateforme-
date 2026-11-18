@@ -50,6 +50,12 @@ const securityHeaders = [
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  experimental: {
+    // Posé par `next upgrade --agent=security` lors du passage 16.4.2 → 16.4.6.
+    // Sans ce marqueur, le build s'interrompt à chaque exécution pour
+    // réafficher la recommandation de mise à jour.
+    agentUpgrade: "security",
+  },
   // Le moteur d'audit (audit-engine) est chargé au runtime par le require
   // natif de Node, pas par webpack. On force donc son inclusion dans la
   // fonction serverless /api/audit (fichiers .js + la base fingerprints.json).

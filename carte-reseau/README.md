@@ -55,14 +55,16 @@ de compte, pas de serveur.
 2. **Ajouter** — cliquer le type (Switch, Caméra, Passerelle…), donner un nom
    (un nom est proposé), l'IP, le modèle. Pour plusieurs caméras d'un coup,
    mettre le **nombre** : les IP et les ports se suivent.
-3. **Câble de cet équipement** — se lit comme une phrase : « Le câble part de
-   *SW-2* port *24* et arrive sur *SW-1* port *24* ». **Seuls les ports libres**
-   sont proposés, et un schéma montre le câble en direct. Câble automatique
-   (SFP = fibre, sinon cuivre RJ45) ou forcé (RJ45, fibre, radio, VPN). Deux
-   switchs peuvent être reliés en RJ45 comme en fibre. Trunk coché d'office
-   entre deux switchs.
-4. **Relier deux équipements déjà créés** — « Relier *A* port … avec *B* port … »,
-   même schéma : trunk entre switchs, liaison entre deux sites, VPN de secours…
+3. **Cadre A (vert) : où est branché l'équipement que vous ajoutez** — son
+   câble à lui, enregistré en même temps que lui : « Le câble part de *SW-2*
+   port *24* et arrive sur *SW-1* port *24* ». **Seuls les ports libres** sont
+   proposés, et un schéma montre le câble en direct. Câble automatique
+   (SFP = fibre, sinon cuivre RJ45) ou forcé (RJ45, fibre, radio, VPN). Trunk
+   coché d'office entre deux switchs.
+4. **Cadre B (violet) : câble en plus entre deux équipements déjà créés** —
+   pour relier deux emplacements entre eux : trunk entre deux switchs, lien
+   entre deux lieux ou deux sites, VPN ou lien de secours. Deux switchs se
+   relient en RJ45 comme en fibre.
 5. **Inventaire** — la liste de tout ce qui est saisi, par site et par lieu ;
    ✎ pour modifier, ✕ pour supprimer, clic pour voir sur la carte.
 

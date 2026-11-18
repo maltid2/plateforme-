@@ -416,3 +416,16 @@ body.lecture .local::after { content: " · lecture seule"; }
 .sc-cable.sc-radio i { background: repeating-linear-gradient(90deg, #f2c94c 0 6px, transparent 6px 10px); }
 .sc-cable.sc-vpn i { background: repeating-linear-gradient(90deg, #a99cff 0 8px, transparent 8px 12px); }
 .sc-cable.sc-trunk i { height: 7px; box-shadow: inset 0 0 0 2px rgba(7, 9, 13, 0.55); }
+
+/* Deux cadres bien distincts : A = raccordement de l'équipement ajouté (vert),
+   B = câble en plus entre deux équipements existants (violet). */
+.f-pastille { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; font-size: 11px; font-weight: 700; color: #0b0d12; margin-right: 4px; vertical-align: 1px; }
+.f-quand { margin: 0 0 6px; font-size: 12px; color: var(--sourd); line-height: 1.45; }
+.f-quand b { color: var(--encre); }
+.f-branche.f-raccord { border: 1px solid rgba(61, 220, 151, 0.45); background: rgba(61, 220, 151, 0.05); }
+.f-raccord .f-pastille { background: #3DDC97; }
+.f-raccord legend { color: #a7f0cf; }
+.f-bloc.f-liaison { border: 1px solid rgba(141, 124, 255, 0.5); background: rgba(141, 124, 255, 0.06); border-radius: 12px; }
+.f-liaison .f-pastille { background: #8D7CFF; }
+.f-liaison h3 { color: #c9c1ff; }
+.f-liaison .f-aide-branche { color: #c9c1ff; }

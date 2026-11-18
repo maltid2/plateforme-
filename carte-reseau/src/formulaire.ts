@@ -75,8 +75,9 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
         <datalist id="l-rj45"><option value="2"><option value="4"><option value="5"><option value="8"><option value="10"><option value="16"><option value="24"><option value="48"></datalist>
         <datalist id="l-sfp"><option value="0"><option value="1"><option value="2"><option value="4"><option value="8"></datalist>
       </div>
-      <fieldset class="f-branche">
-        <legend>Câble de cet équipement</legend>
+      <fieldset class="f-branche f-raccord">
+        <legend><span class="f-pastille">A</span> Où est branché l'équipement que vous ajoutez ?</legend>
+        <p class="f-quand">Son câble à lui, vers son switch : une caméra sur son switch, un switch d'étage sur le switch principal. Il est enregistré en même temps que l'équipement.</p>
         <p class="f-aide-branche"></p>
         <div class="f-phrase">
           <span>Le câble part de</span> <b class="f-moi">cet équipement</b>
@@ -101,9 +102,10 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
       </div>
     </section>
 
-    <section class="f-bloc">
-      <h3>Relier deux équipements déjà créés</h3>
-      <p class="f-aide-branche">Pour ajouter un câble entre deux équipements qui existent déjà : deux switchs (trunk), deux sites, un VPN de secours…</p>
+    <section class="f-bloc f-liaison">
+      <h3><span class="f-pastille">B</span> Câble en plus entre deux équipements déjà créés</h3>
+      <p class="f-quand">Pour relier deux emplacements entre eux : trunk entre deux switchs, lien entre deux lieux ou deux sites, VPN ou lien de secours. Inutile pour brancher un nouvel équipement : faites-le dans <b>A</b> en l'ajoutant.</p>
+      <p class="f-aide-branche">Choisissez les deux bouts du câble : un équipement de chaque côté et son port.</p>
       <div class="f-phrase">
         <span>Relier</span>
         <label class="large"><span class="sr">Premier équipement</span><select data-l="a"></select></label>
@@ -121,7 +123,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
         <label>Remarque<input data-l="libelle" placeholder="lien opérateur, secours…" autocomplete="off" /></label>
       </div>
       <label class="f-case"><input type="checkbox" data-l="trunk" /> Trunk : plusieurs VLAN sur ce câble</label>
-      <div class="f-boutons"><button type="button" class="primaire" data-a="relier">Relier</button></div>
+      <div class="f-boutons"><button type="button" class="primaire" data-a="relier">Ajouter ce câble</button></div>
     </section>
 
     <section class="f-bloc f-inventaire">
@@ -217,7 +219,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     const aide = racine.querySelector<HTMLElement>(".f-aide-branche")!;
     const nCibles = champ<HTMLSelectElement>("vers").options.length - 1;
     aide.textContent = nCibles === 0
-      ? "Rien où le brancher pour l'instant : c'est normal pour le premier équipement d'un site. Ajoutez-le, puis branchez les suivants dessus (ou reliez-les après avec « Relier deux équipements » plus bas)."
+      ? "Rien où le brancher pour l'instant : c'est normal pour le premier équipement d'un site. Ajoutez-le, puis branchez les suivants dessus (ou reliez-les après avec le cadre B plus bas)."
       : vers ? `Choisissez le port de ${vers} où arrive le câble. Seuls les ports encore libres sont proposés.`
         : "Choisissez le switch ou la passerelle sur lequel cet équipement est branché, puis son port.";
     // Suggestions pour « son port à lui » : ses propres ports d'après RJ45 / SFP.

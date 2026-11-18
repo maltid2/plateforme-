@@ -48,6 +48,9 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
         <label>Lieu <small>(école, bâtiment…)</small><select data-c="point"></select></label>
         <label>Baie<select data-c="baie"></select></label>
       </div>
+      <div class="f-ligne">
+        <label>Passerelle du site <small>(IP par défaut de tout le site)</small><input data-c="gw" placeholder="10.0.0.1" autocomplete="off" spellcheck="false" /></label>
+      </div>
     </section>
 
     <section class="f-bloc f-ajout">
@@ -60,6 +63,9 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
       <div class="f-ligne">
         <label>Adresse IP <small>(la 1re si plusieurs)</small><input data-f="ip" placeholder="10.0.0.2" autocomplete="off" spellcheck="false" /></label>
         <label>Modèle<input data-f="modele" placeholder="Cisco 9200, Dôme 4 MP…" autocomplete="off" /></label>
+      </div>
+      <div class="f-ligne">
+        <label>IP passerelle <small>(vide = celle du site)</small><input data-f="gw" autocomplete="off" spellcheck="false" /></label>
       </div>
       <div class="f-ligne f-switch">
         <label>Ports RJ45<select data-f="ports"><option>8</option><option>12</option><option>16</option><option selected>24</option><option>48</option></select></label>
@@ -139,6 +145,10 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     const baies = [...new Set(eqSite.filter((e) => (e.point ?? "") === ctx.point).map((e) => e.baie).filter(Boolean) as string[])];
     if (ctx.baie && !baies.includes(ctx.baie)) baies.push(ctx.baie);
     options($('[data-c="baie"]'), [{ v: "", t: "— aucune —" }, ...baies.map((b) => ({ v: b, t: b })), { v: NOUVEAU, t: "＋ Nouvelle baie…" }], ctx.baie);
+    const gwSite = inv.sites.find((s) => s.nom === ctx.site)?.passerelleIp ?? "";
+    const champGwSite = $<HTMLInputElement>('[data-c="gw"]');
+    if (document.activeElement !== champGwSite) champGwSite.value = gwSite;
+    champ("gw").placeholder = gwSite ? `${gwSite} (celle du site)` : "10.0.0.1";
   }
 
   function remplirTypes() {
@@ -198,6 +208,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     if (champ("modele").value.trim()) p.push(propre(champ("modele").value));
     if (ctx.site) p.push(`@${propre(ctx.site)}${ctx.point ? `/${propre(ctx.point)}` : ""}`);
     if (ctx.baie) p.push(`baie=${propre(ctx.baie)}`);
+    if (champ("gw").value.trim()) p.push(`passerelle=${propre(champ("gw").value)}`);
     if (genre === "switch") p.push(`ports=${champ<HTMLSelectElement>("ports").value}`, `sfp=${champ<HTMLSelectElement>("sfp").value}`);
     return p.join(" | ");
   }
@@ -251,6 +262,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     champ("ip").value = "";
     champ("modele").value = "";
     champ("monport").value = "";
+    champ("gw").value = "";
     champ("vlan").value = genre === "camera" ? champ("vlan").value : "";
     $(".f-titre-ajout").textContent = "Ajouter un équipement";
     $('[data-a="ajouter"]').textContent = "Ajouter";
@@ -389,6 +401,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     champ("qte").setAttribute("disabled", "");
     champ("ip").value = e.ip ?? "";
     champ("modele").value = e.infos[0] ?? "";
+    champ("gw").value = e.passerelleHeritee ? "" : e.passerelleIp ?? "";
     const ports = e.kv.find(([k]) => /^ports?$/i.test(k))?.[1], sfp = e.kv.find(([k]) => /^sfp$/i.test(k))?.[1];
     if (ports) champ<HTMLSelectElement>("ports").value = ports;
     if (sfp) champ<HTMLSelectElement>("sfp").value = sfp;
@@ -425,9 +438,34 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     if (edition?.eq.nom === nom) vider();
   }
 
+  /** La passerelle par défaut du site : sur la ligne « site … », créée au besoin. */
+  function passerelleDuSite(v: string) {
+    const ip = propre(v);
+    if (ip && !/^\d{1,3}(\.\d{1,3}){3}(\/\d{1,2})?$/.test(ip)) { alert(`« ${ip} » n'est pas une adresse IP.`); return; }
+    if (!ctx.site) return;
+    const echappe = ctx.site.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const re = new RegExp(`^(\\s*site\\s+${echappe})\\s*(\\|.*)?$`, "i");
+    modifierTexte((lignes) => {
+      const i = lignes.findIndex((l) => re.test(l));
+      if (i < 0) {
+        if (!ip) return;
+        // Pas encore de ligne « site » : on l'ajoute à la fin, où elle ne
+        // change le site d'aucune ligne existante.
+        while (lignes.length && !lignes[lignes.length - 1].trim()) lignes.pop();
+        lignes.push("", `site ${ctx.site} | passerelle=${ip}`, "");
+        return;
+      }
+      const [, tete, reste = ""] = lignes[i].match(re)!;
+      const champs = reste.split("|").map((x) => x.trim()).filter((x) => x && !/^(passerelle|gw|gateway|pass|gtw)\s*=/i.test(x));
+      if (ip) champs.push(`passerelle=${ip}`);
+      lignes[i] = [tete, ...champs].join(" | ");
+    });
+  }
+
   /* ---------- événements ---------- */
   racine.addEventListener("change", (ev) => {
     const t = ev.target as HTMLElement;
+    if (t.dataset.c === "gw") { passerelleDuSite((t as HTMLInputElement).value); return; }
     const c = t.dataset.c as keyof typeof ctx | undefined;
     if (c) {
       const sel = t as HTMLSelectElement;

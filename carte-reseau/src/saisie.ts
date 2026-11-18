@@ -20,6 +20,9 @@ export type Equipement = {
   /** Un lieu dans le site : une école dans une ville, un bâtiment sur un campus. */
   point?: string;
   baie?: string;
+  /** IP de la passerelle par défaut : écrite sur la ligne, ou héritée du lieu / du site. */
+  passerelleIp?: string;
+  passerelleHeritee?: "lieu" | "site";
   ip?: string;
   infos: string[];          // texte libre après le nom (modèle, remarques…)
   kv: [string, string][];   // clé=valeur
@@ -43,7 +46,7 @@ export const MEDIAS: Record<Media, string> = {
   fibre: "Fibre optique", cuivre: "Cuivre RJ45", radio: "Radio / sans fil", vpn: "VPN / internet",
 };
 
-export type Site = { nom: string; infos: string[]; ligne: number };
+export type Site = { nom: string; infos: string[]; ligne: number; passerelleIp?: string };
 export type Alerte = { ligne: number; niveau: "erreur" | "attention"; msg: string };
 export type Inventaire = { sites: Site[]; equipements: Equipement[]; liaisons: Liaison[]; alertes: Alerte[] };
 
@@ -110,6 +113,19 @@ function lireOptionsLien(champs: string[]): OptionsLien & { reste: string[] } {
   return o;
 }
 
+const CLE_PASSERELLE = /^(passerelle|gw|gateway|pass|gtw)\s*=\s*/i;
+/** « passerelle=10.0.0.1 » parmi des champs ; signale une valeur qui n'est pas une IP. */
+function lirePasserelle(champs: string[], ligne: number, alertes: Alerte[]): string | undefined {
+  const c = champs.find((x) => CLE_PASSERELLE.test(x.trim()));
+  if (!c) return undefined;
+  const v = c.trim().replace(CLE_PASSERELLE, "").trim();
+  if (!IP.test(v)) {
+    alertes.push({ ligne, niveau: "erreur", msg: `IP de passerelle « ${v} » illisible : écrire par exemple  passerelle=10.0.0.1` });
+    return undefined;
+  }
+  return v;
+}
+
 /** « SW1:5 », « SW1 port 5 », « SW1 » → { nom, port } */
 function lireExtremite(s: string): { nom: string; port?: string } {
   const t = s.trim();
@@ -133,6 +149,8 @@ export function analyser(texte: string): Inventaire {
   let siteCourant: string | null = null;
   let baieCourante: string | undefined;
   let pointCourant: string | undefined;
+  const passerellesLieux = new Map<string, string>();
+  const sitesDeclares = new Set<string>();
   const brutes: ({ de: string; vers: string; ligne: number } & OptionsLien)[] = [];
 
   const assurerSite = (ligne: number) => {
@@ -168,19 +186,26 @@ export function analyser(texte: string): Inventaire {
 
     if (mot === "site") {
       if (!reste) { alertes.push({ ligne, niveau: "erreur", msg: "Site sans nom : écrire  site Nanterre" }); return; }
-      if (sites.some((s) => simple(s.nom) === simple(reste)))
+      if (sitesDeclares.has(simple(reste)))
         alertes.push({ ligne, niveau: "attention", msg: `Le site « ${reste} » est déclaré deux fois : les équipements s'ajoutent au premier.` });
-      else sites.push({ nom: reste, infos: champs.filter(Boolean), ligne });
-      siteCourant = sites.find((s) => simple(s.nom) === simple(reste))!.nom;
+      else if (!sites.some((s) => simple(s.nom) === simple(reste)))
+        sites.push({ nom: reste, infos: champs.filter((c) => c && !CLE_PASSERELLE.test(c.trim())), ligne });
+      sitesDeclares.add(simple(reste));
+      const leSite = sites.find((s) => simple(s.nom) === simple(reste))!;
+      const gwSite = lirePasserelle(champs, ligne, alertes);
+      if (gwSite) leSite.passerelleIp = gwSite;
+      siteCourant = leSite.nom;
       baieCourante = undefined;
       pointCourant = undefined;
       return;
     }
     // « point École Jaurès » : les lignes suivantes sont dans ce lieu du site.
     if (mot === "point" || mot === "lieu" || mot === "batiment" || mot === "bâtiment") {
-      assurerSite(ligne);
+      const s0 = assurerSite(ligne);
       pointCourant = reste || undefined;
       baieCourante = undefined;
+      const gwPoint = lirePasserelle(champs, ligne, alertes);
+      if (gwPoint && pointCourant) passerellesLieux.set(`${simple(s0)}§${simple(pointCourant)}`, gwPoint);
       return;
     }
     if (mot === "baie" || mot === "rack") {
@@ -220,6 +245,7 @@ export function analyser(texte: string): Inventaire {
     let siteLigne: string | undefined;
     let pointLigne: string | undefined;
     let baieLigne: string | undefined;
+    let passerelleLigne: string | undefined;
     const optsInline: OptionsLien = {};
     for (const c of champs) {
       if (!c) continue;
@@ -244,6 +270,7 @@ export function analyser(texte: string): Inventaire {
         siteLigne = sNom.trim();
         pointLigne = pNom.join("/").trim() || undefined;
       }
+      else if (CLE_PASSERELLE.test(c.trim())) passerelleLigne = lirePasserelle([c], ligne, alertes);
       else if (c.includes("=")) { const k = c.indexOf("="); kv.push([c.slice(0, k).trim(), c.slice(k + 1).trim()]); }
       else infos.push(c);
     }
@@ -262,7 +289,7 @@ export function analyser(texte: string): Inventaire {
       }
       // Un « @Site » explicite remet le lieu à zéro, sauf s'il en donne un.
       const point = pointLigne ?? (siteLigne ? undefined : pointCourant);
-      equipements.push({ nom: n, genre, site, ...(point ? { point } : {}), baie: baieLigne ?? baieCourante, ip: ip && ipPlus(ip, k), infos, kv, ligne });
+      equipements.push({ nom: n, genre, site, ...(point ? { point } : {}), baie: baieLigne ?? baieCourante, ip: ip && ipPlus(ip, k), ...(passerelleLigne ? { passerelleIp: passerelleLigne } : {}), infos, kv, ligne });
       if (versInline) {
         const v = lireExtremite(versInline);
         brutes.push({ de: n, vers: v.port ? `${v.nom}:${portPlus(v.port, k)}` : v.nom, ligne, ...optsInline });
@@ -329,6 +356,33 @@ export function analyser(texte: string): Inventaire {
     }
   }
 
+  // IP de passerelle héritée : du lieu d'abord, sinon du site.
+  equipements.forEach((e) => {
+    if (e.passerelleIp) return;
+    // L'équipement qui EST la passerelle du site n'en hérite pas.
+    const pasSoi = (gw?: string) => (gw && gw.split("/")[0] !== e.ip?.split("/")[0] ? gw : undefined);
+    const duLieu = pasSoi(e.point ? passerellesLieux.get(`${simple(e.site)}§${simple(e.point)}`) : undefined);
+    const duSite = pasSoi(sites.find((s) => s.nom === e.site)?.passerelleIp);
+    if (duLieu) { e.passerelleIp = duLieu; e.passerelleHeritee = "lieu"; }
+    else if (duSite) { e.passerelleIp = duSite; e.passerelleHeritee = "site"; }
+  });
+  // Contrôles : la passerelle n'est pas l'équipement lui-même, et elle est
+  // dans son réseau quand le masque est écrit (10.14.30.11/24).
+  const versNombre = (ip: string) => ip.split("/")[0].split(".").reduce((n, o) => (n << 8) + Number(o), 0) >>> 0;
+  equipements.forEach((e) => {
+    if (!e.passerelleIp || !e.ip) return;
+    if (e.ip.split("/")[0] === e.passerelleIp.split("/")[0]) {
+      alertes.push({ ligne: e.ligne, niveau: "attention", msg: `${e.nom} a pour passerelle sa propre adresse (${e.passerelleIp}).` });
+      return;
+    }
+    const masque = Number(e.ip.split("/")[1]);
+    if (Number.isFinite(masque) && masque > 0 && masque <= 32) {
+      const m = masque === 32 ? 0xffffffff : (0xffffffff << (32 - masque)) >>> 0;
+      if (((versNombre(e.ip) & m) >>> 0) !== ((versNombre(e.passerelleIp) & m) >>> 0))
+        alertes.push({ ligne: e.ligne, niveau: "attention", msg: `Passerelle ${e.passerelleIp} hors du réseau de ${e.nom} (${e.ip}).` });
+    }
+  });
+
   // Un équipement sans aucune liaison est souvent un oubli.
   const relies = new Set(liaisons.flatMap((l) => [l.a, l.b]));
   equipements.forEach((e) => {
@@ -345,9 +399,10 @@ export const TYPES = (Object.keys(GENRES) as Genre[]).map((g) => GENRES[g].mots[
 export const EXEMPLE = `# Une ligne par équipement :  type NOM | IP | modèle | sur SWITCH:port | vlan=30
 # Une ligne par liaison     :  NOM:port -> NOM:port | fibre | trunk | vlan=10,30
 # « site », « point » et « baie » rangent les lignes qui suivent : pas besoin de les répéter.
+# « passerelle=IP » sur un site ou un lieu vaut pour tous ses équipements (sauf s'ils en ont une).
 
 # ---------- Siège ----------
-site Nanterre
+site Nanterre | passerelle=10.14.0.1
 
 baie A1
   parefeu FW-SIEGE | 10.14.0.1 | FortiGate 100F | ports=8
@@ -361,18 +416,18 @@ baie A2
 FW-SIEGE:LAN1 -> SW-CORE:Te1 | fibre | trunk | vlan=10,20,30
 SW-CORE:Te3 -> SW-CAM:Te1 | fibre | trunk | vlan=30
 NVR-SIEGE -> SW-CAM:1 | vlan=30
-camera CAM-SIEGE x8 | 10.14.30.11 | Bullet 8 MP | sur SW-CAM:2 | vlan=30
+camera CAM-SIEGE x8 | 10.14.30.11 | Bullet 8 MP | sur SW-CAM:2 | vlan=30 | passerelle=10.14.30.1
 poste PC-ACCUEIL x2 | 10.14.10.91 | sur SW-CORE:1 | vlan=10
 
 # ---------- Ville de Lyon : trois écoles qui remontent à la mairie ----------
-site Lyon
+site Lyon | passerelle=10.20.0.1
 
 point Mairie
 baie M1
   switch SW-MAIRIE | 10.20.0.2 | Cisco Catalyst 9200-24P | ports=24 | sfp=4
 camera CAM-MAIRIE x2 | 10.20.30.10 | Dôme 4 MP | sur SW-MAIRIE:1 | vlan=30
 
-point École Jaurès
+point École Jaurès | passerelle=10.20.1.1
 switch SW-JAURES | 10.20.1.2 | Netgear GS110TP PoE | ports=8 | sfp=2 | sur SW-MAIRIE:Te1 | fibre
 camera CAM-JAURES x4 | 10.20.31.10 | sur SW-JAURES:1 | vlan=30
 
@@ -385,7 +440,7 @@ switch SW-CURIE | 10.20.3.2 | Netgear GS108PE | ports=8 | sur SW-MAIRIE:20 | rad
 camera CAM-CURIE x2 | 10.20.33.10 | sur SW-CURIE:1 | vlan=30
 
 # ---------- Agence de Lille : ni pare-feu ni onduleur, rien n'est obligatoire ----------
-site Lille
+site Lille | passerelle=10.30.0.1
 switch SW-LILLE-1 | 10.30.0.2 | HPE 1820-24G | ports=24 | sfp=2
 switch SW-LILLE-2 | 10.30.0.3 | HPE 1820-8G PoE | ports=8 | sfp=2
 SW-LILLE-1:Te1 -> SW-LILLE-2:Te1 | fibre | trunk | vlan=10,30

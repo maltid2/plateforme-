@@ -234,15 +234,16 @@ function remplirFiche() {
   const dl = document.createElement("dl");
   const ligne = (k: string, v: string | Node) => { const dd = h("dd"); dd.append(v); dl.append(h("dt", "", k), dd); };
   ligne("Adresse IP", e.ip ?? "—");
+  if (e.passerelleIp) ligne("IP passerelle", `${e.passerelleIp}${e.passerelleHeritee ? ` · celle du ${e.passerelleHeritee}` : ""}`);
   ligne("Site", e.site);
   if (e.baie) ligne("Baie", e.baie);
   const ch = cheminPasserelle(e.nom, inv);
   if (ch) {
     const p = document.createElement("span");
     p.append(lien(ch.passerelle.nom), ch.passerelle.ip ? ` (${ch.passerelle.ip})` : "");
-    ligne("Passerelle", p);
+    ligne("Équipement passerelle", p);
     if (ch.via) ligne("Remonte par", `port ${ch.via}${ch.sauts.length > 1 ? ` · via ${ch.sauts.slice(0, -1).join(" › ")}` : ""}`);
-  } else if (e.genre !== "passerelle" && e.genre !== "parefeu") ligne("Passerelle", "aucune trouvée sur ce site");
+  } else if (e.genre !== "passerelle" && e.genre !== "parefeu" && !e.passerelleIp) ligne("Passerelle", "aucune déclarée sur ce site");
   e.infos.slice(1).forEach((i) => ligne("Info", i));
   e.kv.filter(([k]) => !/^(ports?|sfp|wan)$/i.test(k)).forEach(([k, v]) => ligne(k, v));
   fiche.append(dl);

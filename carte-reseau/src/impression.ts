@@ -40,7 +40,7 @@ export function imprimer(inv: Inventaire, svgPlan: string, titre: string, site: 
         <td>${echap(b.txt)}</td>
         <td>${echap([b.l?.mode === "trunk" ? "trunk" : "", b.l?.vlans ? `VLAN ${b.l.vlans}` : ""].filter(Boolean).join(" · ") || "—")}</td>
         <td>${b.l?.media ? echap(MEDIAS[b.l.media]) : "—"}</td>
-        <td>${gw ? echap(`${gw.passerelle.nom}${gw.via ? ` (port ${gw.via})` : ""}`) : "—"}</td>
+        <td class="m">${echap(e.passerelleIp ?? gw?.passerelle.ip ?? "—")}${gw ? `<br><small>${echap(`${gw.passerelle.nom}${gw.via ? ` · port ${gw.via}` : ""}`)}</small>` : ""}</td>
       </tr>`;
     }).join("");
     return `<h2>${echap(s.nom)}</h2>

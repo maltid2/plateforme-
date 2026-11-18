@@ -149,6 +149,7 @@ export function creerEditeur(racine: HTMLElement, contexte: Contexte, surChange:
         { texte: "sur ", detail: "branché sur SWITCH:port" },
         { texte: "@", detail: "site de l'équipement" },
         { texte: "vlan=", detail: "VLAN du port" },
+        { texte: "passerelle=", detail: "IP de la passerelle par défaut" },
         { texte: "trunk", detail: "lien trunk (plusieurs VLAN)" },
         { texte: "ports=", detail: "nombre de ports RJ45 (switch)" },
         { texte: "sfp=", detail: "nombre de cages SFP (switch)" },

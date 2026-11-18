@@ -86,10 +86,10 @@ function dessinerFacade(g: SVGGElement, e: Equipement, f: Facade, inv: Inventair
   texte(g, e.ip ?? "IP non renseignée", { x: x0 + 0.34, y: y0 + 1.38, "font-size": 0.27, fill: e.ip ? "#B9C3CF" : "#6B7A8C",
     "font-family": "ui-monospace, monospace" });
   // Voyants d'état.
-  [["PWR", "#3DDC97"], ["SYS", "#3DDC97"]].forEach(([t, c], k) => {
-    el("circle", { cx: x0 + 0.42 + k * 0.62, cy: y0 + 1.7, r: 0.06, fill: c }, g);
-    texte(g, t, { x: x0 + 0.52 + k * 0.62, y: y0 + 1.74, "font-size": 0.13, fill: "#6B7A8C" });
-  });
+  [0, 1].forEach((k) => el("circle", { cx: x0 + 0.4 + k * 0.2, cy: y0 + 1.7, r: 0.055, fill: "#3DDC97" }, g));
+  // IP de la passerelle par défaut, sous l'IP de l'équipement.
+  if (e.passerelleIp)
+    texte(g, `GW ${e.passerelleIp}`, { x: x0 + 0.75, y: y0 + 1.75, "font-size": 0.17, fill: "#A99CFF", "font-family": "ui-monospace, monospace" });
 
   const parNom = new Map(inv.equipements.map((x) => [x.nom, x]));
   const brancheDe = new Map<Port, ReturnType<Facade["branches"]["get"]>>();
@@ -147,7 +147,8 @@ function dessinerCarte(g: SVGGElement, e: Equipement) {
   texte(g, a.sigle, { x: x0 + 1.55, y: y0 + 0.62, "font-size": 0.34, "font-weight": 800, fill: a.couleur });
   texte(g, e.ip ?? "", { x: x0 + 1.55, y: y0 + 1.05, "font-size": 0.22, fill: "#B9C3CF", "font-family": "ui-monospace, monospace" });
   const vlan = e.kv.find(([k]) => /^vlan$/i.test(k))?.[1];
-  if (vlan) texte(g, `VLAN ${vlan}`, { x: x0 + 1.55, y: y0 + 1.36, "font-size": 0.2, fill: "#8B98A8" });
+  if (vlan) texte(g, `VLAN ${vlan}`, { x: x0 + 1.55, y: y0 + 1.3, "font-size": 0.18, fill: "#8B98A8" });
+  if (e.passerelleIp) texte(g, `GW ${e.passerelleIp}`, { x: x0 + 1.55, y: y0 + 1.5, "font-size": 0.16, fill: "#A99CFF", "font-family": "ui-monospace, monospace" });
   texte(g, court(e.nom), { class: "nom-carte", x: 0, y: y0 + CARTE_H + 0.5, "text-anchor": "middle", "font-size": 0.38, "font-weight": 600, fill: "#F5F7FA",
     stroke: "#0D1118", "stroke-width": 0.14, "paint-order": "stroke" });
 }

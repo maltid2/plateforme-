@@ -175,3 +175,43 @@ test("un port au-delà de ce que le switch déclare est signalé", () => {
   assert.match(msgs, /port 9 n'existe pas sur SW : 8 ports RJ45/);
   assert.match(msgs, /port Te3 n'existe pas sur SW : 2 cages SFP/);
 });
+
+test("IP passerelle : sur la ligne, héritée du lieu, sinon du site", () => {
+  const inv = analyser([
+    "site Lyon | passerelle=10.20.0.1",
+    "switch SW-M | 10.20.0.2",
+    "point École A | passerelle=10.20.1.1",
+    "switch SW-A | 10.20.1.2",
+    "camera C | 10.20.30.5 | passerelle=10.20.30.1",
+  ].join("\n"));
+  const e = (n: string) => inv.equipements.find((x) => x.nom === n)!;
+  assert.equal(e("SW-M").passerelleIp, "10.20.0.1");
+  // La passerelle elle-même n'hérite pas de sa propre adresse.
+  assert.equal(analyser("site S | passerelle=10.0.0.1\nparefeu FW | 10.0.0.1").equipements[0].passerelleIp, undefined);
+  assert.equal(e("SW-M").passerelleHeritee, "site");
+  assert.equal(e("SW-A").passerelleIp, "10.20.1.1");
+  assert.equal(e("SW-A").passerelleHeritee, "lieu");
+  assert.equal(e("C").passerelleIp, "10.20.30.1");
+  assert.equal(e("C").passerelleHeritee, undefined);
+  assert.deepEqual(inv.sites[0].infos, []);
+});
+
+test("IP passerelle : valeur illisible, hors réseau, ou égale à l'équipement", () => {
+  const inv = analyser([
+    "switch A | 10.0.0.2 | passerelle=routeur",
+    "switch B | 10.0.0.3/24 | passerelle=10.0.1.1",
+    "switch C | 10.0.0.4 | passerelle=10.0.0.4",
+    "switch D | 10.0.0.5/24 | passerelle=10.0.0.1",
+  ].join("\n"));
+  const msgs = inv.alertes.map((a) => `${a.ligne} ${a.msg}`).join("\n");
+  assert.match(msgs, /^1 IP de passerelle « routeur » illisible/m);
+  assert.match(msgs, /^2 Passerelle 10\.0\.1\.1 hors du réseau de B/m);
+  assert.match(msgs, /^3 C a pour passerelle sa propre adresse/m);
+  assert.doesNotMatch(msgs, /^4 Passerelle/m);
+});
+
+test("un site créé par @ puis déclaré par « site » ne compte pas comme un doublon", () => {
+  const inv = analyser("switch S | @Lille\nsite Lille | passerelle=10.30.0.1");
+  assert.deepEqual(inv.alertes.filter((a) => /deux fois/.test(a.msg)), []);
+  assert.equal(inv.equipements[0].passerelleIp, "10.30.0.1");
+});

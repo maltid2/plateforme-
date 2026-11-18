@@ -16,6 +16,7 @@ import type { Disposition } from "./disposition.ts";
 import { FH, type Facade } from "./facade.ts";
 import { svgFacade } from "./plan2d.ts";
 import { CAM_PAR_PLATEAU, EN_BAIE, HAUTEUR_U, svgSimple, U_PLATEAU } from "./baies.ts";
+import { PICTOS } from "./pictos.ts";
 import type { Equipement, Genre, Inventaire } from "./saisie.ts";
 
 type Rappels = { choisir: (nom: string | null) => void };
@@ -67,6 +68,15 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
   let cliquables: THREE.Object3D[] = [];
   const objets = new Map<string, THREE.Object3D>();
   let surbrillance: THREE.Box3Helper | null = null;
+  // Vue d'ensemble : une pastille par caméra, de taille constante à l'écran,
+  // pour les voir toutes même dézoomé au maximum. Elles s'effacent en zoomant.
+  let apercu = new THREE.Group();
+  let pastilles: THREE.Sprite[] = [];
+  let sols: THREE.Mesh[] = [];
+  const SEUIL_LOIN = 50;
+  const PASTILLE = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1" width="128" height="128">
+    <circle cx="0.5" cy="0.5" r="0.46" fill="${APPARENCE.camera.couleur}" stroke="#07090D" stroke-width="0.05"/>
+    <g transform="translate(0.2 0.2) scale(0.6)" fill="none" stroke="#07090D" stroke-width="0.11" stroke-linecap="round" stroke-linejoin="round">${PICTOS.camera}</g></svg>`;
   let emprise = new THREE.Box3(new THREE.Vector3(-5, 0, -5), new THREE.Vector3(5, 1, 5));
 
   // Les textures de façade coûtent un rendu SVG : on les garde d'une frappe à l'autre.
@@ -259,6 +269,11 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     surbrillance = null;
     racine = new THREE.Group();
     scene.add(racine);
+    apercu = new THREE.Group();
+    apercu.name = "apercu";
+    racine.add(apercu);
+    pastilles = [];
+    sols = [];
 
     const parNom = new Map(inv.equipements.map((e) => [e.nom, e]));
     const visibles = new Set(inv.equipements.filter((e) => !site || e.site === site).map((e) => e.nom));
@@ -275,6 +290,9 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     cadres.filter((c) => c.type === "site" && avecPoints.has(c.site)).forEach((c) => {
       const dalle = boite(c.w, 0.2, c.h, std(0x0a0d12, { roughness: 1, metalness: 0 }));
       dalle.position.set(c.x + c.w / 2, -0.32, c.y + c.h / 2);
+      // Cliquable aussi : dézoomé, un clic entre deux lieux plonge dans le site entier.
+      dalle.userData.salle = { x: c.x, y: c.y, w: c.w, h: c.h };
+      sols.push(dalle);
       racine.add(dalle);
       // Nom du site devant, au bord : celui des lieux est au fond de chaque salle.
       const t = etiquette(c.nom, "etiquette3d site");
@@ -288,6 +306,8 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
       // Le sol de la salle.
       const sol = boite(c.w, 0.2, c.h, std(c.type === "point" ? 0x121a22 : 0x10151c, { roughness: 0.9, metalness: 0 }));
       sol.position.set(c.x + c.w / 2, -0.1, c.y + c.h / 2);
+      sol.userData.salle = { x: c.x, y: c.y, w: c.w, h: c.h };
+      sols.push(sol);
       racine.add(sol);
       const cote = Math.max(c.w, c.h);
       const grille = new THREE.GridHelper(cote, Math.round(cote / 2), 0x1d2530, 0x161c25);
@@ -413,6 +433,30 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
       });
     });
 
+    // Les pastilles de la vue d'ensemble : les caméras de chaque salle en
+    // grille au-dessus du sol, et leur nombre.
+    const matPastille = new THREE.SpriteMaterial({ map: texture(PASTILLE), sizeAttenuation: false, transparent: true, depthTest: false });
+    jetables.push(matPastille);
+    salles.forEach((c) => {
+      const cams = inv.equipements.filter((e) => e.genre === "camera" && visibles.has(e.nom) &&
+        e.site === c.site && (c.type === "site" || (e.point ?? "") === c.point));
+      if (!cams.length) return;
+      const cols = Math.min(8, Math.max(1, Math.ceil(Math.sqrt(cams.length * 1.6))));
+      const x0 = c.x + c.w / 2, z0 = c.y + c.h * 0.6, pas = 3.2;
+      cams.forEach((e, i) => {
+        const sp = new THREE.Sprite(matPastille);
+        sp.position.set(x0 + ((i % cols) - (cols - 1) / 2) * pas, 2.6, z0 + Math.floor(i / cols) * pas);
+        sp.scale.set(0.024, 0.024, 1);
+        sp.renderOrder = 10;
+        sp.userData.nom = e.nom;
+        apercu.add(sp);
+        pastilles.push(sp);
+      });
+      const t = etiquette(`◉ ${cams.length} caméra${cams.length > 1 ? "s" : ""} · ${c.nom}`, "etiquette3d resume");
+      t.position.set(x0, 2.6, z0 - pas * 0.9);
+      apercu.add(t);
+    });
+
     // Les câbles, à la couleur de leur support.
     inv.liaisons.forEach((l) => {
       if (!visibles.has(l.a) || !visibles.has(l.b)) return;
@@ -466,9 +510,30 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     const demiFov = THREE.MathUtils.degToRad(cam.fov / 2);
     const besoin = Math.max(s.x / Math.max(cam.aspect, 0.3), s.z * 1.25, 10) / 2;
     const dist = (besoin / Math.tan(demiFov)) * 1.05;
-    ctrl.target.copy(c).setY(0);
-    cam.position.copy(ctrl.target).add(new THREE.Vector3(0.05, 0.62, 0.78).normalize().multiplyScalar(dist));
-    ctrl.update();
+    const cible = c.clone().setY(0);
+    voler(cible, cible.clone().add(new THREE.Vector3(0.05, 0.62, 0.78).normalize().multiplyScalar(dist)), premier);
+    premier = false;
+  }
+
+  /* ---------- déplacements doux de la caméra ---------- */
+  let premier = true;
+  let vol: { t0: number; c0: THREE.Vector3; c1: THREE.Vector3; p0: THREE.Vector3; p1: THREE.Vector3 } | null = null;
+  function voler(cible: THREE.Vector3, position: THREE.Vector3, immediat = false) {
+    if (immediat) { ctrl.target.copy(cible); cam.position.copy(position); ctrl.update(); vol = null; return; }
+    vol = { t0: performance.now(), c0: ctrl.target.clone(), c1: cible.clone(), p0: cam.position.clone(), p1: position.clone() };
+  }
+  /** Plonger dans une salle : on la cadre d'assez près pour voir le détail. */
+  function entrerDans(s: { x: number; y: number; w: number; h: number }) {
+    const c = new THREE.Vector3(s.x + s.w / 2, 0, s.y + s.h * 0.45);
+    const d = Math.min(SEUIL_LOIN * 0.85, Math.max(14, Math.max(s.w / Math.max(cam.aspect, 0.5), s.h) * 0.85));
+    voler(c, c.clone().add(new THREE.Vector3(0.05, 0.55, 0.83).normalize().multiplyScalar(d)));
+  }
+  function versObjet(nom: string) {
+    const o = objets.get(nom);
+    if (!o) return;
+    const c = new THREE.Box3().setFromObject(o).getCenter(new THREE.Vector3());
+    // De face et un peu au-dessus : on lit la façade et ses ports.
+    voler(c, c.clone().add(new THREE.Vector3(1.2, 1.6, 5.5)));
   }
 
   const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
@@ -480,6 +545,14 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     const r = rnd.domElement.getBoundingClientRect();
     ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
     ray.setFromCamera(ptr, cam);
+    if (apercu.visible) {
+      // Dézoomé : une pastille ouvre la caméra et plonge jusqu'à elle ;
+      // un clic sur le sol d'un site plonge dans ce site.
+      const p = ray.intersectObjects(pastilles, false)[0];
+      if (p) { const nom = p.object.userData.nom as string; cb.choisir(nom); versObjet(nom); return; }
+      const sol = ray.intersectObjects(sols, false)[0];
+      if (sol) { entrerDans(sol.object.userData.salle); return; }
+    }
     const h = ray.intersectObjects(cliquables, true)[0];
     let o: THREE.Object3D | null = h?.object ?? null;
     while (o && !o.userData.nom) o = o.parent;
@@ -499,10 +572,19 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
 
   rnd.setAnimationLoop(() => {
     if (!hote.offsetParent) return; // onglet caché : on ne dessine rien
+    if (vol) {
+      const t = Math.min(1, (performance.now() - vol.t0) / 750);
+      const k = t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
+      ctrl.target.lerpVectors(vol.c0, vol.c1, k);
+      cam.position.lerpVectors(vol.p0, vol.p1, k);
+      if (t >= 1) vol = null;
+    }
     ctrl.update();
-    // Vue d'ensemble : seuls les noms de sites et de baies restent ; les
-    // noms d'équipements reviennent en zoomant.
-    etiq.domElement.classList.toggle("loin", cam.position.distanceTo(ctrl.target) > 55);
+    // Vue d'ensemble : pastilles des caméras et noms de sites ; en zoomant,
+    // la 3D détaillée et les noms d'équipements prennent le relais.
+    const loin = cam.position.distanceTo(ctrl.target) > SEUIL_LOIN;
+    apercu.visible = loin;
+    etiq.domElement.classList.toggle("loin", loin);
     rnd.render(scene, cam);
     etiq.render(scene, cam);
   });
@@ -511,6 +593,8 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     // La surbrillance de sélection n'a rien à faire dans le fichier.
     const sb = surbrillance;
     if (sb) racine.remove(sb);
+    const vu = apercu.visible;
+    apercu.visible = false; // les pastilles n'ont de sens qu'à l'écran
     racine.name = "Carte réseau";
     racine.traverse((o) => { if (o.userData.nom && !o.name) o.name = String(o.userData.nom); });
     try {
@@ -518,6 +602,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
       return new Blob([res as ArrayBuffer], { type: "model/gltf-binary" });
     } finally {
       if (sb) racine.add(sb);
+      apercu.visible = vu;
     }
   }
 
@@ -533,12 +618,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
       const bb = new THREE.Box3().setFromObject(o).expandByScalar(0.08);
       surbrillance = new THREE.Box3Helper(bb, new THREE.Color(0x8d7cff));
       racine.add(surbrillance);
-      if (centrer) {
-        const c = bb.getCenter(new THREE.Vector3());
-        // De face et un peu au-dessus : on lit la façade et ses ports.
-        ctrl.target.copy(c);
-        cam.position.copy(c).add(new THREE.Vector3(1.2, 1.6, 5.5));
-      }
+      if (centrer) versObjet(nom);
     },
   };
 }

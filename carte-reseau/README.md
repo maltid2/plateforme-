@@ -9,7 +9,10 @@ plans** :
   VLAN étiquetés, chaque site dans son cadre et chaque lieu dans son site ;
 - une **vue « Baies »** : les baies de chaque lieu vues de face, côte à côte,
   chaque équipement à sa hauteur (numéros d'U), caméras sur leurs plateaux ;
-- une **vue 3D interactive** : une salle par lieu, des baies avec les
+- une **vue 3D interactive** à deux niveaux. Dézoomé, chaque caméra est une
+  pastille visible de loin, avec le nombre de caméras par site et par lieu ;
+  un clic sur une pastille ou sur le sol d'un site **plonge dans la 3D
+  détaillée**. En zoomant, les pastilles s'effacent et on retrouve : une salle par lieu, des baies avec les
   équipements montés dedans, les caméras rangées sur des plateaux en bas de
   baie et câblées au port de leur switch, les liaisons entre sites en arc.
 

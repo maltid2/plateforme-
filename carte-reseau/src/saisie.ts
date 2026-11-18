@@ -334,8 +334,16 @@ export function analyser(texte: string): Inventaire {
       const ipK = ips ? (k < ips.length ? ips[k] : ipPlus(ips[ips.length - 1], k - ips.length + 1)) : ip && ipPlus(ip, k);
       equipements.push({ nom: n, genre, site, ...(point ? { point } : {}), baie: baieLigne ?? baieCourante, ip: ipK, ...(passerelleLigne ? { passerelleIp: passerelleLigne } : {}), infos, kv: kvDe(k), ligne });
       if (versInline) {
-        const v = lireExtremite(versInline);
-        brutes.push({ de: n, vers: v.port ? `${v.nom}:${portPlus(v.port, k)}` : v.nom, ligne, ...optsInline });
+        // « sur SW-1:3, 7, 9 » : un port par équipement, dans l'ordre des noms
+        // (au-delà de la liste, on continue après le dernier).
+        const v = lireExtremite(versInline.replace(/\s*,\s*/g, ","));
+        const lp = v.port?.split(",").filter(Boolean) ?? [];
+        if (k === 0 && lp.length > 1 && lp.length !== noms.length)
+          alertes.push({ ligne, niveau: "attention", msg: lp.length > noms.length
+            ? `${lp.length} ports pour ${noms.length} équipement${noms.length > 1 ? "s" : ""} : les ports en trop sont ignorés.`
+            : `${lp.length} ports pour ${noms.length} équipements : les suivants continuent après ${lp[lp.length - 1]}.` });
+        const pk = lp.length > 1 ? (k < lp.length ? lp[k] : portPlus(lp[lp.length - 1], k - lp.length + 1)) : portPlus(v.port, k);
+        brutes.push({ de: n, vers: v.port ? `${v.nom}:${pk}` : v.nom, ligne, ...optsInline });
       }
     }
   });

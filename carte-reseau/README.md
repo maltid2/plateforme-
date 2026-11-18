@@ -57,7 +57,8 @@ de compte, pas de serveur.
    mettre le **nombre** : les IP et les ports se suivent.
 3. **Plusieurs switchs d'un coup** — avec plusieurs noms (`SW-A, SW-B, SW-C`)
    ou un nombre, **une ligne par équipement** apparaît : nom, IP, ports RJ45
-   et cages SFP de chacun. On peut aussi taper `24, 8, 48` dans les cases.
+   et cages SFP de chacun, et **le port où chacun est branché** (une fois le
+   switch choisi dans le cadre A). On peut aussi taper `24, 8, 48` dans les cases.
    Si la case Nom reste vide, le nom proposé en grisé est utilisé.
    **Cadre A (vert) : où est branché l'équipement que vous ajoutez** — son
    câble à lui, enregistré en même temps que lui. Seuls les ports libres sont
@@ -98,6 +99,7 @@ FW-SIEGE:WAN2 -> SW-LILLE-1:24 | vpn | secours
 | Plusieurs noms différents | `switch SW-ACCUEIL, SW-ETAGE1, SW-ETAGE2 \| 10.0.0.10 \| sur SW-CORE:5` → IP et ports qui se suivent (dans le formulaire : noms séparés par des virgules) |
 | Une IP précise pour chacun | `switch SW-A, SW-B, SW-C \| 10.0.0.5, 10.0.0.9, 10.0.0.20` → 1re IP au 1er nom, etc. (moins d'IP : la suite continue après la dernière) |
 | Plusieurs d'un coup | `camera CAM x6 \| 10.0.30.11 \| sur SW:3` → CAM-1 à CAM-6, ports 3 à 8 |
+| Un port précis pour chacun | `camera CAM-A, CAM-B, CAM-C \| sur SW-1:3, 7, 12` → 1er port au 1er nom, etc. |
 | Site / lieu | `site Lyon`, `point École A` en blocs, ou `@Lyon/École A` sur la ligne |
 | IP passerelle | `passerelle=10.20.0.1` sur l'équipement ; ou `site Lyon \| passerelle=…` / `point École A \| passerelle=…` pour tous les équipements du site ou du lieu (l'équipement garde la sienne s'il en a une) |
 

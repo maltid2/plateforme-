@@ -273,3 +273,12 @@ test("ports=24, 8, 48 et sfp=4, 0, 2 : un nombre par switch, dans l'ordre des no
   assert.ok(inv.alertes.some((a) => /3 valeurs de ports pour 2 équipements/.test(a.msg)));
   assert.equal(analyser("switch SW-X, SW-Y | ports=24, huit").alertes.filter((a) => a.niveau === "erreur").length, 1);
 });
+
+test("sur SW-1:3, 7, 12 : chaque caméra sur son port", () => {
+  const inv = analyser("site S\nswitch SW-1 | ports=24\ncamera CAM-A, CAM-B, CAM-C | 10.0.30.11 | sur SW-1:3, 7, 12\ncamera CAM x4 | sur SW-1:20,22");
+  const port = (n: string) => inv.liaisons.find((l) => l.a === n || l.b === n)!;
+  const p = (n: string) => { const l = port(n); return l.a === "SW-1" ? l.portA : l.portB; };
+  assert.deepEqual(["CAM-A", "CAM-B", "CAM-C"].map(p), ["3", "7", "12"]);
+  assert.deepEqual(["CAM-1", "CAM-2", "CAM-3", "CAM-4"].map(p), ["20", "22", "23", "24"]);
+  assert.ok(inv.alertes.some((a) => /2 ports pour 4 équipements/.test(a.msg)));
+});

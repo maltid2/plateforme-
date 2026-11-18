@@ -76,7 +76,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
         <datalist id="l-sfp"><option value="0"><option value="1"><option value="2"><option value="4"><option value="8"></datalist>
       </div>
       <div class="f-detail" hidden>
-        <p class="f-quand">Une ligne par équipement : changez l'IP ou les ports de chacun ici (ou avec des virgules dans les cases au-dessus).</p>
+        <p class="f-quand">Une ligne par équipement : changez l'IP, les ports, et le port où chacun est branché (une fois le switch choisi en dessous).</p>
         <table><thead></thead><tbody></tbody></table>
       </div>
       <fieldset class="f-branche f-raccord">
@@ -328,12 +328,26 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     const mon = propre(champ("monport").value);
     // Le port de l'équipement lui-même ne s'écrit que pour un seul équipement.
     if (mon && combien() === 1) return [l, ligneBranche(listeNoms()[0])!];
-    const port = champ<HTMLSelectElement>("port").value;
+    let port = champ<HTMLSelectElement>("port").value;
+    if (port && portsLigne && combien() > 1) {
+      const n = combien(), liste = portsDuGroupe(n);
+      portsLigne = null; const suite = portsDuGroupe(n); portsLigne = liste;
+      if (liste.join() !== suite.join()) port = liste.join(",");
+    }
     return [[l, `sur ${vers}${port ? `:${port}` : ""}`,
       ...optionsLien(champ<HTMLSelectElement>("media").value, champ("vlan").value, champ<HTMLInputElement>("trunk").checked)].join(" | ")];
   }
 
   /* ---------- une case par équipement ---------- */
+  // Port d'arrivée de chaque équipement d'un groupe (null = ports qui se suivent).
+  let portsLigne: string[] | null = null;
+  /** Ports d'arrivée de chacun : ceux choisis ligne par ligne, sinon à la suite. */
+  function portsDuGroupe(n: number): string[] {
+    const port = champ<HTMLSelectElement>("port").value;
+    const m = port.match(/^(.*?)(\d+)$/);
+    const suite = Array.from({ length: n }, (_, k) => (m ? `${m[1]}${Number(m[2]) + k}` : k ? "" : port));
+    return suite.map((p, k) => portsLigne?.[k] ?? p);
+  }
   const liste = (k: string) => champ(k).value.split(",").map((x) => x.trim());
   function tableau() {
     const box = $(".f-detail");
@@ -344,17 +358,29 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     const ips = liste("ip").filter(Boolean), rj = liste("ports").filter(Boolean), sfp = liste("sfp").filter(Boolean);
     const ipDe = (k: number) => ips.length > 1 ? (ips[k] ?? (ips.length ? ipPlus(ips[ips.length - 1], k - ips.length + 1) : "")) : ips[0] ? ipPlus(ips[0], k) : "";
     const de = (l: string[], k: number) => l[Math.min(k, l.length - 1)] ?? "";
-    box.querySelector("thead")!.innerHTML = `<tr><th>Nom</th><th>IP</th>${ports ? "<th>Ports RJ45</th><th>Cages SFP</th>" : ""}</tr>`;
+    const vers = champ<HTMLSelectElement>("vers").value;
+    const avecPort = !!vers && !!champ<HTMLSelectElement>("port").value;
+    const arrivee = avecPort ? portsDuGroupe(noms.length) : [];
+    const libres = avecPort ? portsLibres(vers) : [];
+    const choix = (k: number) => {
+      const v = arrivee[k];
+      const l = v && !libres.includes(v) ? [v, ...libres] : libres;
+      return `<select data-d="port" data-k="${k}" aria-label="Port de ${echap(noms[k])} sur ${echap(vers)}">${l.map((p) => `<option${p === v ? " selected" : ""}>${echap(p)}</option>`).join("")}</select>`;
+    };
+    box.querySelector("thead")!.innerHTML = `<tr><th>Nom</th><th>IP</th>${ports ? "<th>Ports RJ45</th><th>Cages SFP</th>" : ""}${avecPort ? `<th>Port sur ${echap(vers)}</th>` : ""}</tr>`;
     box.querySelector("tbody")!.innerHTML = noms.map((n, k) => `<tr>
       <td><input data-d="nom" data-k="${k}" value="${echap(n)}" spellcheck="false" autocomplete="off" aria-label="Nom n°${k + 1}" /></td>
       <td><input data-d="ip" data-k="${k}" value="${echap(ipDe(k))}" placeholder="—" spellcheck="false" autocomplete="off" aria-label="IP de ${echap(n)}" /></td>
       ${ports ? `<td><input data-d="ports" data-k="${k}" inputmode="numeric" value="${echap(de(rj, k))}" aria-label="Ports RJ45 de ${echap(n)}" /></td>
       <td><input data-d="sfp" data-k="${k}" inputmode="numeric" value="${echap(de(sfp, k))}" aria-label="Cages SFP de ${echap(n)}" /></td>` : ""}
+      ${avecPort ? `<td>${choix(k)}</td>` : ""}
     </tr>`).join("");
   }
   /** Une case du tableau a changé : on réécrit les champs à virgules au-dessus. */
   function depuisTableau() {
     const col = (d: string) => [...racine.querySelectorAll<HTMLInputElement>(`.f-detail [data-d="${d}"]`)].map((i) => i.value.trim());
+    const ports = col("port");
+    if (ports.length) portsLigne = ports;
     const noms = col("nom").map((x) => nomPropre(x));
     if (noms.every(Boolean)) { champ("nom").value = noms.join(", "); champ("qte").value = String(noms.length); champ<HTMLInputElement>("qte").disabled = true; }
     const ips = col("ip");
@@ -385,9 +411,11 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     const qte = combien();
     if (vers && port && qte > 1) {
       const libres = new Set(portsLibres(vers, edition ? undefined : undefined));
-      const m = port.match(/^(.*?)(\d+)$/);
-      const manquants = m ? Array.from({ length: qte }, (_, k) => `${m[1]}${Number(m[2]) + k}`).filter((p) => !libres.has(p)) : [];
+      const voulus = portsDuGroupe(qte).filter(Boolean);
+      const manquants = voulus.filter((p) => !libres.has(p));
+      const doubles = voulus.filter((p, i) => voulus.indexOf(p) !== i);
       if (manquants.length) alerte = `<b class="f-alerte">⚠ Ports ${echap(manquants.join(", "))} déjà pris ou inexistants sur ${echap(vers)}.</b> `;
+      if (doubles.length) alerte += `<b class="f-alerte">⚠ Port ${echap([...new Set(doubles)].join(", "))} choisi deux fois.</b> `;
     }
     // Liste d'IP : autant que d'équipements ?
     const listeIp = champ("ip").value.split(",").map((x) => x.trim()).filter(Boolean);
@@ -398,6 +426,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
 
   function vider() {
     edition = null;
+    portsLigne = null;
     champ("nom").value = "";
     proposerNom();
     champ("qte").value = "1";
@@ -711,6 +740,8 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
       remplirBranche();
       return;
     }
+    if (t.dataset.d) { depuisTableau(); return; }
+    if (t.dataset.f === "vers" || t.dataset.f === "port") { portsLigne = null; queueMicrotask(tableau); }
     if (t.dataset.f === "vers") { remplirPorts(); return; }
     if (t.dataset.l === "a" || t.dataset.l === "b") { remplirRelier(); return; }
     if (t.dataset.l) { schemaRelier(); return; }
@@ -720,6 +751,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     const t = ev.target as HTMLElement;
     if (t.dataset.f === "filtre") { remplirInventaire(); return; }
     if (t.dataset.d) { depuisTableau(); return; }
+    if (["nom", "qte"].includes(t.dataset.f ?? "")) portsLigne = null;
     if (["nom", "qte", "ip", "ports", "sfp"].includes(t.dataset.f ?? "")) queueMicrotask(tableau);
     if (t.dataset.f === "ports" || t.dataset.f === "sfp") { t.dataset.touche = "1"; remplirPorts(); }
     if (t.dataset.f === "qte") remplirPorts();

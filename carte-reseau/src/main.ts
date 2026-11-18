@@ -7,7 +7,7 @@ import { creerFormulaire } from "./formulaire.ts";
 import { CLASSIFICATION, imprimer } from "./impression.ts";
 import { creerPlan2D } from "./plan2d.ts";
 import * as projets from "./projets.ts";
-import { analyser, EXEMPLE, GENRES, MEDIAS, type Genre, type Inventaire, type Media } from "./saisie.ts";
+import { analyser, GENRES, MEDIAS, type Genre, type Inventaire, type Media } from "./saisie.ts";
 import type { Vue3D } from "./vue3d.ts";
 
 // Le modèle de la page, pris AVANT toute modification : il sert à produire
@@ -186,7 +186,10 @@ function dessiner() {
   if (!inv.equipements.length) {
     const d = document.createElement("div");
     d.className = "vide";
-    d.innerHTML = `<div><b>La carte est vide.</b><br>Écrivez à gauche, par exemple :<br><code>switch SW-1 | 10.0.0.2 | @Siège</code><br>ou ouvrez <b>Fichiers › Nouvelle topologie d'exemple</b>.</div>`;
+    d.innerHTML = `<div><b>La carte est vide : créez votre premier site.</b><br>
+      Dans le <b>Formulaire</b> : Site › <b>＋ Nouveau site…</b>, donnez-lui le nom que vous voulez,<br>
+      puis ajoutez ses switchs et ses caméras.<br>
+      Ou en <b>Texte</b> : <code>site NomDuSite</code> puis <code>switch SW-1 | 10.0.0.2</code></div>`;
     hote2d.appendChild(d);
   }
   plan.afficher(inv, disp, site);
@@ -426,7 +429,6 @@ $("b-visionneuse").addEventListener("click", () => {
   const html = `<!doctype html>\n<html lang="fr">\n<head>${MODELE.head.replace(/<title>[^<]*<\/title>/, `<title>${active().nom.replace(/</g, "")} · Carte réseau</title>`)}</head>\n<body>\n<script type="application/json" id="carte-donnees">${donnees}</script>\n${MODELE.body}\n</body>\n</html>\n`;
   telecharger(`${nomFichier(active().nom)}-visionneuse.html`, html, "text/html;charset=utf-8");
 });
-$("b-exemple").addEventListener("click", () => { fermerMenu(); creer("Exemple · Siège et agence", EXEMPLE); });
 document.addEventListener("click", (e) => { if (!(e.target as Element).closest("details.menu")) fermerMenu(); });
 
 /* ---------------- démarrage ---------------- */

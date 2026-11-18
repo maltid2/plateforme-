@@ -366,3 +366,5 @@ body.lecture .local::after { content: " · lecture seule"; }
 .minicarte .mc-lieu { fill: #15302a; stroke: rgba(61, 220, 151, 0.5); vector-effect: non-scaling-stroke; }
 .minicarte .mc-vue { fill: rgba(141, 124, 255, 0.15); stroke: #8d7cff; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
 @media (max-width: 900px) { .minicarte { display: none; } }
+
+.legende:empty, .plan-outils[hidden] { display: none; }

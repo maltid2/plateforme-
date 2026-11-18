@@ -6,8 +6,6 @@
  * changement de poste), la sauvegarde en fichier .json reste la référence à
  * classer avec vos documents.
  */
-import { EXEMPLE } from "./saisie.ts";
-
 export type Topologie = { id: string; nom: string; texte: string; modifie: number };
 export type Classeur = { version: 1; active: string; topologies: Topologie[] };
 
@@ -38,10 +36,11 @@ export function charger(): Classeur {
         return c;
       }
     }
-  } catch { /* stockage illisible : on repart d'un exemple */ }
+  } catch { /* stockage illisible : on repart d'une carte vide */ }
   // Première ouverture, ou ancienne version à une seule saisie.
   const ancienne = lire(ANCIENNE);
-  const t = nouvelle(ancienne ? "Ma topologie" : "Exemple · Siège et agence", ancienne ?? EXEMPLE);
+  // Première ouverture : une carte vide, à remplir avec ses propres sites.
+  const t = nouvelle("Ma carte", ancienne ?? "");
   return { version: 1, active: t.id, topologies: [t] };
 }
 

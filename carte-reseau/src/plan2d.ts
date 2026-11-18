@@ -301,6 +301,8 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
     const visibles = new Set(inv.equipements.filter((e) => !site || e.site === site).map((e) => e.nom));
     const parNom = new Map(inv.equipements.map((e) => [e.nom, e]));
     const cadres = d.cadres.filter((c) => !site || c.site === site);
+    // Carte vide : ni mini-carte ni boutons, il n'y a rien à parcourir.
+    outils.hidden = !cadres.length;
     if (!cadres.length) { bornes = { x: 0, y: 0, w: 10, h: 10 }; cadrer(); return; }
     const cadreSite = new Map(cadres.filter((c) => c.type === "site").map((c) => [c.site, c]));
     const cadrePoint = new Map(cadres.filter((c) => c.type === "point").map((c) => [`${c.site}§${c.point}`, c]));

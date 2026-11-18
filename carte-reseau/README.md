@@ -20,7 +20,8 @@ plans** :
   baie et câblées au port de leur switch, les liaisons entre sites en arc.
 
 Ce n'est pas de la découverte automatique : la carte est exactement ce que
-vous avez renseigné. Rien n'est obligatoire : un site peut n'avoir qu'un
+vous avez renseigné. L'outil s'ouvre sur une carte vide : vous créez vos
+sites avec les noms que vous voulez. Rien n'est obligatoire : un site peut n'avoir qu'un
 switch, sans pare-feu ni onduleur.
 
 ## Installer : un seul fichier, rien d'autre

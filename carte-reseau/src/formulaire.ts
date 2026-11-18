@@ -117,7 +117,9 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
   const $ = <T extends HTMLElement>(sel: string) => racine.querySelector(sel) as T;
   const champ = <T extends HTMLElement = HTMLInputElement>(k: string) => $<T>(`[data-f="${k}"]`);
   const lienC = <T extends HTMLElement = HTMLSelectElement>(k: string) => $<T>(`[data-l="${k}"]`);
-  const NOUVEAU = "\u0000nouveau";
+  // Valeur réservée de l'option « ＋ Nouveau… » (sans caractère de contrôle :
+  // le navigateur remplace un caractère nul dans un attribut HTML).
+  const NOUVEAU = "__nouveau__";
 
   /* ---------- listes ---------- */
   const options = (sel: HTMLSelectElement, valeurs: { v: string; t: string }[], courant: string) => {
@@ -137,7 +139,9 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     const sites = inv.sites.map((s) => s.nom);
     if (ctx.site && !sites.includes(ctx.site)) sites.push(ctx.site);
     if (!ctx.site && sites.length) ctx.site = sites[0];
-    options($('[data-c="site"]'), [...sites.map((s) => ({ v: s, t: s })), { v: NOUVEAU, t: "＋ Nouveau site…" }], ctx.site);
+    // Aucun site encore : une invite, pour que « ＋ Nouveau site… » se choisisse vraiment.
+    options($('[data-c="site"]'), [...(sites.length ? [] : [{ v: "", t: "— créez votre premier site —" }]),
+      ...sites.map((s) => ({ v: s, t: s })), { v: NOUVEAU, t: "＋ Nouveau site…" }], ctx.site);
     const eqSite = inv.equipements.filter((e) => e.site === ctx.site);
     const points = [...new Set(eqSite.map((e) => e.point).filter(Boolean) as string[])];
     if (ctx.point && !points.includes(ctx.point)) points.push(ctx.point);
@@ -190,6 +194,12 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     apercu();
   }
 
+  /** Le dernier nom proposé : on ne remplace que lui, jamais un nom tapé. */
+  let nomAuto = "";
+  function proposerNom() {
+    const v = champ("nom").value.trim();
+    if (!v || v === nomAuto) { nomAuto = nomPropose(); champ("nom").value = nomAuto; }
+  }
   function nomPropose() {
     const { inv } = acces.donnees();
     const base = `${PREFIXE[genre]}-${code(ctx.point || ctx.site) || "X"}`;
@@ -257,7 +267,8 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
 
   function vider() {
     edition = null;
-    champ("nom").value = nomPropose();
+    nomAuto = nomPropose();
+    champ("nom").value = nomAuto;
     champ("qte").value = "1";
     champ("ip").value = "";
     champ("modele").value = "";
@@ -283,7 +294,19 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     fn(lignes);
     acces.ecrire(lignes.join("\n"));
   }
+  /** Sans site choisi, on demande son nom : chaque équipement est rangé dans un site à vous. */
+  function demanderSite(): boolean {
+    if (ctx.site) return true;
+    const v = propre(prompt("Dans quel site ? Donnez son nom (ville, agence, client…) :") ?? "");
+    if (!v) return false;
+    ctx.site = v;
+    remplirOu();
+    if (!edition) proposerNom();
+    return true;
+  }
+
   function ajouter() {
+    if (!demanderSite()) return;
     const l = lignesAAjouter();
     if (!l) { champ("nom").focus(); return; }
     const nom = nomPropre(champ("nom").value);
@@ -474,10 +497,10 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
         const v = propre(prompt(libelle) ?? "");
         if (v) ctx[c] = v;
       } else ctx[c] = sel.value;
-      if (c === "site") { ctx.point = ""; ctx.baie = ""; }
+      if (c === "site") { ctx.point = ""; ctx.baie = ""; champ<HTMLSelectElement>("vers").value = ""; }
       if (c === "point") ctx.baie = "";
       remplirOu();
-      if (!edition) champ("nom").value = nomPropose();
+      if (!edition) proposerNom();
       remplirBranche();
       return;
     }
@@ -496,7 +519,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     const g = t.closest<HTMLElement>("[data-g]");
     if (g) {
       genre = g.dataset.g as Genre;
-      if (!edition) champ("nom").value = nomPropose();
+      if (!edition) proposerNom();
       actualiserType();
       return;
     }
@@ -522,7 +545,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
       remplirBranche(edition ? undefined : undefined);
       remplirRelier();
       remplirInventaire();
-      if (!edition && !champ("nom").value) champ("nom").value = nomPropose();
+      if (!edition) proposerNom();
       apercu();
     },
     reinitialiser() { ctx.site = ""; ctx.point = ""; ctx.baie = ""; vider(); },

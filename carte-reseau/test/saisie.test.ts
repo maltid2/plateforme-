@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { analyser, EXEMPLE } from "../src/saisie.ts";
+import { analyser } from "../src/saisie.ts";
+import { EXEMPLE } from "./exemple.ts";
 import { disposer } from "../src/disposition.ts";
 import { cheminPasserelle, facade, lirePort } from "../src/facade.ts";
 

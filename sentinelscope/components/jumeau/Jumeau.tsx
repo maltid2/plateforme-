@@ -171,7 +171,8 @@ export default function Jumeau() {
             <span className="hidden sm:block">
               <span className="block text-[13px] font-semibold">{e.nom}</span>
               <span className="block text-[11px] text-muted">
-                {e.baies.length} baie{e.baies.length > 1 ? "s" : ""} · {e.postes.length} postes
+                {e.baies.length} baie{e.baies.length > 1 ? "s" : ""} · {e.postes.length} postes ·{" "}
+                {e.bornes.length} bornes
               </span>
             </span>
             <span className="h-2 w-2 flex-none rounded-full" style={{ background: SEV_COULEUR[e.pire] }} />
@@ -191,7 +192,7 @@ export default function Jumeau() {
 
       {/* ----- fiche d'équipement ----- */}
       {fiche && (
-        <div className="absolute inset-x-3 bottom-3 max-h-[70%] overflow-y-auto rounded-2xl border border-line bg-bg2/95 p-4 backdrop-blur sm:inset-x-auto sm:bottom-auto sm:right-6 sm:top-1/2 sm:w-[370px] sm:-translate-y-1/2 sm:p-5">
+        <div className="absolute inset-x-3 bottom-3 max-h-[70%] overflow-y-auto overscroll-contain rounded-2xl border border-line bg-bg2/95 p-4 backdrop-blur sm:inset-x-auto sm:bottom-auto sm:right-6 sm:top-1/2 sm:max-h-[calc(100%-3rem)] sm:w-[370px] sm:-translate-y-1/2 sm:p-5">
           <button
             type="button"
             onClick={() => setFiche(null)}

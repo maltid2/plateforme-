@@ -11,7 +11,7 @@
  * rien à télécharger au chargement de la page.
  */
 import * as THREE from "three";
-import { SITE, type Equipement, type Poste, type Severite } from "./donnees";
+import { SITE, type Borne, type Equipement, type Poste, type Severite } from "./donnees";
 
 export type Fiche = {
   kind: string; name: string; pos: string;
@@ -78,7 +78,12 @@ export function demarrer(hote: HTMLElement, cb: Rappels): Pilote {
     return new THREE.Mesh(geo(new THREE.BoxGeometry(w, h, d)), m);
   };
 
-  type Cible = THREE.Object3D & { userData: { data?: Fiche; halo?: THREE.Mesh; baie?: { nom: string }; haloB?: THREE.Mesh; hauteur?: number } };
+  type Cible = THREE.Object3D & {
+  userData: {
+    data?: Fiche; halo?: THREE.Mesh; baie?: { nom: string }; haloB?: THREE.Mesh;
+    hauteur?: number; brassage?: THREE.Vector3; coeur?: THREE.Vector3; cote?: THREE.Vector3;
+  };
+};
   let racine: THREE.Group | null = null;
   let cliquables: Cible[] = [];
   let baieFocus: Cible | null = null;
@@ -98,6 +103,7 @@ export function demarrer(hote: HTMLElement, cb: Rappels): Pilote {
 
     // L'onduleur est en bas, le panneau de brassage en haut : c'est l'ordre
     // d'une baie réelle, et il se lit au premier coup d'œil.
+    const prises: { brassage?: THREE.Vector3; coeur?: THREE.Vector3 } = {};
     let y = 0.75;
     [...baie.devices].reverse().forEach((d: Equipement) => {
       const h = d.u * U;
@@ -138,6 +144,15 @@ export function demarrer(hote: HTMLElement, cb: Rappels): Pilote {
         }
       }
 
+      // On retient où brancher : la face avant du panneau de brassage pour
+      // le capillaire, celle du commutateur de cœur pour les liens entre
+      // baies. Sans ça, les câbles repartent du flanc de la baie — un
+      // endroit où il n'y a aucun port.
+      if (d.kind === "Panneau de brassage" && !prises.brassage)
+        prises.brassage = new THREE.Vector3(baie.x + LARG * 0.3, gd.position.y, baie.z + PROF / 2 + 0.12);
+      if (d.kind === "Commutateur" && !prises.coeur)
+        prises.coeur = new THREE.Vector3(baie.x - LARG * 0.3, gd.position.y, baie.z + PROF / 2 + 0.12);
+
       const sev = d.vulns.length ? d.vulns[0].sev : null;
       const halo = HALO(LARG + 0.3, h + 0.16, PROF + 0.3, SEV(sev));
       halo.visible = false;
@@ -151,7 +166,14 @@ export function demarrer(hote: HTMLElement, cb: Rappels): Pilote {
     haloB.position.y = H / 2;
     haloB.visible = false;
     g.add(haloB);
-    (g as Cible).userData = { baie, haloB, hauteur: H };
+    (g as Cible).userData = {
+      baie, haloB, hauteur: H,
+      // Le chemin de câbles descend par le côté de la baie, comme un
+      // passe-fils vertical, pas en travers des faces avant.
+      brassage: prises.brassage ?? new THREE.Vector3(baie.x, 3, baie.z + PROF / 2),
+      coeur: prises.coeur ?? prises.brassage ?? new THREE.Vector3(baie.x, 3, baie.z + PROF / 2),
+      cote: new THREE.Vector3(baie.x + LARG / 2 + 0.3, 0, baie.z + PROF / 2 - 0.25),
+    };
     return g as Cible;
   }
 
@@ -194,6 +216,58 @@ export function demarrer(hote: HTMLElement, cb: Rappels): Pilote {
     return g;
   }
 
+  // Une borne Wi-Fi est au plafond, pas sur un bureau : disque plat, tige de
+  // fixation, et sa zone de couverture posée au sol. Le câble PoE repart du
+  // même panneau de brassage que le reste, mais passe par le haut.
+  const PLAFOND = 3.9;
+  function construireBorne(bo: Borne, baie: Cible) {
+    const g = new THREE.Group() as Cible;
+    g.position.set(bo.x, 0, bo.z);
+    const y = PLAFOND - 0.28;
+    const corps = new THREE.Mesh(geo(new THREE.CylinderGeometry(0.62, 0.62, 0.14, 20)), M(0xc3ccd6));
+    corps.position.y = y; g.add(corps);
+    g.add(P(new THREE.Mesh(geo(new THREE.CylinderGeometry(0.2, 0.2, 0.26, 10)), M(C.acierC)), 0, y + 0.2, 0));
+    g.add(P(new THREE.Mesh(geo(new THREE.CylinderGeometry(0.34, 0.34, 0.05, 14)), M(C.acier)), 0, PLAFOND, 0));
+    g.add(P(B(0.1, 0.05, 0.1, 0x000000, bo.sev ? C[bo.sev] : C.low, 1.3), 0.3, y - 0.07, 0.3));
+
+    // La couverture : un disque à peine marqué, pas un projecteur. Il dit
+    // « ça porte jusque-là », il ne doit pas éclairer le plateau.
+    const zone = new THREE.Mesh(
+      geo(new THREE.RingGeometry(bo.portee - 0.12, bo.portee, 48)),
+      (() => { const m = new THREE.MeshBasicMaterial({
+        // Même règle que pour les écrans : la couleur ne qualifie qu'un
+        // constat. Une borne saine trace sa portée en gris acier.
+        color: bo.sev ? C[bo.sev] : 0x5e7a9b, transparent: true, opacity: 0.3, side: THREE.DoubleSide });
+        jetables.push(m); return m; })()
+    );
+    zone.rotation.x = -Math.PI / 2; zone.position.y = 0.04;
+    // Le disque de couverture fait sept mètres de rayon : s'il reste
+    // sensible au pointeur, survoler n'importe quel bureau sélectionne la
+    // borne. On le retire du calcul de visée.
+    zone.raycast = () => {};
+    g.add(zone);
+
+    // Le PoE monte le long du passe-fils puis court sous le plafond.
+    const c = baie.userData.cote!, b = baie.userData.brassage!;
+    racine!.add(chemin([
+      V(b.x, b.y, b.z),
+      V(c.x, b.y + 0.2, c.z),
+      V(c.x, PLAFOND - 0.12, c.z),
+      V((c.x + bo.x) / 2, PLAFOND - 0.06, (c.z + bo.z) / 2),
+      V(bo.x, PLAFOND - 0.1, bo.z),
+      V(bo.x, y + 0.14, bo.z),
+    ], bo.sev ? C[bo.sev] : C.low, 0.05));
+
+    const halo = HALO(1.7, 0.5, 1.7, SEV(bo.sev));
+    halo.position.y = y; halo.visible = false; g.add(halo);
+    g.userData = {
+      data: { kind: "Borne Wi-Fi", name: bo.nom, pos: "plafond · open space", kv: bo.kv, vulns: bo.vulns },
+      halo,
+    };
+    cliquables.push(g);
+    return g;
+  }
+
   function construirePoste(p: Poste) {
     const g = new THREE.Group() as Cible;
     g.position.set(p.x, 0, p.z);
@@ -231,18 +305,30 @@ export function demarrer(hote: HTMLElement, cb: Rappels): Pilote {
     return g;
   }
 
-  // Le câblage court au sol, pas en l'air : une courbe plate qui contourne
-  // légèrement, comme une goulotte. Une courbe qui s'envole traverse les
-  // cloisons et les bureaux, et ne ressemble à rien de réel.
-  function cable(a: THREE.Vector3, b: THREE.Vector3, couleur: number) {
-    const y = 0.16;
-    const A = new THREE.Vector3(a.x, y, a.z), Z = new THREE.Vector3(b.x, y, b.z);
-    const mil = A.clone().add(Z).multiplyScalar(0.5);
-    mil.z += (Z.z >= A.z ? 1 : -1) * 1.4;
-    const courbe = new THREE.QuadraticBezierCurve3(A, mil, Z);
-    const m = new THREE.MeshBasicMaterial({ color: couleur, transparent: true, opacity: 0.62 });
+  // Un câble part d'un port et arrive sur un port. Il descend par le
+  // passe-fils latéral de la baie, court au sol jusqu'au boîtier de l'îlot,
+  // et remonte là où il doit. Une courbe qui relie deux points au hasard en
+  // s'envolant traverse les cloisons et ne branche rien.
+  function chemin(points: THREE.Vector3[], couleur: number, rayon = 0.055) {
+    const courbe = new THREE.CatmullRomCurve3(points, false, "catmullrom", 0.35);
+    const m = new THREE.MeshBasicMaterial({ color: couleur, transparent: true, opacity: 0.66 });
     jetables.push(m);
-    return new THREE.Mesh(geo(new THREE.TubeGeometry(courbe, 26, 0.062, 6, false)), m);
+    return new THREE.Mesh(geo(new THREE.TubeGeometry(courbe, points.length * 16, rayon, 6, false)), m);
+  }
+  const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
+
+  // Le capillaire : panneau de brassage → passe-fils → sol → boîtier d'îlot.
+  function depuisBrassage(baie: Cible, vers: THREE.Vector3, couleur: number) {
+    const b = baie.userData.brassage!, c = baie.userData.cote!;
+    const sortie = V(c.x + 0.35, 0.16, c.z + 0.8);
+    return chemin([
+      V(b.x, b.y, b.z),
+      V(c.x, b.y - 0.12, c.z),
+      V(c.x, 0.5, c.z),
+      sortie,
+      V((sortie.x + vers.x) / 2, 0.16, (sortie.z + vers.z) / 2 + (vers.z >= sortie.z ? 1.1 : -1.1)),
+      vers,
+    ], couleur);
   }
 
   /* ---------- l'étage ---------- */
@@ -281,15 +367,43 @@ export function demarrer(hote: HTMLElement, cb: Rappels): Pilote {
     const dep = baies[0];
     ilots.forEach((e) => {
       const ix = e.x / e.n, iz = e.z / e.n;
+      const boitier = V(ix, 0.16, iz);
       racine!.add(P(B(0.55, 0.1, 0.55, 0x1b242f), ix, 0.06, iz));
-      racine!.add(cable(new THREE.Vector3(dep.position.x + LARG / 2, 0.16, dep.position.z),
-        new THREE.Vector3(ix, 0.16, iz), SEV(e.sev) === C.acc ? C.low : SEV(e.sev)));
+      racine!.add(depuisBrassage(dep, boitier, e.sev ? C[e.sev] : C.low));
     });
+    // Du boîtier de sol au poste : le dernier mètre, celui qu'on voit sous
+    // les bureaux. Sans lui, les machines ne sont reliées à rien.
+    et.postes.forEach((p) => {
+      const e = ilots.get(p.ilot);
+      if (!e) return;
+      const ix = e.x / e.n, iz = e.z / e.n;
+      // La tour est posée en local à (1.7, 0) ; le poste tourne autour de Y,
+      // donc le point d'arrivée tourne avec lui. Le prendre en coordonnées
+      // absolues branchait la moitié des postes dans le vide.
+      const r = p.rot || 0;
+      const tx = p.x + 1.7 * Math.cos(r), tz = p.z - 1.7 * Math.sin(r);
+      racine!.add(chemin([
+        V(ix, 0.16, iz),
+        V((ix + tx) / 2, 0.16, (iz + tz) / 2),
+        V(tx, 0.16, tz + (tz >= iz ? -0.5 : 0.5)),
+        V(tx, 0.42, tz + (tz >= iz ? -0.3 : 0.3)),
+      ], p.sev ? C[p.sev] : C.low, 0.042));
+    });
+    // Entre baies : un lien de cœur à cœur, pas de flanc à flanc.
     for (let i = 1; i < baies.length; i++) {
-      racine.add(cable(
-        new THREE.Vector3(baies[i - 1].position.x + LARG / 2, 0.16, baies[i - 1].position.z),
-        new THREE.Vector3(baies[i].position.x - LARG / 2, 0.16, baies[i].position.z), C.acc));
+      const a = baies[i - 1], b = baies[i];
+      racine.add(chemin([
+        V(a.userData.coeur!.x, a.userData.coeur!.y, a.userData.coeur!.z),
+        V(a.userData.cote!.x, a.userData.coeur!.y - 0.1, a.userData.cote!.z),
+        V(a.userData.cote!.x, 0.45, a.userData.cote!.z),
+        V((a.position.x + b.position.x) / 2, 0.16, a.position.z + PROF / 2 + 0.9),
+        V(b.userData.cote!.x - LARG - 0.6, 0.45, b.userData.cote!.z),
+        V(b.userData.coeur!.x, b.userData.coeur!.y - 0.1, b.userData.coeur!.z + 0.3),
+        V(b.userData.coeur!.x, b.userData.coeur!.y, b.userData.coeur!.z),
+      ], C.acc, 0.07));
     }
+    // Les bornes : alimentées en PoE par le même capillaire, mais au plafond.
+    et.bornes.forEach((bo) => contenu.add(construireBorne(bo, dep)));
     // Un peu de vert : un plateau vide ne ressemble à aucun bureau réel.
     et.zones.filter((z) => z.nom === "Open space").forEach((z) => {
       ([[z.x1 + 1.6, z.z1 + 1.4], [z.x1 + 1.6, z.z2 - 1.4], [z.x2 - 4.5, z.z1 + 1.4]] as const)

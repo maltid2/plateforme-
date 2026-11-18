@@ -25,13 +25,17 @@ export type Poste = {
   id: string; nom: string; ilot: string; x: number; z: number; rot: number;
   sev: Severite | null; kv: [string, string][]; vulns: Constat[];
 };
+export type Borne = {
+  id: string; nom: string; x: number; z: number; portee: number;
+  sev: Severite | null; kv: [string, string][]; vulns: Constat[];
+};
 export type Zone = {
   nom: string; x1: number; x2: number; z1: number; z2: number; teinte: number;
 };
 export type Etage = {
   id: string; num: string; nom: string; sous: string; pire: Severite;
   zones: Zone[]; cloison: { x: number; z1: number; z2: number; porte: [number, number] };
-  baies: Baie[]; postes: Poste[];
+  baies: Baie[]; postes: Poste[]; bornes: Borne[];
 };
 export type Site = { nom: string; etages: Etage[] };
 
@@ -123,6 +127,20 @@ export const SITE: Site = { nom: 'Site de Nanterre', etages:[
     ...ILOT('Îlot 6', 20.6, 4.6,
       PC('p11','Poste commercial 11','10.14.0.101','Catalyst 9300 · Gi1/0/15'),
       PC('p12','Poste commercial 12','10.14.0.102','Catalyst 9300 · Gi1/0/16')),
+  ],
+  bornes:[
+    { id:'ap01', nom:'Borne Wi-Fi · accueil', x:10.6, z:0, portee:5.2, sev:'high',
+      kv:[['Modèle','Aruba AP-515'],['Adresse','10.14.0.71'],
+          ['Connecté sur','Catalyst 9300 · Gi1/0/20 · PoE+'],
+          ['SSID','NANTERRE-CORP · NANTERRE-INVITE'],['Chiffrement','WPA2-PSK']],
+      vulns:[{ id:'SSID invité', sev:'high', score:'',
+        txt:"Le réseau invité est diffusé par la même borne que le réseau interne, sans VLAN dédié ni isolation client. Un visiteur connecté au Wi-Fi invité atteint le même réseau que les serveurs." },
+             { id:'WPA2-PSK', sev:'med', score:'',
+        txt:"Clé partagée unique pour tout le personnel : elle ne se révoque pas au départ d'un salarié et se recopie d'un téléphone à l'autre. WPA2-Entreprise (802.1X) lie l'accès au compte." }] },
+    { id:'ap02', nom:'Borne Wi-Fi · fond de plateau', x:18.4, z:0, portee:5.2, sev:null,
+      kv:[['Modèle','Aruba AP-515'],['Adresse','10.14.0.72'],
+          ['Connecté sur','Catalyst 9300 · Gi1/0/21 · PoE+'],
+          ['SSID','NANTERRE-CORP'],['Chiffrement','WPA2-Entreprise · 802.1X']], vulns:[] },
   ]},
 
 { id:'e1', num:'R+1', nom:'Étage 1', sous:'Local de brassage · plateau administratif', pire:'high',
@@ -171,5 +189,17 @@ export const SITE: Site = { nom: 'Site de Nanterre', etages:[
           ['Connecté sur','Aruba 2530-8G · port 4'],['État','micrologiciel ancien']],
       vulns:[{ id:'Micrologiciel', sev:'med', score:'',
         txt:"Micrologiciel d'imprimante non mis à jour depuis la mise en service. Les multifonctions exposent souvent une interface web et un service d'impression accessibles sans authentification." }] },
+  ],
+  bornes:[
+    { id:'ap11', nom:'Borne Wi-Fi · plateau nord', x:9.6, z:0, portee:5.0, sev:'med',
+      kv:[['Modèle','Cisco Catalyst 9115AX'],['Adresse','10.14.1.71'],
+          ['Connecté sur','Aruba 2530-8G · port 7 · PoE+'],
+          ['SSID','NANTERRE-CORP'],['Micrologiciel','17.3.4 · 3 ans']],
+      vulns:[{ id:'Micrologiciel', sev:'med', score:'',
+        txt:"Borne restée sur une version de 2021 alors que la branche 17.9 est publiée. Les correctifs Wi-Fi des trois dernières années ne sont pas appliqués." }] },
+    { id:'ap12', nom:'Borne Wi-Fi · plateau sud', x:17.2, z:0, portee:5.0, sev:null,
+      kv:[['Modèle','Cisco Catalyst 9115AX'],['Adresse','10.14.1.72'],
+          ['Connecté sur','Aruba 2530-8G · port 8 · PoE+'],
+          ['SSID','NANTERRE-CORP'],['Micrologiciel','17.9.5 · à jour']], vulns:[] },
   ]},
 ] };

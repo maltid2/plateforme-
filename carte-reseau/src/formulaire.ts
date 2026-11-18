@@ -76,19 +76,23 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
         <datalist id="l-sfp"><option value="0"><option value="1"><option value="2"><option value="4"><option value="8"></datalist>
       </div>
       <fieldset class="f-branche">
-        <legend>Branché sur <small>— où arrive le câble de cet équipement</small></legend>
+        <legend>Câble de cet équipement</legend>
         <p class="f-aide-branche"></p>
-        <div class="f-ligne">
-          <label class="large">Switch ou passerelle<select data-f="vers"></select></label>
-          <label>Port<select data-f="port"></select></label>
+        <div class="f-phrase">
+          <span>Le câble part de</span> <b class="f-moi">cet équipement</b>
+          <label class="f-monport">port <select data-f="monport"></select></label>
         </div>
+        <div class="f-phrase">
+          <span>et arrive sur</span>
+          <label class="large"><span class="sr">Équipement d'arrivée</span><select data-f="vers"></select></label>
+          <label>port <select data-f="port"></select></label>
+        </div>
+        <div class="f-schema" data-schema="branche" aria-hidden="true"></div>
         <div class="f-ligne">
-          <label class="f-monport">Son port à lui <small>(facultatif : le port de CET équipement d'où part le câble)</small><input data-f="monport" placeholder="Te1, 24…" autocomplete="off" list="l-monport" /></label>
-          <datalist id="l-monport"></datalist>
-          <label>Câble<select data-f="media"><option value="">Automatique</option>${(Object.keys(MEDIAS) as Media[]).map((m) => `<option value="${m}">${MEDIAS[m]}</option>`).join("")}</select></label>
+          <label>Type de câble<select data-f="media"><option value="">Automatique (SFP = fibre, sinon RJ45)</option>${(Object.keys(MEDIAS) as Media[]).map((m) => `<option value="${m}">${MEDIAS[m]}</option>`).join("")}</select></label>
           <label class="etroit">VLAN<input data-f="vlan" placeholder="30" autocomplete="off" /></label>
         </div>
-        <label class="f-case"><input type="checkbox" data-f="trunk" /> Trunk (plusieurs VLAN, lien entre switchs)</label>
+        <label class="f-case"><input type="checkbox" data-f="trunk" /> Trunk : le câble transporte plusieurs VLAN (lien entre deux switchs)</label>
       </fieldset>
       <p class="f-apercu" aria-live="polite"></p>
       <div class="f-boutons">
@@ -98,19 +102,25 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     </section>
 
     <section class="f-bloc">
-      <h3>Relier deux équipements <small>(trunk, inter-sites…)</small></h3>
-      <div class="f-ligne">
-        <label class="large">De<select data-l="a"></select></label><label>Port<select data-l="pa"></select></label>
+      <h3>Relier deux équipements déjà créés</h3>
+      <p class="f-aide-branche">Pour ajouter un câble entre deux équipements qui existent déjà : deux switchs (trunk), deux sites, un VPN de secours…</p>
+      <div class="f-phrase">
+        <span>Relier</span>
+        <label class="large"><span class="sr">Premier équipement</span><select data-l="a"></select></label>
+        <label>port <select data-l="pa"></select></label>
       </div>
-      <div class="f-ligne">
-        <label class="large">Vers<select data-l="b"></select></label><label>Port<select data-l="pb"></select></label>
+      <div class="f-phrase">
+        <span>avec</span>
+        <label class="large"><span class="sr">Second équipement</span><select data-l="b"></select></label>
+        <label>port <select data-l="pb"></select></label>
       </div>
+      <div class="f-schema" data-schema="relier" aria-hidden="true"></div>
       <div class="f-ligne">
-        <label>Câble<select data-l="media"><option value="">Automatique</option>${(Object.keys(MEDIAS) as Media[]).map((m) => `<option value="${m}">${MEDIAS[m]}</option>`).join("")}</select></label>
+        <label>Type de câble<select data-l="media"><option value="">Automatique (SFP = fibre, sinon RJ45)</option>${(Object.keys(MEDIAS) as Media[]).map((m) => `<option value="${m}">${MEDIAS[m]}</option>`).join("")}</select></label>
         <label class="etroit">VLAN<input data-l="vlan" placeholder="10,20" autocomplete="off" /></label>
-        <label>Remarque<input data-l="libelle" placeholder="lien opérateur…" autocomplete="off" /></label>
+        <label>Remarque<input data-l="libelle" placeholder="lien opérateur, secours…" autocomplete="off" /></label>
       </div>
-      <label class="f-case"><input type="checkbox" data-l="trunk" /> Trunk</label>
+      <label class="f-case"><input type="checkbox" data-l="trunk" /> Trunk : plusieurs VLAN sur ce câble</label>
       <div class="f-boutons"><button type="button" class="primaire" data-a="relier">Relier</button></div>
     </section>
 
@@ -212,9 +222,14 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
         : "Choisissez le switch ou la passerelle sur lequel cet équipement est branché, puis son port.";
     // Suggestions pour « son port à lui » : ses propres ports d'après RJ45 / SFP.
     const nRj = parseInt(champ("ports").value, 10) || 0, nSfp = parseInt(champ("sfp").value, 10) || 0;
-    racine.querySelector("#l-monport")!.innerHTML = A_FACADE.has(genre)
-      ? [...Array.from({ length: Math.min(nSfp, 8) }, (_, i) => `SFP${i + 1}`), ...Array.from({ length: Math.min(nRj, 48) }, (_, i) => String(nRj - i))]
-        .map((v) => `<option value="${v}">`).join("") : "";
+    // « port » de l'équipement lui-même : ses vrais ports, d'après RJ45 / SFP.
+    const monport = champ<HTMLSelectElement>("monport");
+    const garde = monport.value;
+    const siens = A_FACADE.has(genre)
+      ? [...Array.from({ length: Math.min(nSfp, 16) }, (_, i) => `SFP${i + 1}`), ...Array.from({ length: Math.min(nRj, 96) }, (_, i) => String(nRj - i))] : [];
+    if (garde && !siens.includes(garde)) siens.unshift(garde);
+    options(monport, [{ v: "", t: A_FACADE.has(genre) ? "— non précisé —" : "son port réseau" }, ...siens.map((v) => ({ v, t: v }))], garde);
+    monport.disabled = !A_FACADE.has(genre) || combien() > 1;
     // Deux switchs reliés : trunk coché par défaut.
     const e = acces.donnees().inv.equipements.find((x) => x.nom === vers);
     if (!edition) champ<HTMLInputElement>("trunk").checked = genre === "switch" && e?.genre === "switch";
@@ -298,6 +313,11 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
   }
 
   function apercu() {
+    const noms = listeNoms();
+    racine.querySelector(".f-moi")!.textContent = noms.length > 1 ? `chacun de ces ${noms.length} équipements` : noms[0] || "cet équipement";
+    schema("branche", noms.length > 1 ? `${noms[0]} …` : noms[0] ?? "", champ<HTMLSelectElement>("monport").value,
+      champ<HTMLSelectElement>("vers").value, champ<HTMLSelectElement>("port").value, champ<HTMLSelectElement>("media").value,
+      champ<HTMLInputElement>("trunk").checked, champ("vlan").value);
     const l = lignesAAjouter();
     let alerte = "";
     // Plusieurs caméras sur un switch : y a-t-il assez de ports qui se suivent ?
@@ -432,6 +452,19 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     acces.choisir(a);
   }
 
+  /** Le petit schéma du câble : départ (nom · port) ━━ type ━━ arrivée (nom · port). */
+  function schema(cle: "branche" | "relier", a: string, pa: string, b: string, pb: string, media: string, trunk: boolean, vlan: string) {
+    const el = racine.querySelector<HTMLElement>(`[data-schema="${cle}"]`)!;
+    if (!a || !b) { el.innerHTML = ""; return; }
+    const lirePortType = (p: string) => (p ? lirePort(p).type : "");
+    const auto = [pa, pb].some((p) => lirePortType(p) === "sfp") ? "fibre" : "cuivre";
+    const m = (media || auto) as Media;
+    const etiquette = [MEDIAS[m] ?? "", trunk ? "trunk" : "", vlan ? `VLAN ${vlan}` : ""].filter(Boolean).join(" · ");
+    el.innerHTML = `<div class="sc-boite"><b>${echap(a)}</b><span>${pa ? `port ${echap(pa)}` : "port ?"}</span></div>
+      <div class="sc-cable sc-${m}${trunk ? " sc-trunk" : ""}"><i></i><span>${echap(etiquette)}</span></div>
+      <div class="sc-boite"><b>${echap(b)}</b><span>${pb ? `port ${echap(pb)}` : "port ?"}</span></div>`;
+  }
+
   function remplirRelier() {
     const { inv } = acces.donnees();
     const tous = [...inv.equipements].sort((x, y) => Number(A_FACADE.has(y.genre)) - Number(A_FACADE.has(x.genre)) || x.site.localeCompare(y.site));
@@ -445,6 +478,11 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     });
     const ea = inv.equipements.find((e) => e.nom === lienC("a").value), eb = inv.equipements.find((e) => e.nom === lienC("b").value);
     if (ea && eb) lienC<HTMLInputElement>("trunk").checked = ea.genre === "switch" && eb.genre === "switch";
+    schemaRelier();
+  }
+  function schemaRelier() {
+    schema("relier", lienC("a").value, lienC("pa").value, lienC("b").value, lienC("pb").value,
+      lienC("media").value, lienC<HTMLInputElement>("trunk").checked, lienC<HTMLInputElement>("vlan").value);
   }
 
   /* ---------- inventaire ---------- */
@@ -513,6 +551,8 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
       const [v, p, mon] = lien.a === e.nom ? [lien.b, lien.portB, lien.portA] : [lien.a, lien.portA, lien.portB];
       champ<HTMLSelectElement>("vers").value = v;
       remplirPorts(p);
+      if (mon && ![...champ<HTMLSelectElement>("monport").options].some((o) => o.value === mon))
+        champ<HTMLSelectElement>("monport").add(new Option(mon, mon));
       champ("monport").value = mon ?? "";
       champ<HTMLSelectElement>("media").value = lien.media && lien.media !== "cuivre" ? lien.media : "";
       champ("vlan").value = lien.vlans ?? "";
@@ -609,6 +649,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     }
     if (t.dataset.f === "vers") { remplirPorts(); return; }
     if (t.dataset.l === "a" || t.dataset.l === "b") { remplirRelier(); return; }
+    if (t.dataset.l) { schemaRelier(); return; }
     apercu();
   });
   racine.addEventListener("input", (ev) => {
@@ -624,6 +665,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
       remplirPorts();
     }
     if (t.dataset.f) apercu();
+    if (t.dataset.l) schemaRelier();
   });
   racine.addEventListener("click", (ev) => {
     const t = ev.target as HTMLElement;

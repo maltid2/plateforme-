@@ -151,8 +151,8 @@ export function creerEditeur(racine: HTMLElement, contexte: Contexte, surChange:
         { texte: "vlan=", detail: "VLAN du port" },
         { texte: "passerelle=", detail: "IP de la passerelle par défaut" },
         { texte: "trunk", detail: "lien trunk (plusieurs VLAN)" },
-        { texte: "ports=", detail: "nombre de ports RJ45 (switch)" },
-        { texte: "sfp=", detail: "nombre de cages SFP (switch)" },
+        { texte: "ports=", detail: "nombre de ports RJ45 (plusieurs switchs : 24, 8, 48)" },
+        { texte: "sfp=", detail: "nombre de cages SFP (plusieurs : 4, 0, 2)" },
       ]);
     }
     m = avant.match(/(?:->|→).*[|;]\s*([\w=]*)$/);

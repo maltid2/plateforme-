@@ -263,3 +263,13 @@ test("un nom de site avec « / » : site=…/point=…, et @ reconnaît le site 
   assert.equal(e("SW-2").point, "Centre administratif");
   assert.equal(e("SW-3").point, undefined);
 });
+
+test("ports=24, 8, 48 et sfp=4, 0, 2 : un nombre par switch, dans l'ordre des noms", () => {
+  const inv = analyser("site S\nswitch SW-A, SW-B, SW-C | ports=24, 8, 48 | sfp=4, 0, 2\nswitch SW-D, SW-E | ports=16, 8, 24\nSW-B:9 -> SW-C:40");
+  const f = (n: string) => facade(inv.equipements.find((e) => e.nom === n)!, inv);
+  const compte = (n: string, t: string) => f(n).ports.filter((p) => p.type === t).length;
+  assert.deepEqual(["SW-A", "SW-B", "SW-C"].map((n) => [compte(n, "rj45"), compte(n, "sfp")]), [[24, 4], [8, 0], [48, 2]]);
+  assert.ok(inv.alertes.some((a) => /Le port 9 n'existe pas sur SW-B/.test(a.msg)));
+  assert.ok(inv.alertes.some((a) => /3 valeurs de ports pour 2 équipements/.test(a.msg)));
+  assert.equal(analyser("switch SW-X, SW-Y | ports=24, huit").alertes.filter((a) => a.niveau === "erreur").length, 1);
+});

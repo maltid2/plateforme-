@@ -92,6 +92,7 @@ FW-SIEGE:WAN2 -> SW-LILLE-1:24 | vpn | secours
 | Équipement | `type NOM \| IP \| modèle \| @Site/Lieu \| baie=A1 \| sur SWITCH:port \| vlan=30` |
 | Types | passerelle, parefeu, switch, camera, nvr, borne, serveur, nas, poste, imprimante, telephone, onduleur, autre |
 | Switch | `ports=24` (RJ45) et `sfp=4` (cages fibre) dessinent la façade |
+| Ports différents pour chacun | `switch SW-A, SW-B, SW-C \| ports=24, 8, 48 \| sfp=4, 0, 2` → 1er nombre au 1er nom, etc. (dans le formulaire aussi) |
 | Liaison | `SW-1:24 -> SW-2:Te1 \| fibre \| trunk \| vlan=10,20 \| remarque` |
 | Câble | `fibre`, `rj45` (ou `cuivre`), `radio`, `vpn` — sinon déduit (SFP = fibre) |
 | Plusieurs noms différents | `switch SW-ACCUEIL, SW-ETAGE1, SW-ETAGE2 \| 10.0.0.10 \| sur SW-CORE:5` → IP et ports qui se suivent (dans le formulaire : noms séparés par des virgules) |

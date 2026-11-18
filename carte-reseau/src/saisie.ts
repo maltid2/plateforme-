@@ -304,6 +304,24 @@ export function analyser(texte: string): Inventaire {
       alertes.push({ ligne, niveau: "attention", msg: ips.length > noms.length
         ? `${ips.length} IP pour ${noms.length} équipement${noms.length > 1 ? "s" : ""} : les IP en trop sont ignorées.`
         : `${ips.length} IP pour ${noms.length} équipements : les suivantes continuent à partir de ${ips[ips.length - 1]}.` });
+    // « ports=24, 8, 48 » / « sfp=4, 0, 2 » : un nombre par équipement, dans
+    // l'ordre des noms (moins de valeurs : la dernière vaut pour la suite).
+    const CLE_LISTE = /^(ports?|sfp|wan)$/i;
+    for (const [cle, v] of kv) {
+      if (!CLE_LISTE.test(cle) || !v.includes(",")) continue;
+      const vals = v.split(",").map((x) => x.trim()).filter(Boolean);
+      if (vals.some((x) => !/^\d+$/.test(x)))
+        alertes.push({ ligne, niveau: "erreur", msg: `« ${cle}=${v} » : des nombres séparés par des virgules, par exemple ${cle}=24, 8, 48.` });
+      else if (vals.length !== noms.length)
+        alertes.push({ ligne, niveau: "attention", msg: vals.length > noms.length
+          ? `${vals.length} valeurs de ${cle} pour ${noms.length} équipement${noms.length > 1 ? "s" : ""} : les valeurs en trop sont ignorées.`
+          : `${vals.length} valeurs de ${cle} pour ${noms.length} équipements : ${vals[vals.length - 1]} pour les suivants.` });
+    }
+    const kvDe = (k: number): [string, string][] => kv.map(([cle, v]) => {
+      if (!CLE_LISTE.test(cle) || !v.includes(",")) return [cle, v];
+      const vals = v.split(",").map((x) => x.trim()).filter(Boolean);
+      return [cle, vals[Math.min(k, vals.length - 1)] ?? ""];
+    });
     for (let k = 0; k < noms.length; k++) {
       const n = noms[k];
       if (equipements.some((e) => simple(e.nom) === simple(n))) {
@@ -314,7 +332,7 @@ export function analyser(texte: string): Inventaire {
       const point = pointLigne ?? (siteLigne ? undefined : pointCourant);
       // IP de la liste à son rang ; au-delà, on continue à partir de la dernière.
       const ipK = ips ? (k < ips.length ? ips[k] : ipPlus(ips[ips.length - 1], k - ips.length + 1)) : ip && ipPlus(ip, k);
-      equipements.push({ nom: n, genre, site, ...(point ? { point } : {}), baie: baieLigne ?? baieCourante, ip: ipK, ...(passerelleLigne ? { passerelleIp: passerelleLigne } : {}), infos, kv, ligne });
+      equipements.push({ nom: n, genre, site, ...(point ? { point } : {}), baie: baieLigne ?? baieCourante, ip: ipK, ...(passerelleLigne ? { passerelleIp: passerelleLigne } : {}), infos, kv: kvDe(k), ligne });
       if (versInline) {
         const v = lireExtremite(versInline);
         brutes.push({ de: n, vers: v.port ? `${v.nom}:${portPlus(v.port, k)}` : v.nom, ligne, ...optsInline });

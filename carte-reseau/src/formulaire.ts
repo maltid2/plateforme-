@@ -69,9 +69,9 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
         <label>IP passerelle <small>(vide = celle du site)</small><input data-f="gw" autocomplete="off" spellcheck="false" /></label>
       </div>
       <div class="f-ligne f-switch">
-        <label class="etroit">Ports RJ45<input data-f="ports" type="number" min="0" max="96" list="l-rj45" value="24" /></label>
-        <label class="etroit">Cages SFP <small>(fibre)</small><input data-f="sfp" type="number" min="0" max="48" list="l-sfp" value="4" /></label>
-        <label class="etroit f-wan">Ports WAN<input data-f="wan" type="number" min="0" max="8" value="1" /></label>
+        <label>Ports RJ45 <small>(un par switch : 24, 8, 48)</small><input data-f="ports" inputmode="numeric" list="l-rj45" value="24" autocomplete="off" spellcheck="false" /></label>
+        <label>Cages SFP <small>(fibre · 4, 0, 2)</small><input data-f="sfp" inputmode="numeric" list="l-sfp" value="4" autocomplete="off" spellcheck="false" /></label>
+        <label class="etroit f-wan">Ports WAN<input data-f="wan" inputmode="numeric" value="1" autocomplete="off" spellcheck="false" /></label>
         <datalist id="l-rj45"><option value="2"><option value="4"><option value="5"><option value="8"><option value="10"><option value="16"><option value="24"><option value="48"></datalist>
         <datalist id="l-sfp"><option value="0"><option value="1"><option value="2"><option value="4"><option value="8"></datalist>
       </div>
@@ -277,11 +277,18 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     if (champ("gw").value.trim()) p.push(`passerelle=${propre(champ("gw").value)}`);
     // Ports tapés librement (2 RJ45, 3 SFP…) ; vide = déduit des branchements.
     if (A_FACADE.has(genre)) {
-      const n = (k: string, max: number) => { const v = parseInt(champ(k).value, 10); return Number.isFinite(v) && v >= 0 ? Math.min(v, max) : null; };
+      // « 24, 8, 48 » : un nombre par équipement (dans l'ordre des noms).
+      const n = (k: string, max: number) => {
+        const vals = champ(k).value.split(/[,;\s]+/).map((x) => parseInt(x, 10)).filter((v) => Number.isFinite(v) && v >= 0).map((v) => Math.min(v, max));
+        if (!vals.length) return null;
+        const nb = combien();
+        const utiles = vals.slice(0, Math.max(1, nb));
+        return utiles.every((v) => v === utiles[0]) ? String(utiles[0]) : utiles.join(",");
+      };
       const rj = n("ports", 96), sfp = n("sfp", 48), wan = n("wan", 8);
-      if (rj !== null && rj > 0) p.push(`ports=${rj}`);
+      if (rj !== null && rj !== "0") p.push(`ports=${rj}`);
       if (sfp !== null) p.push(`sfp=${sfp}`);
-      if (genre !== "switch" && wan !== null && wan > 0) p.push(`wan=${wan}`);
+      if (genre !== "switch" && wan !== null && wan !== "0") p.push(`wan=${wan}`);
     }
     return p.join(" | ");
   }
@@ -582,6 +589,9 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
         const ch = champs.map((c) => {
           if (c.split(",").every((x) => /^\d{1,3}(\.\d{1,3}){3}(\/\d{1,2})?$/.test(x.trim()))) return e.ip ?? c;
           if (/^sur\s+/i.test(c)) return sur || c;
+          // « ports=24,8,48 » : chacun reprend son propre nombre.
+          const mk = c.match(/^(ports?|sfp|wan)\s*=\s*(.*,.*)$/i);
+          if (mk) { const v = e.kv.find(([k]) => k.toLowerCase() === mk[1].toLowerCase())?.[1]; return v ? `${mk[1]}=${v}` : c; }
           return c;
         });
         return retrait + [`${mot} ${e.nom}`, ...ch].join(" | ");

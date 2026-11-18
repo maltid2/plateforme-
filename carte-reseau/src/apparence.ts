@@ -1,0 +1,21 @@
+import type { Genre } from "./saisie";
+
+/** Une couleur et un sigle par type : la carte se lit avant les étiquettes. */
+export const APPARENCE: Record<Genre, { couleur: string; sigle: string }> = {
+  passerelle: { couleur: "#8D7CFF", sigle: "GW" },
+  parefeu:    { couleur: "#FF7A59", sigle: "FW" },
+  switch:     { couleur: "#4FA3FF", sigle: "SW" },
+  camera:     { couleur: "#3DDC97", sigle: "CAM" },
+  nvr:        { couleur: "#2BB39A", sigle: "NVR" },
+  borne:      { couleur: "#F2C94C", sigle: "AP" },
+  serveur:    { couleur: "#E07BD8", sigle: "SRV" },
+  nas:        { couleur: "#D9A066", sigle: "NAS" },
+  poste:      { couleur: "#9AA8B8", sigle: "PC" },
+  imprimante: { couleur: "#7F8C9C", sigle: "IMP" },
+  telephone:  { couleur: "#56CCF2", sigle: "TEL" },
+  onduleur:   { couleur: "#6B7A8C", sigle: "UPS" },
+  autre:      { couleur: "#8B98A8", sigle: "?" },
+};
+
+export const COULEUR_LIEN = "#5E7A9B";
+export const COULEUR_INTERSITE = "#8D7CFF";

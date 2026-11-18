@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Carte réseau · outil interne</title>
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <header class="barre">
+    <div class="titre">
+      <strong>Carte réseau</strong>
+      <span>outil interne · tout reste dans ce navigateur</span>
+    </div>
+    <div class="actions">
+      <button id="b-exemple" type="button">Exemple</button>
+      <button id="b-ouvrir" type="button">Ouvrir .txt</button>
+      <button id="b-enregistrer" type="button">Enregistrer .txt</button>
+      <button id="b-svg" type="button">Exporter le plan (SVG)</button>
+      <button id="b-aide" type="button" aria-expanded="false">Aide</button>
+      <input id="fichier" type="file" accept=".txt,text/plain" hidden />
+    </div>
+  </header>
+
+  <main class="atelier">
+    <section class="saisie">
+      <div class="aide" id="aide" hidden>
+        <p><b>Une ligne par équipement</b> : <code>type NOM | IP | infos | clé=valeur</code></p>
+        <p>Types : <code>passerelle</code> <code>parefeu</code> <code>switch</code> <code>camera</code> <code>nvr</code> <code>borne</code> <code>serveur</code> <code>nas</code> <code>poste</code> <code>imprimante</code> <code>telephone</code> <code>onduleur</code> <code>autre</code></p>
+        <p><b>Regrouper</b> : <code>site Lyon</code> ouvre un site, <code>baie A1</code> range dans la baie les lignes <b>en retrait</b> qui suivent.</p>
+        <p><b>Plusieurs d'un coup</b> : <code>camera CAM-PARKING x4 | 10.0.0.51</code> crée CAM-PARKING-1 à 4, IP qui suivent.</p>
+        <p><b>Liaison</b> : <code>CAM-1 -> SW-CAM:5</code> ou <code>SW-CORE:24 -> SW-CAM:16 | uplink</code></p>
+        <p><b>Liaison d'un groupe</b> : <code>CAM-PARKING* -> SW-CAM:3</code> branche sur les ports 3, 4, 5, 6.</p>
+        <p><b>Directement sur la ligne</b> : <code>camera CAM-1 | 10.0.0.50 | sur SW-CAM:5</code></p>
+        <p><b>Entre deux sites</b> : <code>GW-PARIS:WAN -> GW-LYON:WAN | VPN</code></p>
+        <p><code>#</code> commence un commentaire.</p>
+      </div>
+      <textarea id="texte" spellcheck="false" autocomplete="off" aria-label="Inventaire"></textarea>
+      <div class="etat" id="etat" aria-live="polite"></div>
+      <ul class="alertes" id="alertes"></ul>
+    </section>
+
+    <section class="carte">
+      <div class="outils">
+        <div class="onglets" role="tablist">
+          <button role="tab" id="v-2d" aria-selected="true">Plan 2D</button>
+          <button role="tab" id="v-3d" aria-selected="false">Vue 3D</button>
+        </div>
+        <select id="filtre-site" aria-label="Site affiché"></select>
+        <input id="recherche" type="search" placeholder="Chercher un équipement…" list="noms" />
+        <datalist id="noms"></datalist>
+        <button id="b-cadrer" type="button" title="Tout afficher">Recentrer</button>
+      </div>
+      <div class="vue" id="vue">
+        <div id="hote-2d" class="hote"></div>
+        <div id="hote-3d" class="hote" hidden></div>
+        <aside class="fiche" id="fiche" hidden></aside>
+        <div class="legende" id="legende"></div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

@@ -350,6 +350,15 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
         } else {
           lignes.splice(eq.ligne - 1, 1, ...l.map((x) => rEq + x));
         }
+        // Renommé : le nouveau nom remplace l'ancien partout où il sert
+        // (« sur SW-B:1 », « SW-B:24 -> … »), sinon ces branchements cassent.
+        if (nom && nom.toLowerCase() !== eq.nom.toLowerCase()) {
+          const ancien = eq.nom.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+          const re = new RegExp(`(^|[\\s>,:|])${ancien}(?=$|[\\s:|,<]|->)`, "gi");
+          lignes.forEach((ligne, i) => {
+            if (ligne.replace(/#.*$/, "").includes("|") || /->|→|=>|<-/.test(ligne)) lignes[i] = ligne.replace(re, (_m, avant) => `${avant}${nom}`);
+          });
+        }
       });
     } else {
       modifierTexte((lignes) => {

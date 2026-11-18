@@ -76,13 +76,15 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
         <datalist id="l-sfp"><option value="0"><option value="1"><option value="2"><option value="4"><option value="8"></datalist>
       </div>
       <fieldset class="f-branche">
-        <legend>Branché sur</legend>
+        <legend>Branché sur <small>— où arrive le câble de cet équipement</small></legend>
+        <p class="f-aide-branche"></p>
         <div class="f-ligne">
           <label class="large">Switch ou passerelle<select data-f="vers"></select></label>
           <label>Port<select data-f="port"></select></label>
         </div>
         <div class="f-ligne">
-          <label class="f-monport">Port de cet équipement <small>(facultatif)</small><input data-f="monport" placeholder="Te1, 24…" autocomplete="off" /></label>
+          <label class="f-monport">Son port à lui <small>(facultatif : le port de CET équipement d'où part le câble)</small><input data-f="monport" placeholder="Te1, 24…" autocomplete="off" list="l-monport" /></label>
+          <datalist id="l-monport"></datalist>
           <label>Câble<select data-f="media"><option value="">Automatique</option>${(Object.keys(MEDIAS) as Media[]).map((m) => `<option value="${m}">${MEDIAS[m]}</option>`).join("")}</select></label>
           <label class="etroit">VLAN<input data-f="vlan" placeholder="30" autocomplete="off" /></label>
         </div>
@@ -201,6 +203,18 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     const voulu = garderPort ?? (libres.includes(port.value) ? port.value : (["rj45", "sfp", "autre", "wan"] as const).map((t) => libres.find((p) => lirePort(p).type === t)).find(Boolean) ?? "");
     options(port, vers ? [{ v: "", t: "— sans port —" }, ...libres.map((p) => ({ v: p, t: qte > 1 ? `${p} (et suivants)` : p }))] : [{ v: "", t: "—" }], voulu);
     port.disabled = !vers;
+    // Explication selon le cas : rien où se brancher, ou choix à faire.
+    const aide = racine.querySelector<HTMLElement>(".f-aide-branche")!;
+    const nCibles = champ<HTMLSelectElement>("vers").options.length - 1;
+    aide.textContent = nCibles === 0
+      ? "Rien où le brancher pour l'instant : c'est normal pour le premier équipement d'un site. Ajoutez-le, puis branchez les suivants dessus (ou reliez-les après avec « Relier deux équipements » plus bas)."
+      : vers ? `Choisissez le port de ${vers} où arrive le câble. Seuls les ports encore libres sont proposés.`
+        : "Choisissez le switch ou la passerelle sur lequel cet équipement est branché, puis son port.";
+    // Suggestions pour « son port à lui » : ses propres ports d'après RJ45 / SFP.
+    const nRj = parseInt(champ("ports").value, 10) || 0, nSfp = parseInt(champ("sfp").value, 10) || 0;
+    racine.querySelector("#l-monport")!.innerHTML = A_FACADE.has(genre)
+      ? [...Array.from({ length: Math.min(nSfp, 8) }, (_, i) => `SFP${i + 1}`), ...Array.from({ length: Math.min(nRj, 48) }, (_, i) => String(nRj - i))]
+        .map((v) => `<option value="${v}">`).join("") : "";
     // Deux switchs reliés : trunk coché par défaut.
     const e = acces.donnees().inv.equipements.find((x) => x.nom === vers);
     if (!edition) champ<HTMLInputElement>("trunk").checked = genre === "switch" && e?.genre === "switch";
@@ -234,7 +248,14 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     const p: string[] = [noms.length > 1 ? `${genre} ${noms.join(", ")}` : `${genre} ${noms[0]}${qte > 1 ? ` x${qte}` : ""}`];
     if (champ("ip").value.trim()) p.push(propre(champ("ip").value));
     if (champ("modele").value.trim()) p.push(propre(champ("modele").value));
-    if (ctx.site) p.push(`@${propre(ctx.site)}${ctx.point ? `/${propre(ctx.point)}` : ""}`);
+    // « @Site/Lieu », sauf si un des noms contient lui-même « / » :
+    // on écrit alors site=… et point=…, sans ambiguïté.
+    if (ctx.site) {
+      if (ctx.site.includes("/") || ctx.point.includes("/")) {
+        p.push(`site=${propre(ctx.site)}`);
+        if (ctx.point) p.push(`point=${propre(ctx.point)}`);
+      } else p.push(`@${propre(ctx.site)}${ctx.point ? `/${propre(ctx.point)}` : ""}`);
+    }
     if (ctx.baie) p.push(`baie=${propre(ctx.baie)}`);
     if (champ("gw").value.trim()) p.push(`passerelle=${propre(champ("gw").value)}`);
     // Ports tapés librement (2 RJ45, 3 SFP…) ; vide = déduit des branchements.
@@ -593,7 +614,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
   racine.addEventListener("input", (ev) => {
     const t = ev.target as HTMLElement;
     if (t.dataset.f === "filtre") { remplirInventaire(); return; }
-    if (t.dataset.f === "ports" || t.dataset.f === "sfp") t.dataset.touche = "1";
+    if (t.dataset.f === "ports" || t.dataset.f === "sfp") { t.dataset.touche = "1"; remplirPorts(); }
     if (t.dataset.f === "qte") remplirPorts();
     if (t.dataset.f === "nom") {
       // Une liste de noms fixe le nombre : le champ « Nombre » s'aligne dessus.

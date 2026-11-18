@@ -275,9 +275,19 @@ export function analyser(texte: string): Inventaire {
       else if (/^baie\s*=/i.test(c)) baieLigne = c.replace(/^baie\s*=\s*/i, "").trim() || undefined;
       // « @Site » ou « @Site/Lieu » : site, et lieu dans le site.
       else if (/^@\S/.test(c)) {
-        const [sNom, ...pNom] = c.slice(1).split("/");
-        siteLigne = sNom.trim();
-        pointLigne = pNom.join("/").trim() || undefined;
+        // Un nom de site peut contenir « / » (« ILM / Issy ») : on reconnaît
+        // d'abord un site déjà connu au début, sinon on coupe au premier « / ».
+        const v = c.slice(1).trim();
+        const connu = [...sites].sort((x, y) => y.nom.length - x.nom.length)
+          .find((s0) => simple(v) === simple(s0.nom) || simple(v).startsWith(simple(s0.nom) + "/") || simple(v).startsWith(simple(s0.nom) + " /"));
+        if (connu) {
+          siteLigne = connu.nom;
+          pointLigne = v.slice(connu.nom.length).replace(/^\s*\/\s*/, "").trim() || undefined;
+        } else {
+          const [sNom, ...pNom] = v.split("/");
+          siteLigne = sNom.trim();
+          pointLigne = pNom.join("/").trim() || undefined;
+        }
       }
       else if (CLE_PASSERELLE.test(c.trim())) passerelleLigne = lirePasserelle([c], ligne, alertes);
       else if (c.includes("=")) { const k = c.indexOf("="); kv.push([c.slice(0, k).trim(), c.slice(k + 1).trim()]); }

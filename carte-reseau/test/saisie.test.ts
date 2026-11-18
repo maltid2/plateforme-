@@ -249,3 +249,17 @@ test("l'exemple complet de l'onglet Texte se lit sans erreur ni remarque", async
   const assemble = ["site", "switchs", "cameras", "lieu"].map((id) => MODELES.find((m) => m.id === id)!.texte).join("\n");
   assert.deepEqual(analyser(assemble).alertes.filter((a) => a.niveau === "erreur"), []);
 });
+
+test("un nom de site avec « / » : site=…/point=…, et @ reconnaît le site déjà connu", () => {
+  const inv = analyser([
+    "switch SW-1 | site=ILM / Issy | point=Centre administratif",
+    "switch SW-2 | @ILM / Issy/Centre administratif | sur SW-1:1",
+    "switch SW-3 | @ILM / Issy | sur SW-1:2",
+  ].join("\n"));
+  const e = (n: string) => inv.equipements.find((x) => x.nom === n)!;
+  assert.deepEqual(inv.sites.map((s) => s.nom), ["ILM / Issy"]);
+  assert.equal(e("SW-1").point, "Centre administratif");
+  assert.equal(e("SW-2").site, "ILM / Issy");
+  assert.equal(e("SW-2").point, "Centre administratif");
+  assert.equal(e("SW-3").point, undefined);
+});

@@ -1,14 +1,21 @@
 /**
- * Le plan 2D, en SVG. Molette pour zoomer, glisser pour se déplacer, clic
- * sur un équipement pour sa fiche ; survoler un équipement fait ressortir
- * ses liaisons.
+ * Le plan 2D, en SVG.
+ *
+ * Les switchs, passerelles et pare-feu sont dessinés en façade, comme on les
+ * voit dans la baie : oreilles de fixation, ports RJ45 par paires, cages SFP,
+ * voyants. Chaque câble part du port écrit dans la saisie. Les autres
+ * équipements (caméras, postes…) sont des cartes avec leur pictogramme.
+ *
+ * Molette : zoom. Glisser : déplacement. Clic : fiche. Survol d'un port :
+ * ce qui y est branché.
  */
-import { APPARENCE, COULEUR_INTERSITE, COULEUR_LIEN } from "./apparence";
-import type { Disposition, Point } from "./disposition";
-import type { Inventaire, Liaison } from "./saisie";
+import { APPARENCE, COULEUR_INTERSITE, COULEUR_TRUNK } from "./apparence.ts";
+import { CARTE_H, CARTE_W, type Disposition, type Point } from "./disposition.ts";
+import { FH, PH, PW, type Facade, type Port } from "./facade.ts";
+import { PICTOS } from "./pictos.ts";
+import type { Equipement, Inventaire, Liaison } from "./saisie.ts";
 
 const NS = "http://www.w3.org/2000/svg";
-const W = 2.6, H = 1.4;
 
 type Rappels = { choisir: (nom: string | null) => void };
 export type Plan2D = {
@@ -24,12 +31,145 @@ function el<K extends keyof SVGElementTagNameMap>(nom: K, attrs: Record<string, 
   parent?.appendChild(e);
   return e;
 }
-const court = (s: string, n = 16) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
+const texte = (parent: Element, t: string, attrs: Record<string, string | number>) => {
+  const e = el("text", attrs, parent);
+  e.textContent = t;
+  return e;
+};
+const court = (s: string, n = 18) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
+
+/** Ce que le câble dit de lui-même au survol. */
+const decrireLien = (l: Liaison) =>
+  `${l.a}${l.portA ? `:${l.portA}` : ""} ↔ ${l.b}${l.portB ? `:${l.portB}` : ""}` +
+  (l.mode ? ` · ${l.mode}` : "") + (l.vlans ? ` · VLAN ${l.vlans}` : "") + (l.libelle ? ` · ${l.libelle}` : "");
+
+/** Dégradés et ombre partagés par le plan et par les textures 3D. */
+const DEFS = `
+    <linearGradient id="g-chassis" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a4350"/><stop offset="0.08" stop-color="#2b323c"/>
+      <stop offset="0.92" stop-color="#1d232b"/><stop offset="1" stop-color="#14181e"/>
+    </linearGradient>
+    <linearGradient id="g-oreille" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#4a5361"/><stop offset="1" stop-color="#2c333d"/>
+    </linearGradient>
+    <linearGradient id="g-sfp" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9aa5b1"/><stop offset="1" stop-color="#5d6773"/>
+    </linearGradient>
+    <linearGradient id="g-carte" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#18202b"/><stop offset="1" stop-color="#111720"/>
+    </linearGradient>
+    <pattern id="g-grille" width="2" height="2" patternUnits="userSpaceOnUse">
+      <path d="M 2 0 L 0 0 0 2" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="0.04"/>
+    </pattern>
+    <filter id="g-ombre" x="-10%" y="-20%" width="120%" height="160%">
+      <feDropShadow dx="0" dy="0.18" stdDeviation="0.18" flood-color="#000" flood-opacity="0.55"/>
+    </filter>`;
+
+/* ---------------- façade ---------------- */
+
+function dessinerFacade(g: SVGGElement, e: Equipement, f: Facade, inv: Inventaire) {
+  const a = APPARENCE[e.genre];
+  const x0 = -f.w / 2, y0 = -FH / 2;
+  const corps = el("g", { filter: "url(#g-ombre)" }, g);
+  // Oreilles de fixation en baie, avec leurs vis.
+  [x0 - 0.42, x0 + f.w].forEach((ox) => {
+    el("rect", { x: ox, y: y0 + 0.08, width: 0.42, height: FH - 0.16, rx: 0.06, fill: "url(#g-oreille)", stroke: "#1a1f26", "stroke-width": 0.03 }, corps);
+    [0.42, FH - 0.42].forEach((oy) => el("circle", { cx: ox + 0.21, cy: y0 + oy, r: 0.09, fill: "#14181e", stroke: "#5b6573", "stroke-width": 0.025 }, corps));
+  });
+  el("rect", { class: "corps", x: x0, y: y0, width: f.w, height: FH, rx: 0.1, fill: "url(#g-chassis)", stroke: "#465060", "stroke-width": 0.04 }, corps);
+  // Liseré de couleur du type et zone d'étiquette.
+  el("rect", { x: x0 + 0.12, y: y0 + 0.16, width: 0.07, height: FH - 0.32, rx: 0.03, fill: a.couleur }, g);
+  const modele = e.infos[0] ?? (e.genre === "switch" ? "Switch" : e.genre === "parefeu" ? "Pare-feu" : "Passerelle");
+  texte(g, court(modele.toUpperCase(), 22), { x: x0 + 0.34, y: y0 + 0.46, "font-size": 0.21, fill: "#8B98A8", "font-weight": 700, "letter-spacing": 0.02 });
+  texte(g, court(e.nom, 13), { x: x0 + 0.34, y: y0 + 0.98, "font-size": 0.42, fill: "#F5F7FA", "font-weight": 800 });
+  texte(g, e.ip ?? "IP non renseignée", { x: x0 + 0.34, y: y0 + 1.38, "font-size": 0.27, fill: e.ip ? "#B9C3CF" : "#6B7A8C",
+    "font-family": "ui-monospace, monospace" });
+  // Voyants d'état.
+  [["PWR", "#3DDC97"], ["SYS", "#3DDC97"]].forEach(([t, c], k) => {
+    el("circle", { cx: x0 + 0.42 + k * 0.62, cy: y0 + 1.7, r: 0.06, fill: c }, g);
+    texte(g, t, { x: x0 + 0.52 + k * 0.62, y: y0 + 1.74, "font-size": 0.13, fill: "#6B7A8C" });
+  });
+
+  const parNom = new Map(inv.equipements.map((x) => [x.nom, x]));
+  const brancheDe = new Map<Port, ReturnType<Facade["branches"]["get"]>>();
+  f.branches.forEach((b, id) => { const p = f.parId.get(id); if (p) brancheDe.set(p, b); });
+
+  f.ports.forEach((p) => {
+    const br = brancheDe.get(p);
+    const px = x0 + p.x, py = y0 + p.y;
+    const gp = el("g", br ? { class: "port", "data-vers": br.vers } : { class: "port" }, g);
+    const trunk = br?.liaison.mode === "trunk";
+    const couleur = br ? (trunk ? COULEUR_TRUNK : APPARENCE[parNom.get(br.vers)?.genre ?? "autre"].couleur) : "";
+    if (p.type === "sfp") {
+      el("rect", { x: px - (PW + 0.1) / 2, y: py - PH / 2 - 0.02, width: PW + 0.1, height: PH + 0.04, rx: 0.03, fill: "url(#g-sfp)" }, gp);
+      el("rect", { x: px - PW / 2 + 0.02, y: py - PH / 2 + 0.07, width: PW - 0.04, height: PH - 0.14, fill: br ? couleur : "#0b0e12" }, gp);
+      if (br) el("rect", { x: px - 0.12, y: py - 0.05, width: 0.24, height: 0.1, fill: "#0b0e12", opacity: 0.6 }, gp);
+    } else {
+      const wan = p.type === "wan";
+      el("rect", { x: px - PW / 2, y: py - PH / 2, width: PW, height: PH, rx: 0.03, fill: "#07090c",
+        stroke: wan ? "#FF9F43" : "#5a6472", "stroke-width": 0.035 }, gp);
+      // Encoche du loquet : en bas pour la rangée du haut, en haut pour celle du bas.
+      const ny = p.haut ? py + PH / 2 - 0.1 : py - PH / 2;
+      el("rect", { x: px - 0.09, y: ny, width: 0.18, height: 0.1, fill: "#1d232b" }, gp);
+      // La fiche branchée : un capuchon de la couleur de ce qui est au bout.
+      if (br) el("rect", { x: px - PW / 2 + 0.06, y: py - PH / 2 + 0.06, width: PW - 0.12, height: PH - 0.12, rx: 0.03, fill: couleur }, gp);
+    }
+    // Voyant de lien au-dessus (rangée haute) ou en dessous (rangée basse).
+    const ly = p.haut ? py - PH / 2 - 0.1 : py + PH / 2 + 0.1;
+    el("rect", { x: px - 0.07, y: ly - 0.035, width: 0.14, height: 0.07, fill: br ? (trunk ? "#FFD166" : "#3DDC97") : "#2a313b" }, gp);
+    // Numéro du port : au-dessus de la rangée haute, en dessous de la basse.
+    const ty = p.haut ? py - PH / 2 - 0.2 : py + PH / 2 + 0.33;
+    texte(gp, court(p.id.replace(/^(Gi|Fa|Te)\d+\/\d+\//i, ""), 5), { x: px, y: ty, "text-anchor": "middle", "font-size": 0.15,
+      fill: br ? "#F5F7FA" : "#6B7A8C", "font-weight": br ? 700 : 400, "font-family": "ui-monospace, monospace" });
+    el("title", {}, gp).textContent = br
+      ? `Port ${p.id} → ${br.vers}${br.portVers ? `:${br.portVers}` : ""}${br.liaison.mode ? ` · ${br.liaison.mode}` : ""}${br.liaison.vlans ? ` · VLAN ${br.liaison.vlans}` : ""}`
+      : `Port ${p.id} · libre`;
+  });
+  const occupes = brancheDe.size, total = f.ports.filter((p) => p.type !== "autre").length;
+  texte(g, `${occupes}/${total} ports utilisés`, { x: x0 + f.w, y: y0 + FH + 0.62, "text-anchor": "end", "font-size": 0.26, fill: "#6B7A8C" });
+  if (e.baie) texte(g, `▤ baie ${e.baie}`, { x: x0, y: y0 + FH + 0.62, "font-size": 0.26, fill: "#A99CFF", "font-weight": 600 });
+}
+
+/* ---------------- carte simple ---------------- */
+
+function dessinerCarte(g: SVGGElement, e: Equipement) {
+  const a = APPARENCE[e.genre];
+  const x0 = -CARTE_W / 2, y0 = -CARTE_H / 2;
+  el("rect", { class: "corps", x: x0, y: y0, width: CARTE_W, height: CARTE_H, rx: 0.28, fill: "url(#g-carte)",
+    stroke: a.couleur, "stroke-width": 0.06, filter: "url(#g-ombre)" }, g);
+  el("rect", { x: x0 + 0.18, y: y0 + 0.2, width: 1.2, height: 1.2, rx: 0.22, fill: a.couleur, opacity: 0.14 }, g);
+  const ic = el("g", { transform: `translate(${x0 + 0.33} ${y0 + 0.35}) scale(0.9)`, fill: "none", stroke: a.couleur,
+    "stroke-width": 0.075, "stroke-linecap": "round", "stroke-linejoin": "round" }, g);
+  ic.innerHTML = PICTOS[e.genre];
+  texte(g, a.sigle, { x: x0 + 1.55, y: y0 + 0.62, "font-size": 0.34, "font-weight": 800, fill: a.couleur });
+  texte(g, e.ip ?? "", { x: x0 + 1.55, y: y0 + 1.05, "font-size": 0.22, fill: "#B9C3CF", "font-family": "ui-monospace, monospace" });
+  const vlan = e.kv.find(([k]) => /^vlan$/i.test(k))?.[1];
+  if (vlan) texte(g, `VLAN ${vlan}`, { x: x0 + 1.55, y: y0 + 1.36, "font-size": 0.2, fill: "#8B98A8" });
+  texte(g, court(e.nom), { x: 0, y: y0 + CARTE_H + 0.5, "text-anchor": "middle", "font-size": 0.38, "font-weight": 600, fill: "#F5F7FA",
+    stroke: "#0D1118", "stroke-width": 0.14, "paint-order": "stroke" });
+}
+
+
+/**
+ * Une façade seule, en SVG autonome : la 3D la dessine sur un canvas et la
+ * plaque sur l'avant du switch monté en baie. Même dessin qu'en 2D.
+ */
+export function svgFacade(e: Equipement, f: Facade, inv: Inventaire, largeurPx = 2048): string {
+  const svg = el("svg", { xmlns: NS, viewBox: `${-f.w / 2} ${-FH / 2} ${f.w} ${FH}`,
+    width: largeurPx, height: Math.round((largeurPx * FH) / f.w), "font-family": "Inter, Segoe UI, Arial, sans-serif" });
+  el("defs", {}, svg).innerHTML = DEFS;
+  const g = el("g", {}, svg) as SVGGElement;
+  dessinerFacade(g, e, f, inv);
+  return new XMLSerializer().serializeToString(svg);
+}
 
 export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
   const svg = el("svg", { xmlns: NS });
   hote.appendChild(svg);
-  const fond = el("rect", { fill: "#07090D", x: -1e4, y: -1e4, width: 2e4, height: 2e4 }, svg);
+  const defs = el("defs", {}, svg);
+  defs.innerHTML = DEFS;
+  el("rect", { fill: "#07090D", x: -1e5, y: -1e5, width: 2e5, height: 2e5 }, svg);
+  el("rect", { fill: "url(#g-grille)", x: -1e5, y: -1e5, width: 2e5, height: 2e5 }, svg);
   const monde = el("g", {}, svg);
 
   let vb = { x: 0, y: 0, w: 10, h: 10 };
@@ -52,33 +192,35 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
     appliquer();
   }
 
-  function courbe(a: Point, b: Point) {
-    // Du bas du parent au haut de l'enfant ; à niveau égal, un arc par-dessous.
-    if (Math.abs(a.y - b.y) < 0.5) {
-      const y = a.y + H / 2, c = y + 1.6;
-      return { d: `M ${a.x} ${y} C ${a.x} ${c}, ${b.x} ${c}, ${b.x} ${y}`, pa: { x: a.x, y: y + 0.45 }, pb: { x: b.x, y: y + 0.45 } };
-    }
-    const [h, bas] = a.y < b.y ? [a, b] : [b, a];
-    const y1 = h.y + H / 2 + 0.85, y2 = bas.y - H / 2, m = (y1 + y2) / 2;
-    const d = `M ${h.x} ${h.y + H / 2} L ${h.x} ${y1} C ${h.x} ${m}, ${bas.x} ${m}, ${bas.x} ${y2}`;
-    // Les étiquettes de port se posent le long de la courbe : côté switch,
-    // assez loin pour que les ports 2, 3, 4… ne s'empilent pas au même point.
-    const sur = (t: number) => {
-      const u = 1 - t;
-      return { x: h.x * (u ** 3 + 3 * u * u * t) + bas.x * (3 * u * t * t + t ** 3), y: y1 * u ** 3 + 3 * m * u * t + y2 * t ** 3 };
-    };
-    const ph = sur(0.42), pbas = sur(0.9);
-    return a.y < b.y ? { d, pa: ph, pb: pbas } : { d, pa: pbas, pb: ph };
+  /* ---------------- câbles ---------------- */
+
+  /** Point d'attache d'une extrémité : le port si l'équipement a une façade, sinon le bord de la carte. */
+  function attache(nom: string, port: string | undefined, versLeBas: boolean, d: Disposition) {
+    const c = d.pos.get(nom)!;
+    const f = d.facades.get(nom);
+    const p = f && port ? f.parId.get(port) : undefined;
+    if (f && p) return { x: c.x - f.w / 2 + p.x, y: c.y - FH / 2 + p.y, bord: versLeBas ? c.y + FH / 2 : c.y - FH / 2 };
+    const h = f ? FH : CARTE_H;
+    return { x: c.x, y: c.y, bord: versLeBas ? c.y + h / 2 : c.y - h / 2 };
   }
 
-  function etiquettePort(g: Element, p: Point, port: string, couleur: string) {
-    const t = court(port, 8);
-    const w = 0.22 * t.length + 0.3;
-    el("rect", { x: p.x - w / 2, y: p.y - 0.22, width: w, height: 0.44, rx: 0.2, fill: "#0D1118", stroke: couleur, "stroke-width": 0.04 }, g);
-    const tx = el("text", { x: p.x, y: p.y + 0.13, "text-anchor": "middle", "font-size": 0.34, fill: "#C9D2DC",
-      "font-family": "ui-monospace, monospace" }, g);
-    tx.textContent = t;
+  function chemin(l: Liaison, d: Disposition) {
+    const ca = d.pos.get(l.a)!, cb = d.pos.get(l.b)!;
+    if (Math.abs(ca.y - cb.y) < 0.6) {
+      // Même rangée : un arc par-dessous.
+      const A = attache(l.a, l.portA, true, d), B = attache(l.b, l.portB, true, d);
+      const yb = Math.max(A.bord, B.bord) + 1.4;
+      return { d: `M ${A.x} ${A.y} L ${A.x} ${A.bord + 0.3} C ${A.x} ${yb}, ${B.x} ${yb}, ${B.x} ${B.bord + 0.3} L ${B.x} ${B.y}`,
+        milieu: { x: (A.x + B.x) / 2, y: yb - 0.3 } };
+    }
+    const aEnHaut = ca.y < cb.y;
+    const A = attache(l.a, l.portA, aEnHaut, d), B = attache(l.b, l.portB, !aEnHaut, d);
+    const ya = A.bord + (aEnHaut ? 0.45 : -0.45), yb = B.bord + (aEnHaut ? -0.45 : 0.45), ym = (ya + yb) / 2;
+    return { d: `M ${A.x} ${A.y} L ${A.x} ${ya} C ${A.x} ${ym}, ${B.x} ${ym}, ${B.x} ${yb} L ${B.x} ${B.y}`,
+      milieu: { x: (A.x + B.x) / 2, y: ym } };
   }
+
+  /* ---------------- rendu ---------------- */
 
   function afficher(inv: Inventaire, d: Disposition, site: string | null) {
     monde.replaceChildren();
@@ -87,111 +229,90 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
     pos = d.pos;
     const visibles = new Set(inv.equipements.filter((e) => !site || e.site === site).map((e) => e.nom));
     const siteDe = new Map(inv.equipements.map((e) => [e.nom, e.site]));
+    const genreDe = new Map(inv.equipements.map((e) => [e.nom, e.genre]));
     const cadres = d.cadres.filter((c) => !site || c.nom === site);
     if (!cadres.length) { bornes = { x: 0, y: 0, w: 10, h: 10 }; cadrer(); return; }
-
-    // Liaisons entre sites : tracées SOUS les cadres. Elles ne se voient donc
-    // qu'entre les sites, et passent derrière ceux qu'elles traversent ; un
-    // segment par-dessus relie ensuite l'équipement au bord de son cadre.
-    const gInter = el("g", {}, monde);
     const cadreDe = new Map(cadres.map((c) => [c.nom, c]));
+    const ajouterLien = (l: Liaison, e: SVGElement) => {
+      [l.a, l.b].forEach((n) => { if (!liensDe.has(n)) liensDe.set(n, []); liensDe.get(n)!.push(e); });
+    };
+
+    // Liaisons entre sites : sous les cadres, visibles seulement entre eux.
+    const gInter = el("g", {}, monde);
     const sortie = (p: Point, q: Point, c: { x: number; y: number; w: number; h: number }) => {
       const dx = q.x - p.x, dy = q.y - p.y;
       const tx = dx > 0 ? (c.x + c.w - p.x) / dx : dx < 0 ? (c.x - p.x) / dx : Infinity;
       const ty = dy > 0 ? (c.y + c.h - p.y) / dy : dy < 0 ? (c.y - p.y) / dy : Infinity;
       const t = Math.min(tx, ty, 1);
-      return { x: p.x + dx * t, y: p.y + dy * t, ux: dx / (Math.hypot(dx, dy) || 1), uy: dy / (Math.hypot(dx, dy) || 1) };
+      return { x: p.x + dx * t, y: p.y + dy * t };
     };
     const dedans = (p: Point) => cadres.some((c) => p.x > c.x && p.x < c.x + c.w && p.y > c.y && p.y < c.y + c.h);
 
-    // Sites
     const gs = el("g", {}, monde);
     cadres.forEach((c) => {
-      el("rect", { x: c.x, y: c.y, width: c.w, height: c.h, rx: 0.8, fill: "#0D1118", stroke: "rgba(255,255,255,0.12)", "stroke-width": 0.06 }, gs);
-      const t = el("text", { x: c.x + 0.8, y: c.y + 1.25, "font-size": 0.75, "font-weight": 700, fill: "#F5F7FA" }, gs);
-      t.textContent = c.nom;
-      const n = inv.equipements.filter((e) => e.site === c.nom).length;
-      const s = el("text", { x: c.x + 0.8 + c.nom.length * 0.44 + 0.6, y: c.y + 1.25, "font-size": 0.45, fill: "#8B98A8" }, gs);
-      s.textContent = `${n} équipement${n > 1 ? "s" : ""}`;
+      el("rect", { x: c.x, y: c.y, width: c.w, height: c.h, rx: 0.9, fill: "#0D1118", stroke: "rgba(255,255,255,0.11)", "stroke-width": 0.06 }, gs);
+      el("path", { d: `M ${c.x} ${c.y + 1.6} V ${c.y + 0.9} Q ${c.x} ${c.y} ${c.x + 0.9} ${c.y} H ${c.x + c.w - 0.9} Q ${c.x + c.w} ${c.y} ${c.x + c.w} ${c.y + 0.9} V ${c.y + 1.6} Z`,
+        fill: "rgba(141,124,255,0.08)" }, gs);
+      texte(gs, c.nom, { x: c.x + 0.9, y: c.y + 1.08, "font-size": 0.72, "font-weight": 800, fill: "#F5F7FA" });
+      const eqs = inv.equipements.filter((e) => e.site === c.nom);
+      const nSw = eqs.filter((e) => e.genre === "switch").length;
+      texte(gs, `${eqs.length} équipements · ${nSw} switch${nSw > 1 ? "s" : ""}`,
+        { x: c.x + c.w - 0.9, y: c.y + 1.04, "text-anchor": "end", "font-size": 0.38, fill: "#8B98A8" });
     });
 
-    // Liaisons
     const gl = el("g", {}, monde);
+    const gn = el("g", {}, monde);
     const gp = el("g", {}, monde);
-    const ajouterLien = (l: Liaison, e: SVGElement) => {
-      [l.a, l.b].forEach((n) => { if (!liensDe.has(n)) liensDe.set(n, []); liensDe.get(n)!.push(e); });
-    };
+
     inv.liaisons.forEach((l) => {
       if (!visibles.has(l.a) || !visibles.has(l.b)) return;
-      const a = d.pos.get(l.a)!, b = d.pos.get(l.b)!;
-      const inter = siteDe.get(l.a) !== siteDe.get(l.b);
-      const g = el("g", {}, gl);
-      if (inter) {
-        const titre = `${l.a}${l.portA ? `:${l.portA}` : ""} ↔ ${l.b}${l.portB ? `:${l.portB}` : ""}${l.libelle ? ` · ${l.libelle}` : ""}`;
-        const trait = { stroke: COULEUR_INTERSITE, "stroke-width": 0.12, opacity: 0.75 };
-        const plein = el("line", { class: "lien", x1: a.x, y1: a.y, x2: b.x, y2: b.y, ...trait }, gInter);
-        el("title", {}, plein).textContent = titre;
+      const trunk = l.mode === "trunk";
+      if (siteDe.get(l.a) !== siteDe.get(l.b)) {
+        const A = attache(l.a, l.portA, false, d), B = attache(l.b, l.portB, false, d);
+        const trait = { stroke: COULEUR_INTERSITE, "stroke-width": 0.14, opacity: 0.85, "stroke-dasharray": "0.6 0.3" };
+        const plein = el("line", { class: "lien", x1: A.x, y1: A.y, x2: B.x, y2: B.y, ...trait }, gInter);
+        el("title", {}, plein).textContent = decrireLien(l);
         ajouterLien(l, plein);
-        const ca = cadreDe.get(siteDe.get(l.a)!)!, cb2 = cadreDe.get(siteDe.get(l.b)!)!;
-        const sa = sortie(a, b, ca), sb = sortie(b, a, cb2);
-        [[a, sa], [b, sb]].forEach(([p, s2]) => {
-          const bout = el("line", { class: "lien", x1: p.x, y1: p.y, x2: s2.x, y2: s2.y, ...trait }, g);
-          el("title", {}, bout).textContent = titre;
+        const sa = sortie(A, B, cadreDe.get(siteDe.get(l.a)!)!), sb = sortie(B, A, cadreDe.get(siteDe.get(l.b)!)!);
+        [[A, sa], [B, sb]].forEach(([p, s2]) => {
+          const bout = el("line", { class: "lien", x1: p.x, y1: p.y, x2: s2.x, y2: s2.y, ...trait }, gl);
+          el("title", {}, bout).textContent = decrireLien(l);
           ajouterLien(l, bout);
         });
-        // Le port se lit au bord du cadre, là où le câble sort du site.
-        if (l.portA) etiquettePort(gp, { x: sa.x - sa.ux * 0.7, y: sa.y - sa.uy * 0.7 }, l.portA, COULEUR_INTERSITE);
-        if (l.portB) etiquettePort(gp, { x: sb.x - sb.ux * 0.7, y: sb.y - sb.uy * 0.7 }, l.portB, COULEUR_INTERSITE);
         const m = { x: (sa.x + sb.x) / 2, y: (sa.y + sb.y) / 2 };
-        if (l.libelle && !dedans(m)) {
-          const t = el("text", { x: m.x, y: m.y - 0.25, "text-anchor": "middle", "font-size": 0.42, fill: "#C2B9FF",
-            "font-weight": 600, stroke: "#07090D", "stroke-width": 0.12, "paint-order": "stroke" }, gp);
-          t.textContent = l.libelle;
-        }
+        if (l.libelle && !dedans(m))
+          texte(gp, l.libelle, { x: m.x, y: m.y - 0.3, "text-anchor": "middle", "font-size": 0.45, fill: "#C2B9FF", "font-weight": 700,
+            stroke: "#07090D", "stroke-width": 0.14, "paint-order": "stroke" });
         return;
       }
-      const c = courbe(a, b);
-      const p = el("path", { class: "lien", d: c.d, stroke: COULEUR_LIEN, "stroke-width": 0.08, opacity: 0.85 }, g);
-      el("title", {}, p).textContent =
-        `${l.a}${l.portA ? `:${l.portA}` : ""} ↔ ${l.b}${l.portB ? `:${l.portB}` : ""}${l.libelle ? ` · ${l.libelle}` : ""}`;
+      const c = chemin(l, d);
+      const bout = d.facades.has(l.a) && !d.facades.has(l.b) ? l.b : l.a;
+      // Gaine sombre plus large puis le câble : il se détache même quand il
+      // croise un autre câble.
+      el("path", { d: c.d, fill: "none", stroke: "#0D1118", "stroke-width": trunk ? 0.34 : 0.22 }, gl);
+      const p = el("path", { class: "lien", d: c.d, fill: "none",
+        stroke: trunk ? COULEUR_TRUNK : APPARENCE[genreDe.get(bout) ?? "autre"].couleur,
+        "stroke-width": trunk ? 0.17 : 0.085, opacity: trunk ? 0.95 : 0.7 }, gl);
+      el("title", {}, p).textContent = decrireLien(l);
       ajouterLien(l, p);
-      if (l.portA) etiquettePort(gp, c.pa, l.portA, COULEUR_LIEN);
-      if (l.portB) etiquettePort(gp, c.pb, l.portB, COULEUR_LIEN);
-      if (l.libelle) {
-        const t = el("text", { x: (a.x + b.x) / 2 + 0.2, y: (a.y + b.y) / 2, "font-size": 0.34, fill: "#8B98A8", "font-style": "italic" }, gp);
-        t.textContent = l.libelle;
+      if (trunk) {
+        const t = `TRUNK${l.vlans ? ` · VLAN ${l.vlans}` : ""}`;
+        const w = t.length * 0.165 + 0.45;
+        el("rect", { x: c.milieu.x - w / 2, y: c.milieu.y - 0.25, width: w, height: 0.5, rx: 0.25, fill: "#1E1A3A", stroke: COULEUR_TRUNK, "stroke-width": 0.04 }, gp);
+        texte(gp, t, { x: c.milieu.x, y: c.milieu.y + 0.1, "text-anchor": "middle", "font-size": 0.27, "font-weight": 700, fill: "#D9D2FF" });
+      } else if (l.libelle) {
+        texte(gp, l.libelle, { x: c.milieu.x + 0.2, y: c.milieu.y, "font-size": 0.3, fill: "#8B98A8", "font-style": "italic",
+          stroke: "#0D1118", "stroke-width": 0.1, "paint-order": "stroke" });
       }
     });
 
-    // Équipements
-    const gn = el("g", {}, monde);
     inv.equipements.forEach((e) => {
       if (!visibles.has(e.nom)) return;
       const p = d.pos.get(e.nom)!;
-      const a = APPARENCE[e.genre];
       const g = el("g", { class: "noeud", transform: `translate(${p.x} ${p.y})`, tabindex: 0, role: "button",
         "aria-label": `${e.nom}${e.ip ? `, ${e.ip}` : ""}`, "data-nom": e.nom }, gn) as SVGGElement;
-      el("title", {}, g).textContent = [e.nom, e.ip, ...e.infos].filter(Boolean).join("\n");
-      el("rect", { class: "corps", x: -W / 2, y: -H / 2, width: W, height: H, rx: 0.25, fill: "#121821", stroke: a.couleur, "stroke-width": 0.07 }, g);
-      el("rect", { x: -W / 2, y: -H / 2, width: 0.18, height: H, rx: 0.08, fill: a.couleur }, g);
-      const s = el("text", { x: 0.09, y: -0.02, "text-anchor": "middle", "font-size": 0.5, "font-weight": 800, fill: a.couleur,
-        "letter-spacing": 0.03 }, g);
-      s.textContent = a.sigle;
-      const ip = el("text", { x: 0.09, y: 0.46, "text-anchor": "middle", "font-size": 0.3, fill: "#8B98A8",
-        "font-family": "ui-monospace, monospace" }, g);
-      ip.textContent = e.ip ?? "";
-      if (e.baie) {
-        // La baie en pastille sur l'équipement : un cadre autour de la baie
-        // couperait l'arbre, ses équipements n'étant pas au même niveau.
-        const t = `▤ ${court(e.baie, 6)}`;
-        const bw = 0.2 * t.length + 0.25;
-        el("rect", { x: W / 2 - bw + 0.15, y: -H / 2 - 0.25, width: bw, height: 0.42, rx: 0.12, fill: "#1E1A3A", stroke: "#8D7CFF", "stroke-width": 0.03 }, g);
-        const tb = el("text", { x: W / 2 - bw / 2 + 0.15, y: -H / 2 + 0.06, "text-anchor": "middle", "font-size": 0.28, fill: "#C2B9FF", "font-weight": 600 }, g);
-        tb.textContent = t;
-      }
-      const t = el("text", { x: 0, y: H / 2 + 0.55, "text-anchor": "middle", "font-size": 0.4, "font-weight": 600, fill: "#F5F7FA",
-        stroke: "#0D1118", "stroke-width": 0.14, "paint-order": "stroke" }, g);
-      t.textContent = court(e.nom);
+      const f = d.facades.get(e.nom);
+      if (f) dessinerFacade(g, e, f, inv); else dessinerCarte(g, e);
       g.addEventListener("pointerenter", () => survoler(e.nom));
       g.addEventListener("pointerleave", () => survoler(null));
       g.addEventListener("keydown", (ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); cb.choisir(e.nom); } });
@@ -199,10 +320,9 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
     });
 
     const xs = cadres.flatMap((c) => [c.x, c.x + c.w]), ys = cadres.flatMap((c) => [c.y, c.y + c.h]);
-    const nouvelles = { x: Math.min(...xs), y: Math.min(...ys) - 3, w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys) + 3 };
+    const nouvelles = { x: Math.min(...xs), y: Math.min(...ys), w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys) };
     // On ne recadre que si l'emprise change : taper une IP ne doit pas faire sauter la vue.
-    const change = Math.abs(nouvelles.w - bornes.w) > 0.01 || Math.abs(nouvelles.h - bornes.h) > 0.01 ||
-      Math.abs(nouvelles.x - bornes.x) > 0.01 || Math.abs(nouvelles.y - bornes.y) > 0.01;
+    const change = (["x", "y", "w", "h"] as const).some((k) => Math.abs(nouvelles[k] - bornes[k]) > 0.01);
     bornes = nouvelles;
     if (change) cadrer();
     if (choisi) marquer(choisi);
@@ -219,24 +339,21 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
     survoler(null);
   }
 
-  /* ----- navigation ----- */
+  /* ---------------- navigation ---------------- */
   const versMonde = (cx: number, cy: number) => {
     const r = svg.getBoundingClientRect();
     return { x: vb.x + ((cx - r.left) / r.width) * vb.w, y: vb.y + ((cy - r.top) / r.height) * vb.h };
   };
-  svg.addEventListener("wheel", (ev) => {
-    ev.preventDefault();
-    const f = Math.exp(ev.deltaY * 0.0015);
-    const p = versMonde(ev.clientX, ev.clientY);
-    const w = Math.min(Math.max(vb.w * f, 4), 2000), k = w / vb.w;
+  const zoomer = (f: number, cx: number, cy: number) => {
+    const p = versMonde(cx, cy);
+    const w = Math.min(Math.max(vb.w * f, 3), 3000), k = w / vb.w;
     vb = { x: p.x - (p.x - vb.x) * k, y: p.y - (p.y - vb.y) * k, w, h: vb.h * k };
     appliquer();
-  }, { passive: false });
+  };
+  svg.addEventListener("wheel", (ev) => { ev.preventDefault(); zoomer(Math.exp(ev.deltaY * 0.0015), ev.clientX, ev.clientY); }, { passive: false });
 
   let glisse: { x: number; y: number; vb: typeof vb; bouge: boolean; id: number } | null = null;
-  svg.addEventListener("pointerdown", (ev) => {
-    glisse = { x: ev.clientX, y: ev.clientY, vb: { ...vb }, bouge: false, id: ev.pointerId };
-  });
+  svg.addEventListener("pointerdown", (ev) => { glisse = { x: ev.clientX, y: ev.clientY, vb: { ...vb }, bouge: false, id: ev.pointerId }; });
   svg.addEventListener("pointermove", (ev) => {
     if (!glisse || glisse.id !== ev.pointerId) return;
     const dx = ev.clientX - glisse.x, dy = ev.clientY - glisse.y;
@@ -246,19 +363,22 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
     vb = { ...glisse.vb, x: glisse.vb.x - (dx / r.width) * vb.w, y: glisse.vb.y - (dy / r.height) * vb.h };
     appliquer();
   });
-  const finir = (ev: PointerEvent) => {
+  svg.addEventListener("pointerup", (ev) => {
     if (!glisse || glisse.id !== ev.pointerId) return;
     const bouge = glisse.bouge;
     glisse = null;
     svg.classList.remove("saisi");
     if (bouge) return;
-    const n = (ev.target as Element).closest?.(".noeud") as SVGGElement | null;
+    const cible = ev.target as Element;
+    // Un clic sur un port branché ouvre ce qui est au bout du câble.
+    const port = cible.closest?.("[data-vers]") as SVGElement | null;
+    if (port) { cb.choisir(port.dataset.vers!); return; }
+    const n = cible.closest?.(".noeud") as SVGGElement | null;
     cb.choisir(n?.dataset.nom ?? null);
-  };
-  svg.addEventListener("pointerup", finir);
+  });
   svg.addEventListener("pointercancel", () => { glisse = null; svg.classList.remove("saisi"); });
+  svg.addEventListener("dblclick", (ev) => zoomer(0.5, ev.clientX, ev.clientY));
   new ResizeObserver(() => cadrer()).observe(hote);
-  void fond;
 
   return {
     afficher,
@@ -267,15 +387,16 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
       marquer(nom);
       if (nom && centrer) {
         const p = pos.get(nom);
-        if (p) { const w = Math.min(vb.w, 30), k = w / vb.w; vb = { x: p.x - w / 2, y: p.y - (vb.h * k) / 2, w, h: vb.h * k }; appliquer(); }
+        if (p) { const w = Math.min(vb.w, 34), k = w / vb.w; vb = { x: p.x - w / 2, y: p.y - (vb.h * k) / 2, w, h: vb.h * k }; appliquer(); }
       }
     },
     cadrer,
     exporter() {
       const c = svg.cloneNode(true) as SVGSVGElement;
-      c.setAttribute("viewBox", `${bornes.x - 2} ${bornes.y - 2} ${bornes.w + 4} ${bornes.h + 4}`);
-      c.setAttribute("width", String(Math.round((bornes.w + 4) * 40)));
-      c.setAttribute("height", String(Math.round((bornes.h + 4) * 40)));
+      const m = 2;
+      c.setAttribute("viewBox", `${bornes.x - m} ${bornes.y - m} ${bornes.w + 2 * m} ${bornes.h + 2 * m}`);
+      c.setAttribute("width", String(Math.round((bornes.w + 2 * m) * 40)));
+      c.setAttribute("height", String(Math.round((bornes.h + 2 * m) * 40)));
       c.setAttribute("font-family", "Inter, Segoe UI, sans-serif");
       return new XMLSerializer().serializeToString(c);
     },

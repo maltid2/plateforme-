@@ -13,13 +13,20 @@
  *
  * Mêmes coordonnées pour la 2D et la 3D (x vers la droite, y vers le bas → z).
  */
-import type { Equipement, Genre, Inventaire } from "./saisie";
+import { aFacade, facade, FH, type Facade } from "./facade.ts";
+import type { Equipement, Genre, Inventaire } from "./saisie.ts";
 
 export type Point = { x: number; y: number };
 export type Cadre = { nom: string; x: number; y: number; w: number; h: number };
-export type Disposition = { pos: Map<string, Point>; cadres: Cadre[]; largeur: number; hauteur: number };
+export type Disposition = {
+  pos: Map<string, Point>;            // centre de chaque équipement
+  facades: Map<string, Facade>;       // switchs, passerelles, pare-feu
+  cadres: Cadre[]; largeur: number; hauteur: number;
+};
 
-const PAS_X = 3.4, PAS_Y = 4.2, PAR_RANG = 10, MARGE = 2.4, ECART_SITES = 6, ENTETE = 1.2;
+/** Une carte d'équipement simple (caméra, poste…) : boîte + nom dessous. */
+export const CARTE_W = 3.2, CARTE_H = 1.6, NOM_H = 1.0;
+const MARGE = 2.4, ECART_SITES = 7, ENTETE = 1.6, ECART_NOEUDS = 0.7, ECART_RANGS = 3.4, LARGEUR_RANG = 64;
 
 const NIVEAU_DEFAUT: Record<Genre, number> = {
   passerelle: 0, parefeu: 0, switch: 1, nvr: 2, serveur: 2, nas: 2, onduleur: 2,
@@ -29,7 +36,9 @@ const NIVEAU_DEFAUT: Record<Genre, number> = {
 type Local = { pos: Map<string, Point>; w: number; h: number };
 
 /** Dispose un site seul, origine en haut à gauche de son cadre. */
-function disposerSite(eqs: Equipement[], inv: Inventaire, siteDe: Map<string, string>): Local {
+function disposerSite(eqs: Equipement[], inv: Inventaire, siteDe: Map<string, string>, facades: Map<string, Facade>): Local {
+  const largeurDe = (e: Equipement) => facades.get(e.nom)?.w ?? CARTE_W;
+  const hauteurDe = (e: Equipement) => (facades.has(e.nom) ? FH + 0.7 : CARTE_H + NOM_H);
   const noms = new Set(eqs.map((e) => e.nom));
   const voisins = new Map<string, string[]>(eqs.map((e) => [e.nom, []]));
   const versAilleurs = new Map<string, number>(eqs.map((e) => [e.nom, 0]));
@@ -78,46 +87,71 @@ function disposerSite(eqs: Equipement[], inv: Inventaire, siteDe: Map<string, st
     etendre([e.nom]);
   });
 
+  // Chaque niveau se pose sous le précédent. Un équipement vise l'aplomb du
+  // port où il est branché ; on le décale seulement s'il chevauche son voisin.
   const parNiveau = new Map<number, Equipement[]>();
   eqs.forEach((e) => {
     const n = niveau.get(e.nom)!;
     if (!parNiveau.has(n)) parNiveau.set(n, []);
     parNiveau.get(n)!.push(e);
   });
-  const ordre = new Map<string, number>();
-  const local = new Map<string, Point>();
-  const rangs: string[][] = [];
-  let y = 0, largeur = 0;
+  const centre = new Map<string, Point>();
+  const ancre = (e: Equipement): number | null => {
+    const p = parent.get(e.nom);
+    if (!p || !centre.has(p)) return null;
+    const c = centre.get(p)!, f = facades.get(p);
+    if (!f) return c.x;
+    const l = inv.liaisons.find((x) => (x.a === p && x.b === e.nom) || (x.b === p && x.a === e.nom));
+    const port = l ? f.parId.get((l.a === p ? l.portA : l.portB) ?? "") : undefined;
+    return port ? c.x - f.w / 2 + port.x : c.x;
+  };
+  let y = 0;
   [...parNiveau.keys()].sort((a, b) => a - b).forEach((n) => {
-    const liste = parNiveau.get(n)!;
-    liste.sort((a, b) => {
-      const pa = ordre.get(parent.get(a.nom) ?? "") ?? Infinity, pb = ordre.get(parent.get(b.nom) ?? "") ?? Infinity;
-      return pa - pb || eqs.indexOf(a) - eqs.indexOf(b);
+    const liste = parNiveau.get(n)!.map((e, i) => ({ e, i, v: ancre(e) }));
+    let suivant = 0;
+    liste.forEach((it) => { if (it.v === null) it.v = (suivant += 1) * 3; });
+    liste.sort((a, b) => a.v! - b.v! || a.i - b.i);
+    // Rangées : on coupe quand la largeur dépasse ce qu'on lit d'un coup d'œil.
+    const rangees: typeof liste[] = [[]];
+    let larg = 0;
+    liste.forEach((it) => {
+      const w = largeurDe(it.e) + ECART_NOEUDS;
+      if (larg + w > LARGEUR_RANG && rangees[rangees.length - 1].length) { rangees.push([]); larg = 0; }
+      rangees[rangees.length - 1].push(it);
+      larg += w;
     });
-    // Un niveau trop large (40 caméras sur un switch) passe sur plusieurs rangs.
-    for (let i = 0; i < liste.length; i += PAR_RANG) {
-      const rang = liste.slice(i, i + PAR_RANG);
-      rang.forEach((e, k) => { ordre.set(e.nom, i + k); local.set(e.nom, { x: k * PAS_X, y }); });
-      rangs.push(rang.map((e) => e.nom));
-      largeur = Math.max(largeur, (rang.length - 1) * PAS_X);
-      y += PAS_Y * (i + PAR_RANG < liste.length ? 0.75 : 1);
-    }
-  });
-  const hauteur = Math.max(0, y - PAS_Y);
-  rangs.forEach((r) => {
-    const w = (r.length - 1) * PAS_X;
-    r.forEach((nom) => { local.get(nom)!.x += (largeur - w) / 2; });
+    rangees.forEach((rg) => {
+      const xs: number[] = [];
+      let droite = -Infinity;
+      rg.forEach((it) => {
+        const w = largeurDe(it.e);
+        const x = Math.max(it.v!, droite + ECART_NOEUDS + w / 2);
+        xs.push(x);
+        droite = x + w / 2;
+      });
+      // Le décalage dû aux chevauchements se répartit des deux côtés.
+      const derive = rg.reduce((t, it, k) => t + (xs[k] - it.v!), 0) / Math.max(1, rg.length);
+      const hRang = Math.max(...rg.map((it) => hauteurDe(it.e)));
+      rg.forEach((it, k) => centre.set(it.e.nom, { x: xs[k] - derive, y: y + hRang / 2 }));
+      y += hRang + ECART_RANGS;
+    });
   });
 
-  const w = Math.max(largeur + MARGE * 2, 12), h = hauteur + MARGE * 2 + ENTETE;
+  const gauches = eqs.map((e) => centre.get(e.nom)!.x - largeurDe(e) / 2);
+  const droites = eqs.map((e) => centre.get(e.nom)!.x + largeurDe(e) / 2);
+  const x0 = Math.min(...gauches, 0), x1 = Math.max(...droites, 0);
+  const contenuW = x1 - x0, contenuH = Math.max(0, y - ECART_RANGS);
+  const w = Math.max(contenuW + MARGE * 2, 14), h = contenuH + MARGE * 2 + ENTETE;
   const pos = new Map<string, Point>();
-  local.forEach((p, nom) => pos.set(nom, { x: p.x + (w - largeur) / 2, y: p.y + MARGE + ENTETE }));
+  centre.forEach((p, nom) => pos.set(nom, { x: p.x - x0 + (w - contenuW) / 2, y: p.y + MARGE + ENTETE }));
   return { pos, w, h };
 }
 
 export function disposer(inv: Inventaire): Disposition {
   const siteDe = new Map(inv.equipements.map((e) => [e.nom, e.site]));
-  const locaux = inv.sites.map((s) => disposerSite(inv.equipements.filter((e) => e.site === s.nom), inv, siteDe));
+  const facades = new Map<string, Facade>();
+  inv.equipements.forEach((e) => { if (aFacade(e)) facades.set(e.nom, facade(e, inv)); });
+  const locaux = inv.sites.map((s) => disposerSite(inv.equipements.filter((e) => e.site === s.nom), inv, siteDe, facades));
   const n = inv.sites.length;
 
   // Le site le plus relié aux autres prend la case centrale.
@@ -165,5 +199,5 @@ export function disposer(inv: Inventaire): Disposition {
 
   const largeur = Math.max(1, ...cadres.map((c) => c.x + c.w));
   const hauteur = Math.max(1, ...cadres.map((c) => c.y + c.h));
-  return { pos, cadres, largeur, hauteur };
+  return { pos, facades, cadres, largeur, hauteur };
 }

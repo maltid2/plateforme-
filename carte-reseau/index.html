@@ -3,53 +3,80 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Aucune connexion sortante : ni requête, ni police, ni image distante.
+       Le fichier fonctionne hors ligne et ne peut rien envoyer. -->
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'none'; font-src 'none'; form-action 'none'; base-uri 'none'" />
   <meta name="robots" content="noindex, nofollow" />
-  <title>Carte réseau · outil interne</title>
+  <meta name="referrer" content="no-referrer" />
+  <title>Carte réseau</title>
   <link rel="stylesheet" href="/src/style.css" />
 </head>
 <body>
   <header class="barre">
-    <div class="titre">
+    <div class="marque">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="2" y="8" width="20" height="8" rx="2" fill="none" stroke="#8D7CFF" stroke-width="1.8"/><path d="M6 12h1.5M9 12h1.5M12 12h1.5" stroke="#3DDC97" stroke-width="1.8" stroke-linecap="round"/><circle cx="18" cy="12" r="1.2" fill="#FFD166"/></svg>
       <strong>Carte réseau</strong>
-      <span>outil interne · tout reste dans ce navigateur</span>
+      <span class="local" title="Aucune donnée ne quitte ce PC : le fichier bloque toute connexion sortante.">● hors ligne · local</span>
     </div>
+
+    <div class="topos">
+      <label for="topologie" class="sr">Topologie</label>
+      <select id="topologie" aria-label="Topologie affichée"></select>
+      <button id="t-nouvelle" type="button" title="Nouvelle topologie">＋ Nouvelle</button>
+      <button id="t-renommer" type="button" title="Renommer">Renommer</button>
+      <button id="t-dupliquer" type="button" title="Dupliquer">Dupliquer</button>
+      <button id="t-supprimer" type="button" title="Supprimer" class="danger">Supprimer</button>
+    </div>
+
     <div class="actions">
-      <button id="b-exemple" type="button">Exemple</button>
-      <button id="b-ouvrir" type="button">Ouvrir .txt</button>
-      <button id="b-enregistrer" type="button">Enregistrer .txt</button>
-      <button id="b-svg" type="button">Exporter le plan (SVG)</button>
+      <details class="menu">
+        <summary>Fichiers</summary>
+        <div class="menu-corps">
+          <button id="b-sauvegarde" type="button">Sauvegarder toutes les topologies (.json)</button>
+          <button id="b-restaurer" type="button">Restaurer une sauvegarde (.json)</button>
+          <hr />
+          <button id="b-enregistrer" type="button">Exporter cette topologie (.txt)</button>
+          <button id="b-ouvrir" type="button">Ouvrir une topologie (.txt)</button>
+          <hr />
+          <button id="b-svg" type="button">Exporter le plan 2D (.svg)</button>
+          <button id="b-png" type="button">Exporter la vue affichée (.png)</button>
+          <hr />
+          <button id="b-exemple" type="button">Nouvelle topologie d'exemple</button>
+        </div>
+      </details>
       <button id="b-aide" type="button" aria-expanded="false">Aide</button>
-      <input id="fichier" type="file" accept=".txt,text/plain" hidden />
+      <input id="f-txt" type="file" accept=".txt,text/plain" hidden />
+      <input id="f-json" type="file" accept=".json,application/json" hidden />
     </div>
   </header>
 
   <main class="atelier">
-    <section class="saisie">
+    <section class="saisie" aria-label="Saisie">
       <div class="aide" id="aide" hidden>
-        <p><b>Une ligne par équipement</b> : <code>type NOM | IP | infos | clé=valeur</code></p>
-        <p>Types : <code>passerelle</code> <code>parefeu</code> <code>switch</code> <code>camera</code> <code>nvr</code> <code>borne</code> <code>serveur</code> <code>nas</code> <code>poste</code> <code>imprimante</code> <code>telephone</code> <code>onduleur</code> <code>autre</code></p>
-        <p><b>Regrouper</b> : <code>site Lyon</code> ouvre un site, <code>baie A1</code> range dans la baie les lignes <b>en retrait</b> qui suivent.</p>
-        <p><b>Site sur la ligne</b> : <code>switch SW-LYON-2 | @Lyon | sur SW-LYON-1:24</code> — pas besoin de bloc, l'ordre des lignes est libre.</p>
-        <p><b>Plusieurs d'un coup</b> : <code>camera CAM-PARKING x4 | 10.0.0.51</code> crée CAM-PARKING-1 à 4, IP qui suivent.</p>
-        <p><b>Liaison</b> : <code>CAM-1 -> SW-CAM:5</code> ou <code>SW-CORE:24 -> SW-CAM:16 | uplink</code></p>
-        <p><b>Liaison d'un groupe</b> : <code>CAM-PARKING* -> SW-CAM:3</code> branche sur les ports 3, 4, 5, 6.</p>
-        <p><b>Directement sur la ligne</b> : <code>camera CAM-1 | 10.0.0.50 | sur SW-CAM:5</code></p>
-        <p><b>Entre deux sites</b> : <code>GW-PARIS:WAN -> GW-LYON:WAN | VPN</code></p>
-        <p><code>#</code> commence un commentaire.</p>
+        <h2>Écrire une topologie</h2>
+        <p><b>Équipement</b> — <code>type NOM | IP | modèle | @Site | sur SWITCH:port | vlan=20</code></p>
+        <p><b>Types</b> — <code>passerelle</code> <code>parefeu</code> <code>switch</code> <code>camera</code> <code>nvr</code> <code>borne</code> <code>serveur</code> <code>nas</code> <code>poste</code> <code>imprimante</code> <code>telephone</code> <code>onduleur</code> <code>autre</code></p>
+        <p><b>Switch</b> — <code>switch SW-1 | 10.0.0.2 | Cisco 9200 | @Lyon | ports=24 | sfp=4</code></p>
+        <p><b>Trunk</b> — <code>SW-1:Te1 -> SW-2:Te1 | trunk | vlan=10,20,30</code> (deux switchs reliés = trunk par défaut)</p>
+        <p><b>Caméras d'un coup</b> — <code>camera CAM x6 | 10.0.30.11 | @Lyon | sur SW-2:3 | vlan=30</code> → ports 3 à 8, IP qui suivent</p>
+        <p><b>Baie</b> — <code>baie A1</code> puis les lignes <b>en retrait</b> en dessous. <b>Site</b> — <code>site Lyon</code> ou <code>@Lyon</code> sur la ligne.</p>
+        <p><b>Ports</b> — <code>5</code>, <code>Gi1/0/5</code>, <code>Te1</code>, <code>SFP2</code>, <code>LAN1</code>, <code>WAN</code>. <code>#</code> commence un commentaire.</p>
+        <p><b>Clavier</b> — les suggestions s'ouvrent seules ; <kbd>↑</kbd><kbd>↓</kbd> pour choisir, <kbd>Entrée</kbd> ou <kbd>Tab</kbd> pour valider, <kbd>Ctrl</kbd>+<kbd>Espace</kbd> pour les rouvrir.</p>
       </div>
-      <textarea id="texte" spellcheck="false" autocomplete="off" aria-label="Inventaire"></textarea>
+      <div class="editeur" id="editeur"></div>
       <div class="etat" id="etat" aria-live="polite"></div>
       <ul class="alertes" id="alertes"></ul>
     </section>
 
-    <section class="carte">
+    <section class="carte" aria-label="Carte">
       <div class="outils">
         <div class="onglets" role="tablist">
           <button role="tab" id="v-2d" aria-selected="true">Plan 2D</button>
           <button role="tab" id="v-3d" aria-selected="false">Vue 3D</button>
         </div>
         <select id="filtre-site" aria-label="Site affiché"></select>
-        <input id="recherche" type="search" placeholder="Chercher un équipement…" list="noms" />
+        <input id="recherche" type="search" placeholder="Chercher un nom ou une IP…" list="noms" />
         <datalist id="noms"></datalist>
         <button id="b-cadrer" type="button" title="Tout afficher">Recentrer</button>
       </div>

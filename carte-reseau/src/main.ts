@@ -1,19 +1,19 @@
-import { APPARENCE } from "./apparence";
-import { disposer, type Disposition } from "./disposition";
-import { creerPlan2D } from "./plan2d";
-import { analyser, EXEMPLE, GENRES, type Genre, type Inventaire } from "./saisie";
-import type { Vue3D } from "./vue3d";
+import { APPARENCE, COULEUR_TRUNK } from "./apparence.ts";
+import { disposer, type Disposition } from "./disposition.ts";
+import { creerEditeur } from "./editeur.ts";
+import { cheminPasserelle } from "./facade.ts";
+import { creerPlan2D } from "./plan2d.ts";
+import * as projets from "./projets.ts";
+import { analyser, EXEMPLE, GENRES, type Genre, type Inventaire } from "./saisie.ts";
+import type { Vue3D } from "./vue3d.ts";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
-const texte = $<HTMLTextAreaElement>("texte");
 const etat = $("etat"), listeAlertes = $("alertes"), fiche = $("fiche"), legende = $("legende");
 const filtre = $<HTMLSelectElement>("filtre-site"), recherche = $<HTMLInputElement>("recherche");
+const selTopo = $<HTMLSelectElement>("topologie");
 const hote2d = $("hote-2d"), hote3d = $("hote-3d");
 
-const CLE = "carte-reseau:saisie";
-const lire = () => { try { return localStorage.getItem(CLE); } catch { return null; } };
-const ecrire = (v: string) => { try { localStorage.setItem(CLE, v); } catch { /* navigation privée */ } };
-
+let classeur = projets.charger();
 let inv: Inventaire = analyser("");
 let disp: Disposition = disposer(inv);
 let site: string | null = null;
@@ -21,34 +21,93 @@ let choisi: string | null = null;
 let vue: "2d" | "3d" = "2d";
 let v3: Vue3D | null = null;
 
+const active = () => classeur.topologies.find((t) => t.id === classeur.active)!;
 const plan = creerPlan2D(hote2d, { choisir });
+const editeur = creerEditeur($("editeur"), () => ({ inv, disp }), (texte) => {
+  const t = active();
+  t.texte = texte;
+  t.modifie = Date.now();
+  enregistrer();
+  recalculer();
+});
+
+function enregistrer() {
+  if (!projets.sauver(classeur)) etat.dataset.alerte = "Le navigateur refuse l'enregistrement local : pensez à « Sauvegarder (.json) ».";
+}
+
+/* ---------------- topologies ---------------- */
+
+function listerTopologies() {
+  selTopo.replaceChildren(...[...classeur.topologies]
+    .sort((a, b) => a.nom.localeCompare(b.nom, "fr"))
+    .map((t) => new Option(t.nom, t.id, false, t.id === classeur.active)));
+  document.title = `${active().nom} · Carte réseau`;
+}
+function ouvrirTopologie(id: string) {
+  classeur.active = id;
+  enregistrer();
+  site = null; choisi = null;
+  editeur.definir(active().texte);
+  listerTopologies();
+  recalculer();
+  plan.cadrer();
+  v3?.cadrer();
+}
+function creer(nom: string, texte: string) {
+  const t = projets.nouvelle(nom, texte);
+  classeur.topologies.push(t);
+  ouvrirTopologie(t.id);
+}
+selTopo.addEventListener("change", () => ouvrirTopologie(selTopo.value));
+$("t-nouvelle").addEventListener("click", () => {
+  const nom = prompt("Nom de la nouvelle topologie :", "Nouvelle topologie");
+  if (nom?.trim()) creer(nom.trim(), "# Écrivez vos équipements ici. Commencez par :  site NOM\n\n");
+  editeur.focus();
+});
+$("t-renommer").addEventListener("click", () => {
+  const nom = prompt("Nouveau nom :", active().nom);
+  if (!nom?.trim()) return;
+  active().nom = nom.trim();
+  enregistrer(); listerTopologies();
+});
+$("t-dupliquer").addEventListener("click", () => creer(`${active().nom} (copie)`, active().texte));
+$("t-supprimer").addEventListener("click", () => {
+  if (!confirm(`Supprimer la topologie « ${active().nom} » ?\n\nCette action est définitive (sauf si vous avez une sauvegarde .json).`)) return;
+  classeur.topologies = classeur.topologies.filter((t) => t.id !== classeur.active);
+  if (!classeur.topologies.length) classeur.topologies.push(projets.nouvelle("Nouvelle topologie", ""));
+  ouvrirTopologie(classeur.topologies[0].id);
+});
 
 /* ---------------- rendu ---------------- */
 
 function recalculer() {
-  inv = analyser(texte.value);
+  inv = analyser(editeur.valeur);
   disp = disposer(inv);
   if (site && !inv.sites.some((s) => s.nom === site)) site = null;
   if (choisi && !inv.equipements.some((e) => e.nom === choisi)) choisi = null;
 
   filtre.replaceChildren(new Option(`Tous les sites (${inv.sites.length})`, ""),
     ...inv.sites.map((s) => new Option(s.nom, s.nom, false, s.nom === site)));
-  $("noms").replaceChildren(...inv.equipements.map((e) => new Option(e.nom)));
+  $("noms").replaceChildren(...inv.equipements.map((e) => new Option(e.nom, e.ip ? `${e.nom}` : e.nom)));
 
   const err = inv.alertes.filter((a) => a.niveau === "erreur").length;
   const att = inv.alertes.length - err;
-  etat.textContent = `${inv.sites.length} site${inv.sites.length > 1 ? "s" : ""} · ${inv.equipements.length} équipements · ${inv.liaisons.length} liaisons`
-    + (err ? ` · ${err} erreur${err > 1 ? "s" : ""}` : "") + (att ? ` · ${att} remarque${att > 1 ? "s" : ""}` : "")
-    + (!err && !att && inv.equipements.length ? " · tout est relié ✓" : "");
+  const nSw = inv.equipements.filter((e) => e.genre === "switch").length;
+  const nTrunk = inv.liaisons.filter((l) => l.mode === "trunk").length;
+  etat.innerHTML = `<b>${inv.sites.length}</b> site${inv.sites.length > 1 ? "s" : ""} · <b>${nSw}</b> switch${nSw > 1 ? "s" : ""} · <b>${inv.equipements.length}</b> équipements · <b>${inv.liaisons.length}</b> liaisons dont <b>${nTrunk}</b> trunk${nTrunk > 1 ? "s" : ""}`
+    + (err ? ` · <span class="e">${err} erreur${err > 1 ? "s" : ""}</span>` : "")
+    + (att ? ` · <span class="a">${att} remarque${att > 1 ? "s" : ""}</span>` : "")
+    + (!err && !att && inv.equipements.length ? ` · <span class="ok">tout est relié ✓</span>` : "");
   listeAlertes.replaceChildren(...inv.alertes.map((a) => {
     const li = document.createElement("li");
     li.className = a.niveau;
     li.innerHTML = `<span class="n">L.${a.ligne}</span><span class="p">●</span><span></span>`;
     (li.lastChild as HTMLElement).textContent = a.msg;
     li.title = "Aller à la ligne";
-    li.addEventListener("click", () => allerLigne(a.ligne));
+    li.addEventListener("click", () => editeur.allerLigne(a.ligne));
     return li;
   }));
+  editeur.alertes(inv.alertes);
 
   const presents = new Set(inv.equipements.map((e) => e.genre));
   legende.replaceChildren(...(Object.keys(APPARENCE) as Genre[]).filter((g) => presents.has(g)).map((g) => {
@@ -57,18 +116,23 @@ function recalculer() {
     s.append(GENRES[g].libelle);
     return s;
   }));
+  if (nTrunk) {
+    const s = document.createElement("span");
+    s.innerHTML = `<i class="trait" style="background:${COULEUR_TRUNK}"></i>`;
+    s.append("Trunk");
+    legende.append(s);
+  }
 
   dessiner();
   remplirFiche();
 }
 
 function dessiner() {
-  const vide = !inv.equipements.length;
   hote2d.querySelector(".vide")?.remove();
-  if (vide) {
+  if (!inv.equipements.length) {
     const d = document.createElement("div");
     d.className = "vide";
-    d.textContent = "Écrivez vos équipements à gauche — ou cliquez sur « Exemple » — et la carte se dessine ici.";
+    d.innerHTML = `<div><b>La carte est vide.</b><br>Écrivez à gauche, par exemple :<br><code>switch SW-1 | 10.0.0.2 | @Siège</code><br>ou ouvrez <b>Fichiers › Nouvelle topologie d'exemple</b>.</div>`;
     hote2d.appendChild(d);
   }
   plan.afficher(inv, disp, site);
@@ -81,6 +145,8 @@ function dessiner() {
 
 function choisir(nom: string | null, centrer = false) {
   choisi = nom;
+  const e = nom ? inv.equipements.find((x) => x.nom === nom) : null;
+  if (e && site && e.site !== site) { site = null; filtre.value = ""; dessiner(); }
   plan.selectionner(nom, centrer && vue === "2d");
   v3?.selectionner(nom, centrer && vue === "3d");
   remplirFiche();
@@ -89,55 +155,90 @@ function choisir(nom: string | null, centrer = false) {
 function remplirFiche() {
   const e = choisi ? inv.equipements.find((x) => x.nom === choisi) : null;
   if (!e) { fiche.hidden = true; return; }
-  const liens = inv.liaisons.filter((l) => l.a === e.nom || l.b === e.nom).map((l) => {
-    const moi = l.a === e.nom;
-    return { monPort: moi ? l.portA : l.portB, autre: moi ? l.b : l.a, sonPort: moi ? l.portB : l.portA, libelle: l.libelle };
-  }).sort((x, y) => (x.monPort ?? "").localeCompare(y.monPort ?? "", "fr", { numeric: true }));
+  const f = disp.facades.get(e.nom);
+  const h = (tag: string, cls = "", txt = "") => { const n = document.createElement(tag); if (cls) n.className = cls; n.textContent = txt; return n; };
+  const lien = (nom: string, port?: string) => {
+    const s = document.createElement("span");
+    const a = h("a", "", nom);
+    a.setAttribute("role", "button"); a.tabIndex = 0;
+    a.onclick = () => choisir(nom, true);
+    a.onkeydown = (ev) => { if (ev.key === "Enter") choisir(nom, true); };
+    s.append(a, port ? h("span", "port", `:${port}`) : "");
+    return s;
+  };
 
   fiche.replaceChildren();
-  const h = (tag: string, cls = "", txt = "") => { const n = document.createElement(tag); if (cls) n.className = cls; n.textContent = txt; return n; };
   const fermer = h("button", "fermer", "×") as HTMLButtonElement;
   fermer.type = "button"; fermer.setAttribute("aria-label", "Fermer la fiche");
   fermer.onclick = () => choisir(null);
-  fiche.append(fermer, h("div", "genre", GENRES[e.genre].libelle), h("h2", "", e.nom),
-    h("div", "ou", [e.site, e.baie && `baie ${e.baie}`].filter(Boolean).join(" · ")));
+  const tete = h("div", "tete");
+  tete.style.setProperty("--c", APPARENCE[e.genre].couleur);
+  tete.append(h("div", "genre", GENRES[e.genre].libelle), h("h2", "", e.nom), h("div", "modele", e.infos[0] ?? ""));
+  fiche.append(fermer, tete);
 
   const dl = document.createElement("dl");
-  const ligne = (k: string, v: string) => dl.append(h("dt", "", k), h("dd", "", v));
-  if (e.ip) ligne("Adresse IP", e.ip);
-  e.infos.forEach((i, k) => ligne(k === 0 ? "Infos" : "", i));
-  e.kv.forEach(([k, v]) => ligne(k, v));
-  if (dl.childElementCount) fiche.append(dl);
+  const ligne = (k: string, v: string | Node) => { const dd = h("dd"); dd.append(v); dl.append(h("dt", "", k), dd); };
+  ligne("Adresse IP", e.ip ?? "—");
+  ligne("Site", e.site);
+  if (e.baie) ligne("Baie", e.baie);
+  const ch = cheminPasserelle(e.nom, inv);
+  if (ch) {
+    const p = document.createElement("span");
+    p.append(lien(ch.passerelle.nom), ch.passerelle.ip ? ` (${ch.passerelle.ip})` : "");
+    ligne("Passerelle", p);
+    if (ch.via) ligne("Remonte par", `port ${ch.via}${ch.sauts.length > 1 ? ` · via ${ch.sauts.slice(0, -1).join(" › ")}` : ""}`);
+  } else if (e.genre !== "passerelle" && e.genre !== "parefeu") ligne("Passerelle", "aucune trouvée sur ce site");
+  e.infos.slice(1).forEach((i) => ligne("Info", i));
+  e.kv.filter(([k]) => !/^(ports?|sfp|wan)$/i.test(k)).forEach(([k, v]) => ligne(k, v));
+  fiche.append(dl);
+
+  const liens = inv.liaisons.filter((l) => l.a === e.nom || l.b === e.nom).map((l) => {
+    const moi = l.a === e.nom;
+    return { monPort: moi ? l.portA : l.portB, autre: moi ? l.b : l.a, sonPort: moi ? l.portB : l.portA, l };
+  });
+
+  if (f) {
+    const total = f.ports.filter((p) => p.type !== "autre").length;
+    const occupes = new Set([...f.branches.keys()].map((k) => f.parId.get(k)));
+    fiche.append(h("h3", "", `Ports · ${occupes.size} / ${total} utilisés`));
+    // Mini-façade cliquable : un carré par port.
+    const mini = h("div", "mini");
+    f.ports.forEach((p) => {
+      const b = [...f.branches.values()].find((x) => f.parId.get(x.port) === p);
+      const c = h("button", `p ${p.haut ? "h" : "b"} ${b ? "pris" : ""} ${b?.liaison.mode === "trunk" ? "trunk" : ""}`, "") as HTMLButtonElement;
+      c.type = "button";
+      c.title = b ? `${p.id} → ${b.vers}${b.liaison.vlans ? ` · VLAN ${b.liaison.vlans}` : ""}` : `${p.id} · libre`;
+      if (b) {
+        c.style.setProperty("--c", b.liaison.mode === "trunk" ? COULEUR_TRUNK : APPARENCE[inv.equipements.find((x) => x.nom === b.vers)?.genre ?? "autre"].couleur);
+        c.onclick = () => choisir(b.vers, true);
+      }
+      mini.append(c);
+    });
+    fiche.append(mini);
+  }
 
   fiche.append(h("h3", "", `Liaisons (${liens.length})`));
-  if (!liens.length) fiche.append(h("p", "ou", "Aucune liaison déclarée."));
+  if (!liens.length) fiche.append(h("p", "vide-fiche", "Aucune liaison déclarée."));
   else {
-    const ul = document.createElement("ul");
-    liens.forEach((l) => {
-      const li = document.createElement("li");
-      li.append(l.monPort ? `port ${l.monPort} → ` : "→ ");
-      const a = h("a", "", l.autre);
-      a.setAttribute("role", "button"); a.tabIndex = 0;
-      a.onclick = () => choisir(l.autre, true);
-      li.append(a, l.sonPort ? `:${l.sonPort}` : "", l.libelle ? ` · ${l.libelle}` : "");
-      ul.append(li);
+    const tab = document.createElement("table");
+    tab.innerHTML = `<thead><tr><th>Port</th><th>Branché sur</th><th>Mode</th></tr></thead>`;
+    const tb = document.createElement("tbody");
+    liens.sort((x, y) => (x.monPort ?? "").localeCompare(y.monPort ?? "", "fr", { numeric: true })).forEach((x) => {
+      const tr = document.createElement("tr");
+      const td = (v: string | Node, cls = "") => { const c = h("td", cls); c.append(v); tr.append(c); };
+      td(x.monPort ?? "—", "mono");
+      td(lien(x.autre, x.sonPort));
+      td(`${x.l.mode === "trunk" ? "trunk" : x.l.mode ?? ""}${x.l.vlans ? ` ${x.l.vlans}` : ""}${x.l.libelle ? ` · ${x.l.libelle}` : ""}`, x.l.mode === "trunk" ? "trunk" : "");
+      tb.append(tr);
     });
-    fiche.append(ul);
+    tab.append(tb);
+    fiche.append(tab);
   }
-  const aller = h("button", "ligne", `Modifier (ligne ${e.ligne})`) as HTMLButtonElement;
+  const aller = h("button", "modifier", `✎ Modifier la ligne ${e.ligne}`) as HTMLButtonElement;
   aller.type = "button";
-  aller.onclick = () => allerLigne(e.ligne);
+  aller.onclick = () => editeur.allerLigne(e.ligne);
   fiche.append(aller);
   fiche.hidden = false;
-}
-
-function allerLigne(n: number) {
-  const lignes = texte.value.split("\n");
-  const debut = lignes.slice(0, n - 1).reduce((t, l) => t + l.length + 1, 0);
-  texte.focus();
-  texte.setSelectionRange(debut, debut + (lignes[n - 1]?.length ?? 0));
-  const hl = parseFloat(getComputedStyle(texte).lineHeight) || 20;
-  texte.scrollTop = Math.max(0, (n - 4) * hl);
 }
 
 /* ---------------- vues ---------------- */
@@ -149,7 +250,7 @@ async function montrer(v: "2d" | "3d") {
   hote2d.hidden = v !== "2d";
   hote3d.hidden = v !== "3d";
   if (v === "3d" && !v3) {
-    const { creerVue3D } = await import("./vue3d");
+    const { creerVue3D } = await import("./vue3d.ts");
     v3 = creerVue3D(hote3d, { choisir });
     v3.afficher(inv, disp, site);
     v3.selectionner(choisi);
@@ -159,69 +260,82 @@ async function montrer(v: "2d" | "3d") {
 
 /* ---------------- événements ---------------- */
 
-let minuteur = 0;
-texte.addEventListener("input", () => {
-  clearTimeout(minuteur);
-  minuteur = window.setTimeout(() => { ecrire(texte.value); recalculer(); }, 250);
-});
-// Tabulation = deux espaces, comme dans l'exemple.
-texte.addEventListener("keydown", (e) => {
-  if (e.key !== "Tab" || e.shiftKey) return;
-  e.preventDefault();
-  texte.setRangeText("  ", texte.selectionStart, texte.selectionEnd, "end");
-  texte.dispatchEvent(new Event("input"));
-});
-
-filtre.addEventListener("change", () => {
-  site = filtre.value || null;
-  dessiner();
-  plan.cadrer();
-  v3?.cadrer();
-});
+filtre.addEventListener("change", () => { site = filtre.value || null; dessiner(); plan.cadrer(); v3?.cadrer(); });
 recherche.addEventListener("change", () => {
   const q = recherche.value.trim().toLowerCase();
   if (!q) return;
-  const e = inv.equipements.find((x) => x.nom.toLowerCase() === q)
-    ?? inv.equipements.find((x) => x.nom.toLowerCase().includes(q) || x.ip === q);
-  if (!e) return;
-  if (site && e.site !== site) { site = null; filtre.value = ""; dessiner(); }
-  choisir(e.nom, true);
+  const e = inv.equipements.find((x) => x.nom.toLowerCase() === q || x.ip === q)
+    ?? inv.equipements.find((x) => x.nom.toLowerCase().includes(q) || (x.ip ?? "").startsWith(q));
+  if (e) choisir(e.nom, true);
 });
 $("v-2d").addEventListener("click", () => montrer("2d"));
 $("v-3d").addEventListener("click", () => montrer("3d"));
 $("b-cadrer").addEventListener("click", () => (vue === "2d" ? plan.cadrer() : v3?.cadrer()));
-
-$("b-exemple").addEventListener("click", () => {
-  if (texte.value.trim() && !confirm("Remplacer la saisie actuelle par l'exemple ?")) return;
-  texte.value = EXEMPLE; ecrire(EXEMPLE); recalculer(); plan.cadrer(); v3?.cadrer();
-});
 $("b-aide").addEventListener("click", (e) => {
   const aide = $("aide");
   aide.hidden = !aide.hidden;
   (e.currentTarget as HTMLElement).setAttribute("aria-expanded", String(!aide.hidden));
 });
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && choisi && document.activeElement?.tagName !== "TEXTAREA") choisir(null);
+});
 
-function telecharger(nom: string, contenu: string, type: string) {
+/* ---------------- fichiers ---------------- */
+
+function telecharger(nom: string, contenu: BlobPart, type: string) {
   const url = URL.createObjectURL(new Blob([contenu], { type }));
   const a = Object.assign(document.createElement("a"), { href: url, download: nom });
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
-const nomFichier = () => (inv.sites.map((s) => s.nom).join("-") || "carte").replace(/[^\w-]+/g, "_").slice(0, 60);
-$("b-enregistrer").addEventListener("click", () => telecharger(`${nomFichier()}.txt`, texte.value, "text/plain;charset=utf-8"));
-$("b-svg").addEventListener("click", () => telecharger(`${nomFichier()}.svg`, plan.exporter(), "image/svg+xml"));
-$("b-ouvrir").addEventListener("click", () => $("fichier").click());
-$<HTMLInputElement>("fichier").addEventListener("change", async (e) => {
+const nomFichier = (n: string) => n.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^\w-]+/g, "_").slice(0, 60) || "carte";
+const date = () => new Date().toISOString().slice(0, 10);
+const fermerMenu = () => document.querySelector("details.menu")?.removeAttribute("open");
+
+$("b-sauvegarde").addEventListener("click", () => { fermerMenu(); telecharger(`carte-reseau-sauvegarde-${date()}.json`, projets.exporter(classeur), "application/json"); });
+$("b-restaurer").addEventListener("click", () => { fermerMenu(); $("f-json").click(); });
+$<HTMLInputElement>("f-json").addEventListener("change", async (e) => {
   const f = (e.target as HTMLInputElement).files?.[0];
-  if (!f) return;
-  texte.value = await f.text();
-  ecrire(texte.value);
-  recalculer(); plan.cadrer(); v3?.cadrer();
   (e.target as HTMLInputElement).value = "";
+  if (!f) return;
+  try {
+    const { ajoutees } = projets.importer(classeur, await f.text());
+    enregistrer(); listerTopologies();
+    alert(ajoutees ? `${ajoutees} topologie${ajoutees > 1 ? "s" : ""} ajoutée${ajoutees > 1 ? "s" : ""}.` : "Rien de nouveau dans ce fichier.");
+  } catch (err) { alert((err as Error).message || "Fichier illisible."); }
 });
+$("b-enregistrer").addEventListener("click", () => { fermerMenu(); telecharger(`${nomFichier(active().nom)}.txt`, editeur.valeur, "text/plain;charset=utf-8"); });
+$("b-ouvrir").addEventListener("click", () => { fermerMenu(); $("f-txt").click(); });
+$<HTMLInputElement>("f-txt").addEventListener("change", async (e) => {
+  const f = (e.target as HTMLInputElement).files?.[0];
+  (e.target as HTMLInputElement).value = "";
+  if (f) creer(f.name.replace(/\.txt$/i, ""), await f.text());
+});
+$("b-svg").addEventListener("click", () => { fermerMenu(); telecharger(`${nomFichier(active().nom)}-plan.svg`, plan.exporter(), "image/svg+xml"); });
+$("b-png").addEventListener("click", async () => {
+  fermerMenu();
+  if (vue === "3d") {
+    const c = hote3d.querySelector("canvas");
+    c?.toBlob((b) => b && telecharger(`${nomFichier(active().nom)}-3d.png`, b, "image/png"));
+    return;
+  }
+  // Le plan 2D est rasterisé en local, sans rien envoyer.
+  const svg = plan.exporter();
+  const img = new Image();
+  img.onload = () => {
+    const k = Math.min(1, 8000 / Math.max(img.width, img.height));
+    const c = Object.assign(document.createElement("canvas"), { width: img.width * k, height: img.height * k });
+    c.getContext("2d")!.drawImage(img, 0, 0, c.width, c.height);
+    c.toBlob((b) => b && telecharger(`${nomFichier(active().nom)}-plan.png`, b, "image/png"));
+  };
+  img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+});
+$("b-exemple").addEventListener("click", () => { fermerMenu(); creer("Exemple · Siège et agence", EXEMPLE); });
+document.addEventListener("click", (e) => { if (!(e.target as Element).closest("details.menu")) fermerMenu(); });
 
 /* ---------------- démarrage ---------------- */
 
-texte.value = lire() ?? EXEMPLE;
+listerTopologies();
+editeur.definir(active().texte);
 recalculer();
 plan.cadrer();

@@ -1,84 +1,89 @@
-# Carte réseau — outil interne
+# Carte réseau — outil interne, 100 % local
 
-On écrit à la main ses sites, ses baies, ses équipements et leurs liaisons
-port à port. L'outil dessine la carte tout seul, en **plan 2D** et en **vue 3D**.
-On ne place plus rien un par un sur la carte.
+On écrit à la main ses sites, ses baies, ses switchs et ce qui est branché
+dessus, port par port. L'outil dessine la carte : un **plan 2D** avec de vrais
+switchs en façade (ports numérotés, câbles qui partent du bon port, trunks
+étiquetés) et une **vue 3D** avec les baies, les équipements montés dedans et
+les câbles jusqu'aux caméras, bornes et postes.
 
-Tout reste dans le navigateur : rien n'est envoyé sur un serveur. La saisie
-est gardée en local et s'enregistre ou s'ouvre en `.txt`.
+Ce n'est pas de la découverte automatique : la carte est exactement ce que
+vous avez renseigné.
 
-## Lancer
+## Utiliser l'outil : un seul fichier
 
-```bash
-npm install
-npm run dev        # http://localhost:5173
-```
+**`carte-reseau.html`** contient tout l'outil (three.js compris). On le copie
+sur un PC, on l'ouvre en double-cliquant dans Chrome, Edge ou Firefox.
 
-Pour une version à poser sur un serveur interne (ou un partage réseau) :
+- **Aucune connexion internet** : le fichier interdit lui-même toute connexion
+  sortante (politique de sécurité intégrée). Rien n'est envoyé, nulle part.
+- **Les données restent sur le PC**, dans le navigateur qui a ouvert le fichier.
+- **Sauvegarde** : menu *Fichiers › Sauvegarder toutes les topologies (.json)*.
+  C'est ce fichier `.json` qu'on classe avec ses documents ; il se recharge
+  avec *Restaurer une sauvegarde*. Faites-en une régulièrement : un nettoyage
+  du navigateur efface le stockage local.
 
-```bash
-npm run build      # produit dist/, des fichiers statiques
-```
+## Plusieurs topologies
 
-## Écrire l'inventaire
+La liste en haut de l'écran permet d'avoir autant de cartes qu'il faut (un
+client, un bâtiment, une version « avant / après »…) : *Nouvelle*, *Renommer*,
+*Dupliquer*, *Supprimer*. Chaque topologie s'exporte aussi seule en `.txt`.
+
+## Écrire une topologie
 
 ```text
 site Nanterre | Siège
 
 baie A1
-  passerelle GW-NANTERRE | 10.14.0.1 | FortiGate 60F
-  switch SW-CORE | 10.14.0.2 | Cisco 9300 | ports=24
-baie A2
-  switch SW-CAM | 10.14.0.3 | PoE 16 ports
+  parefeu FW-NANTERRE | 10.14.0.1 | FortiGate 100F | ports=8
+  switch SW-CORE  | 10.14.0.2 | Cisco Catalyst 9300-24T | ports=24 | sfp=4
+  switch SW-CAM   | 10.14.0.4 | Aruba 2930F PoE+        | ports=24 | sfp=4
 
-camera CAM-ENTREE | 10.14.0.50
-camera CAM-PARKING x4 | 10.14.0.51        # crée CAM-PARKING-1 à 4, IP qui suivent
+FW-NANTERRE:LAN1 -> SW-CORE:Te1 | trunk | vlan=10,20,30
+SW-CORE:Te3 -> SW-CAM:Te1 | trunk | vlan=30
 
-GW-NANTERRE:LAN1 -> SW-CORE:1
-SW-CORE:24 -> SW-CAM:16 | uplink
-CAM-ENTREE -> SW-CAM:2
-CAM-PARKING* -> SW-CAM:3                   # ports 3, 4, 5, 6
+camera CAM-PARKING x6 | 10.14.30.11 | Bullet 8 MP | sur SW-CAM:3 | vlan=30
 
-site Lyon
-passerelle GW-LYON | 10.20.0.1
-switch SW-LYON | 10.20.0.2 | sur GW-LYON:LAN1   # liaison directement sur la ligne
-
-GW-NANTERRE:WAN -> GW-LYON:WAN | VPN IPsec  # entre deux sites
+switch SW-LYON-1 | 10.20.0.2 | @Lyon | ports=24 | sur GW-LYON:LAN1
 ```
 
-- **Équipement** : `type NOM | IP | infos libres | clé=valeur`
-- **Site sur la ligne** : `@Lyon` (ou `site=Lyon`) range l'équipement dans ce
-  site, sans ouvrir de bloc ; le site est créé au besoin et l'ordre des lignes
-  est libre :
+| Quoi | Comment |
+| --- | --- |
+| Équipement | `type NOM \| IP \| modèle \| @Site \| sur SWITCH:port \| vlan=20` |
+| Types | passerelle, parefeu, switch, camera, nvr, borne, serveur, nas, poste, imprimante, telephone, onduleur, autre |
+| Switch | `ports=24` (RJ45) et `sfp=4` (cages SFP) dessinent la façade ; sans eux, la taille se déduit des ports utilisés |
+| Liaison | `SW-1:24 -> SW-2:Te1 \| trunk \| vlan=10,20` |
+| Trunk | écrit `trunk`, ou plusieurs VLAN, ou deux switchs reliés entre eux |
+| Plusieurs d'un coup | `camera CAM x6 \| 10.0.30.11 \| sur SW:3` → CAM-1 à CAM-6, IP et ports qui se suivent |
+| Site | `site Lyon` en bloc, ou `@Lyon` sur la ligne (ordre libre) |
+| Baie | `baie A1`, puis les lignes **en retrait** en dessous |
+| Ports | `5`, `Gi1/0/5`, `Te1`, `SFP2`, `LAN1`, `WAN` |
 
-  ```text
-  switch SW-LYON-1 | @Lyon | 10.20.0.2 | sur SW-SIEGE:5 | fibre
-  switch SW-LYON-2 | @Lyon | 10.20.0.3 | sur SW-LYON-1:24
-  camera CAM-LYON x6 | @Lyon | 10.20.0.50 | sur SW-LYON-2:1
-  ```
-- **Types** : passerelle, parefeu, switch, camera, nvr, borne, serveur, nas,
-  poste, imprimante, telephone, onduleur, autre
-- **Baie** : `baie A1`, puis les lignes **en retrait** qui suivent sont dans la baie
-- **Liaison** : `NOM:port -> NOM:port | libellé` (ou `sur NOM:port` en fin de ligne)
-- `#` commence un commentaire
+**L'éditeur aide à bien écrire** : coloration, numéros de ligne, erreurs
+soulignées en direct, et suggestions pendant la frappe. Après `@` il propose
+les sites, après `sur` ou `->` les équipements, et après `SWITCH:` **les ports
+encore libres** de ce switch. `↑ ↓` pour choisir, `Entrée`/`Tab` pour valider,
+`Ctrl+Espace` pour rouvrir.
 
-Les erreurs s'affichent sous l'éditeur avec leur numéro de ligne : nom
-inconnu dans une liaison, port déjà pris, nom en double, équipement relié à rien.
+**La fiche d'un équipement** (clic sur la carte) donne son IP, son site, sa
+baie, **sa passerelle et le port par lequel il y remonte**, une mini-façade
+des ports utilisés et la table des liaisons. Cliquer un port branché ouvre
+l'équipement au bout du câble.
 
-## Comment la carte est construite
-
-Dans chaque site, l'arbre part de la passerelle ou du pare-feu ; sans eux, du
-switch qui remonte vers les autres sites. Les autres switchs viennent en
-dessous, puis ce qui est branché dessus. Chaque équipement se range sous celui
-auquel il est relié.
-
-Tous les sites sont sur une même carte, chacun dans son cadre. Le site le plus
-relié aux autres (le siège) se place au centre et les liaisons inter-sites
-rayonnent vers les agences. Testé avec 20 sites, 40 switchs et une centaine de
-caméras.
-
-## Tests
+## Modifier l'outil
 
 ```bash
-npm test
+npm install
+npm run dev        # http://localhost:5173
+npm test           # analyseur, façades, placement
+npm run fichier    # reconstruit carte-reseau.html
 ```
+
+| Fichier | Rôle |
+| --- | --- |
+| `src/saisie.ts` | lecture du texte, liaisons, trunks, alertes |
+| `src/facade.ts` | ports d'un switch et leur place, chemin vers la passerelle |
+| `src/disposition.ts` | placement automatique, chaque équipement sous son port |
+| `src/plan2d.ts` | plan 2D en SVG (façades réalistes) |
+| `src/vue3d.ts` | baies et câbles en 3D (three.js) |
+| `src/editeur.ts` | éditeur avec coloration et suggestions |
+| `src/projets.ts` | topologies multiples, sauvegarde et import |

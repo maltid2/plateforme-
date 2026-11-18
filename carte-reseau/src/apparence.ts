@@ -1,4 +1,4 @@
-import type { Genre } from "./saisie";
+import type { Genre } from "./saisie.ts";
 
 /** Une couleur et un sigle par type : la carte se lit avant les étiquettes. */
 export const APPARENCE: Record<Genre, { couleur: string; sigle: string }> = {
@@ -19,3 +19,5 @@ export const APPARENCE: Record<Genre, { couleur: string; sigle: string }> = {
 
 export const COULEUR_LIEN = "#5E7A9B";
 export const COULEUR_INTERSITE = "#8D7CFF";
+/** Un trunk se repère de loin : violet clair, plus épais qu'un lien d'accès. */
+export const COULEUR_TRUNK = "#B4A6FF";

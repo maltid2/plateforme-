@@ -25,6 +25,9 @@ export type Equipement = {
 export type Liaison = {
   a: string; portA?: string;
   b: string; portB?: string;
+  /** trunk : plusieurs VLAN étiquetés (lien entre switchs) ; access : un seul VLAN. */
+  mode?: "trunk" | "access";
+  vlans?: string;
   libelle?: string;
   ligne: number;
 };
@@ -63,6 +66,25 @@ function ipPlus(ip: string, k: number) {
   return [24, 16, 8, 0].map((d) => (n >>> d) & 255).join(".") + (masque ? `/${masque}` : "");
 }
 
+type OptionsLien = { mode?: "trunk" | "access"; vlans?: string; libelle?: string };
+
+/** « trunk », « access », « vlan=10,20 », « vlan 30 » ; le reste fait le libellé. */
+function lireOptionsLien(champs: string[]): OptionsLien & { reste: string[] } {
+  const o: OptionsLien & { reste: string[] } = { reste: [] };
+  for (const brut of champs) {
+    const c = brut.trim();
+    if (!c) continue;
+    if (/^trunk$/i.test(c)) o.mode = "trunk";
+    else if (/^access$/i.test(c)) o.mode = "access";
+    else if (/^vlans?\s*[=: ]\s*\S/i.test(c)) o.vlans = c.replace(/^vlans?\s*[=: ]\s*/i, "").replace(/\s+/g, "");
+    else o.reste.push(c);
+  }
+  // Plusieurs VLAN sur un lien, c'est un trunk même si on ne l'a pas écrit.
+  if (!o.mode && o.vlans && /[,\-]/.test(o.vlans)) o.mode = "trunk";
+  if (o.reste.length) o.libelle = o.reste.join(" · ");
+  return o;
+}
+
 /** « SW1:5 », « SW1 port 5 », « SW1 » → { nom, port } */
 function lireExtremite(s: string): { nom: string; port?: string } {
   const t = s.trim();
@@ -85,7 +107,7 @@ export function analyser(texte: string): Inventaire {
   const alertes: Alerte[] = [];
   let siteCourant: string | null = null;
   let baieCourante: string | undefined;
-  const brutes: { de: string; vers: string; libelle?: string; ligne: number }[] = [];
+  const brutes: ({ de: string; vers: string; ligne: number } & OptionsLien)[] = [];
 
   const assurerSite = (ligne: number) => {
     if (!siteCourant) {
@@ -109,7 +131,8 @@ export function analyser(texte: string): Inventaire {
         alertes.push({ ligne, niveau: "erreur", msg: "Liaison incomplète : écrire  EQUIPEMENT:port -> EQUIPEMENT:port" });
         return;
       }
-      brutes.push({ de, vers, libelle: champs.join(" · ") || undefined, ligne });
+      const { reste: _r, ...opts } = lireOptionsLien(champs);
+      brutes.push({ de, vers, ...opts, ligne });
       return;
     }
 
@@ -161,9 +184,16 @@ export function analyser(texte: string): Inventaire {
     const kv: [string, string][] = [];
     let versInline: string | undefined;
     let siteLigne: string | undefined;
+    const optsInline: OptionsLien = {};
     for (const c of champs) {
       if (!c) continue;
       if (IP.test(c)) ip = c;
+      else if (/^trunk$/i.test(c)) optsInline.mode = "trunk";
+      else if (/^access$/i.test(c)) optsInline.mode = "access";
+      else if (/^vlans?\s*[=: ]\s*\S/i.test(c)) {
+        optsInline.vlans = lireOptionsLien([c]).vlans;
+        kv.push(["VLAN", optsInline.vlans!]);
+      }
       else if (FLECHE.test(` ${c}`) && /^(->|→|=>|--)/.test(c.trim())) versInline = c.trim().replace(/^(->|→|=>|--)\s*/, "");
       else if (/^sur\s+/i.test(c)) versInline = c.replace(/^sur\s+/i, "");
       // « site=Lyon » ou « @Lyon » : le site se donne sur la ligne même,
@@ -189,7 +219,7 @@ export function analyser(texte: string): Inventaire {
       equipements.push({ nom: n, genre, site, baie: baieCourante, ip: ip && ipPlus(ip, k), infos, kv, ligne });
       if (versInline) {
         const v = lireExtremite(versInline);
-        brutes.push({ de: n, vers: v.port ? `${v.nom}:${portPlus(v.port, k)}` : v.nom, ligne });
+        brutes.push({ de: n, vers: v.port ? `${v.nom}:${portPlus(v.port, k)}` : v.nom, ligne, ...optsInline });
       }
     }
   });
@@ -221,8 +251,11 @@ export function analyser(texte: string): Inventaire {
       const l: Liaison = {
         a: a.nom, portA: as.length > 1 ? A.port : portPlus(A.port, k),
         b: b.nom, portB: bs.length > 1 ? B.port : portPlus(B.port, k),
-        libelle: r.libelle, ligne: r.ligne,
+        mode: r.mode, vlans: r.vlans, libelle: r.libelle, ligne: r.ligne,
       };
+      // Deux switchs reliés entre eux : par défaut c'est un trunk.
+      const genreDe = (nom: string) => parNom.get(simple(nom))?.genre;
+      if (!l.mode && genreDe(l.a) === "switch" && genreDe(l.b) === "switch") l.mode = "trunk";
       for (const [eq, port] of [[l.a, l.portA], [l.b, l.portB]] as const) {
         if (!port) continue;
         const cle = `${simple(eq)}:${simple(port)}`;
@@ -245,48 +278,49 @@ export function analyser(texte: string): Inventaire {
   return { sites, equipements, liaisons, alertes };
 }
 
-export const EXEMPLE = `# Une ligne par équipement, une ligne par liaison.
-# Format :  type NOM | adresse IP | infos libres | clé=valeur
-# Liaison : NOM:port -> NOM:port | libellé
+export const TYPES = (Object.keys(GENRES) as Genre[]).map((g) => GENRES[g].mots[0]);
 
-site Nanterre | Siège · 12 rue des Lilas
+export const EXEMPLE = `# Une ligne par équipement, une ligne par liaison.
+# Équipement : type NOM | IP | modèle | @Site | sur SWITCH:port | vlan=20
+# Liaison    : NOM:port -> NOM:port | trunk | vlan=10,20,30
+
+# ---------- Siège : 3 switchs en cascade ----------
+site Nanterre | Siège
 
 baie A1
-  passerelle GW-NANTERRE | 10.14.0.1 | Fortinet FortiGate 60F
-  switch SW-CORE | 10.14.0.2 | Cisco Catalyst 9300-24T | ports=24
-  serveur SRV-AD | 10.14.0.11 | Windows Server 2022 | rôle=AD · DNS
-  nas NAS-SAUV | 10.14.0.20 | Synology RS1221+
-  onduleur UPS-A1 | APC 3000 VA
+  parefeu FW-NANTERRE | 10.14.0.1 | FortiGate 100F | ports=8
+  switch SW-CORE | 10.14.0.2 | Cisco Catalyst 9300-24T | ports=24 | sfp=4
+  switch SW-ETAGE | 10.14.0.3 | Cisco Catalyst 9200-24P | ports=24 | sfp=4
+  switch SW-CAM | 10.14.0.4 | Aruba 2930F-24G PoE+ | ports=24 | sfp=4
+  serveur SRV-AD | 10.14.0.11 | Dell PowerEdge R650
+  nvr NVR-1 | 10.14.0.40 | Hikvision 32 voies
+  onduleur UPS-A1 | APC Smart-UPS 3000
 
-baie A2
-  switch SW-CAM | 10.14.0.3 | Switch PoE 16 ports
-  nvr NVR-1 | 10.14.0.40 | Hikvision 16 voies
+FW-NANTERRE:LAN1 -> SW-CORE:Te1 | trunk | vlan=10,20,30
+SW-CORE:Te2 -> SW-ETAGE:Te1 | trunk | vlan=10,20
+SW-CORE:Te3 -> SW-CAM:Te1 | trunk | vlan=30
+SRV-AD -> SW-CORE:1 | vlan=10
+NVR-1 -> SW-CAM:1 | vlan=30
 
-camera CAM-ENTREE | 10.14.0.50 | Dôme 4 MP
-camera CAM-PARKING x4 | 10.14.0.51 | Bullet 4 MP
-borne AP-ACCUEIL | 10.14.0.71 | Aruba AP-515
-poste PC-ACCUEIL | 10.14.0.91
-imprimante IMP-RDC | 10.14.0.55
+camera CAM-ACCUEIL | 10.14.30.10 | Dôme 4 MP | sur SW-CAM:2 | vlan=30
+camera CAM-PARKING x6 | 10.14.30.11 | Bullet 8 MP | sur SW-CAM:3 | vlan=30
+borne AP-RDC x2 | 10.14.20.71 | Aruba AP-515 | sur SW-ETAGE:1 | vlan=20
+poste PC-COMPTA x4 | 10.14.10.91 | sur SW-ETAGE:5 | vlan=10
+imprimante IMP-RDC | 10.14.10.55 | sur SW-ETAGE:12 | vlan=10
+telephone TEL-ACCUEIL | 10.14.10.60 | sur SW-ETAGE:13 | vlan=10
 
-# liaisons
-GW-NANTERRE:LAN1 -> SW-CORE:1
-SW-CORE:24 -> SW-CAM:16 | uplink
-SRV-AD -> SW-CORE:2
-NAS-SAUV -> SW-CORE:3
-NVR-1 -> SW-CAM:1
-CAM-ENTREE -> SW-CAM:2
-CAM-PARKING* -> SW-CAM:3
-AP-ACCUEIL -> SW-CORE:10 | PoE+
-PC-ACCUEIL -> SW-CORE:11
-IMP-RDC -> SW-CORE:12
-
+# ---------- Lyon : 2 switchs ----------
 site Lyon | Agence
 
-passerelle GW-LYON | 10.20.0.1 | Box fibre
-switch SW-LYON | 10.20.0.2 | Netgear GS724T | sur GW-LYON:LAN1
-camera CAM-LYON x2 | 10.20.0.50 | sur SW-LYON:5
-poste PC-LYON x3 | 10.20.0.91 | sur SW-LYON:10
+baie L1
+  passerelle GW-LYON | 10.20.0.1 | Box fibre pro | ports=4
+  switch SW-LYON-1 | 10.20.0.2 | Netgear GS724T | ports=24 | sfp=2 | sur GW-LYON:LAN1
+  switch SW-LYON-2 | 10.20.0.3 | Netgear GS110TP PoE | ports=8 | sfp=2
 
-# entre sites
-GW-NANTERRE:WAN -> GW-LYON:WAN | VPN IPsec
+SW-LYON-1:24 -> SW-LYON-2:8 | trunk | vlan=10,30
+camera CAM-LYON x3 | 10.20.30.10 | sur SW-LYON-2:1 | vlan=30
+poste PC-LYON x3 | 10.20.10.91 | sur SW-LYON-1:1 | vlan=10
+
+# ---------- entre sites ----------
+FW-NANTERRE:WAN1 -> GW-LYON:WAN | VPN IPsec
 `;

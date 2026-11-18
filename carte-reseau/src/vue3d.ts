@@ -74,6 +74,8 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
   let pastilles: THREE.Sprite[] = [];
   let sols: THREE.Mesh[] = [];
   const SEUIL_LOIN = 50;
+  /** Au-delà : plusieurs sites à l'écran, un résumé par site. Calculé d'après le plus grand site. */
+  let seuilTresLoin = SEUIL_LOIN * 2.4;
   const PASTILLE = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1" width="128" height="128">
     <circle cx="0.5" cy="0.5" r="0.46" fill="${APPARENCE.camera.couleur}" stroke="#07090D" stroke-width="0.05"/>
     <g transform="translate(0.2 0.2) scale(0.6)" fill="none" stroke="#07090D" stroke-width="0.11" stroke-linecap="round" stroke-linejoin="round">${PICTOS.camera}</g></svg>`;
@@ -103,14 +105,31 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     return tex;
   }
 
+  // Matériaux et formes réutilisés : un grand réseau compte des milliers de
+  // boîtes identiques (oreilles, montants, caméras). Les recréer une à une
+  // coûtait plusieurs secondes à l'ouverture de la 3D.
+  let cacheMat = new Map<string, THREE.Material>();
+  let cacheGeo = new Map<string, THREE.BufferGeometry>();
   const std = (c: string | number, o: Partial<THREE.MeshStandardMaterialParameters> = {}) => {
-    const m = new THREE.MeshStandardMaterial({ color: c, roughness: 0.55, metalness: 0.25, ...o });
-    jetables.push(m);
+    const cle = `${c}|${JSON.stringify(o)}`;
+    let m = cacheMat.get(cle) as THREE.MeshStandardMaterial | undefined;
+    if (!m) {
+      m = new THREE.MeshStandardMaterial({ color: c, roughness: 0.55, metalness: 0.25, ...o });
+      jetables.push(m);
+      cacheMat.set(cle, m);
+    }
     return m;
   };
   const geo = <T extends THREE.BufferGeometry>(g: T) => { jetables.push(g); return g; };
-  const boite = (w: number, h: number, d: number, m: THREE.Material | THREE.Material[]) => new THREE.Mesh(geo(new THREE.BoxGeometry(w, h, d)), m);
-  const cyl = (r1: number, r2: number, h: number, m: THREE.Material, seg = 20) => new THREE.Mesh(geo(new THREE.CylinderGeometry(r1, r2, h, seg)), m);
+  const geoPartagee = (cle: string, faire: () => THREE.BufferGeometry) => {
+    let g = cacheGeo.get(cle);
+    if (!g) { g = geo(faire()); cacheGeo.set(cle, g); }
+    return g;
+  };
+  const boite = (w: number, h: number, d: number, m: THREE.Material | THREE.Material[]) =>
+    new THREE.Mesh(geoPartagee(`b${w}|${h}|${d}`, () => new THREE.BoxGeometry(w, h, d)), m);
+  const cyl = (r1: number, r2: number, h: number, m: THREE.Material, seg = 20) =>
+    new THREE.Mesh(geoPartagee(`c${r1}|${r2}|${h}|${seg}`, () => new THREE.CylinderGeometry(r1, r2, h, seg)), m);
   const P = <T extends THREE.Object3D>(o: T, x: number, y: number, z: number) => { o.position.set(x, y, z); return o; };
 
   function etiquette(texte: string, classe = "etiquette3d") {
@@ -122,8 +141,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
 
   function cable(points: THREE.Vector3[], couleur: string, rayon: number, opacite = 1) {
     const c = new THREE.CatmullRomCurve3(points, false, "centripetal");
-    const m = new THREE.MeshStandardMaterial({ color: couleur, roughness: 0.7, metalness: 0, transparent: opacite < 1, opacity: opacite });
-    jetables.push(m);
+    const m = std(couleur, { roughness: 0.7, metalness: 0, transparent: opacite < 1, opacity: opacite });
     return new THREE.Mesh(geo(new THREE.TubeGeometry(c, Math.max(32, points.length * 14), rayon, 6, false)), m);
   }
 
@@ -145,8 +163,13 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     const rail = std(0x6b7684, { metalness: 0.7, roughness: 0.35 });
     [-1, 1].forEach((s) => {
       g.add(P(boite(0.1, H - 0.4, 0.04, rail), (s * (RL + 0.12)) / 2, H / 2, RD / 2 + 0.02));
-      for (let i = 0; i < nbU; i++) g.add(P(boite(0.04, 0.04, 0.01, noir), (s * (RL + 0.12)) / 2, 0.3 + (i + 0.5) * U, RD / 2 + 0.045));
     });
+    // Les trous des rails, en une seule instance par baie (au lieu de 2 × nbU boîtes).
+    const trous = new THREE.InstancedMesh(geoPartagee("trou", () => new THREE.BoxGeometry(0.04, 0.04, 0.01)), noir, nbU * 2);
+    const mtx = new THREE.Matrix4();
+    let n = 0;
+    [-1, 1].forEach((s) => { for (let i = 0; i < nbU; i++) trous.setMatrixAt(n++, mtx.makeTranslation((s * (RL + 0.12)) / 2, 0.3 + (i + 0.5) * U, RD / 2 + 0.045)); });
+    g.add(trous);
     return { g, H };
   }
 
@@ -264,6 +287,8 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     scene.remove(racine);
     jetables.forEach((j) => j.dispose());
     jetables = [];
+    cacheMat = new Map();
+    cacheGeo = new Map();
     cliquables = [];
     objets.clear();
     surbrillance = null;
@@ -291,13 +316,23 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
       const dalle = boite(c.w, 0.2, c.h, std(0x0a0d12, { roughness: 1, metalness: 0 }));
       dalle.position.set(c.x + c.w / 2, -0.32, c.y + c.h / 2);
       // Cliquable aussi : dézoomé, un clic entre deux lieux plonge dans le site entier.
-      dalle.userData.salle = { x: c.x, y: c.y, w: c.w, h: c.h };
+      dalle.userData.salle = { x: c.x, y: c.y, w: c.w, h: c.h, site: true };
       sols.push(dalle);
       racine.add(dalle);
       // Nom du site devant, au bord : celui des lieux est au fond de chaque salle.
       const t = etiquette(c.nom, "etiquette3d site");
       t.position.set(c.x + 1.2, 0, c.y + c.h - 0.8);
       t.center.set(0, 0.5);
+      racine.add(t);
+    });
+
+    // Très loin : un seul résumé par site (le détail par lieu reviendrait en zoomant).
+    cadres.filter((c) => c.type === "site").forEach((c) => {
+      const eqs = inv.equipements.filter((e) => e.site === c.site && visibles.has(e.nom));
+      const nCam = eqs.filter((e) => e.genre === "camera").length;
+      const nBaies = new Set(eqs.filter((e) => EN_BAIE.has(e.genre)).map((e) => `${e.point ?? ""}§${e.baie ?? ""}`)).size;
+      const t = etiquette(`${c.nom} · ${nCam} caméra${nCam > 1 ? "s" : ""} · ${nBaies} baie${nBaies > 1 ? "s" : ""}`, "etiquette3d resume-site");
+      t.position.set(c.x + c.w / 2, 4, c.y + c.h / 2);
       racine.add(t);
     });
 
@@ -446,7 +481,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
       cams.forEach((e, i) => {
         const sp = new THREE.Sprite(matPastille);
         sp.position.set(x0 + ((i % cols) - (cols - 1) / 2) * pas, 2.6, z0 + Math.floor(i / cols) * pas);
-        sp.scale.set(0.024, 0.024, 1);
+        sp.scale.set(0.02, 0.02, 1);
         sp.renderOrder = 10;
         sp.userData.nom = e.nom;
         apercu.add(sp);
@@ -497,11 +532,20 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
       racine.add(cable(pts, couleur, r));
     });
 
+    seuilTresLoin = Math.max(SEUIL_LOIN * 1.6, ...d.cadres.filter((c) => c.type === "site").map((c) => distanceCadrage(c) * 1.2));
+
     // Les textures qui ne servent plus sont libérées.
     cacheTex.forEach((v, k) => { if (v.vu !== generation) { v.tex.dispose(); cacheTex.delete(k); } });
 
     emprise = new THREE.Box3().setFromObject(racine);
     if (emprise.isEmpty()) emprise = new THREE.Box3(new THREE.Vector3(-5, 0, -5), new THREE.Vector3(5, 1, 5));
+    // Le brouillard de profondeur suit la taille de la carte : réglé pour un
+    // petit réseau, il effaçait sols et caméras d'un grand réseau dézoomé.
+    const diag = Math.max(40, emprise.getSize(new THREE.Vector3()).length());
+    (scene.fog as THREE.Fog).near = diag * 1.6;
+    (scene.fog as THREE.Fog).far = diag * 4;
+    cam.far = Math.max(3000, diag * 6);
+    cam.updateProjectionMatrix();
   }
 
   function cadrer() {
@@ -523,10 +567,19 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     vol = { t0: performance.now(), c0: ctrl.target.clone(), c1: cible.clone(), p0: cam.position.clone(), p1: position.clone() };
   }
   /** Plonger dans une salle : on la cadre d'assez près pour voir le détail. */
-  function entrerDans(s: { x: number; y: number; w: number; h: number }) {
+  /**
+   * Plonger dans un site ou dans un lieu. Un site à plusieurs lieux est cadré
+   * en entier, en restant au niveau « pastilles » : on y choisit son lieu.
+   * Un lieu (ou un site d'un seul tenant) est cadré de près : la 3D détaillée.
+   */
+  /** Distance où un cadre tient juste à l'écran. */
+  const distanceCadrage = (s: { w: number; h: number }) =>
+    (Math.max(s.w / Math.max(cam.aspect, 0.5), s.h * 1.15) / 2 / Math.tan(THREE.MathUtils.degToRad(cam.fov / 2))) * 1.08;
+  function entrerDans(s: { x: number; y: number; w: number; h: number; site?: boolean }) {
     const c = new THREE.Vector3(s.x + s.w / 2, 0, s.y + s.h * 0.45);
-    const d = Math.min(SEUIL_LOIN * 0.85, Math.max(14, Math.max(s.w / Math.max(cam.aspect, 0.5), s.h) * 0.85));
-    voler(c, c.clone().add(new THREE.Vector3(0.05, 0.55, 0.83).normalize().multiplyScalar(d)));
+    const juste = distanceCadrage(s);
+    const d = s.site ? Math.max(SEUIL_LOIN * 1.12, juste) : Math.min(SEUIL_LOIN * 0.9, Math.max(12, juste));
+    voler(c, c.clone().add(new THREE.Vector3(0.04, 0.62, 0.78).normalize().multiplyScalar(d)));
   }
   function versObjet(nom: string) {
     const o = objets.get(nom);
@@ -582,9 +635,12 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     ctrl.update();
     // Vue d'ensemble : pastilles des caméras et noms de sites ; en zoomant,
     // la 3D détaillée et les noms d'équipements prennent le relais.
-    const loin = cam.position.distanceTo(ctrl.target) > SEUIL_LOIN;
+    const dist = cam.position.distanceTo(ctrl.target);
+    const loin = dist > SEUIL_LOIN;
     apercu.visible = loin;
     etiq.domElement.classList.toggle("loin", loin);
+    // Très loin (plusieurs sites à l'écran) : un résumé par site, rien d'autre.
+    etiq.domElement.classList.toggle("tres-loin", dist > seuilTresLoin);
     rnd.render(scene, cam);
     etiq.render(scene, cam);
   });

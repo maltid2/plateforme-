@@ -170,7 +170,7 @@ kbd { border: 1px solid var(--trait); }
 .etiquette3d.point { font-size: 13px; color: #a7f0cf; }
 .etiquette3d.petite { font-size: 9.5px; padding: 0 4px; }
 .etiquette3d.plateau { font-size: 10.5px; color: #3ddc97; background: rgba(7, 9, 13, 0.85); }
-.loin .etiquette3d:not(.site):not(.baie):not(.resume) { display: none; }
+.loin .etiquette3d:not(.site):not(.baie):not(.resume):not(.resume-site) { display: none; }
 .etiquette3d.resume { color: #3ddc97; font-size: 12px; border: 1px solid rgba(61, 220, 151, 0.45); background: rgba(7, 9, 13, 0.85); }
 
 /* ---------- fiche ---------- */
@@ -342,3 +342,8 @@ body.lecture .local::after { content: " · lecture seule"; }
   .i-titre-baies { font-size: 14pt; margin: 4px 0; }
   .i-baies .b-site { break-inside: avoid; }
 }
+
+/* ---------- niveaux de détail de la 3D ---------- */
+.etiquette3d.resume-site { display: none; font-size: 13px; font-weight: 700; color: #e3f9ee; background: rgba(13, 30, 23, 0.9); border: 1px solid rgba(61, 220, 151, 0.55); padding: 3px 9px; }
+.tres-loin .etiquette3d.resume-site { display: block; }
+.tres-loin .etiquette3d.site, .tres-loin .etiquette3d.baie, .tres-loin .etiquette3d.resume, .tres-loin .etiquette3d.plateau, .tres-loin .etiquette3d.point { display: none; }

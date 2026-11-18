@@ -795,3 +795,12 @@ Chaque **lundi** : un point « IA : tendances et découvertes » (3 à 5 entrée
 **Incidents/pannes :** rien de daté du 17 novembre trouvé (recherche limitée, pas de source de statut lue).
 **Échéances :** Apple CVE-2024-27834 demain 18/11 ; SonicWall CVE-2026-19868 le 20/11 ; Microsoft Outlook, Cisco BroadWorks, Chromium le 24/11.
 **Fiche :** réplication Active Directory (USN, vecteur d'à-jour, notification). Pas d'issue ATLAS (pile de production non concernée).
+
+---
+
+## 2026-11-18 (mercredi)
+
+**Catalogue CISA (KEV) :** flux relu le 2026-11-18 : version **2026.11.17**, **1782** entrées (+1 depuis 2026.11.13). Seule nouvelle entrée : **CVE-2026-115731**, Perforce, Puppet Enterprise, ajoutée le 2026-11-17, échéance 2026-12-01 (éditeur **hors de ta liste** ; je n'ai pas lu l'avis, donc ni version ni vecteur).
+**Échéances confirmées dans le flux :** Apple CVE-2024-27834 (« Multiple Products ») : **aujourd'hui 2026-11-18** ; SonicWall CVE-2026-19868 (SonicOS SSLVPN) : **2026-11-20**.
+**Avis éditeurs de ta liste :** aucun nouvel avis lu aujourd'hui. **Pannes :** non vérifiées aujourd'hui (aucune source de statut lue).
+**Fiche :** SQL, transactions, isolation et verrous InnoDB. Pas d'issue ATLAS.

@@ -107,6 +107,7 @@ Statuts : `vu` · `à revoir` · `acquis`. Mis à jour à chaque fiche.
 | Synthèse de la semaine 9-15 novembre + bloc d'anglais (15 termes, texte à trous Barracuda) | 1/2/3/4/AD/SQL | 2026-11-15 | à revoir (aucune réponse ni copie reçue) |
 | Agrégat de liens (EtherChannel) : hachage déterministe, répartition 0-7, modes PAgP | 2 | 2026-11-16 | vu (fiche rédigée, en attente de lecture) |
 | Active Directory : réplication, USN, vecteur d'à-jour, notification | AD | 2026-11-17 | vu (fiche rédigée, en attente de lecture) ; calibrage AD toujours sans réponse |
+| SQL : transactions, niveaux d'isolation, verrous InnoDB, `1205` | SQL | 2026-11-18 | vu (fiche rédigée, en attente de lecture) ; calibrage SQL toujours sans réponse |
 
 ## Calibrage
 

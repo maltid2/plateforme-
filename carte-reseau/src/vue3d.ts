@@ -816,8 +816,17 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
   new ResizeObserver(taille).observe(hote);
   taille();
 
+  let derniereFrappe = 0;
+  document.addEventListener("keydown", (e) => {
+    const t = e.target as HTMLElement | null;
+    if (t && (t.tagName === "TEXTAREA" || t.tagName === "INPUT")) derniereFrappe = performance.now();
+  }, true);
+
   rnd.setAnimationLoop(() => {
     if (!hote.offsetParent) return; // onglet caché : on ne dessine rien
+    // Pendant la frappe, la 3D se met en pause (la dernière image reste) :
+    // sur un PC modeste, dessiner une grande scène ralentirait la saisie.
+    if (performance.now() - derniereFrappe < 700 && !vol) return;
     if (vol) {
       const t = Math.min(1, (performance.now() - vol.t0) / 750);
       const k = t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;

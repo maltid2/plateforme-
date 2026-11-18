@@ -96,6 +96,7 @@ function ouvrirTopologie(id: string) {
   editeur.definir(active().texte);
   listerTopologies();
   recalculer();
+  maj3D(true);
   plan.cadrer();
   v3?.cadrer();
 }
@@ -195,8 +196,7 @@ function dessiner() {
   plan.afficher(inv, disp, site);
   plan.selectionner(choisi);
   if (vue === "baies") dessinerBaies();
-  v3?.afficher(inv, disp, site);
-  v3?.selectionner(choisi);
+  maj3D();
 }
 
 /* ---------------- fiche ---------------- */
@@ -314,6 +314,20 @@ $("hote-baies").addEventListener("click", (e) => {
   $("hote-baies").querySelectorAll(".b-eq").forEach((x) => x.classList.toggle("choisi", (x as SVGElement).dataset.nom === choisi));
 });
 
+/**
+ * La 3D n'est reconstruite que si elle est affichée, et après une courte
+ * pause dans la frappe : sur un grand réseau, la reconstruire à chaque
+ * touche (même onglet caché) ralentissait la saisie.
+ */
+let a3D = false, minuteur3D = 0;
+function maj3D(immediat = false) {
+  a3D = true;
+  if (!v3 || vue !== "3d") return;
+  clearTimeout(minuteur3D);
+  const faire = () => { if (!a3D || !v3) return; a3D = false; v3.afficher(inv, disp, site); v3.selectionner(choisi); };
+  if (immediat) faire(); else minuteur3D = window.setTimeout(faire, 450);
+}
+
 async function montrer(v: "2d" | "3d" | "baies") {
   vue = v;
   $("v-2d").setAttribute("aria-selected", String(v === "2d"));
@@ -329,18 +343,17 @@ async function montrer(v: "2d" | "3d" | "baies") {
     m.options.cameras = $<HTMLSelectElement>("o-cams").value as "murs" | "baie";
     $<HTMLSelectElement>("o-cams").addEventListener("change", (e) => {
       m.options.cameras = (e.target as HTMLSelectElement).value as "murs" | "baie";
-      v3?.afficher(inv, disp, site); v3?.selectionner(choisi);
+      maj3D(true);
     });
     v3 = m.creerVue3D(hote3d, { choisir });
-    v3.afficher(inv, disp, site);
-    v3.selectionner(choisi);
+    maj3D(true);
     v3.cadrer();
-  }
+  } else if (v === "3d") maj3D(true);   // rattrape les changements faits pendant que la 3D était cachée
 }
 
 /* ---------------- événements ---------------- */
 
-filtre.addEventListener("change", () => { site = filtre.value || null; dessiner(); plan.cadrer(); v3?.cadrer(); });
+filtre.addEventListener("change", () => { site = filtre.value || null; dessiner(); maj3D(true); plan.cadrer(); v3?.cadrer(); });
 recherche.addEventListener("change", () => {
   const q = recherche.value.trim().toLowerCase();
   if (!q) return;
@@ -416,7 +429,7 @@ $("b-pdf").addEventListener("click", () => { fermerMenu(); imprimer(inv, plan.ex
   elevations(inv, disp, { site, clair: true, camerasEnBaie: $<HTMLSelectElement>("o-cams").value === "baie" })); });
 $("b-glb").addEventListener("click", async () => {
   fermerMenu();
-  if (!v3) await montrer("3d");
+  if (!v3 || vue !== "3d") await montrer("3d");
   const b = await v3!.exporterGLB();
   telecharger(`${nomFichier(active().nom)}-3d.glb`, b, "model/gltf-binary");
 });

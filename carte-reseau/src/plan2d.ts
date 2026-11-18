@@ -23,7 +23,7 @@ export type Plan2D = {
   selectionner: (nom: string | null, centrer?: boolean) => void;
   cadrer: (immediat?: boolean) => void;
   /** Le plan en SVG autonome ; « clair » : fond blanc pour l'impression et les documents. */
-  exporter: (clair?: boolean) => string;
+  exporter: (clair?: boolean, signature?: string) => string;
 };
 
 function el<K extends keyof SVGElementTagNameMap>(nom: K, attrs: Record<string, string | number> = {}, parent?: Element) {
@@ -562,8 +562,14 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
       }
     },
     cadrer,
-    exporter(clair = false) {
+    exporter(clair = false, signature = "") {
       const c = svg.cloneNode(true) as SVGSVGElement;
+      // Signature en bas à droite du plan exporté.
+      if (signature) {
+        const t = el("text", { x: bornes.x + bornes.w, y: bornes.y + bornes.h + 1.4, "text-anchor": "end", "font-size": 0.7,
+          fill: clair ? "#56606C" : "#8B98A8", "font-style": "italic" }, c);
+        t.textContent = `Carte réseau · établi par ${signature} · ${new Date().toLocaleDateString("fr-FR")}`;
+      }
       // L'export garde tout le détail : pas de cartes résumé ni d'estompage.
       c.classList.remove("resume", "saisi");
       c.querySelector(".g-resume")?.remove();

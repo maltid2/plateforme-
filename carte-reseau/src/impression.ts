@@ -13,7 +13,7 @@ const echap = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").repl
 
 export const CLASSIFICATION = "Document interne — diffusion restreinte";
 
-export function imprimer(inv: Inventaire, svgPlan: string, titre: string, site: string | null, baies = "") {
+export function imprimer(inv: Inventaire, svgPlan: string, titre: string, site: string | null, baies = "", auteur = "") {
   document.getElementById("impression")?.remove();
   const date = new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
   const sites = inv.sites.filter((s) => !site || s.nom === site);
@@ -64,7 +64,7 @@ export function imprimer(inv: Inventaire, svgPlan: string, titre: string, site: 
       <header class="i-cartouche">
         <div><div class="i-classif">${echap(CLASSIFICATION)}</div><h1>${echap(titre)}</h1>
           <div class="i-sous">${site ? `Site : ${echap(site)}` : `${sites.length} site${sites.length > 1 ? "s" : ""}`} · ${eqs.length} équipements · ${inv.liaisons.length} liaisons</div></div>
-        <dl><dt>Date</dt><dd>${date}</dd><dt>Plan</dt><dd>Topologie réseau 2D</dd><dt>Version</dt><dd>${new Date().toISOString().slice(0, 16).replace("T", " ")}</dd></dl>
+        <dl>${auteur ? `<dt>Établi par</dt><dd>${echap(auteur)}</dd>` : ""}<dt>Date</dt><dd>${date}</dd><dt>Plan</dt><dd>Topologie réseau 2D</dd><dt>Version</dt><dd>${new Date().toISOString().slice(0, 16).replace("T", " ")}</dd></dl>
       </header>
       <div class="i-svg">${svgPlan.replace(/^(<svg[^>]*?) width="[\d.]+" height="[\d.]+"/, "$1")}</div>
       <footer class="i-legende">
@@ -74,11 +74,11 @@ export function imprimer(inv: Inventaire, svgPlan: string, titre: string, site: 
       </footer>
     </section>
     ${baies && !baies.includes("b-vide") ? `<section class="i-page i-baies">
-      <div class="i-classif">${echap(CLASSIFICATION)} · ${echap(titre)} · ${date}</div>
+      <div class="i-classif">${echap(CLASSIFICATION)} · ${echap(titre)} · ${date}${auteur ? ` · établi par ${echap(auteur)}` : ""}</div>
       <h2 class="i-titre-baies">Baies — vue de face</h2>${baies}
     </section>` : ""}
     <section class="i-page i-tableau">
-      <div class="i-classif">${echap(CLASSIFICATION)} · ${echap(titre)} · ${date}</div>
+      <div class="i-classif">${echap(CLASSIFICATION)} · ${echap(titre)} · ${date}${auteur ? ` · établi par ${echap(auteur)}` : ""}</div>
       ${tableau}${tableInter}
     </section>`;
   document.body.append(d);

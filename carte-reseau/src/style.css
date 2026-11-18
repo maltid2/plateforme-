@@ -368,3 +368,7 @@ body.lecture .local::after { content: " · lecture seule"; }
 @media (max-width: 900px) { .minicarte { display: none; } }
 
 .legende:empty, .plan-outils[hidden] { display: none; }
+
+/* ---------- signature ---------- */
+.signature { font-size: 12px; padding: 3px 10px; border-radius: 999px; color: #d9d2ff; background: rgba(141, 124, 255, 0.12); border-color: rgba(141, 124, 255, 0.35); }
+.signature:disabled { cursor: default; opacity: 0.9; }

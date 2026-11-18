@@ -16,7 +16,7 @@ const MODELE = { head: document.head.innerHTML, body: document.body.innerHTML };
 const EMBARQUE = (() => {
   const n = document.getElementById("carte-donnees");
   if (!n) return null;
-  try { return JSON.parse(n.textContent ?? "") as { nom: string; texte: string; exporte: string }; } catch { return null; }
+  try { return JSON.parse(n.textContent ?? "") as { nom: string; texte: string; exporte: string; auteur?: string }; } catch { return null; }
 })();
 if (EMBARQUE) document.body.classList.add("lecture");
 
@@ -387,7 +387,24 @@ const nomFichier = (n: string) => n.normalize("NFD").replace(/[̀-ͯ]/g, "").rep
 const date = () => new Date().toISOString().slice(0, 10);
 const fermerMenu = () => document.querySelector("details.menu")?.removeAttribute("open");
 
-$("b-sauvegarde").addEventListener("click", () => { fermerMenu(); telecharger(`carte-reseau-sauvegarde-${date()}.json`, projets.exporter(classeur), "application/json"); });
+$("b-sauvegarde").addEventListener("click", () => { fermerMenu(); telecharger(`carte-reseau-sauvegarde-${date()}.json`, projets.exporter(classeur, auteur()), "application/json"); });
+
+/* ---------------- signature ---------------- */
+// En visionneuse, c'est la signature de celui qui l'a exportée ; sinon celle du poste.
+const auteur = () => (EMBARQUE ? EMBARQUE.auteur ?? "" : projets.lireAuteur());
+function afficherSignature() {
+  const b = $<HTMLButtonElement>("b-signature");
+  b.textContent = auteur() ? `✎ ${auteur()}` : "";
+  b.hidden = !auteur();
+  b.disabled = !!EMBARQUE;
+}
+$("b-signature").addEventListener("click", () => {
+  const v = prompt("Signature apposée sur les documents (PDF, plans, visionneuse) :", projets.lireAuteur());
+  if (v === null) return;
+  projets.ecrireAuteur(v.replace(/[<>]/g, "").slice(0, 60));
+  afficherSignature();
+});
+afficherSignature();
 $("b-restaurer").addEventListener("click", () => { fermerMenu(); $("f-json").click(); });
 $<HTMLInputElement>("f-json").addEventListener("change", async (e) => {
   const f = (e.target as HTMLInputElement).files?.[0];
@@ -406,7 +423,7 @@ $<HTMLInputElement>("f-txt").addEventListener("change", async (e) => {
   (e.target as HTMLInputElement).value = "";
   if (f) creer(f.name.replace(/\.txt$/i, ""), await f.text());
 });
-$("b-svg").addEventListener("click", () => { fermerMenu(); telecharger(`${nomFichier(active().nom)}-plan.svg`, plan.exporter(true), "image/svg+xml"); });
+$("b-svg").addEventListener("click", () => { fermerMenu(); telecharger(`${nomFichier(active().nom)}-plan.svg`, plan.exporter(true, auteur()), "image/svg+xml"); });
 $("b-png").addEventListener("click", async () => {
   fermerMenu();
   if (vue === "3d") {
@@ -415,7 +432,7 @@ $("b-png").addEventListener("click", async () => {
     return;
   }
   // Le plan 2D est rasterisé en local, sans rien envoyer.
-  const svg = plan.exporter(true);
+  const svg = plan.exporter(true, auteur());
   const img = new Image();
   img.onload = () => {
     const k = Math.min(1, 8000 / Math.max(img.width, img.height));
@@ -426,7 +443,7 @@ $("b-png").addEventListener("click", async () => {
   img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
 });
 $("b-pdf").addEventListener("click", () => { fermerMenu(); imprimer(inv, plan.exporter(true), active().nom, site,
-  elevations(inv, disp, { site, clair: true, camerasEnBaie: $<HTMLSelectElement>("o-cams").value === "baie" })); });
+  elevations(inv, disp, { site, clair: true, camerasEnBaie: $<HTMLSelectElement>("o-cams").value === "baie" }), auteur()); });
 $("b-glb").addEventListener("click", async () => {
   fermerMenu();
   if (!v3 || vue !== "3d") await montrer("3d");
@@ -437,7 +454,7 @@ $("b-visionneuse").addEventListener("click", () => {
   fermerMenu();
   // Le même outil, la topologie incluse, en lecture seule : il s'ouvre sur
   // n'importe quel poste avec un navigateur, sans réseau ni installation.
-  const donnees = JSON.stringify({ nom: active().nom, texte: editeur.valeur, exporte: new Date().toISOString(), classification: CLASSIFICATION })
+  const donnees = JSON.stringify({ nom: active().nom, texte: editeur.valeur, exporte: new Date().toISOString(), classification: CLASSIFICATION, auteur: auteur() })
     .replace(/</g, "\\u003c");
   const html = `<!doctype html>\n<html lang="fr">\n<head>${MODELE.head.replace(/<title>[^<]*<\/title>/, `<title>${active().nom.replace(/</g, "")} · Carte réseau</title>`)}</head>\n<body>\n<script type="application/json" id="carte-donnees">${donnees}</script>\n${MODELE.body}\n</body>\n</html>\n`;
   telecharger(`${nomFichier(active().nom)}-visionneuse.html`, html, "text/html;charset=utf-8");
@@ -453,5 +470,5 @@ plan.cadrer();
 try { if (localStorage.getItem("carte-reseau:mode") === "texte" && !EMBARQUE) mode("texte"); } catch { /* sans importance */ }
 if (EMBARQUE) {
   document.title = `${EMBARQUE.nom} · Carte réseau (lecture seule)`;
-  $("etat").insertAdjacentHTML("afterbegin", `<span class="e">Lecture seule</span> · exporté le ${new Date(EMBARQUE.exporte).toLocaleString("fr-FR")} · `);
+  $("etat").insertAdjacentHTML("afterbegin", `<span class="e">Lecture seule</span> · exporté le ${new Date(EMBARQUE.exporte).toLocaleString("fr-FR")}${EMBARQUE.auteur ? ` par ${EMBARQUE.auteur.replace(/[<>&]/g, "")}` : ""} · `);
 }

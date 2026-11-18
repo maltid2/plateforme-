@@ -48,9 +48,15 @@ export function sauver(c: Classeur): boolean {
   return ecrire(CLE, JSON.stringify(c));
 }
 
+/** La signature des documents produits : gardée sur ce poste, modifiable. */
+const CLE_AUTEUR = "carte-reseau:auteur";
+export const AUTEUR_DEFAUT = "Dyvan";
+export const lireAuteur = () => (lire(CLE_AUTEUR) ?? AUTEUR_DEFAUT).trim() || AUTEUR_DEFAUT;
+export const ecrireAuteur = (nom: string) => ecrire(CLE_AUTEUR, nom.trim());
+
 /** Fichier de sauvegarde complet (toutes les topologies). */
-export function exporter(c: Classeur): string {
-  return JSON.stringify({ ...c, exporte: new Date().toISOString(), outil: "carte-reseau" }, null, 2);
+export function exporter(c: Classeur, auteur = lireAuteur()): string {
+  return JSON.stringify({ ...c, exporte: new Date().toISOString(), auteur, outil: "carte-reseau" }, null, 2);
 }
 
 /** Ajoute les topologies d'un fichier de sauvegarde, sans écraser l'existant. */

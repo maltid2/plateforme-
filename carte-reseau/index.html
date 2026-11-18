@@ -87,7 +87,7 @@
         <select id="filtre-site" aria-label="Site affiché"></select>
         <input id="recherche" type="search" placeholder="Chercher un nom ou une IP…" list="noms" />
         <datalist id="noms"></datalist>
-        <label class="bascule" id="l-cams" hidden><input type="checkbox" id="o-cams" checked /> Caméras dans la baie</label>
+        <label class="bascule" id="l-cams" hidden>Caméras <select id="o-cams" aria-label="Où représenter les caméras"><option value="baie">dans la baie</option><option value="murs">sur les murs</option></select></label>
         <button id="b-cadrer" type="button" title="Tout afficher">Recentrer</button>
       </div>
       <div class="vue" id="vue">

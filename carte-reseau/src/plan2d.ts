@@ -21,7 +21,7 @@ type Rappels = { choisir: (nom: string | null) => void };
 export type Plan2D = {
   afficher: (inv: Inventaire, d: Disposition, site: string | null) => void;
   selectionner: (nom: string | null, centrer?: boolean) => void;
-  cadrer: () => void;
+  cadrer: (immediat?: boolean) => void;
   /** Le plan en SVG autonome ; « clair » : fond blanc pour l'impression et les documents. */
   exporter: (clair?: boolean) => string;
 };
@@ -207,18 +207,60 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
   const liensDe = new Map<string, SVGElement[]>();
   let choisi: string | null = null;
   let pos = new Map<string, Point>();
+  let cadresAffiches: Disposition["cadres"] = [];
 
-  const appliquer = () => svg.setAttribute("viewBox", `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
+  // Mini-carte et boutons de zoom : hors du SVG du plan, ils ne partent
+  // jamais dans les exports.
+  const outils = document.createElement("div");
+  outils.className = "plan-outils";
+  outils.innerHTML = `
+    <div class="zooms" role="group" aria-label="Zoom">
+      <button type="button" data-z="plus" title="Zoomer" aria-label="Zoomer">＋</button>
+      <button type="button" data-z="moins" title="Dézoomer" aria-label="Dézoomer">−</button>
+      <button type="button" data-z="tout" title="Tout afficher" aria-label="Tout afficher">⤢</button>
+    </div>
+    <svg class="minicarte" xmlns="${NS}" aria-label="Mini-carte : cliquer pour s'y rendre"><g class="mc-cadres"></g><rect class="mc-vue"/></svg>`;
+  hote.appendChild(outils);
+  const mini = outils.querySelector<SVGSVGElement>(".minicarte")!;
+  const miniCadres = mini.querySelector<SVGGElement>(".mc-cadres")!;
+  const miniVue = mini.querySelector<SVGRectElement>(".mc-vue")!;
 
-  function cadrer() {
+  /**
+   * Zoom intelligent : quand les ports deviennent trop petits pour être lus,
+   * on passe en « résumé » — une carte lisible par site et par lieu, le
+   * détail estompé dessous. En zoomant, le détail revient.
+   */
+  const SEUIL_RESUME = 8; // pixels par unité du plan
+  const appliquer = () => {
+    svg.setAttribute("viewBox", `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
+    const pxParUnite = (svg.clientWidth || 1) / vb.w;
+    svg.classList.toggle("resume", pxParUnite < SEUIL_RESUME);
+    miniVue.setAttribute("x", String(vb.x)); miniVue.setAttribute("y", String(vb.y));
+    miniVue.setAttribute("width", String(vb.w)); miniVue.setAttribute("height", String(vb.h));
+  };
+
+  let anim = 0;
+  /** Déplacement doux vers un cadre (x, y, w, h) ajusté au rapport de l'écran. */
+  function allerA(cible: { x: number; y: number; w: number; h: number }, immediat = false) {
     const r = hote.getBoundingClientRect();
     const ar = (r.width || 1) / (r.height || 1);
-    let { x, y, w, h } = bornes;
-    const m = 2;
-    x -= m; y -= m; w += 2 * m; h += 2 * m;
+    let { x, y, w, h } = cible;
     if (w / h < ar) { const nw = h * ar; x -= (nw - w) / 2; w = nw; } else { const nh = w / ar; y -= (nh - h) / 2; h = nh; }
-    vb = { x, y, w, h };
-    appliquer();
+    cancelAnimationFrame(anim);
+    if (immediat) { vb = { x, y, w, h }; appliquer(); return; }
+    const depart = { ...vb }, t0 = performance.now();
+    const pas = () => {
+      const t = Math.min(1, (performance.now() - t0) / 420);
+      const k = t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
+      vb = { x: depart.x + (x - depart.x) * k, y: depart.y + (y - depart.y) * k, w: depart.w + (w - depart.w) * k, h: depart.h + (h - depart.h) * k };
+      appliquer();
+      if (t < 1) anim = requestAnimationFrame(pas);
+    };
+    anim = requestAnimationFrame(pas);
+  }
+  function cadrer(immediat = true) {
+    const m = 2;
+    allerA({ x: bornes.x - m, y: bornes.y - m, w: bornes.w + 2 * m, h: bornes.h + 2 * m }, immediat);
   }
 
   /* ---------------- câbles ---------------- */
@@ -283,9 +325,9 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
     // Ordre des couches : liaisons entre sites, cadres des sites, liaisons
     // entre lieux d'un site, cadres des lieux, câbles, équipements. Une
     // liaison longue ne se voit ainsi qu'entre les cadres qu'elle relie.
-    const gInterSites = el("g", {}, monde);
+    const gInterSites = el("g", { class: "detail" }, monde);
     const gs = el("g", {}, monde);
-    const gInterPoints = el("g", {}, monde);
+    const gInterPoints = el("g", { class: "detail" }, monde);
     const gpt = el("g", {}, monde);
     const avecPoints = new Set(cadres.filter((c) => c.type === "point").map((c) => c.site));
     cadres.forEach((c) => {
@@ -309,9 +351,9 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
       }
     });
 
-    const gl = el("g", {}, monde);
-    const gn = el("g", {}, monde);
-    const gp = el("g", {}, monde);
+    const gl = el("g", { class: "detail" }, monde);
+    const gn = el("g", { class: "detail" }, monde);
+    const gp = el("g", { class: "detail" }, monde);
 
     inv.liaisons.forEach((l) => {
       if (!visibles.has(l.a) || !visibles.has(l.b)) return;
@@ -383,11 +425,50 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
       noeuds.set(e.nom, g);
     });
 
+    // Cartes résumé, visibles quand on est dézoomé.
+    const gr = el("g", { class: "g-resume" }, monde);
+    const resumer = (eqs: typeof inv.equipements) => {
+      const n = (g: string) => eqs.filter((e) => e.genre === g).length;
+      const baies = new Set(eqs.filter((e) => e.baie).map((e) => `${e.point ?? ""}§${e.baie}`)).size;
+      const autres = eqs.length - n("switch") - n("camera");
+      const gws = [...new Set(eqs.map((e) => e.passerelleIp).filter(Boolean))];
+      return [
+        `${n("switch")} switch${n("switch") > 1 ? "s" : ""}${baies ? ` · ${baies} baie${baies > 1 ? "s" : ""}` : ""}`,
+        `${n("camera")} caméra${n("camera") > 1 ? "s" : ""}${autres > 0 ? ` · ${autres} autre${autres > 1 ? "s" : ""}` : ""}`,
+        gws.length === 1 ? `GW ${gws[0]}` : gws.length > 1 ? `${gws.length} passerelles` : "",
+      ].filter(Boolean);
+    };
+    cadres.forEach((c, i) => {
+      const aDesLieux = c.type === "site" && avecPoints.has(c.site);
+      const eqs = inv.equipements.filter((e) => e.site === c.site && (c.type === "site" || (e.point ?? "") === c.point));
+      const g = el("g", { class: "carte-resume", "data-cadre": i }, gr);
+      if (aDesLieux) {
+        // Site à plusieurs lieux : son nom en grand dans le bandeau, les lieux ont leur propre carte.
+        const fs = Math.min(c.w / 14, 3.2);
+        texte(g, `${c.nom}`, { x: c.x + c.w / 2, y: c.y + Math.min(2.2, fs * 0.9), "text-anchor": "middle", "font-size": fs * 0.62, "font-weight": 800, fill: "#F5F7FA" });
+        return;
+      }
+      const fs = Math.min(c.w / 8.5, (c.h - 1) / 5.4, 4.5);
+      const w = c.w * 0.86, h = fs * 5.2, x = c.x + (c.w - w) / 2, y = c.y + (c.h - h) / 2 + (c.type === "point" ? 0.4 : 0.6);
+      el("rect", { x, y, width: w, height: h, rx: fs * 0.5, fill: "#121821", stroke: c.type === "point" ? "#3DDC97" : "#8D7CFF", "stroke-width": fs * 0.06 }, g);
+      texte(g, c.type === "point" ? `⌖ ${c.nom}` : c.nom, { x: x + w / 2, y: y + fs * 1.45, "text-anchor": "middle", "font-size": fs * 1.05, "font-weight": 800, fill: "#F5F7FA" });
+      resumer(eqs).forEach((ligne, k) => texte(g, ligne, { x: x + w / 2, y: y + fs * (2.75 + k * 1.05), "text-anchor": "middle",
+        "font-size": fs * 0.72, fill: k === 2 ? "#C2B9FF" : "#B9C3CF", "font-family": k === 2 ? "ui-monospace, monospace" : "inherit" }));
+    });
+    cadresAffiches = cadres;
+
+    // Mini-carte : les cadres des sites et des lieux, à l'échelle.
+    miniCadres.replaceChildren();
+    cadres.forEach((c) => el("rect", { x: c.x, y: c.y, width: c.w, height: c.h, rx: Math.min(c.w, c.h) * 0.04,
+      class: c.type === "point" ? "mc-lieu" : "mc-site" }, miniCadres));
+
     const xs = cadres.flatMap((c) => [c.x, c.x + c.w]), ys = cadres.flatMap((c) => [c.y, c.y + c.h]);
     const nouvelles = { x: Math.min(...xs), y: Math.min(...ys), w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys) };
     // On ne recadre que si l'emprise change : taper une IP ne doit pas faire sauter la vue.
     const change = (["x", "y", "w", "h"] as const).some((k) => Math.abs(nouvelles[k] - bornes[k]) > 0.01);
     bornes = nouvelles;
+    const mm = Math.max(bornes.w, bornes.h) * 0.04;
+    mini.setAttribute("viewBox", `${bornes.x - mm} ${bornes.y - mm} ${bornes.w + 2 * mm} ${bornes.h + 2 * mm}`);
     if (change) cadrer();
     if (choisi) marquer(choisi);
   }
@@ -434,6 +515,12 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
     svg.classList.remove("saisi");
     if (bouge) return;
     const cible = ev.target as Element;
+    // Dézoomé, un clic sur une carte résumé zoome sur ce site ou ce lieu.
+    if (svg.classList.contains("resume")) {
+      const carte = cible.closest?.("[data-cadre]") as SVGElement | null;
+      const c = carte ? cadresAffiches[Number(carte.dataset.cadre)] : undefined;
+      if (c) { allerA({ x: c.x - 1, y: c.y - 1, w: c.w + 2, h: c.h + 2 }); return; }
+    }
     // Un clic sur un port branché ouvre ce qui est au bout du câble.
     const port = cible.closest?.("[data-vers]") as SVGElement | null;
     if (port) { cb.choisir(port.dataset.vers!); return; }
@@ -444,6 +531,24 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
   svg.addEventListener("dblclick", (ev) => zoomer(0.5, ev.clientX, ev.clientY));
   new ResizeObserver(() => cadrer()).observe(hote);
 
+  outils.addEventListener("click", (ev) => {
+    const z = (ev.target as HTMLElement).closest<HTMLElement>("[data-z]")?.dataset.z;
+    if (!z) return;
+    if (z === "tout") { cadrer(false); return; }
+    const k = z === "plus" ? 0.6 : 1 / 0.6;
+    const cx = vb.x + vb.w / 2, cy = vb.y + vb.h / 2;
+    allerA({ x: cx - (vb.w * k) / 2, y: cy - (vb.h * k) / 2, w: vb.w * k, h: vb.h * k });
+  });
+  // Mini-carte : cliquer ou glisser pour déplacer la vue.
+  let miniSaisi = false;
+  const miniAller = (ev: PointerEvent, doux: boolean) => {
+    const p = new DOMPoint(ev.clientX, ev.clientY).matrixTransform(mini.getScreenCTM()!.inverse());
+    allerA({ x: p.x - vb.w / 2, y: p.y - vb.h / 2, w: vb.w, h: vb.h }, !doux);
+  };
+  mini.addEventListener("pointerdown", (ev) => { miniSaisi = true; mini.setPointerCapture(ev.pointerId); miniAller(ev, true); });
+  mini.addEventListener("pointermove", (ev) => { if (miniSaisi) miniAller(ev, false); });
+  mini.addEventListener("pointerup", () => { miniSaisi = false; });
+
   return {
     afficher,
     selectionner(nom, centrer = false) {
@@ -451,12 +556,15 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
       marquer(nom);
       if (nom && centrer) {
         const p = pos.get(nom);
-        if (p) { const w = Math.min(vb.w, 34), k = w / vb.w; vb = { x: p.x - w / 2, y: p.y - (vb.h * k) / 2, w, h: vb.h * k }; appliquer(); }
+        if (p) { const w = Math.min(vb.w, 34), k = w / vb.w; allerA({ x: p.x - w / 2, y: p.y - (vb.h * k) / 2, w, h: vb.h * k }); }
       }
     },
     cadrer,
     exporter(clair = false) {
       const c = svg.cloneNode(true) as SVGSVGElement;
+      // L'export garde tout le détail : pas de cartes résumé ni d'estompage.
+      c.classList.remove("resume", "saisi");
+      c.querySelector(".g-resume")?.remove();
       if (clair) eclaircir(c);
       const m = 2;
       c.setAttribute("viewBox", `${bornes.x - m} ${bornes.y - m} ${bornes.w + 2 * m} ${bornes.h + 2 * m}`);

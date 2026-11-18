@@ -302,7 +302,7 @@ function remplirFiche() {
 /** Les baies vues de face, côte à côte, par site et par lieu. */
 function dessinerBaies() {
   const h = $("hote-baies");
-  h.innerHTML = elevations(inv, disp, { site, camerasEnBaie: $<HTMLInputElement>("o-cams").checked });
+  h.innerHTML = elevations(inv, disp, { site, camerasEnBaie: $<HTMLSelectElement>("o-cams").value === "baie" });
   h.querySelectorAll(".b-eq").forEach((g) => g.classList.toggle("choisi", (g as SVGElement).dataset.nom === choisi));
 }
 $("hote-baies").addEventListener("click", (e) => {
@@ -323,8 +323,11 @@ async function montrer(v: "2d" | "3d" | "baies") {
   $("l-cams").hidden = v === "2d";
   if (v === "3d" && !v3) {
     const m = await import("./vue3d.ts");
-    m.options.camerasEnBaie = $<HTMLInputElement>("o-cams").checked;
-    $<HTMLInputElement>("o-cams").onchange = (e) => { m.options.camerasEnBaie = (e.target as HTMLInputElement).checked; v3?.afficher(inv, disp, site); v3?.selectionner(choisi); };
+    m.options.cameras = $<HTMLSelectElement>("o-cams").value as "murs" | "baie";
+    $<HTMLSelectElement>("o-cams").addEventListener("change", (e) => {
+      m.options.cameras = (e.target as HTMLSelectElement).value as "murs" | "baie";
+      v3?.afficher(inv, disp, site); v3?.selectionner(choisi);
+    });
     v3 = m.creerVue3D(hote3d, { choisir });
     v3.afficher(inv, disp, site);
     v3.selectionner(choisi);
@@ -345,8 +348,8 @@ recherche.addEventListener("change", () => {
 $("v-2d").addEventListener("click", () => montrer("2d"));
 $("v-3d").addEventListener("click", () => montrer("3d"));
 $("v-baies").addEventListener("click", () => montrer("baies"));
-$<HTMLInputElement>("o-cams").addEventListener("change", () => { if (vue === "baies") dessinerBaies(); });
-$("b-cadrer").addEventListener("click", () => (vue === "2d" ? plan.cadrer() : v3?.cadrer()));
+$<HTMLSelectElement>("o-cams").addEventListener("change", () => { if (vue === "baies") dessinerBaies(); });
+$("b-cadrer").addEventListener("click", () => (vue === "2d" ? plan.cadrer(false) : v3?.cadrer()));
 $("b-aide").addEventListener("click", (e) => {
   const aide = $("aide");
   aide.hidden = !aide.hidden;
@@ -407,7 +410,7 @@ $("b-png").addEventListener("click", async () => {
   img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
 });
 $("b-pdf").addEventListener("click", () => { fermerMenu(); imprimer(inv, plan.exporter(true), active().nom, site,
-  elevations(inv, disp, { site, clair: true, camerasEnBaie: $<HTMLInputElement>("o-cams").checked })); });
+  elevations(inv, disp, { site, clair: true, camerasEnBaie: $<HTMLSelectElement>("o-cams").value === "baie" })); });
 $("b-glb").addEventListener("click", async () => {
   fermerMenu();
   if (!v3) await montrer("3d");

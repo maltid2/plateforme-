@@ -34,7 +34,23 @@ const BW = 2.9, BD = 2.6;   // encombrement d'une baie
 const MEDIAS_COURTS = { fibre: "fibre", cuivre: "RJ45", radio: "radio", vpn: "VPN" } as const;
 
 /** Réglages de la vue, modifiables depuis l'interface. */
-export const options = { camerasEnBaie: true };
+export const options: { cameras: "murs" | "baie" } = { cameras: "baie" };
+
+/**
+ * Ajoute deux points de part et d'autre de chaque angle : la courbe reste
+ * droite le long des chemins et ne s'arrondit qu'aux coudes.
+ */
+function arrondir(pts: THREE.Vector3[]) {
+  const out: THREE.Vector3[] = [pts[0]];
+  for (let i = 1; i < pts.length - 1; i++) {
+    const a = pts[i - 1], b = pts[i], c = pts[i + 1];
+    const da = b.distanceTo(a), dc = b.distanceTo(c);
+    if (da < 0.01) continue;
+    out.push(b.clone().lerp(a, Math.min(0.25, da / 3) / da), b, b.clone().lerp(c, Math.min(0.25, dc / 3) / Math.max(dc, 0.01)));
+  }
+  out.push(pts[pts.length - 1]);
+  return out;
+}
 
 export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
   const scene = new THREE.Scene();
@@ -74,6 +90,14 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
   let pastilles: THREE.Sprite[] = [];
   let sols: THREE.Mesh[] = [];
   const SEUIL_LOIN = 50;
+  /**
+   * Niveau de détail selon la taille à l'écran, pas selon une distance fixe :
+   * une salle qui remplit l'écran est « près », quelle que soit sa taille.
+   * PX_LOIN : en dessous, une unité fait moins de ce nombre de pixels.
+   */
+  const PX_LOIN = 9;
+  const pxParUnite = (dist: number) => (hote.clientHeight || 600) / (2 * dist * Math.tan(THREE.MathUtils.degToRad(cam.fov / 2)));
+  const distancePour = (px: number) => (hote.clientHeight || 600) / (2 * px * Math.tan(THREE.MathUtils.degToRad(cam.fov / 2)));
   /** Au-delà : plusieurs sites à l'écran, un résumé par site. Calculé d'après le plus grand site. */
   let seuilTresLoin = SEUIL_LOIN * 2.4;
   const PASTILLE = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1" width="128" height="128">
@@ -145,6 +169,29 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     return new THREE.Mesh(geo(new THREE.TubeGeometry(c, Math.max(32, points.length * 14), rayon, 6, false)), m);
   }
 
+  /* ---------- habillage des salles ---------- */
+  // Sol technique : dalles de 60 cm, dessinées une fois sur un canvas.
+  const dalles = (() => {
+    const cv = document.createElement("canvas");
+    cv.width = cv.height = 128;
+    const g = cv.getContext("2d")!;
+    g.fillStyle = "#1a212b"; g.fillRect(0, 0, 128, 128);
+    g.fillStyle = "#1f2732"; g.fillRect(3, 3, 122, 122);
+    g.strokeStyle = "#11161d"; g.lineWidth = 3; g.strokeRect(1.5, 1.5, 125, 125);
+    // Quelques dalles perforées (ventilation), comme dans un vrai local.
+    g.fillStyle = "#151b23";
+    for (let i = 0; i < 6; i++) for (let j = 0; j < 6; j++) g.fillRect(22 + i * 15, 22 + j * 15, 5, 5);
+    const t = new THREE.CanvasTexture(cv);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = rnd.capabilities.getMaxAnisotropy();
+    return t;
+  })();
+  // Voyants des équipements : trois rythmes de clignotement, pour que la
+  // baie vive sans que tout clignote en même temps.
+  let voyants: THREE.MeshStandardMaterial[] = [];
+  const voyant = (k: number) => voyants[k % voyants.length];
+
   /* ---------- la baie ---------- */
   function baie(nbU: number) {
     const g = new THREE.Group();
@@ -186,6 +233,9 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     // Oreilles vissées sur les rails.
     const oreille = std(0x3a4350, { metalness: 0.6 });
     [-1, 1].forEach((s) => g.add(P(boite(0.14, h, 0.03, oreille), (s * (RL + 0.12)) / 2, 0, RD / 2 + 0.05)));
+    // Voyants d'activité qui clignotent sur l'oreille droite.
+    const graine = [...e.nom].reduce((t, ch) => t + ch.charCodeAt(0), 0);
+    [0, 1].forEach((i) => g.add(P(boite(0.035, 0.035, 0.02, voyant(graine + i)), RL / 2 + 0.06, h / 2 - 0.07 - i * 0.07, RD / 2 + 0.075)));
     return { g, h };
   }
 
@@ -258,6 +308,31 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     return { g, prise };
   }
 
+  /**
+   * Une caméra fixée au mur, orientée vers la salle : elle sert à repérer
+   * où se trouve la caméra, pas ce qu'elle filme.
+   */
+  function cameraMurale(e: Equipement) {
+    const g = new THREE.Group();
+    const clair = std(0xd9dee5, { roughness: 0.4 }), noir = std(0x111418), gris = std(0x3b4450);
+    const accent = std(APPARENCE.camera.couleur, { emissive: new THREE.Color(APPARENCE.camera.couleur), emissiveIntensity: 0.8 });
+    const dome = e.infos.some((i) => /d[oô]me|fisheye|360/i.test(i));
+    g.add(P(boite(0.28, 0.36, 0.05, gris), 0, 0, -0.12));             // platine murale
+    g.add(P(boite(0.07, 0.07, 0.22, gris), 0, 0, 0.0));               // bras
+    if (dome) {
+      g.add(P(cyl(0.2, 0.2, 0.08, clair, 24), 0, 0, 0.14)).rotation.x = Math.PI / 2;
+      const coque = new THREE.Mesh(geoPartagee("dome", () => new THREE.SphereGeometry(0.17, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2)),
+        std(0x0d1117, { transparent: true, opacity: 0.85, metalness: 0.6, roughness: 0.1 }));
+      coque.rotation.x = Math.PI / 2; coque.position.z = 0.18; g.add(coque);
+    } else {
+      const corps = P(cyl(0.1, 0.1, 0.5, clair, 18), 0, 0.02, 0.32); corps.rotation.x = Math.PI / 2; g.add(corps);
+      g.add(P(boite(0.26, 0.03, 0.56, clair), 0, 0.13, 0.32));       // visière
+      const obj = P(cyl(0.075, 0.075, 0.02, noir, 16), 0, 0.02, 0.575); obj.rotation.x = Math.PI / 2; g.add(obj);
+    }
+    g.add(P(cyl(0.02, 0.02, 0.015, accent, 8), 0.06, -0.05, dome ? 0.24 : 0.585)).rotation.x = Math.PI / 2;
+    return g;
+  }
+
   /** Une caméra en miniature, posée sur un plateau de la baie, objectif vers l'avant. */
   function miniCamera(e: Equipement) {
     const g = new THREE.Group();
@@ -294,6 +369,11 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     surbrillance = null;
     racine = new THREE.Group();
     scene.add(racine);
+    voyants = [0x3ddc97, 0x3ddc97, 0xffd166].map((c) => {
+      const m = new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 1 });
+      jetables.push(m);
+      return m;
+    });
     apercu = new THREE.Group();
     apercu.name = "apercu";
     racine.add(apercu);
@@ -307,7 +387,13 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     // Une salle par lieu ; un site sans lieux est lui-même une salle.
     const salles = cadres.filter((c) => c.type === "point" || !avecPoints.has(c.site));
     const salleDe = new Map<string, string>();
-    type Prise = { port: (id?: string) => THREE.Vector3; enBaie: boolean; plateau?: boolean; hautBaie?: THREE.Vector3; baie?: string };
+    type Prise = {
+      port: (id?: string) => THREE.Vector3; enBaie: boolean; plateau?: boolean; hautBaie?: THREE.Vector3; baie?: string;
+      rack?: { x: number; z: number; H: number };   // pour un équipement en baie
+      mur?: boolean;                                // caméra murale : câble par le chemin de câbles
+    };
+    /** Le chemin de câbles de chaque salle : un U en hauteur le long des murs. */
+    const chemins = new Map<string, { y: number; xL: number; xR: number; zB: number; zF: number }>();
     /** Où se branche un câble : le port sur la façade, ou la prise d'un équipement. */
     const prises = new Map<string, Prise>();
 
@@ -339,17 +425,18 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     salles.forEach((c) => {
       const cle = `${c.site}§${c.type === "point" ? c.point : ""}`;
       // Le sol de la salle.
-      const sol = boite(c.w, 0.2, c.h, std(c.type === "point" ? 0x121a22 : 0x10151c, { roughness: 0.9, metalness: 0 }));
+      // Le sol technique, en dalles (une dalle ≈ 1,2 unité).
+      const tex = dalles.clone();
+      tex.repeat.set(c.w / 1.2, c.h / 1.2);
+      tex.needsUpdate = true;
+      jetables.push(tex);
+      const matSol = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85, metalness: 0.1 });
+      jetables.push(matSol);
+      const sol = new THREE.Mesh(geo(new THREE.BoxGeometry(c.w, 0.2, c.h)), matSol);
       sol.position.set(c.x + c.w / 2, -0.1, c.y + c.h / 2);
       sol.userData.salle = { x: c.x, y: c.y, w: c.w, h: c.h };
       sols.push(sol);
       racine.add(sol);
-      const cote = Math.max(c.w, c.h);
-      const grille = new THREE.GridHelper(cote, Math.round(cote / 2), 0x1d2530, 0x161c25);
-      grille.position.set(c.x + c.w / 2, 0.005, c.y + c.h / 2);
-      grille.scale.set(c.w / cote, 1, c.h / cote);
-      jetables.push(grille.geometry, grille.material as THREE.Material);
-      racine.add(grille);
       const t = etiquette(c.type === "point" ? `⌖ ${c.nom}` : c.nom, c.type === "point" ? "etiquette3d site point" : "etiquette3d site");
       t.position.set(c.x + 1.2, 0.3, c.y + 0.9);
       t.center.set(0, 0.5);
@@ -368,7 +455,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
 
       // Les caméras rangées sous les switchs de leur baie, sur des plateaux.
       const camerasDe = new Map<string, Equipement[]>();
-      if (options.camerasEnBaie) {
+      if (options.cameras === "baie") {
         eqs.filter((e) => e.genre === "camera").forEach((e) => {
           const l = inv.liaisons.find((x) => (x.a === e.nom && baieDe.has(x.b)) || (x.b === e.nom && baieDe.has(x.a)));
           if (!l) return;
@@ -381,6 +468,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
       // Les baies, alignées au fond de la salle.
       const nb = groupes.size;
       let k = 0;
+      const baiesSalle: { x: number; z: number; H: number }[] = [];
       groupes.forEach((liste, nomBaie) => {
         const x = c.x + c.w / 2 + (k++ - (nb - 1) / 2) * (BW + 1.2);
         const z = c.y + 3.2;
@@ -390,6 +478,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
         const { g, H } = baie(nbU);
         g.position.set(x, 0, z);
         racine.add(g);
+        baiesSalle.push({ x, z, H });
         const lb = etiquette(`▤ ${nomBaie}`, "etiquette3d baie");
         lb.position.set(x, H + 0.35, z);
         racine.add(lb);
@@ -408,7 +497,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
           cliquables.push(gm.children[0]);
           objets.set(e.nom, gm);
           prises.set(e.nom, {
-            enBaie: true, baie: `${cle}§${nomBaie}`,
+            enBaie: true, baie: `${cle}§${nomBaie}`, rack: { x, z, H },
             hautBaie: new THREE.Vector3(x, H + 0.1, z),
             port: (id) => {
               const p = f && id ? f.parId.get(id) : undefined;
@@ -449,6 +538,67 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
           });
         }
       });
+
+      // Murs (fond et côtés ; l'avant reste ouvert pour regarder dedans) et
+      // chemin de câbles en hauteur, au-dessus des baies.
+      const hBaies = Math.max(4.2, ...baiesSalle.map((b) => b.H));
+      const yChemin = hBaies + 0.55, hMur = yChemin + 0.9;
+      const mur = std(0x232b36, { roughness: 0.95, metalness: 0 });
+      const plinthe = std(0x2f3a48, { roughness: 0.6 });
+      ([[c.x + c.w / 2, c.y + 0.075, c.w, 0.15], [c.x + 0.075, c.y + c.h / 2, 0.15, c.h], [c.x + c.w - 0.075, c.y + c.h / 2, 0.15, c.h]] as const)
+        .forEach(([x, z, w, dz]) => {
+          racine.add(P(boite(w, hMur, dz, mur), x, hMur / 2, z));
+          racine.add(P(boite(w + (dz > w ? 0.05 : 0), 0.12, dz + (w > dz ? 0.05 : 0), plinthe), x, 0.06, z));
+        });
+      const ch = { y: yChemin, xL: c.x + 0.7, xR: c.x + c.w - 0.7, zB: c.y + 0.7, zF: c.y + c.h - 1.2 };
+      chemins.set(cle, ch);
+      const tole = std(0x7b8794, { metalness: 0.75, roughness: 0.35 });
+      const troncon = (x1: number, z1: number, x2: number, z2: number) => {
+        const lx = Math.abs(x2 - x1) + 0.5, lz = Math.abs(z2 - z1) + 0.5, cx = (x1 + x2) / 2, cz = (z1 + z2) / 2;
+        const enX = lx > lz;
+        racine.add(P(boite(enX ? lx : 0.5, 0.03, enX ? 0.5 : lz, tole), cx, ch.y - 0.08, cz));
+        [-1, 1].forEach((s) => racine.add(P(boite(enX ? lx : 0.03, 0.14, enX ? 0.03 : lz, tole),
+          cx + (enX ? 0 : s * 0.25), ch.y - 0.01, cz + (enX ? s * 0.25 : 0))));
+      };
+      troncon(ch.xL, ch.zF, ch.xL, ch.zB);
+      troncon(ch.xL, ch.zB, ch.xR, ch.zB);
+      troncon(ch.xR, ch.zB, ch.xR, ch.zF);
+      baiesSalle.forEach((b) => troncon(b.x + RL / 2 + 0.25, ch.zB, b.x + RL / 2 + 0.25, b.z));   // dérivation vers chaque baie
+
+      // Caméras murales : réparties le long des murs (côtés, et fond hors des baies).
+      if (options.cameras === "murs") {
+        const cams = eqs.filter((e) => e.genre === "camera" && visibles.has(e.nom) && !prises.has(e.nom));
+        const xMin = Math.min(...baiesSalle.map((b) => b.x - BW / 2), c.x + c.w / 2) - 1.2;
+        const xMax = Math.max(...baiesSalle.map((b) => b.x + BW / 2), c.x + c.w / 2) + 1.2;
+        type Seg = { a: [number, number]; b: [number, number] };
+        const segs = ([
+          { a: [c.x + 0.16, c.y + c.h - 1.5], b: [c.x + 0.16, c.y + 1.4] },
+          { a: [c.x + 1.4, c.y + 0.16], b: [xMin, c.y + 0.16] },
+          { a: [xMax, c.y + 0.16], b: [c.x + c.w - 1.4, c.y + 0.16] },
+          { a: [c.x + c.w - 0.16, c.y + 1.4], b: [c.x + c.w - 0.16, c.y + c.h - 1.5] },
+        ] as Seg[]).filter((sg) => Math.hypot(sg.b[0] - sg.a[0], sg.b[1] - sg.a[1]) > 0.8);
+        const longueurs = segs.map((sg) => Math.hypot(sg.b[0] - sg.a[0], sg.b[1] - sg.a[1]));
+        const total = longueurs.reduce((t, v) => t + v, 0);
+        const centre = new THREE.Vector3(c.x + c.w / 2, 0.4, c.y + c.h * 0.55);
+        cams.forEach((e, i) => {
+          let dist = ((i + 0.5) / cams.length) * total, sIdx = 0;
+          while (sIdx < segs.length - 1 && dist > longueurs[sIdx]) { dist -= longueurs[sIdx]; sIdx++; }
+          const sg = segs[sIdx], t = longueurs[sIdx] ? dist / longueurs[sIdx] : 0;
+          const px = sg.a[0] + (sg.b[0] - sg.a[0]) * t, pz = sg.a[1] + (sg.b[1] - sg.a[1]) * t;
+          const g = cameraMurale(e);
+          g.position.set(px, Math.min(hMur - 0.5, 2.9), pz);
+          g.lookAt(centre);
+          g.userData.nom = e.nom;
+          racine.add(g);
+          cliquables.push(g);
+          objets.set(e.nom, g);
+          const lb = etiquette(e.nom, "etiquette3d petite");
+          lb.position.set(0, 0.45, 0);
+          g.add(lb);
+          const prise = g.position.clone();
+          prises.set(e.nom, { enBaie: false, mur: true, port: () => prise.clone() });
+        });
+      }
 
       // Le reste, posé dans la salle à la même place que sur le plan 2D.
       eqs.filter((e) => !EN_BAIE.has(e.genre) && !prises.has(e.nom)).forEach((e) => {
@@ -521,6 +671,49 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
           new THREE.Vector3(bas.x, bas.y + 0.15, bas.z + 0.15), bas], couleur, r));
         return;
       }
+      // Caméra murale ↔ équipement en baie : par le chemin de câbles.
+      const murale = A.mur ? A : B.mur ? B : null, enRack = A.rack ? A : B.rack ? B : null;
+      const ch = chemins.get(salleDe.get(l.a)!);
+      if (murale && enRack && ch) {
+        const pRack = murale === A ? pb : pa, pCam = murale === A ? pa : pb, rk = enRack.rack!;
+        // Chaque câble décalé dans le chemin : on voit une nappe, pas un seul fil.
+        const o = (([...l.a, ...l.b].reduce((t, c2) => t + c2.charCodeAt(0), 0) % 9) - 4) * 0.045;
+        const y = ch.y + 0.02 + Math.abs(o) * 0.4;
+        const xg = rk.x + RL / 2 + 0.25 + o;
+        // Point du U le plus proche de la caméra, et parcours le long du U.
+        const u = [[ch.xL, ch.zF], [ch.xL, ch.zB], [ch.xR, ch.zB], [ch.xR, ch.zF]] as const;
+        const abs = (px: number, pz: number) => {
+          // Abscisse curviligne du point projeté sur le U.
+          let best = { d: Infinity, s: 0, x: 0, z: 0 }, s0 = 0;
+          for (let i = 0; i < 3; i++) {
+            const [ax, az] = u[i], [bx, bz] = u[i + 1];
+            const L = Math.hypot(bx - ax, bz - az) || 1;
+            const t = Math.max(0, Math.min(1, ((px - ax) * (bx - ax) + (pz - az) * (bz - az)) / (L * L)));
+            const qx = ax + (bx - ax) * t, qz = az + (bz - az) * t, dd = Math.hypot(px - qx, pz - qz);
+            if (dd < best.d) best = { d: dd, s: s0 + t * L, x: qx, z: qz };
+            s0 += L;
+          }
+          return best;
+        };
+        const coins = [0, Math.hypot(u[1][0] - u[0][0], u[1][1] - u[0][1])];
+        coins.push(coins[1] + Math.hypot(u[2][0] - u[1][0], u[2][1] - u[1][1]));
+        const debut = abs(xg, ch.zB), fin = abs(pCam.x, pCam.z);
+        const parcours: THREE.Vector3[] = [];
+        const sens = fin.s >= debut.s ? 1 : -1;
+        [1, 2].map((i) => ({ s: coins[i], x: u[i][0], z: u[i][1] }))
+          .filter((k2) => (k2.s - debut.s) * sens > 0.01 && (fin.s - k2.s) * sens > 0.01)
+          .sort((p1, p2) => (p1.s - p2.s) * sens)
+          .forEach((k2) => parcours.push(new THREE.Vector3(k2.x + o, y, k2.z + o)));
+        const pts = [
+          pRack, pRack.clone().setZ(pRack.z + 0.15), new THREE.Vector3(xg, pRack.y, pRack.z + 0.22),
+          new THREE.Vector3(xg, rk.H + 0.15, pRack.z + 0.22), new THREE.Vector3(xg, y, rk.z),
+          new THREE.Vector3(xg, y, ch.zB + o), ...parcours,
+          new THREE.Vector3(fin.x + o, y, fin.z + o), new THREE.Vector3(pCam.x, y - 0.1, pCam.z),
+          new THREE.Vector3(pCam.x, pCam.y + 0.25, pCam.z), pCam,
+        ];
+        racine.add(cable(arrondir(murale === A ? pts.reverse() : pts), couleur, r));
+        return;
+      }
       // Sortie du port, descente devant la baie, course au sol, remontée.
       const descente = (p: THREE.Vector3, enBaie: boolean) => enBaie
         ? [p, p.clone().setZ(p.z + 0.18), new THREE.Vector3(p.x, Math.max(0.4, p.y - 0.6), p.z + 0.3), new THREE.Vector3(p.x, 0.05, p.z + 0.45)]
@@ -532,7 +725,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
       racine.add(cable(pts, couleur, r));
     });
 
-    seuilTresLoin = Math.max(SEUIL_LOIN * 1.6, ...d.cadres.filter((c) => c.type === "site").map((c) => distanceCadrage(c) * 1.2));
+    seuilTresLoin = Math.max(distancePour(PX_LOIN * 0.55), ...d.cadres.filter((c) => c.type === "site").map((c) => distanceCadrage(c) * 1.2));
 
     // Les textures qui ne servent plus sont libérées.
     cacheTex.forEach((v, k) => { if (v.vu !== generation) { v.tex.dispose(); cacheTex.delete(k); } });
@@ -578,7 +771,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
   function entrerDans(s: { x: number; y: number; w: number; h: number; site?: boolean }) {
     const c = new THREE.Vector3(s.x + s.w / 2, 0, s.y + s.h * 0.45);
     const juste = distanceCadrage(s);
-    const d = s.site ? Math.max(SEUIL_LOIN * 1.12, juste) : Math.min(SEUIL_LOIN * 0.9, Math.max(12, juste));
+    const d = s.site ? Math.max(distancePour(PX_LOIN * 0.9), juste) : Math.min(distancePour(PX_LOIN * 1.15), Math.max(12, juste));
     voler(c, c.clone().add(new THREE.Vector3(0.04, 0.62, 0.78).normalize().multiplyScalar(d)));
   }
   function versObjet(nom: string) {
@@ -635,8 +828,10 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     ctrl.update();
     // Vue d'ensemble : pastilles des caméras et noms de sites ; en zoomant,
     // la 3D détaillée et les noms d'équipements prennent le relais.
+    const tps = performance.now() / 1000;
+    voyants.forEach((m, i) => { m.emissiveIntensity = Math.sin(tps * (2.1 + i * 1.7) + i * 2) > -0.2 ? 1.4 : 0.15; });
     const dist = cam.position.distanceTo(ctrl.target);
-    const loin = dist > SEUIL_LOIN;
+    const loin = pxParUnite(dist) < PX_LOIN;
     apercu.visible = loin;
     etiq.domElement.classList.toggle("loin", loin);
     // Très loin (plusieurs sites à l'écran) : un résumé par site, rien d'autre.

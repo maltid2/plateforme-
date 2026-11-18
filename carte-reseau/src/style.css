@@ -347,3 +347,22 @@ body.lecture .local::after { content: " · lecture seule"; }
 .etiquette3d.resume-site { display: none; font-size: 13px; font-weight: 700; color: #e3f9ee; background: rgba(13, 30, 23, 0.9); border: 1px solid rgba(61, 220, 151, 0.55); padding: 3px 9px; }
 .tres-loin .etiquette3d.resume-site { display: block; }
 .tres-loin .etiquette3d.site, .tres-loin .etiquette3d.baie, .tres-loin .etiquette3d.resume, .tres-loin .etiquette3d.plateau, .tres-loin .etiquette3d.point { display: none; }
+
+/* ---------- plan 2D : zoom intelligent, mini-carte, boutons ---------- */
+.hote > svg .detail { transition: opacity 0.25s; }
+.hote > svg .g-resume { display: none; }
+.hote > svg.resume .g-resume { display: inline; }
+.hote > svg.resume .detail { opacity: 0.16; pointer-events: none; }
+.carte-resume { cursor: zoom-in; }
+.carte-resume:hover rect { filter: brightness(1.35); }
+.plan-outils { position: absolute; right: 12px; bottom: 58px; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; z-index: 4; pointer-events: none; }
+.plan-outils > * { pointer-events: auto; }
+.zooms { display: flex; flex-direction: column; border: 1px solid var(--trait); border-radius: 10px; overflow: hidden; background: rgba(13, 17, 24, 0.92); }
+.zooms button { border: 0; border-radius: 0; background: transparent; width: 34px; height: 32px; padding: 0; font-size: 16px; }
+.zooms button + button { border-top: 1px solid var(--trait); }
+.zooms button:hover { background: rgba(141, 124, 255, 0.18); }
+.minicarte { width: 190px; height: 120px; background: rgba(7, 9, 13, 0.92); border: 1px solid var(--trait); border-radius: 10px; cursor: crosshair; touch-action: none; }
+.minicarte .mc-site { fill: #1a2230; stroke: rgba(255, 255, 255, 0.25); stroke-width: 0.4; vector-effect: non-scaling-stroke; }
+.minicarte .mc-lieu { fill: #15302a; stroke: rgba(61, 220, 151, 0.5); vector-effect: non-scaling-stroke; }
+.minicarte .mc-vue { fill: rgba(141, 124, 255, 0.15); stroke: #8d7cff; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+@media (max-width: 900px) { .minicarte { display: none; } }

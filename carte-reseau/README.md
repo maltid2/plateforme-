@@ -9,7 +9,10 @@ plans** :
   VLAN étiquetés, chaque site dans son cadre et chaque lieu dans son site ;
 - une **vue « Baies »** : les baies de chaque lieu vues de face, côte à côte,
   chaque équipement à sa hauteur (numéros d'U), caméras sur leurs plateaux ;
-- une **vue 3D interactive** à deux niveaux. Dézoomé, chaque caméra est une
+- une **vue 3D interactive**, avec des salles réalistes (murs, sol technique en
+  dalles, chemin de câbles en hauteur, voyants qui clignotent). Les caméras
+  sont regroupées dans la baie de leur switch, ou sur les murs (menu
+  « Caméras »), pour repérer où elles sont. La vue a deux niveaux. Dézoomé, chaque caméra est une
   pastille visible de loin, avec le nombre de caméras par site et par lieu ;
   un clic sur une pastille ou sur le sol d'un site **plonge dans la 3D
   détaillée**. En zoomant, les pastilles s'effacent et on retrouve : une salle par lieu, des baies avec les
@@ -88,6 +91,13 @@ FW-SIEGE:WAN2 -> SW-LILLE-1:24 | vpn | secours
 
 L'éditeur colore la syntaxe, souligne les erreurs et propose les sites, les
 équipements et **les ports libres** pendant la frappe (`Ctrl+Espace`).
+
+## Naviguer dans le plan 2D
+
+Dézoomé, chaque site et chaque lieu affiche une **carte résumé** (switchs,
+baies, caméras, IP de passerelle) ; un clic dessus zoome sur ce site. En
+zoomant, on retrouve les façades et les ports. Boutons ＋ − ⤢ et
+**mini-carte** en bas à droite : cliquer ou glisser dessus pour se déplacer.
 
 ## Exporter (s'ouvre partout)
 

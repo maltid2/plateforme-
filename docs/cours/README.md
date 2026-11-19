@@ -108,6 +108,7 @@ Statuts : `vu` · `à revoir` · `acquis`. Mis à jour à chaque fiche.
 | Agrégat de liens (EtherChannel) : hachage déterministe, répartition 0-7, modes PAgP | 2 | 2026-11-16 | vu (fiche rédigée, en attente de lecture) |
 | Active Directory : réplication, USN, vecteur d'à-jour, notification | AD | 2026-11-17 | vu (fiche rédigée, en attente de lecture) ; calibrage AD toujours sans réponse |
 | SQL : transactions, niveaux d'isolation, verrous InnoDB, `1205` | SQL | 2026-11-18 | vu (fiche rédigée, en attente de lecture) ; calibrage SQL toujours sans réponse |
+| Sécurité infra : SSLVPN et SAML, contournement du MFA (SonicWall CVE-2026-19868) | 4 | 2026-11-19 | vu (fiche rédigée, en attente de lecture) |
 
 ## Calibrage
 

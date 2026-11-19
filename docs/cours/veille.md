@@ -804,3 +804,20 @@ Chaque **lundi** : un point « IA : tendances et découvertes » (3 à 5 entrée
 **Échéances confirmées dans le flux :** Apple CVE-2024-27834 (« Multiple Products ») : **aujourd'hui 2026-11-18** ; SonicWall CVE-2026-19868 (SonicOS SSLVPN) : **2026-11-20**.
 **Avis éditeurs de ta liste :** aucun nouvel avis lu aujourd'hui. **Pannes :** non vérifiées aujourd'hui (aucune source de statut lue).
 **Fiche :** SQL, transactions, isolation et verrous InnoDB. Pas d'issue ATLAS.
+
+---
+
+## 2026-11-19 (jeudi)
+
+**Catalogue CISA (KEV) :** version **2026.11.18**, **1786** entrées (+4 depuis 2026.11.17). Ajoutées le 2026-11-18 : **Synology DSM CVE-2024-10441** (échéance **2026-11-21**) ; BerriAI LiteLLM CVE-2026-40217 (2026-12-02) ; Vanderbilt REDCap CVE-2026-90817 (2026-11-21) ; Apache Axis CVE-2026-90436 (2026-11-21). Hors de ta liste d'éditeurs : LiteLLM, REDCap, Axis (non lus à la source).
+
+### 1. Synology DSM — CVE-2024-10441 (exploitation active selon le KEV ; **ta liste**)
+- **Avis éditeur lu :** Synology-SA-24-20 (https://www.synology.com/en-global/security/advisory/Synology_SA_24_20, lu le 2026-11-19, première version 2024-11-05) ; **NVD** (lu le 2026-11-19) : CVSS 3.1 **9,8** (`AV:N/AC:L/PR:N`, source Synology), exécution de code à distance, « vecteurs non précisés », composant : *system plugin daemon*.
+- **Affectés / corrigés (avis) :** DSM 7.2.2 → corrigé **7.2.2-72806-1** ; 7.2.1 → **7.2.1-69057-6** ; 7.2 → **7.2-64570-4** ; 7.1 → **7.1.1-42962-7** ; BeeStation OS avant **1.1-65374** (NVD). **Contournement : aucun** (avis).
+- **Ce que tu vérifies :** si tu as un NAS Synology : version DSM/BSM installée ; ce NAS est-il joignable depuis Internet (ports d'administration, QuickConnect) ? Je n'ai **pas** lu la page KEV ni confirmé une campagne précise.
+- **Écart notable :** correctif publié en 2024, mais exploitation constatée par CISA en novembre 2026 (ajout KEV) : un équipement non mis à jour reste exposé.
+
+### 2. SonicWall SSLVPN — CVE-2026-19868 (KEV, ajouté 2026-11-06, échéance **2026-11-20**)
+Déjà suivie ; fiche du jour. Avis SonicWall illisible : versions non établies. NVD : 7,5.
+
+**Pannes :** rien de vérifié aujourd'hui. **Issue ATLAS :** aucune.

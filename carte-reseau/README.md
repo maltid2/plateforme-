@@ -92,6 +92,7 @@ la ligne de titres peut être sous un titre de page :
 | Site, Lieu, Baie | Site, Ville, Agence · Lieu, Bâtiment, Emplacement, Salle · Baie, Rack |
 | Branché sur, Port | Branché sur, Switch, Connecté à, Uplink · Port, Port switch |
 | Port local | Port local, Port de l'équipement — pour un switch relié port à port |
+| *Façon d'écrire un port* | `9`, `RJ45 9`, `Port 9`, `n°9` → port 9 · `SFP 2`, `Fibre 1` → SFP2 · `WAN 1` · `Gi1/0/9`, `Te1` tels quels |
 | Câble, VLAN | Câble (fibre, RJ45, radio, VPN) · VLAN |
 | Ports RJ45, SFP, WAN | Nb ports, Ports RJ45 · SFP, Cages SFP · WAN |
 | Passerelle, Remarque | Passerelle, Gateway · Remarque, Commentaire |

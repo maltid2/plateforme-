@@ -338,3 +338,17 @@ test("import Excel à plusieurs onglets : sites, types, liaisons, onglets ignor�
   const vpn = inv.liaisons.find((l) => l.a === "SW-LYON-CORE" && l.b === "SW-LILLE")!;
   assert.deepEqual([vpn.portA, vpn.portB, vpn.media, vpn.vlans], ["Te1", "Te1", "vpn", "10,30"]);
 });
+
+test("ports écrits à la façon Excel : RJ45 9, Port 9, SFP 2, WAN 1…", async () => {
+  const { portExcel, tableurVersTexte } = await import("../src/tableur.ts");
+  const cas: [string, string][] = [["RJ45 9", "9"], ["rj45-9", "9"], ["RJ-45 n°9", "9"], ["Port 9", "9"], ["n° 9", "9"], ["9", "9"], ["LAN 3", "3"],
+    ["SFP 2", "SFP2"], ["SFP+1", "SFP1"], ["Fibre 1", "SFP1"], ["WAN 1", "WAN1"], ["Gi1/0/9", "Gi1/0/9"], ["Te1", "Te1"], ["", ""]];
+  for (const [e, s] of cas) assert.equal(portExcel(e), s, e);
+  const r = tableurVersTexte([["Nom", "Type", "Branché sur", "Port", "Nb ports", "SFP"], ["SW-1", "switch", "", "", "RJ45 24", "2"], ["CAM-1", "caméra", "SW-1", "RJ45 9", "", ""]]);
+  const inv = analyser(r.texte);
+  assert.deepEqual(inv.alertes.filter((a) => a.niveau === "erreur"), []);
+  const l = inv.liaisons[0];
+  assert.equal(l.a === "SW-1" ? l.portA : l.portB, "9");
+  assert.equal(lirePort("RJ45-9").type, "rj45");
+  assert.equal(lirePort("RJ45-9").n, 9);
+});

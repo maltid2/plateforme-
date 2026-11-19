@@ -167,6 +167,27 @@ const TITRES: [Champ, RegExp][] = [
 const propre = (s: string) => String(s ?? "").replace(/[|;\t#]/g, " ").replace(/\s+/g, " ").trim();
 const nomPropre = (s: string) => propre(s).replace(/\s*,\s*/g, "-").replace(/\s+/g, "-");
 
+/** Un port tel qu'on l'écrit dans Excel → tel que l'outil le lit :
+ *  « RJ45 9 », « Port 9 », « n°9 », « 9 » → 9 ; « SFP 2 », « Fibre 1 » → SFP2 ;
+ *  « WAN 1 » → WAN1 ; « Gi1/0/9 », « Te1 » restent tels quels. */
+export function portExcel(v: string): string {
+  const t = String(v ?? "").trim();
+  if (!t) return "";
+  const s = t.toLowerCase().replace(/[°º]/g, "").replace(/\s+/g, " ");
+  const n = s.match(/(\d+)\s*$/)?.[1];
+  if (/^(port\s*)?(sfp\+?|fibre|fiber|optique|uplink sfp)\b/.test(s) || /^(port\s*)?sfp\+?\d/.test(s)) return n ? `SFP${n}` : "SFP1";
+  if (/^(port\s*)?wan\b/.test(s) || /^wan\d/.test(s)) return `WAN${n ?? ""}`;
+  // « RJ45 9 », « RJ-45 n 9 », « port 9 », « n 9 », « LAN 9 », « cuivre 9 »
+  if (/^(port|n|no|num|numero|rj\s*-?\s*45|cuivre|ethernet|lan)\b|^rj\s*-?\s*45/.test(s) && n && !/\//.test(s)) {
+    const reste = s.replace(/rj\s*-?\s*45/g, " ").replace(/(^|\s)(port|n|no|num|numero|cuivre|ethernet|lan)(?=\s|\d|$)/g, " ").replace(/[-:#.]/g, " ").trim();
+    if (/^\d+$/.test(reste)) return reste;
+  }
+  return t.replace(/\s+/g, "");
+}
+
+/** Un nombre de ports écrit « 24 », « 24 ports », « RJ45 24 » ou « 24 x RJ45 ». */
+const nombreDe = (v: string) => v.replace(/rj\s*-?\s*45/gi, " ").match(/\d+/)?.[0];
+
 /** Le type d'après la colonne Type, sinon d'après le début du nom (CAM-…, SW-…). */
 function deviner(type: string, nom: string): Genre | undefined {
   const t = plat(type);
@@ -225,7 +246,7 @@ export function tableurVersTexte(entree: Feuille[] | string[][]): ResultatImport
       for (const l of pleines.slice(iTitre + 1)) {
         const a = nomPropre(lire(l, "de")), b = nomPropre(lire(l, "vers"));
         if (!a || !b) { ignorees++; continue; }
-        const pa = lire(l, "monport").replace(/\s+/g, ""), pb = lire(l, "port").replace(/\s+/g, "");
+        const pa = portExcel(lire(l, "monport")), pb = portExcel(lire(l, "port"));
         const vlan = lire(l, "vlan").replace(/\s+/g, ""), rem = lire(l, "remarque").replace(/=/g, "-");
         liaisons.push([`${a}${pa ? `:${pa}` : ""} -> ${b}${pb ? `:${pb}` : ""}`, media(l), vlan ? `vlan=${vlan}` : "", rem].filter(Boolean).join(" | "));
         n++;
@@ -254,14 +275,14 @@ export function tableurVersTexte(entree: Feuille[] | string[][]): ResultatImport
       const lieu = lire(l, "lieu"); if (lieu) p.push(`point=${lieu}`);
       const baie = lire(l, "baie"); if (baie) p.push(`baie=${baie}`);
       const gw = lire(l, "passerelle").match(/\d{1,3}(\.\d{1,3}){3}(\/\d{1,2})?/)?.[0]; if (gw) p.push(`passerelle=${gw}`);
-      const nombre = (c: Champ) => lire(l, c).match(/^\d+/)?.[0];
+      const nombre = (c: Champ) => nombreDe(lire(l, c));
       if (nombre("ports")) p.push(`ports=${nombre("ports")}`);
       if (nombre("sfp")) p.push(`sfp=${nombre("sfp")}`);
       if (nombre("wan")) p.push(`wan=${nombre("wan")}`);
       const vlan = lire(l, "vlan").replace(/\s+/g, "");
       const vers = nomPropre(lire(l, "vers"));
-      const port = lire(l, "port").replace(/\s+/g, "");
-      const monport = lire(l, "monport").replace(/\s+/g, "");
+      const port = portExcel(lire(l, "port"));
+      const monport = portExcel(lire(l, "monport"));
       const opts = [media(l), vlan ? `vlan=${vlan}` : ""].filter(Boolean);
       if (vers && monport) {
         // Port à port (deux switchs) : une liaison à part, écrite après tous les équipements.

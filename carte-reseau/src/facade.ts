@@ -41,6 +41,7 @@ export function lirePort(p: string): { type: TypePort; n: number | null } {
   const num = n ? Number(n) : null;
   if (/^wan/.test(s)) return { type: "wan", n: num ?? 1 };
   if (/^(sfp|te|xe|tengig|tengigabit|x|uplink|up|fibre|fiber|mgig)/.test(s)) return { type: "sfp", n: num };
+  if (/^rj-?45./.test(s)) { const m = s.match(/^rj-?45\D+(\d+)$/); return { type: "rj45", n: m ? Number(m[1]) : null }; }
   if (/^(\d+|gi|ge|fa|eth|et|port|p|lan|g|f|ge-)/.test(s) && num !== null) return { type: "rj45", n: num };
   return { type: "autre", n: num };
 }

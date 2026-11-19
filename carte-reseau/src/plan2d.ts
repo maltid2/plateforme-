@@ -453,6 +453,20 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
             ajouterLien(l, seg);
           });
         }
+        // Le port de chaque bout, posé sur la ligne juste après le port.
+        ([[A, B, l.a], [B, A, l.b]] as const).forEach(([p, q, nom]) => {
+          if (!p.port) return;
+          // Juste après le bord de l'équipement, pas sur sa façade.
+          const L = Math.hypot(q.x - p.x, q.y - p.y) || 1, ux = (q.x - p.x) / L, uy = (q.y - p.y) / L;
+          const c0 = d.pos.get(nom)!, fw = (d.facades.get(nom)?.w ?? CARTE_W) / 2, fh = (d.facades.has(nom) ? FH : CARTE_H) / 2;
+          const tx = ux > 0 ? (c0.x + fw - p.x) / ux : ux < 0 ? (c0.x - fw - p.x) / ux : Infinity;
+          const ty = uy > 0 ? (c0.y + fh - p.y) / uy : uy < 0 ? (c0.y - fh - p.y) / uy : Infinity;
+          const k = Math.min(Math.min(tx, ty) + 0.7, L / 2);
+          const t = court(p.port, 8), w = t.length * 0.15 + 0.24;
+          const x = p.x + ((q.x - p.x) / L) * k, y = placer(x, p.y + ((q.y - p.y) / L) * k, w, 0.36);
+          el("rect", { x: x - w / 2, y: y - 0.18, width: w, height: 0.36, rx: 0.12, fill: "#0D1118", stroke: sm.stroke, "stroke-width": 0.04, class: "port-etiq" }, gp);
+          texte(gp, t, { x, y: y + 0.09, "text-anchor": "middle", "font-size": 0.24, "font-weight": 700, fill: "#F5F7FA", class: "port-etiq" });
+        });
         const m = { x: (sa.x + sb.x) / 2, y: (sa.y + sb.y) / 2 };
         const t = [l.libelle, trunk ? `trunk${l.vlans ? ` ${l.vlans}` : ""}` : l.vlans ? `VLAN ${l.vlans}` : ""].filter(Boolean).join(" · ");
         if (t && !dedans(m))

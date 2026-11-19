@@ -485,3 +485,22 @@ test("Excel : « SW-1 port 5 » dans une seule case, colonnes « Port caméra »
   assert.equal(p("CAM-1"), ">5");
   assert.equal(p("SRV-1"), "1>9");
 });
+
+test("Excel : colonnes aux titres inconnus, comprises d'après leur contenu, et corrections", async () => {
+  const { tableurVersTexte, colonnesDe } = await import("../src/tableur.ts");
+  const lignes = [["Repère", "Famille matériel", "Adr", "Msq", "Relié à", "N°", "Physique"],
+    ["SW-A", "Switch", "10.1.0.2", "255.255.255.0", "", "", "00:11:22:33:44:55"],
+    ["CAM-1", "Caméra", "10.1.30.11", "255.255.255.0", "SW-A", "4", "00:11:22:33:44:56"],
+    ["CAM-2", "Caméra", "10.1.30.12", "255.255.255.0", "SW-A port 6", "", "00:11:22:33:44:57"]];
+  const cols = colonnesDe([{ nom: "Feuil1", lignes }])[0].colonnes.map((c) => c.sens);
+  assert.deepEqual(cols, ["nom", "type", "ip", "masque", "vers", "port", "mac"]);
+  const inv = analyser(tableurVersTexte(lignes).texte);
+  assert.deepEqual(inv.alertes, []);
+  const p = (n: string) => inv.liaisons.find((x) => x.a === n)!.portB;
+  assert.deepEqual([p("CAM-1"), p("CAM-2")], ["4", "6"]);
+  // Correction de l'utilisateur : « N° » à ignorer, « Physique » gardée en information.
+  const r = tableurVersTexte(lignes, new Map([["n", "ignorer"], ["physique", "info"]]));
+  const i2 = analyser(r.texte);
+  assert.equal(i2.liaisons.find((x) => x.a === "CAM-1")!.portB, undefined);
+  assert.equal(i2.equipements.find((e) => e.nom === "CAM-1")!.kv.find(([k]) => k === "Physique")?.[1], "00:11:22:33:44:56");
+});

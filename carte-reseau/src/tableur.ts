@@ -175,8 +175,8 @@ const TITRES: [Champ, RegExp][] = [
   ["de", /^(de|depuis|equipement a|extremite a|origine|cote a|equipement 1|equipement source)$/],
   ["passerelle", /^(ip )?(passerelle|gateway|gw|default gateway|passerelle par defaut)( ip)?$/],
   ["monport", /^(port (local|de l equipement|equipement|source|depart|camera|cam|serveur|nvr|nas|poste|pc|borne|ap|imprimante|automate|carte|nic|eth)|mon port|son port|port a|local port|port cote equipement)$/],
-  ["port", /^(port( du)?( switch)?|port sw|port arrivee|port b|n port|no port|numero de port|interface|remote port|port distant|port (switch )?amont|port uplink|port d arrivee|port cote switch|port de raccordement|port brassage)$/],
-  ["vers", /^(branche sur|branche|connecte a|connecte sur|relie a|switch|sw|switch amont|uplink|amont|parent|equipement amont|vers|destination|raccorde a|sur|equipement b|extremite b|cote b|equipement 2|equipement destination)$/],
+  ["port", /^(prise|n prise|port( du)?( switch| commutateur)?|port sw|port arrivee|port b|n port|no port|numero de port|interface|remote port|port distant|port (switch )?amont|port uplink|port d arrivee|port cote switch|port de raccordement|port brassage)$/],
+  ["vers", /^(branche sur|branche|connecte a|connecte sur|relie a|switch|sw|switch amont|uplink|amont|parent|equipement amont|vers|destination|raccorde a|sur|equipement b|extremite b|cote b|equipement 2|equipement destination|commutateur|switch de raccordement|raccordement|raccorde sur|connexion|uplink switch)$/],
   ["ports", /^((nb|nombre|total)( de)? )?ports?( rj45| cuivre| ethernet| total)?$|^(ports? )?(rj45|cuivre)$|^capacite( ports?)?$|^nb ports? rj45$/],
   ["sfp", /^((nb|nombre)( de)? )?(sfp\+?|cages? sfp|ports? sfp|ports? fibre|fibre|uplinks? sfp)$/],
   ["wan", /^((nb|nombre)( de)? )?(ports? )?wan$/],
@@ -184,8 +184,8 @@ const TITRES: [Champ, RegExp][] = [
   ["mac", /^((adresse )?mac|mac address|adresse physique|adr mac)$/],
   ["masque", /^(masque( de sous reseau)?|netmask|subnet( mask)?|mask|sous reseau|cidr)$/],
   ["type", /^(type|genre|categorie|famille|type d equipement|nature)$/],
-  ["nom", /^(nom|name|hostname|nom d hote|equipement|designation|libelle|identifiant|id|nom equipement)$/],
-  ["ip", /^((adresse )?ip|adresse|ip address|adresse ip v4|ipv4)$/],
+  ["nom", /^(nom|name|hostname|hote|nom d hote|equipement|designation|libelle|identifiant|id|nom equipement|nom du materiel|appareil|device)$/],
+  ["ip", /^((adresse )?ip|adresse|ip address|adresse ip v4|ipv4|adresse reseau|ip v4|ip fixe|ip de gestion|ip admin)$/],
   ["modele", /^(modele|model|reference|ref|marque|marque modele|materiel)$/],
   ["site", /^(site|ville|agence|client|etablissement|commune)$/],
   ["lieu", /^(lieu|batiment|emplacement|point|local|salle|localisation|ecole|zone|etage)$/],
@@ -276,7 +276,72 @@ const ONGLET_BANAL = /^(feuil|feuille|sheet|onglet|tableau|table|tab|tbl|inventa
 type Bloc = { onglet: string; nom: string; titre: string; lignes: string[][] };
 
 const nbCases = (l: string[]) => l.filter((c) => String(c ?? "").trim()).length;
-const champsDe = (l: string[]) => l.map((c) => TITRES.find(([, re]) => re.test(plat(String(c ?? ""))))?.[0]);
+/** Ce qu'une colonne veut dire : un champ, « info » (gardée telle quelle) ou « ignorer ». */
+export type Sens = Champ | "info" | "ignorer";
+/** Libellés pour la fenêtre de correspondance, dans l'ordre où on les propose. */
+export const SENS: [Sens, string][] = [
+  ["nom", "Nom de l'équipement"], ["type", "Type (switch, caméra…)"], ["ip", "Adresse IP"], ["masque", "Masque"],
+  ["modele", "Modèle"], ["serie", "N° de série"], ["mac", "Adresse MAC"], ["site", "Site"], ["lieu", "Lieu / bâtiment"],
+  ["baie", "Baie"], ["vers", "Branché sur (switch)"], ["port", "Port du switch"], ["monport", "Port de l'équipement"],
+  ["cable", "Câble (fibre, RJ45…)"], ["vlan", "VLAN"], ["ports", "Nombre de ports RJ45"], ["sfp", "Nombre de SFP"],
+  ["wan", "Ports WAN"], ["passerelle", "Passerelle"], ["remarque", "Remarque"], ["de", "De (onglet de liaisons)"],
+  ["info", "Garder en information"], ["ignorer", "Ignorer"],
+];
+/**
+ * Colonnes au titre inconnu : on regarde ce qu'elles contiennent. Une colonne
+ * pleine d'adresses IP est une colonne IP, d'adresses MAC une colonne MAC ; une
+ * colonne dont les valeurs sont les noms d'autres lignes dit « branché sur » ;
+ * à côté, des numéros de port sont le port du switch.
+ */
+function deduire(titres: string[], donnees: string[][], connus: (Sens | undefined)[]): (Sens | undefined)[] {
+  const res = [...connus];
+  const a = (s: Sens) => res.includes(s);
+  const valeurs = (i: number) => donnees.map((l) => String(l[i] ?? "").trim()).filter(Boolean);
+  const part = (v: string[], re: RegExp) => (v.length ? v.filter((x) => re.test(x)).length / v.length : 0);
+  const IP4 = /^\d{1,3}(\.\d{1,3}){3}(\/\d{1,2})?$/;
+  const inconnus = () => titres.map((_, i) => i).filter((i) => res[i] === undefined && valeurs(i).length);
+  for (const i of inconnus()) {
+    const v = valeurs(i);
+    if (part(v, /^255\.\d+\.\d+\.\d+$|^\/\d{1,2}$/) >= 0.6 && !a("masque")) res[i] = "masque";
+    else if (part(v, IP4) >= 0.6) res[i] = !a("ip") ? "ip" : /passerelle|gateway|gw/.test(plat(titres[i])) || !a("passerelle") && new Set(v).size === 1 ? "passerelle" : res[i];
+    else if (part(v, /^([0-9a-f]{2}[:-]){5}[0-9a-f]{2}$|^[0-9a-f]{4}\.[0-9a-f]{4}\.[0-9a-f]{4}$/i) >= 0.6 && !a("mac")) res[i] = "mac";
+  }
+  // Le nom : une colonne de textes tous différents, plutôt à gauche (CAM-01, SW-CORE…).
+  if (!a("nom")) {
+    const i = inconnus().find((k) => { const v = valeurs(k); return v.length >= 2 && new Set(v).size === v.length && part(v, /^[A-Za-z][\w.\-\/ ]{1,40}$/) >= 0.8 && part(v, /^\d+$/) === 0; });
+    if (i !== undefined) res[i] = "nom";
+  }
+  const iNom = res.indexOf("nom");
+  if (iNom >= 0) {
+    const noms = new Set(valeurs(iNom).map((x) => plat(x)));
+    if (!a("vers")) {
+      const i = inconnus().find((k) => { const v = valeurs(k).map((x) => plat(versEtPort(x).nom)); return v.length > 0 && v.filter((x) => noms.has(x)).length / v.length >= 0.5; });
+      if (i !== undefined) res[i] = "vers";
+    }
+    if (a("vers") && !a("port")) {
+      const i = inconnus().find((k) => part(valeurs(k).map(portExcel), /^(\d{1,3}|SFP\d+|WAN\d*|[A-Za-z]{1,10}\d+(\/\d+){0,2})$/) >= 0.7);
+      if (i !== undefined) res[i] = "port";
+    }
+  }
+  // Le type : une colonne aux mots de types connus (switch, caméra, serveur…).
+  if (!a("type")) {
+    const i = inconnus().find((k) => { const v = valeurs(k); return v.length > 0 && v.filter((x) => deviner(x, "")).length / v.length >= 0.7; });
+    if (i !== undefined) res[i] = "type";
+  }
+  return res;
+}
+
+/** Corrections choisies par l'utilisateur, par titre de colonne (sans accents). */
+let forcees: Map<string, Sens> | null = null;
+const sensDe = (titre: string): Sens | undefined => {
+  const t = plat(String(titre ?? ""));
+  if (!t) return undefined;
+  const f = forcees?.get(t);
+  if (f) return f;
+  if (/^vlan/.test(t)) return "vlan";
+  return TITRES.find(([, re]) => re.test(t))?.[0];
+};
+const champsDe = (l: string[]) => l.map((c) => { const s = sensDe(c); return s === "info" || s === "ignorer" ? undefined : s; });
 const estEntete = (l: string[]) => {
   const c = champsDe(l);
   return c.includes("nom") || (c.includes("de") && c.includes("vers")) || (c.includes("ip") && c.includes("type"));
@@ -291,6 +356,22 @@ function titreAuDessus(lignes: string[][], haut: number, plancher: number): { te
     break;
   }
   return { texte: "", ligne: haut };
+}
+
+/** La ligne de titres d'un bloc et le sens de chaque colonne (titre, sinon contenu). */
+function enteteDe(pleines: string[][]): { iTitre: number; sens: (Sens | undefined)[] } {
+  const lire = (i: number) => {
+    const titres = pleines[i].map((t) => String(t ?? ""));
+    const connus = titres.map((t) => sensDe(t));
+    // Une colonne au titre forcé par l'utilisateur ne se « devine » pas.
+    return deduire(titres, pleines.slice(i + 1, i + 40).filter((l) => !estEntete(l)), connus);
+  };
+  let i = pleines.findIndex(estEntete);
+  if (i >= 0) return { iTitre: i, sens: lire(i) };
+  // Pas de titre reconnu : la première ligne de 2 cases ou plus, si son contenu parle.
+  i = pleines.findIndex((l) => nbCases(l) >= 2);
+  if (i >= 0) { const sens = lire(i); if (sens.includes("nom")) return { iTitre: i, sens }; }
+  return { iTitre: -1, sens: [] };
 }
 
 /** Une feuille → ses blocs : les tableaux Excel s'il y en a, sinon un bloc par ligne de titres. */
@@ -325,7 +406,32 @@ const nettoyer = (brut: string) => {
 };
 
 /** Transforme les onglets du classeur en texte de topologie (que l'outil lit ensuite). */
-export function tableurVersTexte(entree: Feuille[] | string[][]): ResultatImport {
+export function tableurVersTexte(entree: Feuille[] | string[][], corrections?: Map<string, Sens>): ResultatImport {
+  forcees = corrections ?? null;
+  try { return convertir(entree); } finally { forcees = null; }
+}
+
+/** Les colonnes de chaque tableau, avec ce que l'outil en a compris : pour la fenêtre de correspondance. */
+export function colonnesDe(entree: Feuille[], corrections?: Map<string, Sens>) {
+  forcees = corrections ?? null;
+  try {
+    return entree.flatMap(blocs).map((b) => {
+      const pleines = b.lignes.filter((l) => nbCases(l));
+      let { iTitre: i, sens } = enteteDe(pleines);
+      if (i < 0) { i = pleines.findIndex((l) => nbCases(l) >= 2); sens = []; }
+      if (i < 0) return null;
+      const titres = pleines[i].map((t) => String(t ?? "").trim());
+      return {
+        bloc: [b.onglet, b.titre || b.nom].filter(Boolean).join(" › ") || "tableau",
+        reconnu: sens.includes("nom") || sens.includes("de"),
+        colonnes: titres.map((t, k) => ({ titre: t, cle: plat(t), sens: (sens[k] ?? (t ? "info" : "ignorer")) as Sens, exemples: pleines.slice(i + 1, i + 4).map((l) => String(l[k] ?? "").trim()) }))
+          .filter((c) => c.titre),
+      };
+    }).filter((x): x is NonNullable<typeof x> => !!x);
+  } finally { forcees = null; }
+}
+
+function convertir(entree: Feuille[] | string[][]): ResultatImport {
   const feuilles: Feuille[] = entree.length && Array.isArray(entree[0]) ? [{ nom: "", lignes: entree as string[][] }] : (entree as Feuille[]);
   const sortie: string[] = [];
   const liaisons: string[] = [];
@@ -338,13 +444,13 @@ export function tableurVersTexte(entree: Feuille[] | string[][]): ResultatImport
     const { onglet } = bloc;
     const etiquette = [onglet, bloc.titre || bloc.nom].filter(Boolean).join(" › ") || "tableau";
     const pleines = bloc.lignes.filter((l) => nbCases(l));
-    const iTitre = pleines.findIndex(estEntete);
+    const { iTitre, sens } = enteteDe(pleines);
     if (iTitre < 0) { onglets.push({ nom: etiquette, lu: pleines.length ? "ignoré (pas de colonne « Nom »)" : "vide" }); continue; }
     const col = new Map<Champ, number>();
-    champsDe(pleines[iTitre]).forEach((c, i) => { if (c && !col.has(c)) col.set(c, i); });
+    sens.forEach((c, i) => { if (c && c !== "info" && c !== "ignorer" && !col.has(c)) col.set(c, i); });
     col.forEach((_v, k) => vuesCol.add(k));
     // Toutes les colonnes « VLAN… » (VLAN 1, VLAN 2, VLAN vidéo…) comptent.
-    const colsVlan = pleines[iTitre].map((t, i) => (/^vlan/.test(plat(String(t ?? ""))) ? i : -1)).filter((i) => i >= 0);
+    const colsVlan = sens.map((c, i) => (c === "vlan" ? i : -1)).filter((i) => i >= 0);
     if (colsVlan.length) vuesCol.add("vlan");
     const lire = (l: string[], c: Champ) => (col.has(c) ? propre(l[col.get(c)!] ?? "") : "");
     // Colonnes non reconnues, gardées telles quelles (« Garantie », « Firmware »…).
@@ -363,7 +469,7 @@ export function tableurVersTexte(entree: Feuille[] | string[][]): ResultatImport
     });
     const pris = new Set([...col.values(), ...colsVlan, ...[...groupes.values()].flatMap((g) => Object.values(g))]);
     const autres: [number, string][] = pleines[iTitre].map((t, i): [number, string] => [i, propre(String(t ?? "")).replace(/[=:]/g, " ").trim()])
-      .filter(([i, t]) => t && !pris.has(i) && !/^colonne\s*\d+$/i.test(t) && !/^(site|point|baie|ports?|sfp|wan|vlans?|passerelle|sur|trunk|access)$/i.test(t));
+      .filter(([i, t]) => t && !pris.has(i) && sens[i] !== "ignorer" && !/^colonne\s*\d+$/i.test(t) && !/^(site|point|baie|ports?|sfp|wan|vlans?|passerelle|sur|trunk|access)$/i.test(t));
     const vlanDe = (l: string[]) => vlansDe(colsVlan.map((i) => l[i] ?? ""));
     const media = (l: string[], i?: number) => {
       const c = plat(i === undefined ? lire(l, "cable") : propre(l[i] ?? ""));

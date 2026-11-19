@@ -450,3 +450,21 @@ body.lecture .local::after { content: " · lecture seule"; }
 .sc-cable.sc-coax i { background: #d08c5b; }
 .sc-cable.sc-serie i { background: repeating-linear-gradient(90deg, #f472b6 0 3px, transparent 3px 6px); }
 .sc-cable.sc-usb i { background: #b8c4d6; }
+
+/* Fenêtre « ce que l'outil a compris de votre tableau » */
+dialog.colonnes { width: min(980px, 94vw); max-height: 88vh; padding: 0; border: 1px solid rgba(255,255,255,0.14); border-radius: 14px; background: #10141B; color: var(--encre); }
+dialog.colonnes::backdrop { background: rgba(5, 7, 10, 0.7); }
+dialog.colonnes form { display: flex; flex-direction: column; max-height: 88vh; }
+dialog.colonnes h2 { margin: 0; padding: 16px 20px 4px; font-size: 17px; }
+.aide-col { margin: 0; padding: 0 20px 10px; color: var(--sourd); font-size: 13px; }
+.blocs-col { overflow: auto; padding: 0 20px; }
+.blocs-col h3 { font-size: 13px; margin: 14px 0 6px; color: #c9c1ff; }
+.attention-col { color: #FFD166; font-weight: 600; }
+.blocs-col table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.blocs-col th { text-align: left; color: var(--sourd); font-weight: 500; padding: 4px 6px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.blocs-col td { padding: 4px 6px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: middle; }
+.blocs-col select { width: 100%; }
+.ex-col { color: var(--sourd); font-family: ui-monospace, monospace; font-size: 11.5px; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+tr.col-info td:first-child b { color: var(--sourd); }
+tr.col-ignoree td { opacity: 0.5; }
+.boutons-col { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px 16px; border-top: 1px solid rgba(255,255,255,0.08); }

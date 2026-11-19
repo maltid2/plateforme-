@@ -81,6 +81,14 @@ d'écriture (double-clic : grand / normal) ; la largeur est mémorisée.
 la topologie se dessine dans une **nouvelle topologie** (la vôtre n'est pas
 touchée). Le fichier est lu dans le navigateur ; rien n'est envoyé.
 
+**Avant l'import, une fenêtre montre ce que l'outil a compris de chaque
+colonne** (avec des exemples tirés du fichier) : une colonne mal comprise se
+corrige d'un clic, et ces choix sont retenus pour les imports suivants. Une
+colonne au titre inconnu est comprise **d'après son contenu** : des adresses IP
+→ IP, des MAC → MAC, des masques → masque, les noms d'autres lignes →
+« Branché sur », des numéros à côté → port, des mots comme switch / caméra →
+type.
+
 Les colonnes sont reconnues **par leur titre**, dans n'importe quel ordre, et
 la ligne de titres peut être sous un titre de page :
 

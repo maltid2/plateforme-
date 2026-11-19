@@ -58,7 +58,12 @@ function disposerSite(eqs: Equipement[], inv: Inventaire, siteDe: Map<string, un
       versAilleurs.get(e.nom)! * 1000 +
       voisins.get(e.nom)!.filter((v) => genreDe.get(v) === "switch").length * 10 +
       voisins.get(e.nom)!.length;
-    const cands = eqs.filter((e) => e.genre === "switch");
+    // Un switch « branché sur » un autre switch n'est pas la tête : la tête est
+    // celui qui ne remonte vers aucun autre (le cœur de réseau).
+    const aFac = new Set(eqs.filter((e) => facades.has(e.nom)).map((e) => e.nom));
+    const remonte = new Set(inv.liaisons.filter((l) => noms.has(l.a) && aFac.has(l.b) && aFac.has(l.a)).map((l) => l.a));
+    const switchs = eqs.filter((e) => e.genre === "switch");
+    const cands = switchs.filter((e) => !remonte.has(e.nom)).length ? switchs.filter((e) => !remonte.has(e.nom)) : switchs;
     const pool = cands.length ? cands : eqs;
     const max = pool.reduce<Equipement | null>((m, e) => (!m || score(e) > score(m) ? e : m), null);
     racines = max ? [max] : [];
@@ -81,7 +86,18 @@ function disposerSite(eqs: Equipement[], inv: Inventaire, siteDe: Map<string, un
   };
   racines.forEach((r) => niveau.set(r.nom, 0));
   etendre(racines.map((r) => r.nom));
-  // Ce qui n'est pas relié à la tête prend le niveau habituel de son type.
+  // Un switch qui n'est pas relié à la tête de ce cadre (il remonte vers un
+  // autre lieu, ou il est seul) est une tête lui aussi : il se pose en haut,
+  // ses caméras dessous, et non au milieu des caméras d'un autre switch.
+  const aFacade2 = new Set(eqs.filter((e) => facades.has(e.nom)).map((e) => e.nom));
+  const remonteIci = new Set(inv.liaisons.filter((l) => noms.has(l.a) && noms.has(l.b) && aFacade2.has(l.a) && aFacade2.has(l.b)).map((l) => l.a));
+  const niveauTete = racines.some((r) => r.genre === "passerelle" || r.genre === "parefeu") ? 1 : 0;
+  eqs.filter((e) => !niveau.has(e.nom) && e.genre === "switch" && !remonteIci.has(e.nom)).forEach((e) => {
+    if (niveau.has(e.nom)) return;
+    niveau.set(e.nom, niveauTete);
+    etendre([e.nom]);
+  });
+  // Ce qui reste prend le niveau habituel de son type.
   eqs.forEach((e) => {
     if (niveau.has(e.nom)) return;
     niveau.set(e.nom, NIVEAU_DEFAUT[e.genre]);

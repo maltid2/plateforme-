@@ -469,3 +469,19 @@ test("Excel : ports et câbles pour tous les équipements, plusieurs câbles sur
   assert.deepEqual(m.alertes.filter((a) => a.niveau === "erreur"), []);
   assert.equal(m.equipements.length, 8);
 });
+
+test("Excel : « SW-1 port 5 » dans une seule case, colonnes « Port caméra » / « Port switch »", async () => {
+  const { tableurVersTexte, versEtPort } = await import("../src/tableur.ts");
+  assert.deepEqual(versEtPort("SW-1 port 5"), { nom: "SW-1", port: "5" });
+  assert.deepEqual(versEtPort("SW-1:Gi1/0/5"), { nom: "SW-1", port: "Gi1/0/5" });
+  assert.deepEqual(versEtPort("SW-1 (port 7)"), { nom: "SW-1", port: "7" });
+  assert.deepEqual(versEtPort("SW CORE / SFP2"), { nom: "SW CORE", port: "SFP2" });
+  assert.deepEqual(versEtPort("SW-ACC1"), { nom: "SW-ACC1", port: "" });
+  const r = tableurVersTexte([["Nom", "Type", "Branché sur", "Port switch", "Port caméra", "Ports"],
+    ["SW-1", "switch", "", "", "", "24"], ["CAM-1", "caméra", "SW-1 port 5", "", "", ""], ["SRV-1", "serveur", "SW-1", "RJ45 9", "1", "2"]]);
+  const inv = analyser(r.texte);
+  assert.deepEqual(inv.alertes, []);
+  const p = (n: string) => { const l = inv.liaisons.find((x) => x.a === n)!; return `${l.portA ?? ""}>${l.portB}`; };
+  assert.equal(p("CAM-1"), ">5");
+  assert.equal(p("SRV-1"), "1>9");
+});

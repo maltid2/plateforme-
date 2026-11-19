@@ -10,7 +10,7 @@
  * ce qui y est branché.
  */
 import { APPARENCE, COULEUR_MEDIA } from "./apparence.ts";
-import { CARTE_H, CARTE_W, type Disposition, type Point } from "./disposition.ts";
+import { CARTE_H, CARTE_W, NOM_H, type Disposition, type Point } from "./disposition.ts";
 import { FH, PH, PW, type Facade, type Port } from "./facade.ts";
 import { PICTOS } from "./pictos.ts";
 import type { Equipement, Inventaire, Liaison } from "./saisie.ts";
@@ -129,7 +129,8 @@ function dessinerFacade(g: SVGGElement, e: Equipement, f: Facade, inv: Inventair
       : `Port ${p.id} · libre`;
   });
   const occupes = brancheDe.size, total = f.ports.filter((p) => p.type !== "autre").length;
-  texte(g, `${occupes}/${total} ports utilisés`, { x: x0 + f.w, y: y0 + FH + 0.62, "text-anchor": "end", "font-size": 0.26, fill: "#6B7A8C" });
+  // À gauche, sous le nom : les câbles partent des ports, plus à droite.
+  texte(g, `${occupes}/${total} ports utilisés`, { x: x0, y: y0 + FH + (e.baie ? 1.0 : 0.62), "font-size": 0.26, fill: "#6B7A8C" });
   if (e.baie) texte(g, `▤ baie ${e.baie}`, { x: x0, y: y0 + FH + 0.62, "font-size": 0.26, fill: "#A99CFF", "font-weight": 600 });
 }
 
@@ -265,30 +266,48 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
 
   /* ---------------- câbles ---------------- */
 
-  /** Point d'attache d'une extrémité : le port si l'équipement a une façade, sinon le bord de la carte. */
-  function attache(nom: string, port: string | undefined, versLeBas: boolean, d: Disposition) {
+  /**
+   * Point d'attache d'une extrémité. Sur une façade : le port lui-même, puis
+   * une sortie par le bord ; un port de la rangée du haut qui sort par le bas
+   * (ou l'inverse) se décale pour ne pas recouvrir le câble du port voisin de
+   * la même colonne. Sur une carte : le bord, décalé de `dx` quand plusieurs
+   * câbles arrivent sur la même carte (sinon ils se rejoignent en un point).
+   */
+  function attache(nom: string, port: string | undefined, versLeBas: boolean, d: Disposition, dx = 0) {
     const c = d.pos.get(nom)!;
     const f = d.facades.get(nom);
     const p = f && port ? f.parId.get(port) : undefined;
-    if (f && p) return { x: c.x - f.w / 2 + p.x, y: c.y - FH / 2 + p.y, bord: versLeBas ? c.y + FH / 2 : c.y - FH / 2 };
+    const dir = versLeBas ? 1 : -1;
+    if (f && p) {
+      const x = c.x - f.w / 2 + p.x;
+      const traverse = versLeBas ? p.haut : !p.haut;
+      return { x, y: c.y - FH / 2 + p.y, sx: x + (traverse ? -0.17 : 0), bord: c.y + dir * FH / 2, dir, port: p.id, decale: !!traverse };
+    }
     const h = f ? FH : CARTE_H;
-    return { x: c.x, y: c.y, bord: versLeBas ? c.y + h / 2 : c.y - h / 2 };
+    // Sous une carte, le nom de l'équipement : le câble et son étiquette passent dessous.
+    const sousNom = !f && versLeBas ? NOM_H : 0;
+    return { x: c.x + dx, y: c.y + dir * h * 0.3, sx: c.x + dx, bord: c.y + dir * h / 2 + sousNom, dir, port: port ?? "", decale: false };
   }
 
-  function chemin(l: Liaison, d: Disposition) {
+  type Bout = ReturnType<typeof attache>;
+  /** Longueur de la sortie droite avant la courbe : de la place pour l'étiquette du port. */
+  const sortieDe = (b: Bout) => (b.port ? (b.decale ? 1.75 : 1.3) : 0.45);
+
+  function chemin(l: Liaison, d: Disposition, dxA = 0, dxB = 0) {
     const ca = d.pos.get(l.a)!, cb = d.pos.get(l.b)!;
-    if (Math.abs(ca.y - cb.y) < 0.6) {
+    const memeRang = Math.abs(ca.y - cb.y) < 0.6;
+    const aEnHaut = memeRang || ca.y < cb.y;
+    const A = attache(l.a, l.portA, memeRang ? true : aEnHaut, d, dxA), B = attache(l.b, l.portB, memeRang ? true : !aEnHaut, d, dxB);
+    const ya = A.bord + A.dir * sortieDe(A), yb = B.bord + B.dir * sortieDe(B);
+    const debut = `M ${A.x} ${A.y} L ${A.sx} ${A.bord + A.dir * 0.12} L ${A.sx} ${ya}`;
+    const fin = `L ${B.sx} ${B.bord + B.dir * 0.12} L ${B.x} ${B.y}`;
+    if (memeRang) {
       // Même rangée : un arc par-dessous.
-      const A = attache(l.a, l.portA, true, d), B = attache(l.b, l.portB, true, d);
-      const yb = Math.max(A.bord, B.bord) + 1.4;
-      return { d: `M ${A.x} ${A.y} L ${A.x} ${A.bord + 0.3} C ${A.x} ${yb}, ${B.x} ${yb}, ${B.x} ${B.bord + 0.3} L ${B.x} ${B.y}`,
-        milieu: { x: (A.x + B.x) / 2, y: yb - 0.3 } };
+      const ybas = Math.max(ya, yb) + 1.2;
+      return { d: `${debut} C ${A.sx} ${ybas}, ${B.sx} ${ybas}, ${B.sx} ${yb} ${fin}`, milieu: { x: (A.sx + B.sx) / 2, y: ybas - 0.3 }, A, B };
     }
-    const aEnHaut = ca.y < cb.y;
-    const A = attache(l.a, l.portA, aEnHaut, d), B = attache(l.b, l.portB, !aEnHaut, d);
-    const ya = A.bord + (aEnHaut ? 0.45 : -0.45), yb = B.bord + (aEnHaut ? -0.45 : 0.45), ym = (ya + yb) / 2;
-    return { d: `M ${A.x} ${A.y} L ${A.x} ${ya} C ${A.x} ${ym}, ${B.x} ${ym}, ${B.x} ${yb} L ${B.x} ${B.y}`,
-      milieu: { x: (A.x + B.x) / 2, y: ym } };
+    const ym = (ya + yb) / 2;
+    return { d: `${debut} C ${A.sx} ${ym}, ${B.sx} ${ym}, ${B.sx} ${yb} ${fin}`, milieu: { x: (A.sx + B.sx) / 2, y: ym }, A, B };
   }
 
   /* ---------------- rendu ---------------- */
@@ -357,7 +376,53 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
     const gn = el("g", { class: "detail" }, monde);
     const gp = el("g", { class: "detail" }, monde);
 
-    inv.liaisons.forEach((l) => {
+    // Plusieurs câbles qui arrivent par le même bord d'une carte (ou d'une
+    // façade sans port précisé) : on les répartit le long du bord, dans
+    // l'ordre de leur autre extrémité, pour qu'ils ne se croisent pas.
+    const decalage = new Map<string, number>();
+    {
+      const groupes = new Map<string, { cle: string; x: number }[]>();
+      inv.liaisons.forEach((l, i) => {
+        if (!visibles.has(l.a) || !visibles.has(l.b) || cadreDe(l.a) !== cadreDe(l.b)) return;
+        const ca = d.pos.get(l.a)!, cb = d.pos.get(l.b)!;
+        const memeRang = Math.abs(ca.y - cb.y) < 0.6, aEnHaut = memeRang || ca.y < cb.y;
+        ([[l.a, l.portA, memeRang ? true : aEnHaut, `${i}a`, l.b, l.portB], [l.b, l.portB, memeRang ? true : !aEnHaut, `${i}b`, l.a, l.portA]] as const)
+          .forEach(([nom, port, bas, cle, autre, portAutre]) => {
+            const f = d.facades.get(nom);
+            if (f && port && f.parId.get(port)) return;
+            const k = `${nom}|${bas}`;
+            if (!groupes.has(k)) groupes.set(k, []);
+            groupes.get(k)!.push({ cle, x: attache(autre, portAutre, !bas, d).x });
+          });
+      });
+      groupes.forEach((liste, k) => {
+        if (liste.length < 2) return;
+        const nom = k.split("|")[0];
+        const w = d.facades.get(nom)?.w ?? CARTE_W;
+        const pas = Math.min(0.55, (w * 0.8) / liste.length);
+        liste.sort((a, b) => a.x - b.x).forEach((it, j) => decalage.set(it.cle, (j - (liste.length - 1) / 2) * pas));
+      });
+    }
+    // Étiquettes déjà posées : une nouvelle étiquette se décale au lieu de recouvrir.
+    const posees: { x: number; y: number; w: number; h: number }[] = [];
+    const placer = (x: number, y: number, w: number, h: number) => {
+      const chevauche = (yy: number) => posees.some((r) => Math.abs(r.x - x) * 2 < r.w + w && Math.abs(r.y - yy) * 2 < r.h + h);
+      let yy = y;
+      for (let k = 1; k <= 8 && chevauche(yy); k++) yy = y + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * (h + 0.1);
+      posees.push({ x, y: yy, w, h });
+      return yy;
+    };
+    /** Le numéro du port écrit sur le câble, juste à sa sortie. */
+    const etiquettePort = (b: Bout, couleur: string) => {
+      if (!b.port) return;
+      const t = court(b.port, 8);
+      const w = t.length * 0.15 + 0.24;
+      const y = placer(b.sx, b.bord + b.dir * (b.decale ? 1.3 : 0.85), w, 0.36);
+      el("rect", { x: b.sx - w / 2, y: y - 0.18, width: w, height: 0.36, rx: 0.12, fill: "#0D1118", stroke: couleur, "stroke-width": 0.04, class: "port-etiq" }, gp);
+      texte(gp, t, { x: b.sx, y: y + 0.09, "text-anchor": "middle", "font-size": 0.24, "font-weight": 700, fill: "#F5F7FA", class: "port-etiq" });
+    };
+
+    inv.liaisons.forEach((l, i) => {
       if (!visibles.has(l.a) || !visibles.has(l.b)) return;
       const trunk = l.mode === "trunk";
       const ea = parNom.get(l.a)!, eb = parNom.get(l.b)!;
@@ -395,7 +460,9 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
             stroke: "#07090D", "stroke-width": 0.14, "paint-order": "stroke" });
         return;
       }
-      const c = chemin(l, d);
+      const c = chemin(l, d, decalage.get(`${i}a`) ?? 0, decalage.get(`${i}b`) ?? 0);
+      etiquettePort(c.A, sm.stroke);
+      etiquettePort(c.B, sm.stroke);
       // Gaine sombre plus large puis le câble : il se détache même quand il
       // croise un autre câble. Un trunk est un câble épais à liseré central.
       el("path", { d: c.d, fill: "none", stroke: "#0D1118", "stroke-width": trunk ? 0.38 : 0.22 }, gl);
@@ -406,8 +473,9 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
         el("path", { d: c.d, fill: "none", stroke: "#0D1118", "stroke-width": 0.05, opacity: 0.85, "pointer-events": "none" }, gl);
         const t = `TRUNK${l.vlans ? ` · VLAN ${l.vlans}` : ""}${l.media === "fibre" ? " · FIBRE" : ""}`;
         const w = t.length * 0.165 + 0.45;
-        el("rect", { x: c.milieu.x - w / 2, y: c.milieu.y - 0.25, width: w, height: 0.5, rx: 0.25, fill: "#141922", stroke: sm.stroke, "stroke-width": 0.05 }, gp);
-        texte(gp, t, { x: c.milieu.x, y: c.milieu.y + 0.1, "text-anchor": "middle", "font-size": 0.27, "font-weight": 700, fill: "#F5F7FA" });
+        const my = placer(c.milieu.x, c.milieu.y, w, 0.5);
+        el("rect", { x: c.milieu.x - w / 2, y: my - 0.25, width: w, height: 0.5, rx: 0.25, fill: "#141922", stroke: sm.stroke, "stroke-width": 0.05 }, gp);
+        texte(gp, t, { x: c.milieu.x, y: my + 0.1, "text-anchor": "middle", "font-size": 0.27, "font-weight": 700, fill: "#F5F7FA" });
       } else if (l.libelle) {
         texte(gp, l.libelle, { x: c.milieu.x + 0.2, y: c.milieu.y, "font-size": 0.3, fill: "#8B98A8", "font-style": "italic",
           stroke: "#0D1118", "stroke-width": 0.1, "paint-order": "stroke" });

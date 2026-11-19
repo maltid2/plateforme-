@@ -174,8 +174,8 @@ const TITRES: [Champ, RegExp][] = [
   // Onglet de liaisons : « De / Port A / Vers / Port B ».
   ["de", /^(de|depuis|equipement a|extremite a|origine|cote a|equipement 1|equipement source)$/],
   ["passerelle", /^(ip )?(passerelle|gateway|gw|default gateway|passerelle par defaut)( ip)?$/],
-  ["monport", /^(port (local|de l equipement|equipement|source|depart)|mon port|son port|port a|local port)$/],
-  ["port", /^(port( du)?( switch)?|port sw|port arrivee|port b|n port|no port|numero de port|interface|remote port)$/],
+  ["monport", /^(port (local|de l equipement|equipement|source|depart|camera|cam|serveur|nvr|nas|poste|pc|borne|ap|imprimante|automate|carte|nic|eth)|mon port|son port|port a|local port|port cote equipement)$/],
+  ["port", /^(port( du)?( switch)?|port sw|port arrivee|port b|n port|no port|numero de port|interface|remote port|port distant|port (switch )?amont|port uplink|port d arrivee|port cote switch|port de raccordement|port brassage)$/],
   ["vers", /^(branche sur|branche|connecte a|connecte sur|relie a|switch|sw|switch amont|uplink|amont|parent|equipement amont|vers|destination|raccorde a|sur|equipement b|extremite b|cote b|equipement 2|equipement destination)$/],
   ["ports", /^((nb|nombre|total)( de)? )?ports?( rj45| cuivre| ethernet| total)?$|^(ports? )?(rj45|cuivre)$|^capacite( ports?)?$|^nb ports? rj45$/],
   ["sfp", /^((nb|nombre)( de)? )?(sfp\+?|cages? sfp|ports? sfp|ports? fibre|fibre|uplinks? sfp)$/],
@@ -215,6 +215,14 @@ export function portExcel(v: string): string {
     if (/^\d+$/.test(reste)) return reste;
   }
   return t.replace(/\s+/g, "");
+}
+
+/** « SW-1 port 5 », « SW-1:Gi1/0/5 », « SW-1 / 5 », « SW-1 (port 5) » → nom et port. */
+export function versEtPort(v: string): { nom: string; port: string } {
+  const t = v.trim();
+  const m = t.match(/^(.+?)\s*(?:\(\s*(?:port\s*)?([^()]+?)\s*\)|:\s*(\S+)|\s+port\s+(\S+)|\s+\/\s+(\S+)|\s+-\s+(?:port\s*)?(\S+))$/i);
+  if (!m) return { nom: t, port: "" };
+  return { nom: m[1].trim(), port: (m[2] ?? m[3] ?? m[4] ?? m[5] ?? m[6] ?? "").trim() };
 }
 
 /** Un nombre de ports écrit « 24 », « 24 ports », « RJ45 24 » ou « 24 x RJ45 ». */
@@ -369,9 +377,10 @@ export function tableurVersTexte(entree: Feuille[] | string[][]): ResultatImport
       let n = 0;
       for (const l of pleines.slice(iTitre + 1)) {
         if (estEntete(l)) continue;
-        const a = nomPropre(lire(l, "de")), b = nomPropre(lire(l, "vers"));
+        const va = versEtPort(lire(l, "de")), vb = versEtPort(lire(l, "vers"));
+        const a = nomPropre(va.nom), b = nomPropre(vb.nom);
         if (!a || !b) { ignorees++; continue; }
-        const pa = portExcel(lire(l, "monport")), pb = portExcel(lire(l, "port"));
+        const pa = portExcel(lire(l, "monport") || va.port), pb = portExcel(lire(l, "port") || vb.port);
         const vlan = vlanDe(l), rem = lire(l, "remarque").replace(/=/g, "-");
         liaisons.push([`${a}${pa ? `:${pa}` : ""} -> ${b}${pb ? `:${pb}` : ""}`, media(l), vlan ? `vlan=${vlan}` : "", rem].filter(Boolean).join(" | "));
         n++;
@@ -419,8 +428,10 @@ export function tableurVersTexte(entree: Feuille[] | string[][]): ResultatImport
       if (sfp) p.push(`sfp=${sfp}`);
       const wan = nombreDe(lire(l, "wan")); if (wan) p.push(`wan=${wan}`);
       const vlan = vlanDe(l);
-      const vers = nomPropre(lire(l, "vers"));
-      const port = portExcel(lire(l, "port"));
+      // « SW-1 port 5 », « SW-1:5 », « SW-1 / Gi1/0/5 » dans la seule case Branché sur.
+      const { nom: versBrut, port: portDansVers } = versEtPort(lire(l, "vers"));
+      const vers = nomPropre(versBrut);
+      const port = portExcel(lire(l, "port") || portDansVers);
       const monport = portExcel(lire(l, "monport"));
       const opts = [media(l), vlan ? `vlan=${vlan}` : ""].filter(Boolean);
       if (vers && monport) {

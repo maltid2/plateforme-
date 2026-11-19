@@ -75,6 +75,31 @@ permet d'aller plus vite quand on a l'habitude.
 La **barre entre la saisie et la carte** se glisse pour élargir la zone
 d'écriture (double-clic : grand / normal) ; la largeur est mémorisée.
 
+## Importer un tableau Excel ou CSV
+
+*Fichiers › Importer un tableau Excel ou CSV* : une ligne par équipement, et
+la topologie se dessine dans une **nouvelle topologie** (la vôtre n'est pas
+touchée). Le fichier est lu dans le navigateur ; rien n'est envoyé.
+
+Les colonnes sont reconnues **par leur titre**, dans n'importe quel ordre, et
+la ligne de titres peut être sous un titre de page :
+
+| Colonne | Titres reconnus (exemples) |
+| --- | --- |
+| Nom *(seule obligatoire)* | Nom, Équipement, Hostname, Désignation |
+| Type | Type, Catégorie — sinon deviné d'après le nom (CAM-…, SW-…, AP-…) |
+| IP, Modèle | IP, Adresse IP · Modèle, Référence, Marque |
+| Site, Lieu, Baie | Site, Ville, Agence · Lieu, Bâtiment, Emplacement, Salle · Baie, Rack |
+| Branché sur, Port | Branché sur, Switch, Connecté à, Uplink · Port, Port switch |
+| Port local | Port local, Port de l'équipement — pour un switch relié port à port |
+| Câble, VLAN | Câble (fibre, RJ45, radio, VPN) · VLAN |
+| Ports RJ45, SFP, WAN | Nb ports, Ports RJ45 · SFP, Cages SFP · WAN |
+| Passerelle, Remarque | Passerelle, Gateway · Remarque, Commentaire |
+
+*Fichiers › Modèle de tableau à remplir* donne un CSV prêt à ouvrir dans
+Excel. Formats lus : `.xlsx` (première feuille) et `.csv` ; un ancien `.xls`
+s'enregistre d'abord en `.xlsx` depuis Excel.
+
 ## Saisir : le texte (pour aller vite)
 
 ```text
@@ -151,3 +176,4 @@ npm run fichier    # reconstruit topologie-reseau-v1.html et son empreinte SHA-2
 | `src/editeur.ts` | éditeur texte avec coloration et suggestions |
 | `src/impression.ts` | dossier imprimable / PDF |
 | `src/projets.ts` | topologies multiples, sauvegarde et import |
+| `src/tableur.ts` | import Excel (.xlsx) / CSV, sans bibliothèque |

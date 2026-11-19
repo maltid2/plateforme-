@@ -1,0 +1,6 @@
+﻿Type;Nom;IP;Modèle;Site;Lieu;Baie;Branché sur;Port;Port local;Câble;VLAN;Ports RJ45;SFP;Passerelle;Remarque
+switch;SW-CORE;10.0.0.2;Cisco 9300;Site A;Bâtiment 1;Baie A1;;;;;;48;4;10.0.0.1;cœur de réseau
+switch;SW-ETAGE1;10.0.0.3;Cisco 9200;Site A;Bâtiment 1;Baie A1;SW-CORE;SFP1;SFP1;fibre;;24;2;;
+camera;CAM-ENTREE;10.0.30.11;Dôme 4 MP;Site A;Bâtiment 1;;SW-ETAGE1;3;;;30;;;;
+camera;CAM-PARKING;10.0.30.12;Bullet 4 MP;Site A;Bâtiment 1;;SW-ETAGE1;7;;;30;;;;
+borne;AP-HALL;10.0.40.5;;Site A;Bâtiment 1;;SW-ETAGE1;12;;;40;;;;

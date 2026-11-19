@@ -4,6 +4,7 @@ import { creerEditeur } from "./editeur.ts";
 import { cheminPasserelle } from "./facade.ts";
 import { elevations } from "./elevation.ts";
 import { creerFormulaire } from "./formulaire.ts";
+import { lireTableur, modeleCsv, tableurVersTexte } from "./tableur.ts";
 import { EXEMPLE_COMPLET, MODELES } from "./modeles.ts";
 import { CLASSIFICATION, imprimer } from "./impression.ts";
 import { creerPlan2D } from "./plan2d.ts";
@@ -474,6 +475,25 @@ $<HTMLInputElement>("f-txt").addEventListener("change", async (e) => {
   (e.target as HTMLInputElement).value = "";
   if (f) creer(f.name.replace(/\.txt$/i, ""), await f.text());
 });
+// Tableau Excel / CSV → nouvelle topologie (lu dans le navigateur, rien n'est envoyé).
+$("b-tableur").addEventListener("click", () => { fermerMenu(); $("f-tableur").click(); });
+$("b-modele-tableur").addEventListener("click", () => { fermerMenu(); telecharger("modele-topologie.csv", modeleCsv(), "text/csv;charset=utf-8"); });
+$<HTMLInputElement>("f-tableur").addEventListener("change", async (e) => {
+  const f = (e.target as HTMLInputElement).files?.[0];
+  (e.target as HTMLInputElement).value = "";
+  if (!f) return;
+  try {
+    const r = tableurVersTexte(await lireTableur(f.name, await f.arrayBuffer()));
+    if (!r.equipements) { alert("Aucun équipement trouvé : vérifiez que la colonne « Nom » est remplie."); return; }
+    creer(f.name.replace(/\.(xlsx|xls|csv|txt)$/i, ""), r.texte);
+    const nb = inv.alertes.filter((a) => a.niveau === "erreur").length;
+    alert(`${r.equipements} équipement${r.equipements > 1 ? "s" : ""} importé${r.equipements > 1 ? "s" : ""} dans une nouvelle topologie « ${active().nom} ».`
+      + (r.ignorees ? `\n${r.ignorees} ligne${r.ignorees > 1 ? "s" : ""} sans nom ou en double ignorée${r.ignorees > 1 ? "s" : ""}.` : "")
+      + (r.manquantes.length ? `\nColonnes absentes (facultatives) : ${r.manquantes.map((c) => LIBELLE_COLONNE[c] ?? c).join(", ")}.` : "")
+      + (nb ? `\n${nb} point${nb > 1 ? "s" : ""} à corriger : voir la liste sous la saisie.` : ""));
+  } catch (err) { alert((err as Error).message || "Fichier illisible."); }
+});
+const LIBELLE_COLONNE: Record<string, string> = { type: "Type", ip: "IP", site: "Site", vers: "Branché sur", port: "Port" };
 $("b-svg").addEventListener("click", () => { fermerMenu(); telecharger(`${nomFichier(active().nom)}-plan.svg`, plan.exporter(true, auteur()), "image/svg+xml"); });
 $("b-png").addEventListener("click", async () => {
   fermerMenu();

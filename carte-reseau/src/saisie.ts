@@ -68,6 +68,8 @@ export const GENRES: Record<Genre, { libelle: string; mots: string[] }> = {
 
 const simple = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 const GENRE_PAR_MOT = new Map<string, Genre>();
+/** « Caméra », « switch », « AP »… → type d'équipement (ou undefined). */
+export const genreDe = (mot: string): Genre | undefined => GENRE_PAR_MOT.get(simple(mot.trim()));
 (Object.keys(GENRES) as Genre[]).forEach((g) => GENRES[g].mots.forEach((m) => GENRE_PAR_MOT.set(m, g)));
 
 const IP = /^\d{1,3}(\.\d{1,3}){3}(\/\d{1,2})?$/;

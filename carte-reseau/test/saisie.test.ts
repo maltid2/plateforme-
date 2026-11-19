@@ -282,3 +282,37 @@ test("sur SW-1:3, 7, 12 : chaque caméra sur son port", () => {
   assert.deepEqual(["CAM-1", "CAM-2", "CAM-3", "CAM-4"].map(p), ["20", "22", "23", "24"]);
   assert.ok(inv.alertes.some((a) => /2 ports pour 4 équipements/.test(a.msg)));
 });
+
+test("import Excel (.xlsx) : colonnes reconnues par leur titre, topologie sans erreur", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { lireTableur, tableurVersTexte } = await import("../src/tableur.ts");
+  const buf = readFileSync(new URL("./fixtures/inventaire.xlsx", import.meta.url));
+  const lignes = await lireTableur("inventaire.xlsx", buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength));
+  const r = tableurVersTexte(lignes);
+  assert.equal(r.equipements, 5);
+  const inv = analyser(r.texte);
+  assert.deepEqual(inv.alertes.filter((a) => a.niveau === "erreur"), []);
+  assert.deepEqual(inv.sites.map((s) => s.nom), ["Nord / Lille"]);
+  const eq = (n: string) => inv.equipements.find((e) => e.nom === n)!;
+  assert.equal(eq("SW-CORE").genre, "switch");
+  assert.equal(eq("CAM-HALL").genre, "camera");
+  assert.equal(eq("CAM-PARKING").genre, "camera");   // deviné d'après le nom
+  assert.equal(eq("AP-1").genre, "borne");
+  assert.equal(eq("CAM-HALL").point, "Bât A");
+  assert.equal(eq("SW-ETAGE").baie, "Baie 1");
+  const l = (n: string) => inv.liaisons.find((x) => x.a === n || x.b === n)!;
+  assert.equal(l("CAM-HALL").b === "SW-ETAGE" ? l("CAM-HALL").portB : l("CAM-HALL").portA, "5");
+  const up = inv.liaisons.find((x) => x.a === "SW-ETAGE" && x.b === "SW-CORE")!;
+  assert.deepEqual([up.a, up.portA, up.b, up.portB, up.media], ["SW-ETAGE", "SFP2", "SW-CORE", "SFP1", "fibre"]);
+  assert.ok(inv.liaisons.some((x) => (x.a === "AP-1" && x.b === "SW-CORE") || (x.b === "AP-1" && x.a === "SW-CORE")));
+});
+
+test("import CSV (Excel français, « ; ») et modèle fourni", async () => {
+  const { lireCsv, tableurVersTexte, modeleCsv } = await import("../src/tableur.ts");
+  const r = tableurVersTexte(lireCsv(modeleCsv().replace(/^﻿/, "")));
+  assert.equal(r.equipements, 5);
+  const inv = analyser(r.texte);
+  assert.deepEqual(inv.alertes.filter((a) => a.niveau === "erreur"), []);
+  const c = lireCsv('Nom;IP;Remarque\r\n"CAM;1";10.0.0.5;"dit ""bonjour"""\r\n');
+  assert.deepEqual(c[1], ["CAM;1", "10.0.0.5", 'dit "bonjour"']);
+});

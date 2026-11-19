@@ -396,3 +396,14 @@ test("Excel mis en forme de tableau : un tableau par site, ports « 24 + 4 SFP �
   assert.deepEqual(portsEtSfp("48 RJ45 / 4 SFP+", ""), { rj: "48", sfp: "4" });
   assert.deepEqual(portsEtSfp("24", "2"), { rj: "24", sfp: "2" });
 });
+
+test("Excel : « Insérer › Tableau » après coup (en-têtes dans le tableau, ligne Total, Colonne1…)", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { lireTableur, tableurVersTexte } = await import("../src/tableur.ts");
+  const buf = readFileSync(new URL("./fixtures/mon-tableau.xlsx", import.meta.url));
+  const r = tableurVersTexte(await lireTableur("mon-tableau.xlsx", buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)));
+  const inv = analyser(r.texte);
+  assert.deepEqual(inv.alertes, []);
+  assert.deepEqual(inv.equipements.map((e) => `${e.nom}@${e.site}`), ["SW-1@Nanterre", "CAM-1@Nanterre", "CAM-2@Nanterre", "SW-LY@Lyon", "CAM-LY@Lyon"]);
+  assert.ok(!inv.equipements.some((e) => /^(total|nom|colonne)/i.test(e.nom)));
+});

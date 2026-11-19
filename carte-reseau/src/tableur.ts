@@ -17,7 +17,7 @@ import { GENRES, genreDe, type Genre } from "./saisie.ts";
 export type Feuille = {
   nom: string; lignes: string[][];
   /** Tableaux Excel (« Mettre sous forme de tableau ») : nom et plage, ex. A3:H12. */
-  tableaux?: { nom: string; ref: string }[];
+  tableaux?: { nom: string; ref: string; total?: number }[];
 };
 
 /** Lit un .xlsx (tous ses onglets, dans l'ordre) ou un .csv (un seul). */
@@ -116,9 +116,9 @@ async function lireXlsx(o: Uint8Array): Promise<Feuille[]> {
 }
 
 /** Les tableaux Excel posés sur une feuille (xl/tables/tableN.xml, via les liens de la feuille). */
-function tableauxDe(f: Map<string, string>, chemin: string): { nom: string; ref: string }[] {
+function tableauxDe(f: Map<string, string>, chemin: string): NonNullable<Feuille["tableaux"]> {
   const rels = f.get(chemin.replace(/([^/]+)$/, "_rels/$1.rels")) ?? "";
-  const res: { nom: string; ref: string }[] = [];
+  const res: NonNullable<Feuille["tableaux"]> = [];
   for (const m of rels.matchAll(/<Relationship\b([^>]*)\/?>/g)) {
     if (!/Type="[^"]*\/table"/.test(m[1])) continue;
     const cible = m[1].match(/\bTarget="([^"]+)"/)?.[1] ?? "";
@@ -128,7 +128,9 @@ function tableauxDe(f: Map<string, string>, chemin: string): { nom: string; ref:
     if (!entete) continue;
     const ref = entete.match(/\bref="([A-Z]+\d+:[A-Z]+\d+)"/)?.[1];
     const nom = entites(entete.match(/\bdisplayName="([^"]*)"/)?.[1] ?? entete.match(/\bname="([^"]*)"/)?.[1] ?? "");
-    if (ref) res.push({ nom, ref });
+    // Ligne « Total » en bas du tableau (Création de tableau › Ligne Total) : ce n'est pas un équipement.
+    const total = Number(entete.match(/\btotalsRowCount="(\d+)"/)?.[1] ?? 0);
+    if (ref) res.push({ nom, ref, total });
   }
   return res.sort((a, b) => ligneDe(a.ref) - ligneDe(b.ref) || colonne(a.ref) - colonne(b.ref));
 }
@@ -289,7 +291,7 @@ function blocs(f: Feuille): Bloc[] {
       const r1 = ligneDe(a), r2 = ligneDe(b), c1 = colonne(a), c2 = colonne(b);
       const titre = titreAuDessus(f.lignes.map((l) => l.slice(c1, c2 + 1)), r1, plancher).texte;
       plancher = r2 + 1;
-      return { onglet: f.nom, nom: t.nom, titre, lignes: f.lignes.slice(r1, r2 + 1).map((l) => l.slice(c1, c2 + 1)) };
+      return { onglet: f.nom, nom: t.nom, titre, lignes: f.lignes.slice(r1, r2 + 1 - (t.total ?? 0)).map((l) => l.slice(c1, c2 + 1)) };
     });
   }
   const entetes = f.lignes.map((l, i) => (estEntete(l) ? i : -1)).filter((i) => i >= 0);
@@ -304,9 +306,12 @@ function blocs(f: Feuille): Bloc[] {
 }
 
 /** « Site : Nanterre », « Tableau_Nanterre » → « Nanterre ». */
-const nettoyer = (s: string) => propre(s.replace(/_/g, " "))
-  .replace(/^(tableau|table|tbl|tab)\s*(?=\S)(?!\d+$)/i, "")
-  .replace(/^(site|agence|ville|lieu de)\s*[:\-–—]\s*/i, "").trim();
+const nettoyer = (brut: string) => {
+  // « Tableau_Nanterre », « TableauNanterre » → « Nanterre » ; « Tableau1 » reste banal.
+  const m = brut.match(/^(?:[Tt]ableau|[Tt]able|[Tt]bl|[Tt]ab)(?:[_\s-]+|(?=[A-ZÀ-Ý]))(.+)$/);
+  const v = m && !/^\d+$/.test(m[1]) ? m[1] : brut;
+  return propre(v.replace(/_/g, " ")).replace(/^(site|agence|ville|lieu de)\s*[:\-–—]\s*/i, "").trim();
+};
 
 /** Transforme les onglets du classeur en texte de topologie (que l'outil lit ensuite). */
 export function tableurVersTexte(entree: Feuille[] | string[][]): ResultatImport {

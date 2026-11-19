@@ -430,3 +430,24 @@ test("n° de série, adresse MAC, masque : lus, contrôlés, un par équipement"
   const e = analyser(r.texte).equipements[0];
   assert.deepEqual(Object.fromEntries(e.kv), { masque: "/24", serie: "FOC99", mac: "AA:BB:CC:DD:EE:FF", Garantie: "2027", Firmware: "17.9 - 17.12" });
 });
+
+test("tous les équipements ont des ports (serveur, NAS, enregistreur) et tous les types de câble", async () => {
+  const inv = analyser("site S\nswitch SW-1 | ports=24 | sfp=4\nserveur SRV-1 | ports=2 | sfp=2\nnvr NVR-1 | ports=8\n"
+    + "SRV-1:SFP1 -> SW-1:SFP1 | dac\nSRV-1:SFP2 -> SW-1:SFP2 | fibre\nSRV-1:1 -> SW-1:20\nNVR-1:9 -> SW-1:21\n"
+    + "camera CAM-1 | sur NVR-1:1 | coax\nautre AUTOMATE-1 | sur SRV-1:2 | rs485\nautre CLE-1 | sur SRV-1:3 | usb");
+  const l = (a: string, pa: string) => inv.liaisons.find((x) => (x.a === a && x.portA === pa) || (x.b === a && x.portB === pa))!;
+  assert.equal(l("SRV-1", "SFP1").media, "dac");
+  assert.equal(l("SRV-1", "SFP2").media, "fibre");
+  assert.equal(l("NVR-1", "1").media, "coax");
+  assert.equal(l("SRV-1", "2").media, "serie");
+  const msg = inv.alertes.map((a) => a.msg).join("\n");
+  assert.match(msg, /Le port 9 n'existe pas sur NVR-1/);      // 8 ports déclarés
+  assert.match(msg, /Le port 3 n'existe pas sur SRV-1/);      // 2 ports RJ45
+  const { tableurVersTexte } = await import("../src/tableur.ts");
+  const r = tableurVersTexte([["Nom", "Type", "Branché sur", "Port", "Port local", "Câble", "Ports", "SFP"],
+    ["SW-2", "switch", "", "", "", "", "24", "4"], ["SRV-2", "serveur", "SW-2", "SFP1", "SFP1", "DAC", "2", "2"], ["API-1", "automate", "SRV-2", "1", "", "RS-485", "", ""]]);
+  const i2 = analyser(r.texte);
+  assert.equal(i2.liaisons.find((x) => x.a === "SRV-2")!.media, "dac");
+  assert.equal(i2.liaisons.find((x) => x.a === "API-1" || x.b === "API-1")!.media, "serie");
+  assert.equal(i2.equipements.find((e) => e.nom === "SRV-2")!.kv.find(([k]) => k === "sfp")?.[1], "2");
+});

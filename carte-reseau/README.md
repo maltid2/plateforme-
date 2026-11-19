@@ -146,7 +146,8 @@ FW-SIEGE:WAN2 -> SW-LILLE-1:24 | vpn | secours
 | Switch | `ports=24` (RJ45) et `sfp=4` (cages fibre) dessinent la façade |
 | Ports différents pour chacun | `switch SW-A, SW-B, SW-C \| ports=24, 8, 48 \| sfp=4, 0, 2` → 1er nombre au 1er nom, etc. (dans le formulaire aussi) |
 | Liaison | `SW-1:24 -> SW-2:Te1 \| fibre \| trunk \| vlan=10,20 \| remarque` |
-| Câble | `fibre`, `rj45` (ou `cuivre`), `radio`, `vpn` — sinon déduit (SFP = fibre) |
+| Câble | `rj45` (ou `cuivre`), `fibre`, `dac` (twinax, SFP direct), `coax` (BNC), `rs485` / `rs232` (série), `usb`, `radio`, `vpn` — sinon déduit (SFP = fibre) |
+| Ports de tous les équipements | `serveur SRV-1 \| ports=2 \| sfp=2`, `nvr NVR-1 \| ports=8`… puis `SRV-1:SFP1 -> SW-1:SFP1 \| dac`, `camera CAM-1 \| sur NVR-1:3` ; dans le formulaire, *Ports RJ45 / Cages SFP* existe pour tous les types |
 | Plusieurs noms différents | `switch SW-ACCUEIL, SW-ETAGE1, SW-ETAGE2 \| 10.0.0.10 \| sur SW-CORE:5` → IP et ports qui se suivent (dans le formulaire : noms séparés par des virgules) |
 | Une IP précise pour chacun | `switch SW-A, SW-B, SW-C \| 10.0.0.5, 10.0.0.9, 10.0.0.20` → 1re IP au 1er nom, etc. (moins d'IP : la suite continue après la dernière) |
 | Plusieurs d'un coup | `camera CAM x6 \| 10.0.30.11 \| sur SW:3` → CAM-1 à CAM-6, ports 3 à 8 |

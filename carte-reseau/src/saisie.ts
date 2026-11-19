@@ -41,9 +41,10 @@ export type Liaison = {
   ligne: number;
 };
 
-export type Media = "fibre" | "cuivre" | "radio" | "vpn";
+export type Media = "fibre" | "cuivre" | "dac" | "coax" | "serie" | "usb" | "radio" | "vpn";
 export const MEDIAS: Record<Media, string> = {
-  fibre: "Fibre optique", cuivre: "Cuivre RJ45", radio: "Radio / sans fil", vpn: "VPN / internet",
+  cuivre: "Cuivre RJ45", fibre: "Fibre optique", dac: "Câble DAC / twinax (SFP direct)", coax: "Coaxial (BNC)",
+  serie: "Série RS-232 / RS-485", usb: "USB", radio: "Radio / sans fil", vpn: "VPN / internet",
 };
 
 export type Site = { nom: string; infos: string[]; ligne: number; passerelleIp?: string };
@@ -114,6 +115,10 @@ type OptionsLien = { mode?: "trunk" | "access"; vlans?: string; media?: Media; l
 export function lireMedia(c: string): Media | undefined {
   if (/^(fibre|fiber|fo|optique|monomode|multimode|om\d|os\d)$/i.test(c)) return "fibre";
   if (/^(cuivre|rj45|rj-45|cu|copper|ethernet)$/i.test(c)) return "cuivre";
+  if (/^(dac|twinax|twinaxial|cuivre direct|direct attach)$/i.test(c)) return "dac";
+  if (/^(coax|coaxial|bnc|rg59|rg-59|rg6)$/i.test(c)) return "coax";
+  if (/^(serie|série|rs232|rs-232|rs485|rs-485|rs422|com|modbus)$/i.test(c)) return "serie";
+  if (/^usb$/i.test(c)) return "usb";
   if (/^(radio|wifi|wi-fi|4g|5g|lte|faisceau|hertzien)$/i.test(c)) return "radio";
   if (/^vpn\b/i.test(c)) return "vpn";
   return undefined;

@@ -31,7 +31,7 @@ export type Vue3D = {
 const U = 0.3;              // hauteur d'un U
 const RL = 2.2, RD = 2.0;   // largeur et profondeur d'un équipement 19"
 const BW = 2.9, BD = 2.6;   // encombrement d'une baie
-const MEDIAS_COURTS = { fibre: "fibre", cuivre: "RJ45", radio: "radio", vpn: "VPN" } as const;
+const MEDIAS_COURTS = { fibre: "fibre", cuivre: "RJ45", dac: "DAC", coax: "coax", serie: "série", usb: "USB", radio: "radio", vpn: "VPN" } as const;
 
 /** Réglages de la vue, modifiables depuis l'interface. */
 export const options: { cameras: "murs" | "baie" } = { cameras: "baie" };

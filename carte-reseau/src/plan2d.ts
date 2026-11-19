@@ -321,7 +321,7 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
     const dedans = (p: Point) => cadres.some((c) => p.x > c.x && p.x < c.x + c.w && p.y > c.y && p.y < c.y + c.h);
     const styleMedia = (l: Liaison) => {
       const m = l.media ?? "inconnu";
-      return { stroke: COULEUR_MEDIA[m], ...(m === "vpn" ? { "stroke-dasharray": "0.7 0.35" } : m === "radio" ? { "stroke-dasharray": "0.25 0.2" } : {}) };
+      return { stroke: COULEUR_MEDIA[m], ...(m === "vpn" ? { "stroke-dasharray": "0.7 0.35" } : m === "radio" ? { "stroke-dasharray": "0.25 0.2" } : m === "serie" ? { "stroke-dasharray": "0.12 0.12" } : {}) };
     };
 
     // Ordre des couches : liaisons entre sites, cadres des sites, liaisons

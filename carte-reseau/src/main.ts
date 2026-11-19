@@ -1,7 +1,7 @@
 import { APPARENCE, COULEUR_MEDIA, COULEUR_TRUNK } from "./apparence.ts";
 import { disposer, type Disposition } from "./disposition.ts";
 import { creerEditeur } from "./editeur.ts";
-import { cheminPasserelle } from "./facade.ts";
+import { cheminPasserelle, lirePort } from "./facade.ts";
 import { elevations } from "./elevation.ts";
 import { creerFormulaire } from "./formulaire.ts";
 import { lireTableur, modeleCsv, tableurVersTexte } from "./tableur.ts";
@@ -330,6 +330,27 @@ function remplirFiche() {
       mini.append(c);
     });
     fiche.append(mini);
+  } else {
+    // Serveur, NAS, enregistreur… avec des ports déclarés : la liste, libres ou pris.
+    const n = (re: RegExp) => Math.min(96, parseInt(e.kv.find(([k]) => re.test(k))?.[1] ?? "", 10) || 0);
+    const rj = n(/^ports?$/i), sfp = n(/^sfp$/i), wan = n(/^wan$/i);
+    const tous = [...Array.from({ length: rj }, (_, i) => String(i + 1)), ...Array.from({ length: sfp }, (_, i) => `SFP${i + 1}`),
+      ...Array.from({ length: wan }, (_, i) => (wan > 1 ? `WAN${i + 1}` : "WAN"))];
+    if (tous.length) {
+      const cle = (p?: string) => { if (!p) return ""; const l = lirePort(p); return l.n !== null ? `${l.type}:${l.n}` : p.toLowerCase(); };
+      const pris = new Map(liens.filter((x) => x.monPort).map((x) => [cle(x.monPort), x]));
+      fiche.append(h("h3", "", `Ports · ${tous.filter((p) => pris.has(cle(p))).length} / ${tous.length} utilisés`));
+      const mini = h("div", "mini");
+      tous.forEach((p) => {
+        const b = pris.get(cle(p));
+        const c = h("button", `p h ${b ? "pris" : ""} ${b?.l.mode === "trunk" ? "trunk" : ""}`, "") as HTMLButtonElement;
+        c.type = "button";
+        c.title = b ? `${p} → ${b.autre}${b.sonPort ? ` port ${b.sonPort}` : ""}` : `${p} · libre`;
+        if (b) { c.style.setProperty("--c", APPARENCE[inv.equipements.find((x) => x.nom === b.autre)?.genre ?? "autre"].couleur); c.onclick = () => choisir(b.autre, true); }
+        mini.append(c);
+      });
+      fiche.append(mini);
+    }
   }
 
   fiche.append(h("h3", "", `Liaisons (${liens.length})`));

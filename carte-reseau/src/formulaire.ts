@@ -34,6 +34,13 @@ const code = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/
 const propre = (s: string) => s.replace(/[|;\t#]/g, " ").replace(/\s+/g, " ").trim();
 const nomPropre = (s: string) => propre(s).replace(/\s+/g, "-");
 const A_FACADE = new Set<Genre>(["switch", "passerelle", "parefeu"]);
+/** Les ports d'un équipement qui n'a pas de façade dessinée, d'après « ports= » / « sfp= » / « wan= ». */
+function portsDeclares(e: Equipement): string[] {
+  const n = (re: RegExp) => Math.min(96, parseInt(e.kv.find(([k]) => re.test(k))?.[1] ?? "", 10) || 0);
+  const rj = n(/^ports?$/i), sfp = n(/^sfp$/i), wan = n(/^wan$/i);
+  return [...Array.from({ length: rj }, (_, i) => String(i + 1)), ...Array.from({ length: sfp }, (_, i) => `SFP${i + 1}`),
+    ...Array.from({ length: wan }, (_, i) => (wan > 1 ? `WAN${i + 1}` : "WAN"))];
+}
 
 export function creerFormulaire(racine: HTMLElement, acces: Acces) {
   // Ce qui reste sélectionné d'un ajout à l'autre.
@@ -86,7 +93,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
       </div>
       <fieldset class="f-branche f-raccord">
         <legend><span class="f-pastille">A</span> Où est branché l'équipement que vous ajoutez ?</legend>
-        <p class="f-quand">Une caméra, une borne, un poste… se branche sur <b>un port du switch</b>. Seuls deux switchs se relient port à port (choisir alors aussi le port du nouveau switch).</p>
+        <p class="f-quand">Une caméra, un poste… se branche sur <b>un port du switch</b> (ou d'un enregistreur, d'un serveur…). Un équipement à plusieurs ports (switch, serveur, NAS…) : remplissez <b>Ports RJ45 / Cages SFP</b> au-dessus, puis choisissez <b>son</b> port ici.</p>
         <p class="f-aide-branche"></p>
         <div class="f-phrase">
           <span>Branché sur</span>
@@ -155,11 +162,20 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     if (!valeurs.some((o) => o.v === courant)) sel.selectedIndex = 0;
   };
   const portsLibres = (nom: string, garder?: string) => {
-    const { disp } = acces.donnees();
+    const { disp, inv } = acces.donnees();
     const f = disp.facades.get(nom);
-    if (!f) return [];
-    const pris = new Set([...f.branches.keys()].filter((k) => k !== garder).map((k) => f.parId.get(k)));
-    return f.ports.filter((p) => !pris.has(p)).map((p) => p.id);
+    if (f) {
+      const pris = new Set([...f.branches.keys()].filter((k) => k !== garder).map((k) => f.parId.get(k)));
+      return f.ports.filter((p) => !pris.has(p)).map((p) => p.id);
+    }
+    // Serveur, NAS, enregistreur, caméra… avec des ports déclarés (ports=2 | sfp=2).
+    const e = inv.equipements.find((x) => x.nom === nom);
+    const tous = e ? portsDeclares(e) : [];
+    if (!tous.length) return [];
+    const cle = (p: string) => { const l = lirePort(p); return l.n !== null ? `${l.type}:${l.n}` : p.toLowerCase(); };
+    const pris = new Set(inv.liaisons.flatMap((l) => [l.a === nom ? l.portA : undefined, l.b === nom ? l.portB : undefined])
+      .filter((p): p is string => !!p && p !== garder).map(cle));
+    return tous.filter((p) => !pris.has(cle(p)));
   };
 
   function remplirOu() {
@@ -194,7 +210,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
   /** Équipements à façade, ceux du site courant d'abord. */
   function cibles() {
     const { inv } = acces.donnees();
-    return inv.equipements.filter((e) => A_FACADE.has(e.genre) && e.nom !== edition?.eq.nom)
+    return inv.equipements.filter((e) => (A_FACADE.has(e.genre) || portsDeclares(e).length > 0) && e.nom !== edition?.eq.nom)
       .sort((a, b) => Number(b.site === ctx.site) - Number(a.site === ctx.site) || Number((b.point ?? "") === ctx.point) - Number((a.point ?? "") === ctx.point));
   }
 
@@ -237,11 +253,10 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     // « port » de l'équipement lui-même : ses vrais ports, d'après RJ45 / SFP.
     const monport = champ<HTMLSelectElement>("monport");
     const garde = monport.value;
-    const siens = A_FACADE.has(genre)
-      ? [...Array.from({ length: Math.min(nSfp, 16) }, (_, i) => `SFP${i + 1}`), ...Array.from({ length: Math.min(nRj, 96) }, (_, i) => String(nRj - i))] : [];
+    const siens = [...Array.from({ length: Math.min(nSfp, 16) }, (_, i) => `SFP${i + 1}`), ...Array.from({ length: Math.min(nRj, 96) }, (_, i) => String(nRj - i))];
     if (garde && !siens.includes(garde)) siens.unshift(garde);
-    options(monport, [{ v: "", t: A_FACADE.has(genre) ? "— non précisé —" : "son port réseau" }, ...siens.map((v) => ({ v, t: v }))], garde);
-    monport.disabled = !A_FACADE.has(genre) || combien() > 1;
+    options(monport, [{ v: "", t: siens.length ? "— non précisé —" : "son port réseau" }, ...siens.map((v) => ({ v, t: v }))], garde);
+    monport.disabled = !siens.length || combien() > 1;
     // Deux switchs reliés : trunk coché par défaut.
     const e = acces.donnees().inv.equipements.find((x) => x.nom === vers);
     if (!edition) champ<HTMLInputElement>("trunk").checked = genre === "switch" && e?.genre === "switch";
@@ -311,7 +326,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
       if (v.some(Boolean)) p.push(`${k}=${v.join(", ").replace(/(,\s*)+$/, "")}`);
     }
     // Ports tapés librement (2 RJ45, 3 SFP…) ; vide = déduit des branchements.
-    if (A_FACADE.has(genre)) {
+    {
       // « 24, 8, 48 » : un nombre par équipement (dans l'ordre des noms).
       const n = (k: string, max: number) => {
         const vals = champ(k).value.split(/[,;\s]+/).map((x) => parseInt(x, 10)).filter((v) => Number.isFinite(v) && v >= 0).map((v) => Math.min(v, max));
@@ -322,8 +337,9 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
       };
       const rj = n("ports", 96), sfp = n("sfp", 48), wan = n("wan", 8);
       if (rj !== null && rj !== "0") p.push(`ports=${rj}`);
-      if (sfp !== null) p.push(`sfp=${sfp}`);
-      if (genre !== "switch" && wan !== null && wan !== "0") p.push(`wan=${wan}`);
+      // Switch, passerelle, pare-feu : « sfp=0 » se garde (façade dessinée) ; les autres : seulement s'il y en a.
+      if (sfp !== null && (A_FACADE.has(genre) || sfp !== "0")) p.push(`sfp=${sfp}`);
+      if (avecWan() && wan !== null && wan !== "0") p.push(`wan=${wan}`);
     }
     return p.join(" | ");
   }
@@ -361,6 +377,10 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
       ...optionsLien(champ<HTMLSelectElement>("media").value, champ("vlan").value, champ<HTMLInputElement>("trunk").checked)].join(" | ")];
   }
 
+  /** Des ports RJ45 / SFP tapés pour cet équipement (au moins un). */
+  const aDesPorts = () => ["ports", "sfp"].some((k) => champ(k).value.split(/[,;\s]+/).some((x) => parseInt(x, 10) > 0));
+  const avecWan = () => genre === "passerelle" || genre === "parefeu";
+
   /* ---------- une case par équipement ---------- */
   // Port d'arrivée de chaque équipement d'un groupe (null = ports qui se suivent).
   let portsLigne: string[] | null = null;
@@ -378,7 +398,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     const noms = nomsCrees();
     if (noms.length < 2 || noms.length > 60 || edition) { box.hidden = true; return; }
     box.hidden = false;
-    const ports = A_FACADE.has(genre);
+    const ports = A_FACADE.has(genre) || aDesPorts();
     const ips = liste("ip").filter(Boolean), rj = liste("ports").filter(Boolean), sfp = liste("sfp").filter(Boolean);
     const ipDe = (k: number) => ips.length > 1 ? (ips[k] ?? (ips.length ? ipPlus(ips[ips.length - 1], k - ips.length + 1) : "")) : ips[0] ? ipPlus(ips[0], k) : "";
     const de = (l: string[], k: number) => l[Math.min(k, l.length - 1)] ?? "";
@@ -401,7 +421,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     const vers = champ<HTMLSelectElement>("vers").value;
     const actif = actifGroupe(noms.length, vers);
     box.hidden = !actif;
-    racine.querySelector<HTMLElement>(".f-monport")!.hidden = noms.length > 1 || !A_FACADE.has(genre);
+    racine.querySelector<HTMLElement>(".f-monport")!.hidden = noms.length > 1 || (!A_FACADE.has(genre) && !aDesPorts());
     racine.querySelector<HTMLElement>(".f-port1")!.hidden = actifGroupe(noms.length, vers);
     if (!actif) { box.innerHTML = ""; return; }
     const arrivee = portsDuGroupe(noms.length);
@@ -444,7 +464,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     const portsSw = nb > 1 ? portsDuGroupe(nb).filter(Boolean).join(", ") : champ<HTMLSelectElement>("port").value;
     const nomMoi = nb > 1 ? `les ${nb} nouveaux` : noms[0] ?? "";
     schema("branche", champ<HTMLSelectElement>("vers").value, portsSw,
-      nomMoi, A_FACADE.has(genre) ? champ<HTMLSelectElement>("monport").value : `=${GENRES[genre].libelle}`, champ<HTMLSelectElement>("media").value,
+      nomMoi, champ<HTMLSelectElement>("monport").value || (A_FACADE.has(genre) || aDesPorts() ? "" : `=${GENRES[genre].libelle}`), champ<HTMLSelectElement>("media").value,
       champ<HTMLInputElement>("trunk").checked, champ("vlan").value);
     const l = lignesAAjouter();
     let alerte = "";
@@ -477,6 +497,8 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     champ("monport").value = "";
     champ("gw").value = "";
     for (const k of ["masque", "serie", "mac"]) champ(k).value = "";
+    // Le type de câble choisi pour un équipement ne s'applique pas au suivant.
+    champ<HTMLSelectElement>("media").value = "";
     // Nouveau formulaire : les nombres de ports reprennent les valeurs du type.
     (["ports", "sfp"] as const).forEach((k) => delete champ(k).dataset.touche);
     champ("vlan").value = genre === "camera" ? champ("vlan").value : "";
@@ -490,11 +512,14 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
   function actualiserType() {
     queueMicrotask(tableau);
     racine.querySelectorAll<HTMLElement>(".f-types [data-g]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.g === genre)));
-    racine.querySelector<HTMLElement>(".f-switch")!.hidden = !A_FACADE.has(genre);
-    racine.querySelector<HTMLElement>(".f-wan")!.hidden = genre === "switch";
+    // Ports RJ45 / SFP pour tous les équipements (serveur à 2 cartes, NAS, enregistreur PoE…).
+    racine.querySelector<HTMLElement>(".f-switch")!.hidden = false;
+    racine.querySelector<HTMLElement>(".f-wan")!.hidden = !avecWan();
+    const vide = A_FACADE.has(genre) ? "" : " (vide = un seul port)";
+    racine.querySelector<HTMLElement>(".f-switch label:first-child small")!.textContent = `(un par équipement : 24, 8, 48)${vide}`;
     // Valeurs habituelles du type, tant qu'on ne les a pas modifiées.
     if (!edition) {
-      const defaut = genre === "switch" ? { ports: "24", sfp: "4" } : { ports: "8", sfp: "0" };
+      const defaut = genre === "switch" ? { ports: "24", sfp: "4" } : A_FACADE.has(genre) ? { ports: "8", sfp: "0" } : { ports: "", sfp: "" };
       (["ports", "sfp"] as const).forEach((k) => {
         if (!champ(k).dataset.touche) champ(k).value = defaut[k];
       });

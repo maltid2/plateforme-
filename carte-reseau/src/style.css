@@ -446,3 +446,7 @@ body.lecture .local::after { content: " · lecture seule"; }
 .f-fleche { color: var(--sourd); }
 .f-monport[hidden], .f-port1[hidden] { display: none !important; }
 .f-ligne[hidden], .f-detail[hidden], .f-ports-groupe[hidden] { display: none !important; }
+.sc-cable.sc-dac i { background: #2dd4bf; }
+.sc-cable.sc-coax i { background: #d08c5b; }
+.sc-cable.sc-serie i { background: repeating-linear-gradient(90deg, #f472b6 0 3px, transparent 3px 6px); }
+.sc-cable.sc-usb i { background: #b8c4d6; }

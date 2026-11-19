@@ -346,7 +346,9 @@ export function tableurVersTexte(entree: Feuille[] | string[][]): ResultatImport
     const vlanDe = (l: string[]) => vlansDe(colsVlan.map((i) => l[i] ?? ""));
     const media = (l: string[]) => {
       const c = plat(lire(l, "cable"));
-      return /fibre|fiber|optique|sfp/.test(c) ? "fibre" : /rj|cuivre|copper|ethernet/.test(c) ? "rj45" : /radio|wifi|4g|5g/.test(c) ? "radio" : /vpn/.test(c) ? "vpn" : "";
+      return /dac|twinax|direct attach/.test(c) ? "dac" : /fibre|fiber|optique|sfp/.test(c) ? "fibre" : /coax|bnc|rg ?59|rg ?6\b/.test(c) ? "coax"
+        : /rs ?232|rs ?485|rs ?422|serie|modbus|\bcom\b/.test(c) ? "serie" : /usb/.test(c) ? "usb"
+        : /rj|cuivre|copper|ethernet/.test(c) ? "rj45" : /radio|wifi|4g|5g/.test(c) ? "radio" : /vpn/.test(c) ? "vpn" : "";
     };
 
     // Bloc de liaisons (De / Vers, sans colonne Nom).

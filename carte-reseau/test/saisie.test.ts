@@ -310,7 +310,7 @@ test("import Excel (.xlsx) : colonnes reconnues par leur titre, topologie sans e
 test("import CSV (Excel français, « ; ») et modèle fourni", async () => {
   const { lireCsv, tableurVersTexte, modeleCsv } = await import("../src/tableur.ts");
   const r = tableurVersTexte(lireCsv(modeleCsv().replace(/^﻿/, "")));
-  assert.equal(r.equipements, 5);
+  assert.equal(r.equipements, 8);
   const inv = analyser(r.texte);
   assert.deepEqual(inv.alertes.filter((a) => a.niveau === "erreur"), []);
   const c = lireCsv('Nom;IP;Remarque\r\n"CAM;1";10.0.0.5;"dit ""bonjour"""\r\n');
@@ -450,4 +450,22 @@ test("tous les équipements ont des ports (serveur, NAS, enregistreur) et tous l
   assert.equal(i2.liaisons.find((x) => x.a === "SRV-2")!.media, "dac");
   assert.equal(i2.liaisons.find((x) => x.a === "API-1" || x.b === "API-1")!.media, "serie");
   assert.equal(i2.equipements.find((e) => e.nom === "SRV-2")!.kv.find(([k]) => k === "sfp")?.[1], "2");
+});
+
+test("Excel : ports et câbles pour tous les équipements, plusieurs câbles sur une ligne", async () => {
+  const { tableurVersTexte, lireCsv, modeleCsv } = await import("../src/tableur.ts");
+  const r = tableurVersTexte([["Nom", "Type", "Ports", "SFP", "Branché sur", "Port", "Port local", "Câble", "Branché sur 2", "Port 2", "Port local 2", "Câble 2"],
+    ["SW-1", "switch", "24", "4", "", "", "", "", "", "", "", ""],
+    ["SRV-1", "serveur", "2", "2", "SW-1", "SFP1", "SFP1", "DAC", "SW-1", "RJ45 20", "1", "cuivre"],
+    ["NAS-1", "nas", "4", "", "SW-1", "21", "1", "", "", "", "", ""],
+    ["API-1", "automate", "", "", "SRV-1", "2", "", "RS-485", "", "", "", ""]]);
+  const inv = analyser(r.texte);
+  assert.deepEqual(inv.alertes, []);
+  const de = (a: string) => inv.liaisons.filter((x) => x.a === a || x.b === a).map((x) => `${x.a}:${x.portA ?? ""}->${x.b}:${x.portB ?? ""} ${x.media ?? ""}`).sort();
+  assert.deepEqual(de("SRV-1"), ["API-1:->SRV-1:2 serie", "SRV-1:1->SW-1:20 cuivre", "SRV-1:SFP1->SW-1:SFP1 dac"]);
+  assert.deepEqual(de("NAS-1"), ["NAS-1:1->SW-1:21 cuivre"]);
+  assert.ok(!inv.equipements.find((e) => e.nom === "SRV-1")!.kv.some(([k]) => /2$/.test(k)));   // pas recopié en « info »
+  const m = analyser(tableurVersTexte(lireCsv(modeleCsv().replace(/^﻿/, ""))).texte);
+  assert.deepEqual(m.alertes.filter((a) => a.niveau === "erreur"), []);
+  assert.equal(m.equipements.length, 8);
 });

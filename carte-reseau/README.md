@@ -97,6 +97,7 @@ la ligne de titres peut être sous un titre de page :
 | Ports RJ45, SFP, WAN | Nb ports, Ports RJ45 · SFP, Cages SFP · WAN |
 | Passerelle, Remarque | Passerelle, Gateway · Remarque, Commentaire |
 | Masque, N° de série, MAC | Masque, Masque de sous-réseau, Netmask · N° de série, S/N, Serial · Adresse MAC, MAC |
+| Câbles en plus sur la même ligne | Branché sur 2 / Port 2 / Port local 2 / Câble 2 (jusqu'à 9) — serveur à deux cartes, switch à deux uplinks |
 | *Autres colonnes* | gardées telles quelles dans la fiche de l'équipement (Garantie, Firmware, Date de pose…) |
 
 **Plusieurs onglets** : tous les onglets visibles sont lus, chacun avec sa
@@ -116,7 +117,7 @@ du tableau (« Nanterre », « Site : Nanterre »), sinon du **nom du tableau**
 sinon du nom de l'onglet. Sans objet Tableau, des plages empilées sur une
 feuille (titre, ligne de titres, lignes) sont reconnues de la même façon.
 
-**Ports** : `24`, `RJ45 24`, ou les deux dans une case : `24 + 4 SFP`,
+**Ports, pour tous les équipements** (switch, serveur, NAS, enregistreur, caméra…) : `24`, `RJ45 24`, ou les deux dans une case : `24 + 4 SFP`,
 `48 RJ45 / 4 SFP+`. **VLAN** : plusieurs par équipement, dans une case
 (`10, 20`, `10 / 20`, `10 et 30`, `100-110`) ou dans plusieurs colonnes
 (`VLAN 1`, `VLAN 2`, `VLAN vidéo`…). Sur un switch relié à un autre, ils

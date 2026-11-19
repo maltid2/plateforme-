@@ -340,12 +340,25 @@ export function tableurVersTexte(entree: Feuille[] | string[][]): ResultatImport
     if (colsVlan.length) vuesCol.add("vlan");
     const lire = (l: string[], c: Champ) => (col.has(c) ? propre(l[col.get(c)!] ?? "") : "");
     // Colonnes non reconnues, gardées telles quelles (« Garantie », « Firmware »…).
-    const pris = new Set([...col.values(), ...colsVlan]);
+    // Câbles en plus sur la même ligne : « Branché sur 2 », « Port 2 », « Port local 2 », « Câble 2 »…
+    // (un serveur à deux cartes, un switch avec deux uplinks).
+    const groupes = new Map<number, Partial<Record<"vers" | "port" | "monport" | "cable", number>>>();
+    pleines[iTitre].forEach((t, i) => {
+      const m = plat(String(t ?? "")).match(/^(.*\S)\s+([2-9])$/);
+      if (!m || col.get("nom") === i) return;
+      const c = TITRES.find(([, re]) => re.test(m[1]))?.[0];
+      if (c === "vers" || c === "port" || c === "monport" || c === "cable") {
+        const g = groupes.get(Number(m[2])) ?? {};
+        g[c] ??= i;
+        groupes.set(Number(m[2]), g);
+      }
+    });
+    const pris = new Set([...col.values(), ...colsVlan, ...[...groupes.values()].flatMap((g) => Object.values(g))]);
     const autres: [number, string][] = pleines[iTitre].map((t, i): [number, string] => [i, propre(String(t ?? "")).replace(/[=:]/g, " ").trim()])
       .filter(([i, t]) => t && !pris.has(i) && !/^colonne\s*\d+$/i.test(t) && !/^(site|point|baie|ports?|sfp|wan|vlans?|passerelle|sur|trunk|access)$/i.test(t));
     const vlanDe = (l: string[]) => vlansDe(colsVlan.map((i) => l[i] ?? ""));
-    const media = (l: string[]) => {
-      const c = plat(lire(l, "cable"));
+    const media = (l: string[], i?: number) => {
+      const c = plat(i === undefined ? lire(l, "cable") : propre(l[i] ?? ""));
       return /dac|twinax|direct attach/.test(c) ? "dac" : /fibre|fiber|optique|sfp/.test(c) ? "fibre" : /coax|bnc|rg ?59|rg ?6\b/.test(c) ? "coax"
         : /rs ?232|rs ?485|rs ?422|serie|modbus|\bcom\b/.test(c) ? "serie" : /usb/.test(c) ? "usb"
         : /rj|cuivre|copper|ethernet/.test(c) ? "rj45" : /radio|wifi|4g|5g/.test(c) ? "radio" : /vpn/.test(c) ? "vpn" : "";
@@ -424,6 +437,14 @@ export function tableurVersTexte(entree: Feuille[] | string[][]): ResultatImport
       const mac = lire(l, "mac").replace(/[,=]/g, " ").trim(); if (mac) p.push(`mac=${mac}`);
       // Les autres colonnes (date de pose, garantie, firmware…) restent en informations.
       for (const [i, cle] of autres) { const v = propre(l[i] ?? "").replace(/=/g, "-"); if (v) p.push(`${cle}=${v}`); }
+      for (const g of groupes.values()) {
+        const v2 = g.vers !== undefined ? nomPropre(propre(l[g.vers] ?? "")) : "";
+        if (!v2) continue;
+        const p2 = g.port !== undefined ? portExcel(propre(l[g.port] ?? "")) : "";
+        const m2 = g.monport !== undefined ? portExcel(propre(l[g.monport] ?? "")) : "";
+        liaisons.push([`${nom}${m2 ? `:${m2}` : ""} -> ${v2}${p2 ? `:${p2}` : ""}`, g.cable !== undefined ? media(l, g.cable) : ""].filter(Boolean).join(" | "));
+        nbLiens++;
+      }
       const rem = lire(l, "remarque"); if (rem) p.push(rem.replace(/=/g, "-"));
       sortie.push(p.join(" | "));
       n++;
@@ -442,12 +463,15 @@ export function tableurVersTexte(entree: Feuille[] | string[][]): ResultatImport
 /** Un modèle de tableau à remplir dans Excel (CSV « ; », comme l'Excel français). */
 export function modeleCsv(): string {
   const l = [
-    ["Type", "Nom", "IP", "Masque", "Modèle", "N° de série", "Adresse MAC", "Site", "Lieu", "Baie", "Branché sur", "Port", "Port local", "Câble", "VLAN", "Ports RJ45", "SFP", "Passerelle", "Remarque"],
+    ["Type", "Nom", "IP", "Masque", "Modèle", "N° de série", "Adresse MAC", "Site", "Lieu", "Baie", "Branché sur", "Port", "Port local", "Câble", "VLAN", "Ports RJ45", "SFP", "Passerelle", "Remarque", "Branché sur 2", "Port 2", "Port local 2", "Câble 2"],
     ["switch", "SW-CORE", "10.0.0.2", "255.255.255.0", "Cisco 9300", "FOC0000A1", "00:11:22:00:00:01", "Site A", "Bâtiment 1", "Baie A1", "", "", "", "", "10, 20, 30", "48", "4", "10.0.0.1", "cœur de réseau"],
     ["switch", "SW-ETAGE1", "10.0.0.3", "255.255.255.0", "Cisco 9200", "FOC0000B2", "00:11:22:00:00:02", "Site A", "Bâtiment 1", "Baie A1", "SW-CORE", "SFP1", "SFP1", "fibre", "10, 30", "24", "2", "", ""],
     ["camera", "CAM-ENTREE", "10.0.30.11", "255.255.255.0", "Dôme 4 MP", "", "", "Site A", "Bâtiment 1", "", "SW-ETAGE1", "3", "", "", "30", "", "", "", ""],
     ["camera", "CAM-PARKING", "10.0.30.12", "255.255.255.0", "Bullet 4 MP", "", "", "Site A", "Bâtiment 1", "", "SW-ETAGE1", "7", "", "", "30", "", "", "", ""],
     ["borne", "AP-HALL", "10.0.40.5", "255.255.255.0", "", "", "", "Site A", "Bâtiment 1", "", "SW-ETAGE1", "12", "", "", "40", "", "", "", ""],
+    ["serveur", "SRV-VIDEO", "10.0.0.20", "255.255.255.0", "Dell R650", "", "", "Site A", "Bâtiment 1", "Baie A1", "SW-CORE", "SFP2", "SFP1", "DAC", "10, 30", "2", "2", "", "2 cartes réseau", "SW-ETAGE1", "20", "1", "RJ45"],
+    ["nvr", "NVR-1", "10.0.30.2", "255.255.255.0", "", "", "", "Site A", "Bâtiment 1", "Baie A1", "SW-ETAGE1", "21", "", "", "30", "8", "", "", "8 ports PoE"],
+    ["camera", "CAM-COUR", "10.0.30.13", "255.255.255.0", "Dôme", "", "", "Site A", "Bâtiment 1", "", "NVR-1", "RJ45 3", "", "", "30", "", "", "", ""],
   ];
   return "﻿" + l.map((r) => r.map((c) => (/[;"\n]/.test(c) ? `"${c.replace(/"/g, '""')}"` : c)).join(";")).join("\r\n") + "\r\n";
 }

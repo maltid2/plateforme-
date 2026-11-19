@@ -1,6 +1,9 @@
-﻿Type;Nom;IP;Modèle;Site;Lieu;Baie;Branché sur;Port;Port local;Câble;VLAN;Ports RJ45;SFP;Passerelle;Remarque
-switch;SW-CORE;10.0.0.2;Cisco 9300;Site A;Bâtiment 1;Baie A1;;;;;;48;4;10.0.0.1;cœur de réseau
-switch;SW-ETAGE1;10.0.0.3;Cisco 9200;Site A;Bâtiment 1;Baie A1;SW-CORE;SFP1;SFP1;fibre;;24;2;;
-camera;CAM-ENTREE;10.0.30.11;Dôme 4 MP;Site A;Bâtiment 1;;SW-ETAGE1;3;;;30;;;;
-camera;CAM-PARKING;10.0.30.12;Bullet 4 MP;Site A;Bâtiment 1;;SW-ETAGE1;7;;;30;;;;
-borne;AP-HALL;10.0.40.5;;Site A;Bâtiment 1;;SW-ETAGE1;12;;;40;;;;
+﻿Type;Nom;IP;Masque;Modèle;N° de série;Adresse MAC;Site;Lieu;Baie;Branché sur;Port;Port local;Câble;VLAN;Ports RJ45;SFP;Passerelle;Remarque;Branché sur 2;Port 2;Port local 2;Câble 2
+switch;SW-CORE;10.0.0.2;255.255.255.0;Cisco 9300;FOC0000A1;00:11:22:00:00:01;Site A;Bâtiment 1;Baie A1;;;;;10, 20, 30;48;4;10.0.0.1;cœur de réseau
+switch;SW-ETAGE1;10.0.0.3;255.255.255.0;Cisco 9200;FOC0000B2;00:11:22:00:00:02;Site A;Bâtiment 1;Baie A1;SW-CORE;SFP1;SFP1;fibre;10, 30;24;2;;
+camera;CAM-ENTREE;10.0.30.11;255.255.255.0;Dôme 4 MP;;;Site A;Bâtiment 1;;SW-ETAGE1;3;;;30;;;;
+camera;CAM-PARKING;10.0.30.12;255.255.255.0;Bullet 4 MP;;;Site A;Bâtiment 1;;SW-ETAGE1;7;;;30;;;;
+borne;AP-HALL;10.0.40.5;255.255.255.0;;;;Site A;Bâtiment 1;;SW-ETAGE1;12;;;40;;;;
+serveur;SRV-VIDEO;10.0.0.20;255.255.255.0;Dell R650;;;Site A;Bâtiment 1;Baie A1;SW-CORE;SFP2;SFP1;DAC;10, 30;2;2;;2 cartes réseau;SW-ETAGE1;20;1;RJ45
+nvr;NVR-1;10.0.30.2;255.255.255.0;;;;Site A;Bâtiment 1;Baie A1;SW-ETAGE1;21;;;30;8;;;8 ports PoE
+camera;CAM-COUR;10.0.30.13;255.255.255.0;Dôme;;;Site A;Bâtiment 1;;NVR-1;RJ45 3;;;30;;;;

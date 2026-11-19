@@ -487,8 +487,10 @@ $<HTMLInputElement>("f-tableur").addEventListener("change", async (e) => {
     if (!r.equipements) { alert("Aucun équipement trouvé : vérifiez que la colonne « Nom » est remplie."); return; }
     creer(f.name.replace(/\.(xlsx|xls|csv|txt)$/i, ""), r.texte);
     const nb = inv.alertes.filter((a) => a.niveau === "erreur").length;
-    alert(`${r.equipements} équipement${r.equipements > 1 ? "s" : ""} importé${r.equipements > 1 ? "s" : ""} dans une nouvelle topologie « ${active().nom} ».`
-      + (r.ignorees ? `\n${r.ignorees} ligne${r.ignorees > 1 ? "s" : ""} sans nom ou en double ignorée${r.ignorees > 1 ? "s" : ""}.` : "")
+    const pl = (n: number, mot: string) => `${n} ${mot}${n > 1 ? "s" : ""}`;
+    alert(`${pl(r.equipements, "équipement")} et ${pl(r.liaisons, "câble")} importés dans une nouvelle topologie « ${active().nom} ».`
+      + (r.onglets.length > 1 ? `\n\nOnglets :\n${r.onglets.map((o) => `  • ${o.nom} : ${o.lu}`).join("\n")}` : "")
+      + (r.ignorees ? `\n\n${pl(r.ignorees, "ligne")} sans nom ou en double ignorée${r.ignorees > 1 ? "s" : ""}.` : "")
       + (r.manquantes.length ? `\nColonnes absentes (facultatives) : ${r.manquantes.map((c) => LIBELLE_COLONNE[c] ?? c).join(", ")}.` : "")
       + (nb ? `\n${nb} point${nb > 1 ? "s" : ""} à corriger : voir la liste sous la saisie.` : ""));
   } catch (err) { alert((err as Error).message || "Fichier illisible."); }

@@ -96,8 +96,17 @@ la ligne de titres peut être sous un titre de page :
 | Ports RJ45, SFP, WAN | Nb ports, Ports RJ45 · SFP, Cages SFP · WAN |
 | Passerelle, Remarque | Passerelle, Gateway · Remarque, Commentaire |
 
+**Plusieurs onglets** : tous les onglets visibles sont lus, chacun avec sa
+propre ligne de titres. Sans colonne Site, le **nom de l'onglet devient le
+site** (« Lyon », « Lille ») ; un onglet « Caméras », « Switchs », « Bornes »…
+donne le **type** quand la colonne Type manque. Un onglet **De / Port A / Vers /
+Port B** (avec Câble, VLAN) décrit des liaisons. Les onglets sans colonne Nom
+(notes, sommaire) et les onglets masqués sont ignorés ; un nom déjà vu dans un
+autre onglet n'est pas recréé. À la fin, l'outil dit ce qu'il a lu dans
+chaque onglet.
+
 *Fichiers › Modèle de tableau à remplir* donne un CSV prêt à ouvrir dans
-Excel. Formats lus : `.xlsx` (première feuille) et `.csv` ; un ancien `.xls`
+Excel. Formats lus : `.xlsx` (tous les onglets) et `.csv` ; un ancien `.xls`
 s'enregistre d'abord en `.xlsx` depuis Excel.
 
 ## Saisir : le texte (pour aller vite)

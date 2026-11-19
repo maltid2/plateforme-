@@ -288,7 +288,7 @@ test("import Excel (.xlsx) : colonnes reconnues par leur titre, topologie sans e
   const { lireTableur, tableurVersTexte } = await import("../src/tableur.ts");
   const buf = readFileSync(new URL("./fixtures/inventaire.xlsx", import.meta.url));
   const lignes = await lireTableur("inventaire.xlsx", buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength));
-  const r = tableurVersTexte(lignes);
+  const r = tableurVersTexte(lignes);  // un seul onglet utile, l autre est ignoré
   assert.equal(r.equipements, 5);
   const inv = analyser(r.texte);
   assert.deepEqual(inv.alertes.filter((a) => a.niveau === "erreur"), []);
@@ -315,4 +315,26 @@ test("import CSV (Excel français, « ; ») et modèle fourni", async () => {
   assert.deepEqual(inv.alertes.filter((a) => a.niveau === "erreur"), []);
   const c = lireCsv('Nom;IP;Remarque\r\n"CAM;1";10.0.0.5;"dit ""bonjour"""\r\n');
   assert.deepEqual(c[1], ["CAM;1", "10.0.0.5", 'dit "bonjour"']);
+});
+
+test("import Excel à plusieurs onglets : sites, types, liaisons, onglets ignorés", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { lireTableur, tableurVersTexte } = await import("../src/tableur.ts");
+  const buf = readFileSync(new URL("./fixtures/onglets.xlsx", import.meta.url));
+  const feuilles = await lireTableur("onglets.xlsx", buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength));
+  assert.deepEqual(feuilles.map((f) => f.nom), ["Lyon", "Lille", "Caméras", "Liaisons", "Notes"]);   // l'onglet masqué est sauté
+  const r = tableurVersTexte(feuilles);
+  assert.equal(r.equipements, 6);
+  assert.match(r.onglets.find((o) => o.nom === "Notes")!.lu, /ignoré/);
+  assert.match(r.onglets.find((o) => o.nom === "Liaisons")!.lu, /1 liaison/);
+  const inv = analyser(r.texte);
+  assert.deepEqual(inv.alertes.filter((a) => a.niveau === "erreur"), []);
+  const eq = (n: string) => inv.equipements.find((e) => e.nom === n)!;
+  assert.equal(eq("SW-LILLE").site, "Lille");          // nom de l'onglet = site
+  assert.equal(eq("CAM-LYON-1").point, "École");
+  assert.equal(eq("DOME-HALL").genre, "camera");       // onglet « Caméras » = type
+  assert.equal(eq("SW-LYON-CORE").ip, "10.2.0.2");     // le doublon de l'onglet Caméras est ignoré
+  assert.ok(!inv.equipements.some((e) => e.nom === "NE-PAS-LIRE"));
+  const vpn = inv.liaisons.find((l) => l.a === "SW-LYON-CORE" && l.b === "SW-LILLE")!;
+  assert.deepEqual([vpn.portA, vpn.portB, vpn.media, vpn.vlans], ["Te1", "Te1", "vpn", "10,30"]);
 });

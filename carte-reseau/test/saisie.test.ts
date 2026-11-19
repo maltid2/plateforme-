@@ -368,3 +368,31 @@ test("un équipement écrit sans site rejoint le site de ce à quoi il est reli�
   const r2 = tableurVersTexte([["Nom", "Type", "Branché sur"], ["GW-B", "passerelle", ""], ["SW-B", "switch", "GW-B"]]);
   assert.deepEqual(analyser(r2.texte).sites.map((s) => s.nom), ["Site principal"]);
 });
+
+test("Excel mis en forme de tableau : un tableau par site, ports « 24 + 4 SFP », plusieurs VLAN", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { lireTableur, tableurVersTexte, vlansDe, portsEtSfp } = await import("../src/tableur.ts");
+  const buf = readFileSync(new URL("./fixtures/tableaux.xlsx", import.meta.url));
+  const feuilles = await lireTableur("tableaux.xlsx", buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength));
+  assert.deepEqual(feuilles[0].tableaux!.map((t) => t.nom), ["Tableau1", "Tableau_Issy"]);
+  const r = tableurVersTexte(feuilles);
+  const inv = analyser(r.texte);
+  assert.deepEqual(inv.alertes.filter((a) => a.niveau === "erreur"), []);
+  const eq = (n: string) => inv.equipements.find((e) => e.nom === n)!;
+  assert.equal(eq("SW-NANT").site, "Nanterre");     // titre « Site : Nanterre » au-dessus du tableau
+  assert.equal(eq("GW-NANT").site, "Nanterre");
+  assert.equal(eq("SW-ISSY").site, "Issy");         // nom du tableau « Tableau_Issy »
+  assert.equal(eq("CAM-LYON").site, "Lyon");        // plages empilées sans objet Tableau
+  assert.equal(eq("SW-LILLE2").site, "Lille");
+  assert.ok(!inv.equipements.some((e) => e.nom === "Nom"));
+  const kv = (n: string, k: string) => eq(n).kv.find(([c]) => c === k)?.[1];
+  assert.equal(kv("SW-NANT", "ports"), "24");
+  assert.equal(kv("SW-NANT", "sfp"), "4");
+  assert.equal(kv("SW-NANT", "VLAN"), "10,20");     // deux colonnes VLAN
+  const up = inv.liaisons.find((l) => l.a === "SW-ISSY")!;
+  assert.equal(up.vlans, "10,20,30");
+  assert.equal(up.mode, "trunk");
+  assert.equal(vlansDe(["10 Vidéo ; 20 Admin", "100-110", "20"]), "10,20,100-110");
+  assert.deepEqual(portsEtSfp("48 RJ45 / 4 SFP+", ""), { rj: "48", sfp: "4" });
+  assert.deepEqual(portsEtSfp("24", "2"), { rj: "24", sfp: "2" });
+});

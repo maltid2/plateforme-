@@ -14,7 +14,11 @@ import { GENRES, genreDe, type Genre } from "./saisie.ts";
 /* ---------------- lecture du fichier ---------------- */
 
 /** Un onglet du classeur : son nom et ses lignes de cellules (texte). */
-export type Feuille = { nom: string; lignes: string[][] };
+export type Feuille = {
+  nom: string; lignes: string[][];
+  /** Tableaux Excel (« Mettre sous forme de tableau ») : nom et plage, ex. A3:H12. */
+  tableaux?: { nom: string; ref: string }[];
+};
 
 /** Lit un .xlsx (tous ses onglets, dans l'ordre) ou un .csv (un seul). */
 export async function lireTableur(nom: string, donnees: ArrayBuffer): Promise<Feuille[]> {
@@ -67,7 +71,7 @@ async function fichiersZip(o: Uint8Array): Promise<Map<string, string>> {
     const local = dv.getUint32(p + 42, true);
     const nom = dec.decode(o.subarray(p + 46, p + 46 + lnom));
     p += 46 + lnom + lext + lcom;
-    if (!/^xl\/(sharedStrings\.xml|workbook\.xml|worksheets\/sheet\d+\.xml|_rels\/workbook\.xml\.rels)$/.test(nom)) continue;
+    if (!/^xl\/(sharedStrings\.xml|workbook\.xml|worksheets\/sheet\d+\.xml|worksheets\/_rels\/sheet\d+\.xml\.rels|tables\/table\d+\.xml|_rels\/workbook\.xml\.rels)$/.test(nom)) continue;
     const debut = local + 30 + dv.getUint16(local + 26, true) + dv.getUint16(local + 28, true);
     const brut = o.subarray(debut, debut + taille);
     if (methode === 0) res.set(nom, dec.decode(brut));
@@ -108,14 +112,37 @@ async function lireXlsx(o: Uint8Array): Promise<Feuille[]> {
   if (!onglets.length) [...f.keys()].filter((k) => k.startsWith("xl/worksheets/")).sort()
     .forEach((k, i) => onglets.push({ nom: `Feuille ${i + 1}`, chemin: k, cache: false }));
   if (!onglets.length) throw new Error("Aucune feuille trouvée dans ce classeur.");
-  return onglets.map(({ nom, chemin }) => ({ nom, lignes: lignesDe(f.get(chemin)!, partages) }));
+  return onglets.map(({ nom, chemin }) => ({ nom, lignes: lignesDe(f.get(chemin)!, partages), tableaux: tableauxDe(f, chemin) }));
 }
+
+/** Les tableaux Excel posés sur une feuille (xl/tables/tableN.xml, via les liens de la feuille). */
+function tableauxDe(f: Map<string, string>, chemin: string): { nom: string; ref: string }[] {
+  const rels = f.get(chemin.replace(/([^/]+)$/, "_rels/$1.rels")) ?? "";
+  const res: { nom: string; ref: string }[] = [];
+  for (const m of rels.matchAll(/<Relationship\b([^>]*)\/?>/g)) {
+    if (!/Type="[^"]*\/table"/.test(m[1])) continue;
+    const cible = m[1].match(/\bTarget="([^"]+)"/)?.[1] ?? "";
+    const fichier = cible.startsWith("/") ? cible.slice(1) : `xl/${cible.replace(/^(\.\.\/)+/, "")}`;
+    const xml = f.get(fichier);
+    const entete = xml?.match(/<table\b([^>]*)>/)?.[1] ?? xml?.match(/<table\b([^>]*)\/>/)?.[1];
+    if (!entete) continue;
+    const ref = entete.match(/\bref="([A-Z]+\d+:[A-Z]+\d+)"/)?.[1];
+    const nom = entites(entete.match(/\bdisplayName="([^"]*)"/)?.[1] ?? entete.match(/\bname="([^"]*)"/)?.[1] ?? "");
+    if (ref) res.push({ nom, ref });
+  }
+  return res.sort((a, b) => ligneDe(a.ref) - ligneDe(b.ref) || colonne(a.ref) - colonne(b.ref));
+}
+
+const ligneDe = (ref: string) => Number(ref.match(/\d+/)?.[0] ?? 1) - 1;
 
 function lignesDe(feuille: string, partages: string[]): string[][] {
   const lignes: string[][] = [];
-  for (const r of feuille.matchAll(/<row\b[^>]*?(?:\/>|>([\s\S]*?)<\/row>)/g)) {
+  for (const r of feuille.matchAll(/<row\b([^>]*?)(?:\/>|>([\s\S]*?)<\/row>)/g)) {
+    // Les lignes vides n'existent pas dans le fichier : on les remet à leur place.
+    const num = Number(r[1].match(/\br="(\d+)"/)?.[1] ?? lignes.length + 1) - 1;
+    while (lignes.length < num) lignes.push([]);
     const ligne: string[] = [];
-    for (const c of (r[1] ?? "").matchAll(/<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g)) {
+    for (const c of (r[2] ?? "").matchAll(/<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g)) {
       const attrs = c[1], corps = c[2] ?? "";
       const ref = attrs.match(/\br="([A-Z]+\d+)"/)?.[1];
       const t = attrs.match(/\bt="(\w+)"/)?.[1];
@@ -148,8 +175,8 @@ const TITRES: [Champ, RegExp][] = [
   ["monport", /^(port (local|de l equipement|equipement|source|depart)|mon port|son port|port a|local port)$/],
   ["port", /^(port( du)?( switch)?|port sw|port arrivee|port b|n port|no port|numero de port|interface|remote port)$/],
   ["vers", /^(branche sur|branche|connecte a|connecte sur|relie a|switch|sw|switch amont|uplink|amont|parent|equipement amont|vers|destination|raccorde a|sur|equipement b|extremite b|cote b|equipement 2|equipement destination)$/],
-  ["ports", /^((nb|nombre)( de)? )?ports?( rj45| cuivre)?$|^rj45$/],
-  ["sfp", /^((nb|nombre)( de)? )?(sfp|cages? sfp|ports? sfp|ports? fibre|fibre)$/],
+  ["ports", /^((nb|nombre|total)( de)? )?ports?( rj45| cuivre| ethernet| total)?$|^(ports? )?(rj45|cuivre)$|^capacite( ports?)?$|^nb ports? rj45$/],
+  ["sfp", /^((nb|nombre)( de)? )?(sfp\+?|cages? sfp|ports? sfp|ports? fibre|fibre|uplinks? sfp)$/],
   ["wan", /^((nb|nombre)( de)? )?(ports? )?wan$/],
   ["type", /^(type|genre|categorie|famille|type d equipement|nature)$/],
   ["nom", /^(nom|name|hostname|nom d hote|equipement|designation|libelle|identifiant|id|nom equipement)$/],
@@ -188,6 +215,26 @@ export function portExcel(v: string): string {
 /** Un nombre de ports écrit « 24 », « 24 ports », « RJ45 24 » ou « 24 x RJ45 ». */
 const nombreDe = (v: string) => v.replace(/rj\s*-?\s*45/gi, " ").match(/\d+/)?.[0];
 
+/** « 24 + 4 SFP », « 48 RJ45 / 4 SFP+ » dans une seule case : RJ45 et SFP séparés. */
+export function portsEtSfp(caseRj: string, caseSfp: string): { rj?: string; sfp?: string } {
+  const sfpDansRj = caseRj.match(/(\d+)\s*(?:x\s*)?(?:cages?\s*)?(?:sfp\+?|fibre|10g)/i);
+  const rj = nombreDe(sfpDansRj ? caseRj.replace(sfpDansRj[0], " ") : caseRj);
+  return { rj, sfp: (caseSfp ? nombreDe(caseSfp) : undefined) ?? sfpDansRj?.[1] };
+}
+
+/** VLAN d'une ou plusieurs cases : « 10, 20 », « 10 / 20 », « 10 et 30 », « 10 Vidéo ; 20 Admin »,
+ *  plage « 100-110 » → « 10,20 » (numéros 1 à 4094, sans doublon). */
+export function vlansDe(cases: string[]): string {
+  const vus: string[] = [];
+  for (const c of cases) for (const m of String(c ?? "").matchAll(/(\d{1,4})(?:\s*-\s*(\d{1,4})(?!\d))?/g)) {
+    const a = Number(m[1]), b = m[2] ? Number(m[2]) : NaN;
+    if (a < 1 || a > 4094) continue;
+    const v = Number.isFinite(b) && b > a && b <= 4094 ? `${a}-${b}` : String(a);
+    if (!vus.includes(v)) vus.push(v);
+  }
+  return vus.join(",");
+}
+
 /** Le type d'après la colonne Type, sinon d'après le début du nom (CAM-…, SW-…). */
 function deviner(type: string, nom: string): Genre | undefined {
   const t = plat(type);
@@ -209,8 +256,57 @@ export type ResultatImport = {
   manquantes: string[];
 };
 
-/** Noms d'onglet qui ne disent rien du site (« Feuil1 », « Inventaire »…). */
-const ONGLET_BANAL = /^(feuil|feuille|sheet|onglet|tableau|inventaire|equipements?|materiels?|liste|donnees|data|reseau|export|tous|global)\s*\d*$/;
+/** Noms d'onglet ou de tableau qui ne disent rien du site (« Feuil1 », « Tableau1 »…). */
+const ONGLET_BANAL = /^(feuil|feuille|sheet|onglet|tableau|table|tab|tbl|inventaire|equipements?|materiels?|liste|donnees|data|reseau|export|tous|global)\s*\d*$/;
+
+/** Un bloc à lire : un tableau Excel, ou une partie de feuille sous sa ligne de titres. */
+type Bloc = { onglet: string; nom: string; titre: string; lignes: string[][] };
+
+const nbCases = (l: string[]) => l.filter((c) => String(c ?? "").trim()).length;
+const champsDe = (l: string[]) => l.map((c) => TITRES.find(([, re]) => re.test(plat(String(c ?? ""))))?.[0]);
+const estEntete = (l: string[]) => {
+  const c = champsDe(l);
+  return c.includes("nom") || (c.includes("de") && c.includes("vers")) || (c.includes("ip") && c.includes("type"));
+};
+/** Le titre posé au-dessus d'un tableau (1 ou 2 cases remplies sur la ligne). */
+function titreAuDessus(lignes: string[][], haut: number, plancher: number): { texte: string; ligne: number } {
+  for (let k = haut - 1; k >= Math.max(plancher, haut - 3); k--) {
+    const l = lignes[k] ?? [];
+    const n = nbCases(l);
+    if (!n) continue;
+    if (n <= 2 && !estEntete(l)) return { texte: l.map((c) => String(c ?? "").trim()).filter(Boolean).join(" "), ligne: k };
+    break;
+  }
+  return { texte: "", ligne: haut };
+}
+
+/** Une feuille → ses blocs : les tableaux Excel s'il y en a, sinon un bloc par ligne de titres. */
+function blocs(f: Feuille): Bloc[] {
+  if (f.tableaux?.length) {
+    let plancher = 0;
+    return f.tableaux.map((t) => {
+      const [a, b] = t.ref.split(":");
+      const r1 = ligneDe(a), r2 = ligneDe(b), c1 = colonne(a), c2 = colonne(b);
+      const titre = titreAuDessus(f.lignes.map((l) => l.slice(c1, c2 + 1)), r1, plancher).texte;
+      plancher = r2 + 1;
+      return { onglet: f.nom, nom: t.nom, titre, lignes: f.lignes.slice(r1, r2 + 1).map((l) => l.slice(c1, c2 + 1)) };
+    });
+  }
+  const entetes = f.lignes.map((l, i) => (estEntete(l) ? i : -1)).filter((i) => i >= 0);
+  if (!entetes.length) return [{ onglet: f.nom, nom: "", titre: "", lignes: f.lignes }];
+  // Plusieurs tableaux l'un sous l'autre : chacun commence à sa ligne de titres,
+  // et le titre posé juste au-dessus (« Site : Nanterre ») lui appartient.
+  const titres = entetes.map((h, k) => titreAuDessus(f.lignes, h, k ? entetes[k - 1] + 1 : 0));
+  return entetes.map((h, k) => ({
+    onglet: f.nom, nom: "", titre: titres[k].texte,
+    lignes: f.lignes.slice(h, k + 1 < entetes.length ? titres[k + 1].ligne : f.lignes.length),
+  }));
+}
+
+/** « Site : Nanterre », « Tableau_Nanterre » → « Nanterre ». */
+const nettoyer = (s: string) => propre(s.replace(/_/g, " "))
+  .replace(/^(tableau|table|tbl|tab)\s*(?=\S)(?!\d+$)/i, "")
+  .replace(/^(site|agence|ville|lieu de)\s*[:\-–—]\s*/i, "").trim();
 
 /** Transforme les onglets du classeur en texte de topologie (que l'outil lit ensuite). */
 export function tableurVersTexte(entree: Feuille[] | string[][]): ResultatImport {
@@ -222,69 +318,80 @@ export function tableurVersTexte(entree: Feuille[] | string[][]): ResultatImport
   const vuesCol = new Set<Champ>();
   let equipements = 0, ignorees = 0, nbLiens = 0;
 
-  for (const { nom: onglet, lignes } of feuilles) {
-    const pleines = lignes.filter((l) => l.some((c) => String(c ?? "").trim()));
-    const champsDe = (l: string[]) => l.map((c) => TITRES.find(([, re]) => re.test(plat(String(c ?? ""))))?.[0]);
-    const iTitre = pleines.findIndex((l) => {
-      const c = champsDe(l);
-      return c.includes("nom") || (c.includes("de") && c.includes("vers")) || (c.includes("ip") && c.includes("type"));
-    });
-    if (iTitre < 0) { onglets.push({ nom: onglet, lu: pleines.length ? "ignoré (pas de colonne « Nom »)" : "vide" }); continue; }
+  for (const bloc of feuilles.flatMap(blocs)) {
+    const { onglet } = bloc;
+    const etiquette = [onglet, bloc.titre || bloc.nom].filter(Boolean).join(" › ") || "tableau";
+    const pleines = bloc.lignes.filter((l) => nbCases(l));
+    const iTitre = pleines.findIndex(estEntete);
+    if (iTitre < 0) { onglets.push({ nom: etiquette, lu: pleines.length ? "ignoré (pas de colonne « Nom »)" : "vide" }); continue; }
     const col = new Map<Champ, number>();
     champsDe(pleines[iTitre]).forEach((c, i) => { if (c && !col.has(c)) col.set(c, i); });
     col.forEach((_v, k) => vuesCol.add(k));
+    // Toutes les colonnes « VLAN… » (VLAN 1, VLAN 2, VLAN vidéo…) comptent.
+    const colsVlan = pleines[iTitre].map((t, i) => (/^vlan/.test(plat(String(t ?? ""))) ? i : -1)).filter((i) => i >= 0);
+    if (colsVlan.length) vuesCol.add("vlan");
     const lire = (l: string[], c: Champ) => (col.has(c) ? propre(l[col.get(c)!] ?? "") : "");
+    const vlanDe = (l: string[]) => vlansDe(colsVlan.map((i) => l[i] ?? ""));
     const media = (l: string[]) => {
       const c = plat(lire(l, "cable"));
       return /fibre|fiber|optique|sfp/.test(c) ? "fibre" : /rj|cuivre|copper|ethernet/.test(c) ? "rj45" : /radio|wifi|4g|5g/.test(c) ? "radio" : /vpn/.test(c) ? "vpn" : "";
     };
-    const po = plat(onglet);
 
-    // Onglet de liaisons (De / Vers, sans colonne Nom).
+    // Bloc de liaisons (De / Vers, sans colonne Nom).
     if (!col.has("nom") && col.has("de")) {
       let n = 0;
       for (const l of pleines.slice(iTitre + 1)) {
+        if (estEntete(l)) continue;
         const a = nomPropre(lire(l, "de")), b = nomPropre(lire(l, "vers"));
         if (!a || !b) { ignorees++; continue; }
         const pa = portExcel(lire(l, "monport")), pb = portExcel(lire(l, "port"));
-        const vlan = lire(l, "vlan").replace(/\s+/g, ""), rem = lire(l, "remarque").replace(/=/g, "-");
+        const vlan = vlanDe(l), rem = lire(l, "remarque").replace(/=/g, "-");
         liaisons.push([`${a}${pa ? `:${pa}` : ""} -> ${b}${pb ? `:${pb}` : ""}`, media(l), vlan ? `vlan=${vlan}` : "", rem].filter(Boolean).join(" | "));
         n++;
       }
       nbLiens += n;
-      onglets.push({ nom: onglet, lu: `${n} liaison${n > 1 ? "s" : ""}` });
+      onglets.push({ nom: etiquette, lu: `${n} liaison${n > 1 ? "s" : ""}` });
       continue;
     }
 
-    // Le nom de l'onglet sert de type (« Caméras ») ou de site (« Lyon ») quand la colonne manque.
-    const genreOnglet = po ? genreDe(po) ?? genreDe(po.replace(/s$/, "")) ?? genreDe((po.split(" ")[0] ?? "").replace(/s$/, "")) : undefined;
-    const siteOnglet = !col.has("site") && onglet && !genreOnglet && !ONGLET_BANAL.test(po) ? propre(onglet) : "";
-    sortie.push("", `# Onglet « ${onglet || "tableau"} »`);
+    // Titre au-dessus du tableau, nom du tableau, puis nom de l'onglet : le
+    // premier qui parle donne le site (« Nanterre ») ou le type (« Caméras »).
+    let genreBloc: Genre | undefined, siteBloc = "";
+    for (const brut of [bloc.titre, bloc.nom, onglet]) {
+      const v = nettoyer(brut ?? ""), pv = plat(v);
+      if (!pv || ONGLET_BANAL.test(pv)) continue;
+      const g = genreDe(pv) ?? genreDe(pv.replace(/s$/, "")) ?? genreDe((pv.split(" ")[0] ?? "").replace(/s$/, ""));
+      if (g) { genreBloc ??= g; continue; }
+      if (!siteBloc) siteBloc = v;
+    }
+    if (siteBloc) vuesCol.add("site");
+    sortie.push("", `# ${etiquette}`);
     let dernierSite = "";
     let n = 0;
     for (const l of pleines.slice(iTitre + 1)) {
+      if (estEntete(l)) continue;
       const nom = nomPropre(lire(l, "nom"));
       if (!nom) { ignorees++; continue; }
       if (vus.has(nom.toLowerCase())) { sortie.push(`# Déjà vu, ignoré : ${nom}`); ignorees++; continue; }
       vus.add(nom.toLowerCase());
-      const genre = deviner(lire(l, "type"), nom) ?? genreOnglet ?? "autre";
+      const genre = deviner(lire(l, "type"), nom) ?? genreBloc ?? "autre";
       const p: string[] = [`${genre} ${nom}`];
       const ip = lire(l, "ip").match(/\d{1,3}(\.\d{1,3}){3}(\/\d{1,2})?/)?.[0];
       if (ip) p.push(ip);
       const modele = lire(l, "modele"); if (modele) p.push(modele.replace(/=/g, "-"));
-      // Case Site vide : cellules fusionnées dans Excel (la valeur n'est que sur
-      // la première ligne) → on reprend le site de la ligne du dessus. Sans site
-      // du tout, l'équipement rejoint le site de ce à quoi il est branché.
-      const siteLu = lire(l, "site") || siteOnglet || dernierSite;
+      // Case Site vide : le site du tableau (titre, nom), sinon celui de la ligne
+      // du dessus (cellules fusionnées). Sans site du tout, l'équipement
+      // rejoint le site de ce à quoi il est branché.
+      const siteLu = lire(l, "site") || siteBloc || dernierSite;
       if (siteLu) { p.push(`site=${siteLu}`); dernierSite = siteLu; }
       const lieu = lire(l, "lieu"); if (lieu) p.push(`point=${lieu}`);
       const baie = lire(l, "baie"); if (baie) p.push(`baie=${baie}`);
       const gw = lire(l, "passerelle").match(/\d{1,3}(\.\d{1,3}){3}(\/\d{1,2})?/)?.[0]; if (gw) p.push(`passerelle=${gw}`);
-      const nombre = (c: Champ) => nombreDe(lire(l, c));
-      if (nombre("ports")) p.push(`ports=${nombre("ports")}`);
-      if (nombre("sfp")) p.push(`sfp=${nombre("sfp")}`);
-      if (nombre("wan")) p.push(`wan=${nombre("wan")}`);
-      const vlan = lire(l, "vlan").replace(/\s+/g, "");
+      const { rj, sfp } = portsEtSfp(lire(l, "ports"), lire(l, "sfp"));
+      if (rj) p.push(`ports=${rj}`);
+      if (sfp) p.push(`sfp=${sfp}`);
+      const wan = nombreDe(lire(l, "wan")); if (wan) p.push(`wan=${wan}`);
+      const vlan = vlanDe(l);
       const vers = nomPropre(lire(l, "vers"));
       const port = portExcel(lire(l, "port"));
       const monport = portExcel(lire(l, "monport"));
@@ -292,6 +399,7 @@ export function tableurVersTexte(entree: Feuille[] | string[][]): ResultatImport
       if (vers && monport) {
         // Port à port (deux switchs) : une liaison à part, écrite après tous les équipements.
         liaisons.push([`${nom}:${monport} -> ${vers}${port ? `:${port}` : ""}`, ...opts].join(" | "));
+        if (vlan) p.push(`vlan=${vlan}`);
         nbLiens++;
       } else if (vers) {
         p.push(`sur ${vers}${port ? `:${port}` : ""}`, ...opts);
@@ -302,12 +410,12 @@ export function tableurVersTexte(entree: Feuille[] | string[][]): ResultatImport
       n++;
     }
     equipements += n;
-    onglets.push({ nom: onglet, lu: `${n} équipement${n > 1 ? "s" : ""}${siteOnglet ? ` (site « ${siteOnglet} »)` : genreOnglet && !col.has("type") ? ` (type « ${GENRES[genreOnglet].libelle} »)` : ""}` });
+    onglets.push({ nom: etiquette, lu: `${n} équipement${n > 1 ? "s" : ""}${siteBloc && !col.has("site") ? ` (site « ${siteBloc} »)` : ""}${genreBloc && !col.has("type") ? ` (type « ${GENRES[genreBloc].libelle} »)` : ""}` });
   }
   if (!equipements && !liaisons.length)
     throw new Error("Je ne trouve pas la ligne de titres : il faut au moins une colonne « Nom » (ou « Équipement », « Hostname »).");
   if (liaisons.length) sortie.push("", "# Liaisons", ...liaisons);
-  const entete = `# Importé d'un tableau : ${onglets.filter((o) => /\d/.test(o.lu)).map((o) => `${o.nom || "tableau"} (${o.lu})`).join(", ")}.`;
+  const entete = `# Importé d'un tableau : ${onglets.filter((o) => /\d/.test(o.lu)).map((o) => `${o.nom} (${o.lu})`).join(", ")}.`;
   const manquantes = (["type", "ip", "site", "vers", "port"] as Champ[]).filter((c) => !vuesCol.has(c));
   return { texte: [entete, ...sortie].join("\n") + "\n", equipements, liaisons: nbLiens, ignorees, onglets, manquantes };
 }

@@ -106,6 +106,20 @@ Port B** (avec Câble, VLAN) décrit des liaisons. Les onglets sans colonne Nom
 autre onglet n'est pas recréé. À la fin, l'outil dit ce qu'il a lu dans
 chaque onglet.
 
+**Mis en forme de tableau** (*Accueil › Mettre sous forme de tableau*) :
+chaque tableau Excel est lu à part, même s'il y en a plusieurs sur une
+feuille. Sans colonne Site, le site vient du **titre posé juste au-dessus**
+du tableau (« Nanterre », « Site : Nanterre »), sinon du **nom du tableau**
+(*Création de tableau › Nom du tableau* : `Tableau_Nanterre` → Nanterre),
+sinon du nom de l'onglet. Sans objet Tableau, des plages empilées sur une
+feuille (titre, ligne de titres, lignes) sont reconnues de la même façon.
+
+**Ports** : `24`, `RJ45 24`, ou les deux dans une case : `24 + 4 SFP`,
+`48 RJ45 / 4 SFP+`. **VLAN** : plusieurs par équipement, dans une case
+(`10, 20`, `10 / 20`, `10 et 30`, `100-110`) ou dans plusieurs colonnes
+(`VLAN 1`, `VLAN 2`, `VLAN vidéo`…). Sur un switch relié à un autre, ils
+passent sur le lien (trunk).
+
 *Fichiers › Modèle de tableau à remplir* donne un CSV prêt à ouvrir dans
 Excel. Formats lus : `.xlsx` (tous les onglets) et `.csv` ; un ancien `.xls`
 s'enregistre d'abord en `.xlsx` depuis Excel.

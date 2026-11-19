@@ -67,6 +67,11 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
       </div>
       <div class="f-ligne">
         <label>IP passerelle <small>(vide = celle du site)</small><input data-f="gw" autocomplete="off" spellcheck="false" /></label>
+        <label>Masque <small>(du réseau)</small><input data-f="masque" placeholder="255.255.255.0 ou /24" autocomplete="off" spellcheck="false" /></label>
+      </div>
+      <div class="f-ligne">
+        <label>N° de série <small>(plusieurs : séparés par des virgules)</small><input data-f="serie" autocomplete="off" spellcheck="false" /></label>
+        <label>Adresse MAC <small>(idem)</small><input data-f="mac" placeholder="00:11:22:AA:BB:CC" autocomplete="off" spellcheck="false" /></label>
       </div>
       <div class="f-ligne f-switch">
         <label>Ports RJ45 <small>(un par switch : 24, 8, 48)</small><input data-f="ports" inputmode="numeric" list="l-rj45" value="24" autocomplete="off" spellcheck="false" /></label>
@@ -299,6 +304,12 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     }
     if (ctx.baie) p.push(`baie=${propre(ctx.baie)}`);
     if (champ("gw").value.trim()) p.push(`passerelle=${propre(champ("gw").value)}`);
+    if (champ("masque").value.trim()) p.push(`masque=${propre(champ("masque").value).replace(/\s+/g, "")}`);
+    // N° de série et MAC : un par équipement, dans l'ordre des noms.
+    for (const k of ["serie", "mac"]) {
+      const v = champ(k).value.split(",").map((x) => propre(x).replace(/=/g, "-"));
+      if (v.some(Boolean)) p.push(`${k}=${v.join(", ").replace(/(,\s*)+$/, "")}`);
+    }
     // Ports tapés librement (2 RJ45, 3 SFP…) ; vide = déduit des branchements.
     if (A_FACADE.has(genre)) {
       // « 24, 8, 48 » : un nombre par équipement (dans l'ordre des noms).
@@ -371,12 +382,15 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     const ips = liste("ip").filter(Boolean), rj = liste("ports").filter(Boolean), sfp = liste("sfp").filter(Boolean);
     const ipDe = (k: number) => ips.length > 1 ? (ips[k] ?? (ips.length ? ipPlus(ips[ips.length - 1], k - ips.length + 1) : "")) : ips[0] ? ipPlus(ips[0], k) : "";
     const de = (l: string[], k: number) => l[Math.min(k, l.length - 1)] ?? "";
-    box.querySelector("thead")!.innerHTML = `<tr><th>Nom</th><th>IP</th>${ports ? "<th>Ports RJ45</th><th>Cages SFP</th>" : ""}</tr>`;
+    box.querySelector("thead")!.innerHTML = `<tr><th>Nom</th><th>IP</th>${ports ? "<th>Ports RJ45</th><th>Cages SFP</th>" : ""}<th>N° de série</th><th>MAC</th></tr>`;
+    const series = liste("serie"), macs = liste("mac");
     box.querySelector("tbody")!.innerHTML = noms.map((n, k) => `<tr>
       <td><input data-d="nom" data-k="${k}" value="${echap(n)}" spellcheck="false" autocomplete="off" aria-label="Nom n°${k + 1}" /></td>
       <td><input data-d="ip" data-k="${k}" value="${echap(ipDe(k))}" placeholder="—" spellcheck="false" autocomplete="off" aria-label="IP de ${echap(n)}" /></td>
-      ${ports ? `<td><input data-d="ports" data-k="${k}" inputmode="numeric" value="${echap(de(rj, k))}" aria-label="Ports RJ45 de ${echap(n)}" /></td>
-      <td><input data-d="sfp" data-k="${k}" inputmode="numeric" value="${echap(de(sfp, k))}" aria-label="Cages SFP de ${echap(n)}" /></td>` : ""}
+      ${ports ? `<td class="f-num"><input data-d="ports" data-k="${k}" inputmode="numeric" value="${echap(de(rj, k))}" aria-label="Ports RJ45 de ${echap(n)}" /></td>
+      <td class="f-num"><input data-d="sfp" data-k="${k}" inputmode="numeric" value="${echap(de(sfp, k))}" aria-label="Cages SFP de ${echap(n)}" /></td>` : ""}
+      <td><input data-d="serie" data-k="${k}" value="${echap(series[k] ?? "")}" placeholder="—" spellcheck="false" autocomplete="off" aria-label="N° de série de ${echap(n)}" /></td>
+      <td><input data-d="mac" data-k="${k}" value="${echap(macs[k] ?? "")}" placeholder="—" spellcheck="false" autocomplete="off" aria-label="Adresse MAC de ${echap(n)}" /></td>
     </tr>`).join("");
   }
   /** Dans le cadre A : le port de chacun quand on en branche plusieurs. */
@@ -408,6 +422,8 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     if (noms.every(Boolean)) { champ("nom").value = noms.join(", "); champ("qte").value = String(noms.length); champ<HTMLInputElement>("qte").disabled = true; }
     const ips = col("ip");
     champ("ip").value = ips.every(Boolean) ? ips.join(", ") : ips.filter(Boolean).join(", ");
+    // Série / MAC : la place compte (une case vide garde sa place).
+    for (const d of ["serie", "mac"]) champ(d).value = col(d).map((x) => x.replace(/,/g, " ")).join(", ").replace(/(,\s*)+$/, "");
     for (const d of ["ports", "sfp"]) {
       const v = col(d); if (!v.length) continue;
       const pleins = v.map((x) => x || v.find(Boolean) || "0");
@@ -460,6 +476,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     champ("modele").value = "";
     champ("monport").value = "";
     champ("gw").value = "";
+    for (const k of ["masque", "serie", "mac"]) champ(k).value = "";
     // Nouveau formulaire : les nombres de ports reprennent les valeurs du type.
     (["ports", "sfp"] as const).forEach((k) => delete champ(k).dataset.touche);
     champ("vlan").value = genre === "camera" ? champ("vlan").value : "";
@@ -659,6 +676,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     champ("ip").value = e.ip ?? "";
     champ("modele").value = e.infos[0] ?? "";
     champ("gw").value = e.passerelleHeritee ? "" : e.passerelleIp ?? "";
+    for (const k of ["masque", "serie", "mac"]) champ(k).value = e.kv.find(([c]) => c === k)?.[1] ?? "";
     const kv = (re: RegExp) => e.kv.find(([k]) => re.test(k))?.[1] ?? "";
     champ("ports").value = kv(/^ports?$/i);
     champ("sfp").value = kv(/^sfp$/i);
@@ -698,11 +716,13 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
           if (c.split(",").every((x) => /^\d{1,3}(\.\d{1,3}){3}(\/\d{1,2})?$/.test(x.trim()))) return e.ip ?? c;
           if (/^sur\s+/i.test(c)) return sur || c;
           // « ports=24,8,48 » : chacun reprend son propre nombre.
+          const ms = c.match(/^(serie|mac)\s*=\s*(.*,.*)$/i);
+          if (ms) { const v = e.kv.find(([k]) => k === ms[1].toLowerCase())?.[1]; return v ? `${ms[1]}=${v}` : ""; }
           const mk = c.match(/^(ports?|sfp|wan)\s*=\s*(.*,.*)$/i);
           if (mk) { const v = e.kv.find(([k]) => k.toLowerCase() === mk[1].toLowerCase())?.[1]; return v ? `${mk[1]}=${v}` : c; }
           return c;
         });
-        return retrait + [`${mot} ${e.nom}`, ...ch].join(" | ");
+        return retrait + [`${mot} ${e.nom}`, ...ch.filter(Boolean)].join(" | ");
       });
       lignes.splice(n - 1, 1, ...nouvelles);
     });

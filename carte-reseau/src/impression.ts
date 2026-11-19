@@ -7,7 +7,7 @@
  */
 import { APPARENCE, COULEUR_MEDIA } from "./apparence.ts";
 import { cheminPasserelle } from "./facade.ts";
-import { GENRES, MEDIAS, type Genre, type Inventaire, type Media } from "./saisie.ts";
+import { GENRES, MEDIAS, type Equipement, type Genre, type Inventaire, type Media } from "./saisie.ts";
 
 const echap = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
@@ -28,6 +28,8 @@ export function imprimer(inv: Inventaire, svgPlan: string, titre: string, site: 
   const presents = new Set(eqs.map((e) => e.genre));
   const medias = new Set(inv.liaisons.map((l) => l.media).filter(Boolean) as Media[]);
 
+  const val = (e: Equipement, k: string) => e.kv.find(([c]) => c === k)?.[1];
+  const masqueDe = (e: Equipement) => val(e, "masque");
   const tableau = sites.map((s) => {
     const lignes = eqs.filter((e) => e.site === s.nom).map((e) => {
       const b = brancheDe(e.nom);
@@ -35,16 +37,17 @@ export function imprimer(inv: Inventaire, svgPlan: string, titre: string, site: 
       return `<tr>
         <td><i style="background:${APPARENCE[e.genre].couleur}"></i>${echap(GENRES[e.genre].libelle)}</td>
         <td><b>${echap(e.nom)}</b>${e.infos[0] ? `<br><small>${echap(e.infos[0])}</small>` : ""}</td>
-        <td class="m">${echap(e.ip ?? "—")}</td>
+        <td class="m">${echap(e.ip ?? "—")}${masqueDe(e) ? `<br><small>masque ${echap(masqueDe(e)!)}</small>` : ""}</td>
         <td>${echap([e.point, e.baie && `baie ${e.baie}`].filter(Boolean).join(" · ") || "—")}</td>
         <td>${echap(b.txt)}</td>
         <td>${echap([b.l?.mode === "trunk" ? "trunk" : "", b.l?.vlans ? `VLAN ${b.l.vlans}` : ""].filter(Boolean).join(" · ") || "—")}</td>
         <td>${b.l?.media ? echap(MEDIAS[b.l.media]) : "—"}</td>
+        <td class="m">${echap([val(e, "serie") && `S/N ${val(e, "serie")}`, val(e, "mac")].filter(Boolean).join("\n") || "—").replace("\n", "<br>")}</td>
         <td class="m">${echap(e.passerelleIp ?? gw?.passerelle.ip ?? "—")}${gw ? `<br><small>${echap(`${gw.passerelle.nom}${gw.via ? ` · port ${gw.via}` : ""}`)}</small>` : ""}</td>
       </tr>`;
     }).join("");
     return `<h2>${echap(s.nom)}</h2>
-      <table><thead><tr><th>Type</th><th>Nom</th><th>Adresse IP</th><th>Lieu / baie</th><th>Branché sur</th><th>VLAN</th><th>Câble</th><th>Passerelle</th></tr></thead><tbody>${lignes}</tbody></table>`;
+      <table><thead><tr><th>Type</th><th>Nom</th><th>Adresse IP</th><th>Lieu / baie</th><th>Branché sur</th><th>VLAN</th><th>Câble</th><th>N° série · MAC</th><th>Passerelle</th></tr></thead><tbody>${lignes}</tbody></table>`;
   }).join("");
 
   const inter = inv.liaisons.filter((l) => {

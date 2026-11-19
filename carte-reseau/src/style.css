@@ -436,7 +436,8 @@ body.lecture .local::after { content: " · lecture seule"; }
 .f-detail th { text-align: left; font-weight: 500; color: var(--sourd); padding: 2px 4px; }
 .f-detail td { padding: 2px 4px; }
 .f-detail input { width: 100%; min-width: 0; box-sizing: border-box; }
-.f-detail td:nth-child(n+3) { width: 72px; }
+.f-detail td.f-num { width: 64px; }
+.f-detail td { min-width: 70px; }
 .f-detail select { width: 100%; min-width: 64px; }
 .f-nouveau { color: var(--sourd); font-size: 11px; }
 .f-ports-groupe { margin: 6px 0; display: grid; gap: 4px; }
@@ -444,3 +445,4 @@ body.lecture .local::after { content: " · lecture seule"; }
 .f-pg span:first-child { color: var(--encre); font-family: ui-monospace, monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .f-fleche { color: var(--sourd); }
 .f-monport[hidden], .f-port1[hidden] { display: none !important; }
+.f-ligne[hidden], .f-detail[hidden], .f-ports-groupe[hidden] { display: none !important; }

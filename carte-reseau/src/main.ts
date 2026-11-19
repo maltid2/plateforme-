@@ -9,7 +9,7 @@ import { EXEMPLE_COMPLET, MODELES } from "./modeles.ts";
 import { CLASSIFICATION, imprimer } from "./impression.ts";
 import { creerPlan2D } from "./plan2d.ts";
 import * as projets from "./projets.ts";
-import { analyser, GENRES, MEDIAS, type Genre, type Inventaire, type Media } from "./saisie.ts";
+import { analyser, GENRES, MEDIAS, type Genre, type Inventaire, type Media, LIBELLE_CLE } from "./saisie.ts";
 import type { Vue3D } from "./vue3d.ts";
 
 // Le modèle de la page, pris AVANT toute modification : il sert à produire
@@ -300,7 +300,11 @@ function remplirFiche() {
     if (ch.via) ligne("Remonte par", `port ${ch.via}${ch.sauts.length > 1 ? ` · via ${ch.sauts.slice(0, -1).join(" › ")}` : ""}`);
   } else if (e.genre !== "passerelle" && e.genre !== "parefeu" && !e.passerelleIp) ligne("Passerelle", "aucune déclarée sur ce site");
   e.infos.slice(1).forEach((i) => ligne("Info", i));
-  e.kv.filter(([k]) => !/^(ports?|sfp|wan)$/i.test(k)).forEach(([k, v]) => ligne(k, v));
+  // N° de série, MAC, masque d'abord, puis les autres informations (colonnes Excel en plus…).
+  const rang = (k: string) => { const i = ["masque", "serie", "mac"].indexOf(k); return i < 0 ? 9 : i; };
+  e.kv.filter(([k]) => !/^(ports?|sfp|wan)$/i.test(k))
+    .sort(([a], [b]) => rang(a) - rang(b))
+    .forEach(([k, v]) => ligne(LIBELLE_CLE[k] ?? k, v));
   fiche.append(dl);
 
   const liens = inv.liaisons.filter((l) => l.a === e.nom || l.b === e.nom).map((l) => {

@@ -165,7 +165,7 @@ function lignesDe(feuille: string, partages: string[]): string[][] {
 /* ---------------- tableau → texte de topologie ---------------- */
 
 type Champ = "de" | "type" | "nom" | "ip" | "modele" | "site" | "lieu" | "baie" | "vers" | "port" | "monport"
-  | "vlan" | "ports" | "sfp" | "wan" | "passerelle" | "cable" | "remarque";
+  | "vlan" | "ports" | "sfp" | "wan" | "passerelle" | "cable" | "remarque" | "serie" | "mac" | "masque";
 
 const plat = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 
@@ -180,6 +180,9 @@ const TITRES: [Champ, RegExp][] = [
   ["ports", /^((nb|nombre|total)( de)? )?ports?( rj45| cuivre| ethernet| total)?$|^(ports? )?(rj45|cuivre)$|^capacite( ports?)?$|^nb ports? rj45$/],
   ["sfp", /^((nb|nombre)( de)? )?(sfp\+?|cages? sfp|ports? sfp|ports? fibre|fibre|uplinks? sfp)$/],
   ["wan", /^((nb|nombre)( de)? )?(ports? )?wan$/],
+  ["serie", /^(n(o|um|umero)? ?(de )?serie|serie|s n|sn|serial( number)?|numero de serie|n serie)$/],
+  ["mac", /^((adresse )?mac|mac address|adresse physique|adr mac)$/],
+  ["masque", /^(masque( de sous reseau)?|netmask|subnet( mask)?|mask|sous reseau|cidr)$/],
   ["type", /^(type|genre|categorie|famille|type d equipement|nature)$/],
   ["nom", /^(nom|name|hostname|nom d hote|equipement|designation|libelle|identifiant|id|nom equipement)$/],
   ["ip", /^((adresse )?ip|adresse|ip address|adresse ip v4|ipv4)$/],
@@ -193,7 +196,7 @@ const TITRES: [Champ, RegExp][] = [
 ];
 
 /** Les séparateurs de la syntaxe ne doivent pas entrer dans une valeur. */
-const propre = (s: string) => String(s ?? "").replace(/[|;\t#]/g, " ").replace(/\s+/g, " ").trim();
+const propre = (s: string) => String(s ?? "").replace(/->|<-|→|=>/g, "-").replace(/[|;\t#]/g, " ").replace(/\s+/g, " ").trim();
 const nomPropre = (s: string) => propre(s).replace(/\s*,\s*/g, "-").replace(/\s+/g, "-");
 
 /** Un port tel qu'on l'écrit dans Excel → tel que l'outil le lit :
@@ -336,6 +339,10 @@ export function tableurVersTexte(entree: Feuille[] | string[][]): ResultatImport
     const colsVlan = pleines[iTitre].map((t, i) => (/^vlan/.test(plat(String(t ?? ""))) ? i : -1)).filter((i) => i >= 0);
     if (colsVlan.length) vuesCol.add("vlan");
     const lire = (l: string[], c: Champ) => (col.has(c) ? propre(l[col.get(c)!] ?? "") : "");
+    // Colonnes non reconnues, gardées telles quelles (« Garantie », « Firmware »…).
+    const pris = new Set([...col.values(), ...colsVlan]);
+    const autres: [number, string][] = pleines[iTitre].map((t, i): [number, string] => [i, propre(String(t ?? "")).replace(/[=:]/g, " ").trim()])
+      .filter(([i, t]) => t && !pris.has(i) && !/^colonne\s*\d+$/i.test(t) && !/^(site|point|baie|ports?|sfp|wan|vlans?|passerelle|sur|trunk|access)$/i.test(t));
     const vlanDe = (l: string[]) => vlansDe(colsVlan.map((i) => l[i] ?? ""));
     const media = (l: string[]) => {
       const c = plat(lire(l, "cable"));
@@ -410,6 +417,11 @@ export function tableurVersTexte(entree: Feuille[] | string[][]): ResultatImport
         p.push(`sur ${vers}${port ? `:${port}` : ""}`, ...opts);
         nbLiens++;
       } else if (vlan) p.push(`vlan=${vlan}`);
+      const masque = lire(l, "masque"); if (masque) p.push(`masque=${masque}`);
+      const serie = lire(l, "serie").replace(/[,=]/g, " ").trim(); if (serie) p.push(`serie=${serie}`);
+      const mac = lire(l, "mac").replace(/[,=]/g, " ").trim(); if (mac) p.push(`mac=${mac}`);
+      // Les autres colonnes (date de pose, garantie, firmware…) restent en informations.
+      for (const [i, cle] of autres) { const v = propre(l[i] ?? "").replace(/=/g, "-"); if (v) p.push(`${cle}=${v}`); }
       const rem = lire(l, "remarque"); if (rem) p.push(rem.replace(/=/g, "-"));
       sortie.push(p.join(" | "));
       n++;
@@ -428,12 +440,12 @@ export function tableurVersTexte(entree: Feuille[] | string[][]): ResultatImport
 /** Un modèle de tableau à remplir dans Excel (CSV « ; », comme l'Excel français). */
 export function modeleCsv(): string {
   const l = [
-    ["Type", "Nom", "IP", "Modèle", "Site", "Lieu", "Baie", "Branché sur", "Port", "Port local", "Câble", "VLAN", "Ports RJ45", "SFP", "Passerelle", "Remarque"],
-    ["switch", "SW-CORE", "10.0.0.2", "Cisco 9300", "Site A", "Bâtiment 1", "Baie A1", "", "", "", "", "", "48", "4", "10.0.0.1", "cœur de réseau"],
-    ["switch", "SW-ETAGE1", "10.0.0.3", "Cisco 9200", "Site A", "Bâtiment 1", "Baie A1", "SW-CORE", "SFP1", "SFP1", "fibre", "", "24", "2", "", ""],
-    ["camera", "CAM-ENTREE", "10.0.30.11", "Dôme 4 MP", "Site A", "Bâtiment 1", "", "SW-ETAGE1", "3", "", "", "30", "", "", "", ""],
-    ["camera", "CAM-PARKING", "10.0.30.12", "Bullet 4 MP", "Site A", "Bâtiment 1", "", "SW-ETAGE1", "7", "", "", "30", "", "", "", ""],
-    ["borne", "AP-HALL", "10.0.40.5", "", "Site A", "Bâtiment 1", "", "SW-ETAGE1", "12", "", "", "40", "", "", "", ""],
+    ["Type", "Nom", "IP", "Masque", "Modèle", "N° de série", "Adresse MAC", "Site", "Lieu", "Baie", "Branché sur", "Port", "Port local", "Câble", "VLAN", "Ports RJ45", "SFP", "Passerelle", "Remarque"],
+    ["switch", "SW-CORE", "10.0.0.2", "255.255.255.0", "Cisco 9300", "FOC0000A1", "00:11:22:00:00:01", "Site A", "Bâtiment 1", "Baie A1", "", "", "", "", "10, 20, 30", "48", "4", "10.0.0.1", "cœur de réseau"],
+    ["switch", "SW-ETAGE1", "10.0.0.3", "255.255.255.0", "Cisco 9200", "FOC0000B2", "00:11:22:00:00:02", "Site A", "Bâtiment 1", "Baie A1", "SW-CORE", "SFP1", "SFP1", "fibre", "10, 30", "24", "2", "", ""],
+    ["camera", "CAM-ENTREE", "10.0.30.11", "255.255.255.0", "Dôme 4 MP", "", "", "Site A", "Bâtiment 1", "", "SW-ETAGE1", "3", "", "", "30", "", "", "", ""],
+    ["camera", "CAM-PARKING", "10.0.30.12", "255.255.255.0", "Bullet 4 MP", "", "", "Site A", "Bâtiment 1", "", "SW-ETAGE1", "7", "", "", "30", "", "", "", ""],
+    ["borne", "AP-HALL", "10.0.40.5", "255.255.255.0", "", "", "", "Site A", "Bâtiment 1", "", "SW-ETAGE1", "12", "", "", "40", "", "", "", ""],
   ];
   return "﻿" + l.map((r) => r.map((c) => (/[;"\n]/.test(c) ? `"${c.replace(/"/g, '""')}"` : c)).join(";")).join("\r\n") + "\r\n";
 }

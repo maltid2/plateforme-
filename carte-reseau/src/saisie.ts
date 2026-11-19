@@ -75,6 +75,32 @@ export const genreDe = (mot: string): Genre | undefined => GENRE_PAR_MOT.get(sim
 const IP = /^\d{1,3}(\.\d{1,3}){3}(\/\d{1,2})?$/;
 const FLECHE = /\s*(?:->|<->|<-|—|–|--|=>|→)\s*/;
 
+/** Clés écrites de plusieurs façons → une seule : « sn », « n° série » → serie ; « netmask » → masque. */
+export function cleKv(brut: string): string {
+  const k = brut.trim(), p = simple(k).replace(/[^a-z0-9]+/g, " ").trim();
+  if (/^(serie|sn|s n|serial|serial number|n serie|no serie|num serie|numero de serie|numero serie|n de serie)$/.test(p)) return "serie";
+  if (/^(mac|adresse mac|mac address|adr mac)$/.test(p)) return "mac";
+  if (/^(masque|mask|netmask|masque de sous reseau|subnet|subnet mask|sous reseau)$/.test(p)) return "masque";
+  return k;
+}
+/** Libellé lisible d'une clé (fiche, dossier PDF). */
+export const LIBELLE_CLE: Record<string, string> = { serie: "N° de série", mac: "Adresse MAC", masque: "Masque", VLAN: "VLAN" };
+
+/** « 00-11-22-AA-BB-CC », « 0011.22aa.bbcc », « 001122AABBCC » → « 00:11:22:AA:BB:CC » ; sinon null. */
+export function lireMac(v: string): string | null {
+  const h = v.replace(/[\s:.\-]/g, "").toUpperCase();
+  return /^[0-9A-F]{12}$/.test(h) ? h.match(/../g)!.join(":") : null;
+}
+/** « 255.255.255.0 », « /24 », « 24 » → 24 ; sinon null. */
+export function lireMasque(v: string): number | null {
+  const t = v.trim().replace(/^\//, "");
+  if (/^\d{1,2}$/.test(t)) return Number(t) <= 32 ? Number(t) : null;
+  if (!/^\d{1,3}(\.\d{1,3}){3}$/.test(t)) return null;
+  const n = t.split(".").reduce((a, o) => a * 256 + Number(o), 0);
+  const bits = n.toString(2).padStart(32, "0");
+  return /^1*0*$/.test(bits) ? bits.indexOf("0") < 0 ? 32 : bits.indexOf("0") : null;
+}
+
 export function ipPlus(ip: string, k: number) {
   const [adr, masque] = ip.split("/");
   const o = adr.split(".").map(Number);
@@ -296,7 +322,7 @@ export function analyser(texte: string): Inventaire {
         }
       }
       else if (CLE_PASSERELLE.test(c.trim())) passerelleLigne = lirePasserelle([c], ligne, alertes);
-      else if (c.includes("=")) { const k = c.indexOf("="); kv.push([c.slice(0, k).trim(), c.slice(k + 1).trim()]); }
+      else if (c.includes("=")) { const k = c.indexOf("="); kv.push([cleKv(c.slice(0, k)), c.slice(k + 1).trim()]); }
       else infos.push(c);
     }
 
@@ -324,10 +350,22 @@ export function analyser(texte: string): Inventaire {
           ? `${vals.length} valeurs de ${cle} pour ${noms.length} équipement${noms.length > 1 ? "s" : ""} : les valeurs en trop sont ignorées.`
           : `${vals.length} valeurs de ${cle} pour ${noms.length} équipements : ${vals[vals.length - 1]} pour les suivants.` });
     }
-    const kvDe = (k: number): [string, string][] => kv.map(([cle, v]) => {
+    // « serie=A1, A2, A3 », « mac=… , … » : une valeur par équipement (pas de suite).
+    const CLE_UNIQUE = /^(serie|mac)$/;
+    for (const [cle, v] of kv) {
+      if (!CLE_UNIQUE.test(cle) || noms.length < 2) continue;
+      const n = v.split(",").length;
+      if (n > noms.length)
+        alertes.push({ ligne, niveau: "attention", msg: `${n} ${cle === "mac" ? "adresse(s) MAC" : "numéro(s) de série"} pour ${noms.length} équipements : celles en trop sont ignorées (une par équipement, dans l'ordre des noms).` });
+    }
+    const kvDe = (k: number): [string, string][] => kv.map(([cle, v]): [string, string] => {
+      if (CLE_UNIQUE.test(cle) && noms.length > 1) return [cle, v.split(",").map((x) => x.trim())[k] ?? ""];
       if (!CLE_LISTE.test(cle) || !v.includes(",")) return [cle, v];
       const vals = v.split(",").map((x) => x.trim()).filter(Boolean);
       return [cle, vals[Math.min(k, vals.length - 1)] ?? ""];
+    }).filter(([, v]) => v !== "").map(([cle, v]) => {
+      if (cle === "mac") { const m = lireMac(v); return [cle, m ?? v]; }
+      return [cle, v];
     });
     for (let k = 0; k < noms.length; k++) {
       const n = noms[k];
@@ -453,11 +491,27 @@ export function analyser(texte: string): Inventaire {
       alertes.push({ ligne: e.ligne, niveau: "attention", msg: `${e.nom} a pour passerelle sa propre adresse (${e.passerelleIp}).` });
       return;
     }
-    const masque = Number(e.ip.split("/")[1]);
+    const masqueKv = e.kv.find(([k]) => k === "masque")?.[1];
+    const masque = Number(e.ip.split("/")[1] ?? (masqueKv ? lireMasque(masqueKv) ?? NaN : NaN));
     if (Number.isFinite(masque) && masque > 0 && masque <= 32) {
       const m = masque === 32 ? 0xffffffff : (0xffffffff << (32 - masque)) >>> 0;
       if (((versNombre(e.ip) & m) >>> 0) !== ((versNombre(e.passerelleIp) & m) >>> 0))
         alertes.push({ ligne: e.ligne, niveau: "attention", msg: `Passerelle ${e.passerelleIp} hors du réseau de ${e.nom} (${e.ip}).` });
+    }
+  });
+
+  // Adresse MAC et masque lisibles ; MAC, n° de série et IP en double.
+  const deja = new Map<string, string>();
+  equipements.forEach((e) => {
+    const val = (k: string) => e.kv.find(([c]) => c === k)?.[1];
+    const mac = val("mac"), masque = val("masque"), serie = val("serie");
+    if (mac && !lireMac(mac)) alertes.push({ ligne: e.ligne, niveau: "attention", msg: `Adresse MAC de ${e.nom} illisible (« ${mac} ») : 12 chiffres hexadécimaux, par exemple 00:11:22:AA:BB:CC.` });
+    if (masque && lireMasque(masque) === null) alertes.push({ ligne: e.ligne, niveau: "attention", msg: `Masque de ${e.nom} illisible (« ${masque} ») : par exemple 255.255.255.0 ou /24.` });
+    for (const [quoi, v] of [["L'adresse MAC", mac && lireMac(mac)], ["Le n° de série", serie], ["L'adresse IP", e.ip?.split("/")[0]]] as const) {
+      if (!v) continue;
+      const cle = `${quoi}§${v.toUpperCase()}`, autre = deja.get(cle);
+      if (autre) alertes.push({ ligne: e.ligne, niveau: "attention", msg: `${quoi} ${v} de ${e.nom} est déjà celle de ${autre}.`.replace("déjà celle", quoi.startsWith("Le ") ? "déjà celui" : "déjà celle") });
+      else deja.set(cle, e.nom);
     }
   });
 

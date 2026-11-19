@@ -153,6 +153,9 @@ export function creerEditeur(racine: HTMLElement, contexte: Contexte, surChange:
         { texte: "trunk", detail: "lien trunk (plusieurs VLAN)" },
         { texte: "ports=", detail: "nombre de ports RJ45 (plusieurs switchs : 24, 8, 48)" },
         { texte: "sfp=", detail: "nombre de cages SFP (plusieurs : 4, 0, 2)" },
+        { texte: "masque=", detail: "masque de sous-réseau (255.255.255.0 ou /24)" },
+        { texte: "serie=", detail: "numéro de série (plusieurs : un par équipement)" },
+        { texte: "mac=", detail: "adresse MAC (plusieurs : une par équipement)" },
       ]);
     }
     m = avant.match(/(?:->|→).*[|;]\s*([\w=]*)$/);

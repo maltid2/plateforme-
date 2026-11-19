@@ -96,6 +96,8 @@ la ligne de titres peut être sous un titre de page :
 | Câble, VLAN | Câble (fibre, RJ45, radio, VPN) · VLAN |
 | Ports RJ45, SFP, WAN | Nb ports, Ports RJ45 · SFP, Cages SFP · WAN |
 | Passerelle, Remarque | Passerelle, Gateway · Remarque, Commentaire |
+| Masque, N° de série, MAC | Masque, Masque de sous-réseau, Netmask · N° de série, S/N, Serial · Adresse MAC, MAC |
+| *Autres colonnes* | gardées telles quelles dans la fiche de l'équipement (Garantie, Firmware, Date de pose…) |
 
 **Plusieurs onglets** : tous les onglets visibles sont lus, chacun avec sa
 propre ligne de titres. Sans colonne Site, le **nom de l'onglet devient le
@@ -150,6 +152,7 @@ FW-SIEGE:WAN2 -> SW-LILLE-1:24 | vpn | secours
 | Plusieurs d'un coup | `camera CAM x6 \| 10.0.30.11 \| sur SW:3` → CAM-1 à CAM-6, ports 3 à 8 |
 | Un port précis pour chacun | `camera CAM-A, CAM-B, CAM-C \| sur SW-1:3, 7, 12` → 1er port au 1er nom, etc. |
 | Site / lieu | `site Lyon`, `point École A` en blocs, ou `@Lyon/École A` sur la ligne |
+| N° de série, MAC, masque | `masque=255.255.255.0` (ou `/24`), `serie=FOC1234`, `mac=00:11:22:AA:BB:CC` (toute écriture de MAC est acceptée) ; plusieurs équipements : `serie=A1, A2, A3`, un par nom. MAC illisible, masque faux, MAC / n° de série / IP en double sont signalés |
 | IP passerelle | `passerelle=10.20.0.1` sur l'équipement ; ou `site Lyon \| passerelle=…` / `point École A \| passerelle=…` pour tous les équipements du site ou du lieu (l'équipement garde la sienne s'il en a une) |
 
 Au-dessus de l'éditeur, **« Insérer : »** écrit au curseur un bloc prêt à

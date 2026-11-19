@@ -407,3 +407,26 @@ test("Excel : « Insérer › Tableau » après coup (en-têtes dans le tableau,
   assert.deepEqual(inv.equipements.map((e) => `${e.nom}@${e.site}`), ["SW-1@Nanterre", "CAM-1@Nanterre", "CAM-2@Nanterre", "SW-LY@Lyon", "CAM-LY@Lyon"]);
   assert.ok(!inv.equipements.some((e) => /^(total|nom|colonne)/i.test(e.nom)));
 });
+
+test("n° de série, adresse MAC, masque : lus, contrôlés, un par équipement", async () => {
+  const inv = analyser("site S\nswitch SW-1 | 10.0.0.2 | masque=255.255.255.0 | passerelle=10.0.1.1 | serie=FOC1234 | mac=0011.22aa.bbcc\n"
+    + "camera CAM-A, CAM-B, CAM-C | 10.0.30.11 | sur SW-1:3 | S/N=A1, , A3 | mac=00-11-22-33-44-01, 00:11:22:33:44:02\n"
+    + "camera CAM-X | 10.0.30.50 | sur SW-1:9 | mac=zz | serie=A1 | masque=255.0.255.0");
+  const kv = (n: string, k: string) => inv.equipements.find((e) => e.nom === n)!.kv.find(([c]) => c === k)?.[1];
+  assert.equal(kv("SW-1", "mac"), "00:11:22:AA:BB:CC");
+  assert.equal(kv("SW-1", "serie"), "FOC1234");
+  assert.equal(kv("CAM-A", "serie"), "A1");
+  assert.equal(kv("CAM-B", "serie"), undefined);     // case vide : rien, et la suivante garde sa place
+  assert.equal(kv("CAM-C", "serie"), "A3");
+  assert.equal(kv("CAM-B", "mac"), "00:11:22:33:44:02");
+  const msg = inv.alertes.map((a) => a.msg).join("\n");
+  assert.match(msg, /Passerelle 10\.0\.1\.1 hors du réseau de SW-1/);   // grâce au masque
+  assert.match(msg, /Adresse MAC de CAM-X illisible/);
+  assert.match(msg, /Masque de CAM-X illisible/);
+  assert.match(msg, /n° de série A1 de CAM-X est déjà celui de CAM-A/i);
+  const { tableurVersTexte } = await import("../src/tableur.ts");
+  const r = tableurVersTexte([["Nom", "IP", "Masque de sous-réseau", "N° de série", "Adresse MAC", "Garantie", "Firmware"],
+    ["SW-9", "10.1.0.2", "/24", "FOC99", "AA-BB-CC-DD-EE-FF", "2027", "17.9 -> 17.12"]]);
+  const e = analyser(r.texte).equipements[0];
+  assert.deepEqual(Object.fromEntries(e.kv), { masque: "/24", serie: "FOC99", mac: "AA:BB:CC:DD:EE:FF", Garantie: "2027", Firmware: "17.9 - 17.12" });
+});

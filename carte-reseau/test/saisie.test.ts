@@ -352,3 +352,19 @@ test("ports écrits à la façon Excel : RJ45 9, Port 9, SFP 2, WAN 1…", async
   assert.equal(lirePort("RJ45-9").type, "rj45");
   assert.equal(lirePort("RJ45-9").n, 9);
 });
+
+test("un équipement écrit sans site rejoint le site de ce à quoi il est relié", async () => {
+  const inv = analyser("passerelle GW-1 | 10.0.0.1\nswitch SW-1 | @Lyon | sur GW-1:LAN1\nparefeu FW-1\nFW-1:WAN -> GW-1:LAN2");
+  assert.deepEqual(inv.equipements.map((e) => e.site), ["Lyon", "Lyon", "Lyon"]);
+  assert.deepEqual(inv.sites.map((s) => s.nom), ["Lyon"]);
+  // Excel : passerelle sans site, et cellules Site fusionnées (vides sous la 1re)
+  const { tableurVersTexte } = await import("../src/tableur.ts");
+  const r = tableurVersTexte([["Nom", "Type", "Site", "Branché sur", "Port"],
+    ["SW-A", "switch", "Nanterre", "GW-A", "LAN1"], ["CAM-A", "caméra", "", "SW-A", "3"], ["GW-A", "passerelle", "", "", ""],
+    ["GW-X", "passerelle", "", "", ""]]);
+  const i2 = analyser(r.texte);
+  assert.equal(i2.equipements.find((e) => e.nom === "GW-A")!.site, "Nanterre");
+  assert.equal(i2.equipements.find((e) => e.nom === "CAM-A")!.site, "Nanterre");
+  const r2 = tableurVersTexte([["Nom", "Type", "Branché sur"], ["GW-B", "passerelle", ""], ["SW-B", "switch", "GW-B"]]);
+  assert.deepEqual(analyser(r2.texte).sites.map((s) => s.nom), ["Site principal"]);
+});

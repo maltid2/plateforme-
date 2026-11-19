@@ -155,9 +155,13 @@ export function analyser(texte: string): Inventaire {
   const sitesDeclares = new Set<string>();
   const brutes: ({ de: string; vers: string; ligne: number } & OptionsLien)[] = [];
 
+  // Site créé faute de mieux (aucun « site … » ni « @… » avant la ligne) : ses
+  // équipements rejoindront plus bas le site de ce qui leur est relié.
+  const SITE_DEFAUT = "Site principal";
+  const sansSite = new Set<string>();
   const assurerSite = (ligne: number) => {
     if (!siteCourant) {
-      siteCourant = "Site principal";
+      siteCourant = SITE_DEFAUT;
       sites.push({ nom: siteCourant, infos: [], ligne });
     }
     return siteCourant;
@@ -302,6 +306,7 @@ export function analyser(texte: string): Inventaire {
       if (!connu) sites.push({ nom: siteLigne, infos: [], ligne });
       site = connu?.nom ?? siteLigne;
     } else site = assurerSite(ligne);
+    const implicite = !siteLigne && site === SITE_DEFAUT && !sitesDeclares.has(simple(SITE_DEFAUT));
     if (ips && ips.length !== noms.length)
       alertes.push({ ligne, niveau: "attention", msg: ips.length > noms.length
         ? `${ips.length} IP pour ${noms.length} équipement${noms.length > 1 ? "s" : ""} : les IP en trop sont ignorées.`
@@ -334,6 +339,7 @@ export function analyser(texte: string): Inventaire {
       const point = pointLigne ?? (siteLigne ? undefined : pointCourant);
       // IP de la liste à son rang ; au-delà, on continue à partir de la dernière.
       const ipK = ips ? (k < ips.length ? ips[k] : ipPlus(ips[ips.length - 1], k - ips.length + 1)) : ip && ipPlus(ip, k);
+      if (implicite) sansSite.add(n);
       equipements.push({ nom: n, genre, site, ...(point ? { point } : {}), baie: baieLigne ?? baieCourante, ip: ipK, ...(passerelleLigne ? { passerelleIp: passerelleLigne } : {}), infos, kv: kvDe(k), ligne });
       if (versInline) {
         // « sur SW-1:3, 7, 9 » : un port par équipement, dans l'ordre des noms
@@ -406,6 +412,25 @@ export function analyser(texte: string): Inventaire {
         else portsPris.set(cle, r.ligne);
       }
       liaisons.push(l);
+    }
+  }
+
+  // Un équipement écrit sans site (« passerelle GW-1 | 10.0.0.1 ») va dans le
+  // site de ce à quoi il est relié, plutôt que dans un « Site principal » à part.
+  if (sansSite.size) {
+    const parNomEq = new Map(equipements.map((e) => [e.nom, e]));
+    for (let tour = 0, change = true; change && tour < 20; tour++) {
+      change = false;
+      for (const l of liaisons) {
+        for (const [x, y] of [[l.a, l.b], [l.b, l.a]] as const) {
+          const ex = parNomEq.get(x), ey = parNomEq.get(y);
+          if (ex && ey && sansSite.has(x) && !sansSite.has(y)) { ex.site = ey.site; delete ex.point; sansSite.delete(x); change = true; }
+        }
+      }
+    }
+    if (!equipements.some((e) => e.site === SITE_DEFAUT) && !sitesDeclares.has(simple(SITE_DEFAUT))) {
+      const i = sites.findIndex((x) => x.nom === SITE_DEFAUT);
+      if (i >= 0) sites.splice(i, 1);
     }
   }
 

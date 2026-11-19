@@ -260,6 +260,7 @@ export function tableurVersTexte(entree: Feuille[] | string[][]): ResultatImport
     const genreOnglet = po ? genreDe(po) ?? genreDe(po.replace(/s$/, "")) ?? genreDe((po.split(" ")[0] ?? "").replace(/s$/, "")) : undefined;
     const siteOnglet = !col.has("site") && onglet && !genreOnglet && !ONGLET_BANAL.test(po) ? propre(onglet) : "";
     sortie.push("", `# Onglet « ${onglet || "tableau"} »`);
+    let dernierSite = "";
     let n = 0;
     for (const l of pleines.slice(iTitre + 1)) {
       const nom = nomPropre(lire(l, "nom"));
@@ -271,7 +272,11 @@ export function tableurVersTexte(entree: Feuille[] | string[][]): ResultatImport
       const ip = lire(l, "ip").match(/\d{1,3}(\.\d{1,3}){3}(\/\d{1,2})?/)?.[0];
       if (ip) p.push(ip);
       const modele = lire(l, "modele"); if (modele) p.push(modele.replace(/=/g, "-"));
-      p.push(`site=${lire(l, "site") || siteOnglet || "Site importé"}`);
+      // Case Site vide : cellules fusionnées dans Excel (la valeur n'est que sur
+      // la première ligne) → on reprend le site de la ligne du dessus. Sans site
+      // du tout, l'équipement rejoint le site de ce à quoi il est branché.
+      const siteLu = lire(l, "site") || siteOnglet || dernierSite;
+      if (siteLu) { p.push(`site=${siteLu}`); dernierSite = siteLu; }
       const lieu = lire(l, "lieu"); if (lieu) p.push(`point=${lieu}`);
       const baie = lire(l, "baie"); if (baie) p.push(`baie=${baie}`);
       const gw = lire(l, "passerelle").match(/\d{1,3}(\.\d{1,3}){3}(\/\d{1,2})?/)?.[0]; if (gw) p.push(`passerelle=${gw}`);

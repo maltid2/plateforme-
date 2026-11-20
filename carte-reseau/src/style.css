@@ -468,3 +468,8 @@ dialog.colonnes h2 { margin: 0; padding: 16px 20px 4px; font-size: 17px; }
 tr.col-info td:first-child b { color: var(--sourd); }
 tr.col-ignoree td { opacity: 0.5; }
 .boutons-col { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px 16px; border-top: 1px solid rgba(255,255,255,0.08); }
+/* Numéro de port sur un câble, en 3D : petit, n'apparaît qu'en zoomant. */
+.etiquette3d.port { font-size: 9px; font-weight: 700; padding: 0 3px; line-height: 13px; border: 1px solid #4FC3F7; background: rgba(7, 9, 13, 0.9); color: #F5F7FA; border-radius: 4px; font-family: ui-monospace, monospace; }
+.etiquette3d.port { display: none; }
+.proche .etiquette3d.port { display: block; }
+.fiche { z-index: 5; }

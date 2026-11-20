@@ -62,7 +62,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
   rnd.outputColorSpace = THREE.SRGBColorSpace;
   hote.appendChild(rnd.domElement);
   const etiq = new CSS2DRenderer();
-  Object.assign(etiq.domElement.style, { position: "absolute", inset: "0", pointerEvents: "none" });
+  Object.assign(etiq.domElement.style, { position: "absolute", inset: "0", pointerEvents: "none", zIndex: "0" });
   hote.appendChild(etiq.domElement);
 
   const ctrl = new OrbitControls(cam, rnd.domElement);
@@ -642,6 +642,14 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
       apercu.add(t);
     });
 
+    // Le numéro du port, collé devant le port, à la couleur du câble (visible en zoomant).
+    const portEtiq = (port: string | undefined, p: THREE.Vector3, couleur: string, dy = 0) => {
+      if (!port) return;
+      const e = etiquette(port, "etiquette3d port");
+      (e.element as HTMLElement).style.borderColor = couleur;
+      e.position.set(p.x, p.y + 0.09 + dy, p.z + 0.16);
+      racine.add(e);
+    };
     // Les câbles, à la couleur de leur support.
     inv.liaisons.forEach((l) => {
       if (!visibles.has(l.a) || !visibles.has(l.b)) return;
@@ -653,6 +661,8 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
       if (salleDe.get(l.a) !== salleDe.get(l.b)) {
         // Entre deux lieux d'un site : arc bas. Entre deux sites : arc haut.
         const a = A.hautBaie ?? A.port(l.portA), b = B.hautBaie ?? B.port(l.portB);
+        portEtiq(l.portA, A.port(l.portA), couleur);
+        portEtiq(l.portB, B.port(l.portB), couleur);
         const dist = a.distanceTo(b);
         const m = a.clone().lerp(b, 0.5); m.y = Math.max(a.y, b.y) + dist * (ea.site === eb.site ? 0.14 : 0.28);
         racine.add(cable([a, a.clone().lerp(m, 0.5).setY(m.y * 0.85), m, b.clone().lerp(m, 0.5).setY(m.y * 0.85), b], couleur,
@@ -663,6 +673,10 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
       }
       const pa = A.port(l.portA), pb = B.port(l.portB);
       const r = trunk ? 0.03 : 0.014;
+      // Ports pairs (rangée du bas) : étiquette sous le port, pour ne pas recouvrir celle du dessus.
+      const dessous = (port?: string) => (port && /^\d+$/.test(port) && Number(port) % 2 === 0 ? -0.2 : 0);
+      portEtiq(l.portA, pa, couleur, dessous(l.portA));
+      portEtiq(l.portB, pb, couleur, dessous(l.portB));
       if (A.enBaie && B.enBaie && A.baie === B.baie) {
         // Dans la même baie : cordon de brassage devant la façade, ou jusqu'au plateau des caméras.
         const [h, bas] = pa.y > pb.y ? [pa, pb] : [pb, pa];
@@ -845,6 +859,8 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     etiq.domElement.classList.toggle("loin", loin);
     // Très loin (plusieurs sites à l'écran) : un résumé par site, rien d'autre.
     etiq.domElement.classList.toggle("tres-loin", dist > seuilTresLoin);
+    // Tout près d'une baie : les numéros de port sur les câbles.
+    etiq.domElement.classList.toggle("proche", pxParUnite(dist) > PX_LOIN * 9);
     rnd.render(scene, cam);
     etiq.render(scene, cam);
   });

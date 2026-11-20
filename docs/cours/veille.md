@@ -821,3 +821,13 @@ Chaque **lundi** : un point « IA : tendances et découvertes » (3 à 5 entrée
 Déjà suivie ; fiche du jour. Avis SonicWall illisible : versions non établies. NVD : 7,5.
 
 **Pannes :** rien de vérifié aujourd'hui. **Issue ATLAS :** aucune.
+
+---
+
+## 2026-11-20 (vendredi)
+
+**Catalogue CISA (KEV) :** flux relu le 2026-11-20 : version **2026.11.18**, **1786** entrées, **identique à hier** : aucune nouvelle entrée.
+**Échéances :** SonicWall CVE-2026-19868 : **aujourd'hui 2026-11-20** ; Synology DSM CVE-2024-10441 : **demain 2026-11-21** (voir entrées du 19 novembre, non répétées). Pas de nouvel avis de ta liste lu aujourd'hui. **Pannes :** non vérifiées.
+
+**Pile de production du projet (SentinelScope) :** commit `f5295a7` du 2026-11-18 : Next.js 16.4.2 → **16.4.6** pour un « avis de sécurité publié » (numéro non cité dans le commit ; l'API d'avis GitHub m'est refusée, **non lu**). État de `main` relu le 2026-11-20 : `next` 16.4.6 installé ; `npm audit --package-lock-only` : **0 vulnérabilité**. Le commit dit pourtant un avis picomatch (GHSA-fc5q-39xc-vjpf) non traité : **contradiction non levée**. **Issue [MINERVE→ATLAS] :** non ouverte (outil GitHub indisponible dans cette session) ; point à poser à l'agent : statut exact de cet avis avec picomatch 2.3.2.
+**Livré cette semaine par les agents (lu dans l'historique de `main`) :** module « jumeau 3D » (three.js, importé dynamiquement), câblage sur ports réels et bornes Wi-Fi, mise à jour de Next.js ; fusion de la branche de comparaison de solutions de suivi.

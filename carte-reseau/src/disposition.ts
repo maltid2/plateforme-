@@ -27,7 +27,7 @@ export type Disposition = {
 
 /** Une carte d'équipement simple (caméra, poste…) : boîte + nom dessous. */
 export const CARTE_W = 3.2, CARTE_H = 1.6, NOM_H = 1.0;
-const MARGE = 2.4, ECART_SITES = 7, ENTETE = 1.6, ECART_NOEUDS = 0.7, ECART_RANGS = 3.4, LARGEUR_RANG = 64;
+const MARGE = 1.6, ECART_SITES = 7, ENTETE = 1.4, ECART_NOEUDS = 0.7, ECART_RANGS = 3.4, LARGEUR_RANG = 64;
 
 const NIVEAU_DEFAUT: Record<Genre, number> = {
   passerelle: 0, parefeu: 0, switch: 1, nvr: 2, serveur: 2, nas: 2, onduleur: 2,
@@ -206,7 +206,7 @@ function ranger(blocs: { cle: string; w: number; h: number }[], liens: Map<strin
   return { place, w, h };
 }
 
-const MARGE_SITE = 1.6, ENTETE_SITE = 2.4, ECART_POINTS = 4;
+const MARGE_SITE = 1.4, ENTETE_SITE = 2.2, ECART_POINTS = 3;
 
 export function disposer(inv: Inventaire): Disposition {
   const tous = new Map(inv.equipements.map((e) => [e.nom, e]));

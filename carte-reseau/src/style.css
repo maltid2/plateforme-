@@ -473,3 +473,8 @@ tr.col-ignoree td { opacity: 0.5; }
 .etiquette3d.port { display: none; }
 .proche .etiquette3d.port { display: block; }
 .fiche { z-index: 5; }
+/* Fenêtre « Couleurs » */
+.grille-coul { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px 14px; }
+label.coul { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--encre); cursor: pointer; padding: 3px 0; }
+label.coul input[type="color"] { width: 34px; height: 26px; padding: 0; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; background: none; cursor: pointer; }
+label.coul i { display: none; }

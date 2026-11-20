@@ -12,7 +12,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { CSS2DObject, CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
 import { APPARENCE, COULEUR_MEDIA } from "./apparence.ts";
-import type { Disposition } from "./disposition.ts";
+import type { Cadre, Disposition } from "./disposition.ts";
 import { FH, type Facade } from "./facade.ts";
 import { svgFacade } from "./plan2d.ts";
 import { CAM_PAR_PLATEAU, EN_BAIE, HAUTEUR_U, svgSimple, U_PLATEAU } from "./baies.ts";
@@ -397,8 +397,78 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     /** Où se branche un câble : le port sur la façade, ou la prise d'un équipement. */
     const prises = new Map<string, Prise>();
 
-    // Le terrain d'un site à plusieurs lieux : une dalle plus sombre dessous.
-    cadres.filter((c) => c.type === "site" && avecPoints.has(c.site)).forEach((c) => {
+    // Chaque salle à la taille de ce qu'elle contient : la rangée de baies au
+    // fond, l'espace devant, et les équipements posés au sol (bornes, postes…).
+    // Le cadre du plan 2D, souvent bien plus grand, n'est qu'une limite.
+    const contenu = (c: Cadre) => inv.equipements.filter((e) => e.site === c.site && (c.type === "site" || (e.point ?? "") === c.point));
+    const compactes = new Map<Cadre, Cadre>();
+    salles.forEach((c) => {
+      const eqs = contenu(c);
+      const enBaie = new Set(eqs.filter((e) => EN_BAIE.has(e.genre)).map((e) => e.nom));
+      const nbBaies = new Set(eqs.filter((e) => enBaie.has(e.nom)).map((e) => e.baie ?? "Baie")).size;
+      const camEnBaie = (e: Equipement) => options.cameras === "baie" && inv.liaisons.some((l) => (l.a === e.nom && enBaie.has(l.b)) || (l.b === e.nom && enBaie.has(l.a)));
+      const auSol = eqs.filter((e) => !enBaie.has(e.nom) && !(e.genre === "camera" && (options.cameras === "murs" || camEnBaie(e))));
+      const cx = c.x + c.w / 2, demi = Math.max(5.5, (nbBaies * (BW + 1.2)) / 2 + 2.6);
+      let x0 = cx - demi, x1 = cx + demi, z1 = c.y + 10;
+      if (options.cameras === "murs") z1 += Math.min(8, eqs.filter((e) => e.genre === "camera").length * 0.25);
+      auSol.forEach((e) => {
+        const p = d.pos.get(e.nom);
+        if (!p) return;
+        x0 = Math.min(x0, p.x - 2.2); x1 = Math.max(x1, p.x + 2.2); z1 = Math.max(z1, Math.max(p.y, c.y + 7) + 2.8);
+      });
+      x0 = Math.max(x0, c.x); x1 = Math.min(x1, c.x + c.w); z1 = Math.min(z1, c.y + c.h);
+      compactes.set(c, { ...c, x: x0, w: x1 - x0, h: z1 - c.y });
+    });
+    // Les salles d'un site côte à côte (à la ligne au-delà d'une certaine
+    // largeur), puis les sites en grille : la 3D ne garde pas les grands vides
+    // du plan 2D. `decalage` déplace aussi ce qui est posé au sol.
+    const decalage = new Map<Cadre, { dx: number; dz: number }>();
+    {
+      const ECART = 4, ECART_SITES = 9, LARG_MAX = 70;
+      const sitesC = cadres.filter((c) => c.type === "site");
+      const blocs = sitesC.map((sc) => {
+        const ss = salles.filter((x) => x.site === sc.site);
+        let x = 0, y = 0, hRang = 0, w = 0;
+        const places = ss.map((c) => {
+          const r = compactes.get(c)!;
+          if (x > 0 && x + r.w > LARG_MAX) { x = 0; y += hRang + ECART; hRang = 0; }
+          const pl = { c, x, y };
+          x += r.w + ECART; w = Math.max(w, x - ECART); hRang = Math.max(hRang, r.h);
+          return pl;
+        });
+        return { sc, places, w: w + 3, h: y + hRang + 4.5 };
+      });
+      const cols = Math.max(1, Math.ceil(Math.sqrt(blocs.length)));
+      const largCol: number[] = [], hautRang: number[] = [];
+      blocs.forEach((b, i) => {
+        largCol[i % cols] = Math.max(largCol[i % cols] ?? 0, b.w);
+        hautRang[Math.floor(i / cols)] = Math.max(hautRang[Math.floor(i / cols)] ?? 0, b.h);
+      });
+      blocs.forEach((b, i) => {
+        const ox = largCol.slice(0, i % cols).reduce((t, v) => t + v + ECART_SITES, 0);
+        const oy = hautRang.slice(0, Math.floor(i / cols)).reduce((t, v) => t + v + ECART_SITES, 0);
+        b.places.forEach(({ c, x, y }) => {
+          const r = compactes.get(c)!;
+          const dx = ox + 1.5 + x - r.x, dz = oy + 1.5 + y - r.y;
+          const bouge = { ...r, x: r.x + dx, y: r.y + dz };
+          compactes.set(c, bouge);
+          decalage.set(bouge, { dx, dz });
+        });
+      });
+    }
+    const centreBaies = new Map(salles.map((c) => [compactes.get(c)!, c.x + c.w / 2 + decalage.get(compactes.get(c)!)!.dx]));
+    /** Le rectangle d'un site en 3D : autour de ses salles. */
+    const rectSite = (sc: Cadre) => {
+      const ss = salles.filter((x) => x.site === sc.site).map((x) => compactes.get(x)!);
+      if (!ss.length) return sc;
+      const x0 = Math.min(...ss.map((x) => x.x)) - 1.5, y0 = Math.min(...ss.map((x) => x.y)) - 1.5;
+      const x1 = Math.max(...ss.map((x) => x.x + x.w)) + 1.5, y1 = Math.max(...ss.map((x) => x.y + x.h)) + 2.5;
+      return { ...sc, x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+    };
+
+    // Le terrain d'un site à plusieurs lieux : une dalle plus sombre dessous,
+    // juste autour de ses salles.
+    cadres.filter((c) => c.type === "site" && avecPoints.has(c.site)).map(rectSite).forEach((c) => {
       const dalle = boite(c.w, 0.2, c.h, std(0x0a0d12, { roughness: 1, metalness: 0 }));
       dalle.position.set(c.x + c.w / 2, -0.32, c.y + c.h / 2);
       // Cliquable aussi : dézoomé, un clic entre deux lieux plonge dans le site entier.
@@ -413,7 +483,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     });
 
     // Très loin : un seul résumé par site (le détail par lieu reviendrait en zoomant).
-    cadres.filter((c) => c.type === "site").forEach((c) => {
+    cadres.filter((c) => c.type === "site").map(rectSite).forEach((c) => {
       const eqs = inv.equipements.filter((e) => e.site === c.site && visibles.has(e.nom));
       const nCam = eqs.filter((e) => e.genre === "camera").length;
       const nBaies = new Set(eqs.filter((e) => EN_BAIE.has(e.genre)).map((e) => `${e.point ?? ""}§${e.baie ?? ""}`)).size;
@@ -422,7 +492,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
       racine.add(t);
     });
 
-    salles.forEach((c) => {
+    salles.map((c) => compactes.get(c)!).forEach((c) => {
       const cle = `${c.site}§${c.type === "point" ? c.point : ""}`;
       // Le sol de la salle.
       // Le sol technique, en dalles (une dalle ≈ 1,2 unité).
@@ -470,7 +540,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
       let k = 0;
       const baiesSalle: { x: number; z: number; H: number }[] = [];
       groupes.forEach((liste, nomBaie) => {
-        const x = c.x + c.w / 2 + (k++ - (nb - 1) / 2) * (BW + 1.2);
+        const x = centreBaies.get(c)! + (k++ - (nb - 1) / 2) * (BW + 1.2);
         const z = c.y + 3.2;
         const cams = camerasDe.get(nomBaie) ?? [];
         const plateaux = Math.ceil(cams.length / CAM_PAR_PLATEAU);
@@ -603,7 +673,8 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
       // Le reste, posé dans la salle à la même place que sur le plan 2D.
       eqs.filter((e) => !EN_BAIE.has(e.genre) && !prises.has(e.nom)).forEach((e) => {
         if (!visibles.has(e.nom)) return;
-        const p = d.pos.get(e.nom)!;
+        const p0 = d.pos.get(e.nom)!, dep = decalage.get(c) ?? { dx: 0, dz: 0 };
+        const p = { x: p0.x + dep.dx, y: p0.y + dep.dz };
         const { g, prise } = modele(e);
         g.position.set(p.x, 0, Math.max(p.y, c.y + 7));
         g.userData.nom = e.nom;
@@ -622,7 +693,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     // grille au-dessus du sol, et leur nombre.
     const matPastille = new THREE.SpriteMaterial({ map: texture(PASTILLE), sizeAttenuation: false, transparent: true, depthTest: false });
     jetables.push(matPastille);
-    salles.forEach((c) => {
+    salles.map((c) => compactes.get(c)!).forEach((c) => {
       const cams = inv.equipements.filter((e) => e.genre === "camera" && visibles.has(e.nom) &&
         e.site === c.site && (c.type === "site" || (e.point ?? "") === c.point));
       if (!cams.length) return;
@@ -739,7 +810,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
       racine.add(cable(pts, couleur, r));
     });
 
-    seuilTresLoin = Math.max(distancePour(PX_LOIN * 0.55), ...d.cadres.filter((c) => c.type === "site").map((c) => distanceCadrage(c) * 1.2));
+    seuilTresLoin = Math.max(distancePour(PX_LOIN * 0.55), ...cadres.filter((c) => c.type === "site").map((c) => distanceCadrage(rectSite(c)) * 1.2));
 
     // Les textures qui ne servent plus sont libérées.
     cacheTex.forEach((v, k) => { if (v.vu !== generation) { v.tex.dispose(); cacheTex.delete(k); } });

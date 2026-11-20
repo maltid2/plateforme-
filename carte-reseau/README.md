@@ -180,6 +180,18 @@ baies, caméras, IP de passerelle) ; un clic dessus zoome sur ce site. En
 zoomant, on retrouve les façades et les ports. Boutons ＋ − ⤢ et
 **mini-carte** en bas à droite : cliquer ou glisser dessus pour se déplacer.
 
+## Couleurs
+
+Bouton **Couleurs** (en haut) : une pastille par type de câble (RJ45, fibre,
+DAC, coaxial, série, USB, radio, VPN, trunk) et par type d'équipement. Le plan
+2D, la 3D, le PDF, le SVG et la visionneuse exportée suivent ; les couleurs
+sont retenues sur le poste, et **Couleurs d'origine** revient aux réglages de
+départ.
+
+En 3D, chaque bâtiment (lieu) a la taille de ce qu'il contient — la rangée de
+baies au fond, l'espace devant, les équipements posés au sol — et les
+bâtiments d'un site sont regroupés côte à côte.
+
 ## Exporter (s'ouvre partout)
 
 | Export | S'ouvre avec |

@@ -1,4 +1,4 @@
-import { APPARENCE, COULEUR_MEDIA, COULEUR_TRUNK } from "./apparence.ts";
+import { APPARENCE, appliquerCouleurs, COULEUR_MEDIA, COULEUR_TRUNK, type Couleurs } from "./apparence.ts";
 import { disposer, type Disposition } from "./disposition.ts";
 import { creerEditeur } from "./editeur.ts";
 import { cheminPasserelle, lirePort } from "./facade.ts";
@@ -18,8 +18,17 @@ const MODELE = { head: document.head.innerHTML, body: document.body.innerHTML };
 const EMBARQUE = (() => {
   const n = document.getElementById("carte-donnees");
   if (!n) return null;
-  try { return JSON.parse(n.textContent ?? "") as { nom: string; texte: string; exporte: string; auteur?: string }; } catch { return null; }
+  try { return JSON.parse(n.textContent ?? "") as { nom: string; texte: string; exporte: string; auteur?: string; couleurs?: Couleurs }; } catch { return null; }
 })();
+// Couleurs choisies (menu « Couleurs ») : retenues dans ce navigateur, et
+// emportées dans la visionneuse exportée.
+const CLE_COULEURS = "carte-reseau:couleurs";
+const lireCouleurs = (): Couleurs | null => {
+  if (EMBARQUE) return EMBARQUE.couleurs ?? null;
+  try { return JSON.parse(localStorage.getItem(CLE_COULEURS) ?? "null"); } catch { return null; }
+};
+let couleurs: Couleurs = lireCouleurs() ?? {};
+appliquerCouleurs(couleurs);
 if (EMBARQUE) document.body.classList.add("lecture");
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -524,6 +533,56 @@ $<HTMLInputElement>("f-tableur").addEventListener("change", async (e) => {
       + (nb ? `\n${nb} point${nb > 1 ? "s" : ""} à corriger : voir la liste sous la saisie.` : ""));
   } catch (err) { alert((err as Error).message || "Fichier illisible."); }
 });
+/* ---------- couleurs ---------- */
+$("b-couleurs").addEventListener("click", () => {
+  const d = document.createElement("dialog");
+  d.className = "colonnes couleurs";
+  const ligne = (cle: string, libelle: string, valeur: string, pastille: "trait" | "carre") =>
+    `<label class="coul"><input type="color" data-cle="${cle}" value="${valeur}" /><i class="${pastille}"></i><span>${libelle}</span></label>`;
+  const rendre = () => {
+    d.innerHTML = `<form method="dialog">
+      <h2>Couleurs</h2>
+      <p class="aide-col">Cliquez une pastille pour changer sa couleur : le plan 2D, la 3D, le PDF, le SVG et la visionneuse suivent. Vos couleurs sont retenues sur ce poste.</p>
+      <div class="blocs-col">
+        <h3>Câbles</h3><div class="grille-coul">
+          ${(Object.keys(MEDIAS) as Media[]).map((m) => ligne(`m:${m}`, MEDIAS[m], (COULEUR_MEDIA as Record<string, string>)[m], "trait")).join("")}
+          ${ligne("t:trunk", "Trunk (étiquettes, liseré)", COULEUR_TRUNK, "trait")}
+        </div>
+        <h3>Équipements</h3><div class="grille-coul">
+          ${(Object.keys(GENRES) as Genre[]).map((g) => ligne(`g:${g}`, GENRES[g].libelle, APPARENCE[g].couleur, "carre")).join("")}
+        </div>
+      </div>
+      <div class="boutons-col"><button type="button" data-a="defaut">Couleurs d'origine</button><button value="ok" type="submit" class="primaire">Fermer</button></div>
+    </form>`;
+  };
+  rendre();
+  let minuteur = 0;
+  const enregistrer = () => {
+    appliquerCouleurs(couleurs);
+    try { localStorage.setItem(CLE_COULEURS, JSON.stringify(couleurs)); } catch { /* stockage indisponible */ }
+    clearTimeout(minuteur);
+    minuteur = window.setTimeout(() => { recalculer(); maj3D(true); }, 120);
+  };
+  d.addEventListener("input", (ev) => {
+    const i = ev.target as HTMLInputElement;
+    const [t, k] = (i.dataset.cle ?? "").split(":");
+    if (!k) return;
+    if (t === "m") couleurs = { ...couleurs, medias: { ...couleurs.medias, [k]: i.value } };
+    else if (t === "g") couleurs = { ...couleurs, genres: { ...couleurs.genres, [k]: i.value } };
+    else couleurs = { ...couleurs, trunk: i.value };
+    enregistrer();
+  });
+  d.addEventListener("click", (ev) => {
+    if ((ev.target as HTMLElement).dataset.a !== "defaut") return;
+    couleurs = {};
+    enregistrer();
+    rendre();
+  });
+  d.addEventListener("close", () => d.remove());
+  document.body.append(d);
+  d.showModal();
+});
+
 /* ---------- fenêtre « ce que l'outil a compris de votre tableau » ---------- */
 const CLE_COLONNES = "carte-reseau:colonnes";
 function lireCorrections(): Map<string, Sens> {
@@ -606,7 +665,7 @@ $("b-visionneuse").addEventListener("click", () => {
   fermerMenu();
   // Le même outil, la topologie incluse, en lecture seule : il s'ouvre sur
   // n'importe quel poste avec un navigateur, sans réseau ni installation.
-  const donnees = JSON.stringify({ nom: active().nom, texte: editeur.valeur, exporte: new Date().toISOString(), classification: CLASSIFICATION, auteur: auteur() })
+  const donnees = JSON.stringify({ nom: active().nom, texte: editeur.valeur, exporte: new Date().toISOString(), classification: CLASSIFICATION, auteur: auteur(), couleurs })
     .replace(/</g, "\\u003c");
   const html = `<!doctype html>\n<html lang="fr">\n<head>${MODELE.head.replace(/<title>[^<]*<\/title>/, `<title>${active().nom.replace(/</g, "")} · Topologie réseau v1</title>`)}</head>\n<body>\n<script type="application/json" id="carte-donnees">${donnees}</script>\n${MODELE.body}\n</body>\n</html>\n`;
   telecharger(`${nomFichier(active().nom)}-visionneuse.html`, html, "text/html;charset=utf-8");

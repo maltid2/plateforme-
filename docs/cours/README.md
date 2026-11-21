@@ -110,6 +110,7 @@ Statuts : `vu` · `à revoir` · `acquis`. Mis à jour à chaque fiche.
 | SQL : transactions, niveaux d'isolation, verrous InnoDB, `1205` | SQL | 2026-11-18 | vu (fiche rédigée, en attente de lecture) ; calibrage SQL toujours sans réponse |
 | Sécurité infra : SSLVPN et SAML, contournement du MFA (SonicWall CVE-2026-19868) | 4 | 2026-11-19 | vu (fiche rédigée, en attente de lecture) |
 | Projet : relire un commit de mise à jour de sécurité (lockfile, plage `^`, `npm audit`) | 1/5 | 2026-11-20 | vu (fiche rédigée, en attente de lecture) |
+| Poste de travail : NCSI, « connecté sans accès Internet » (sonde active, proxy, portail captif) | 2/6 | 2026-11-21 | vu (fiche rédigée, en attente de lecture) |
 
 ## Calibrage
 

@@ -831,3 +831,21 @@ Déjà suivie ; fiche du jour. Avis SonicWall illisible : versions non établies
 
 **Pile de production du projet (SentinelScope) :** commit `f5295a7` du 2026-11-18 : Next.js 16.4.2 → **16.4.6** pour un « avis de sécurité publié » (numéro non cité dans le commit ; l'API d'avis GitHub m'est refusée, **non lu**). État de `main` relu le 2026-11-20 : `next` 16.4.6 installé ; `npm audit --package-lock-only` : **0 vulnérabilité**. Le commit dit pourtant un avis picomatch (GHSA-fc5q-39xc-vjpf) non traité : **contradiction non levée**. **Issue [MINERVE→ATLAS] :** non ouverte (outil GitHub indisponible dans cette session) ; point à poser à l'agent : statut exact de cet avis avec picomatch 2.3.2.
 **Livré cette semaine par les agents (lu dans l'historique de `main`) :** module « jumeau 3D » (three.js, importé dynamiquement), câblage sur ports réels et bornes Wi-Fi, mise à jour de Next.js ; fusion de la branche de comparaison de solutions de suivi.
+
+---
+
+## 2026-11-21 (samedi)
+
+**Catalogue CISA (KEV) :** version **2026.11.20**, **1790** entrées (+4 depuis 2026.11.18, toutes ajoutées le 2026-11-20, échéance **2026-11-23**). Deux concernent ta liste d'éditeurs ; deux hors liste (Apache Roller CVE-2026-129448 ; SAP NetWeaver CVE-2025-42884 : avis non lus).
+
+### 1. Broadcom VMware vCenter — CVE-2026-123890 (KEV ; exploitation constatée par CISA)
+- **Avis lu :** VMSA-2026-0009 (Broadcom, publié 2026-11-19, mis à jour 2026-11-20 ; https://support.broadcom.com/web/ecx/support-content-notification/-/external/content/SecurityAdvisories/0/39495, lu le 2026-11-21). Contournement d'authentification dans le *VMware Directory Service* ; accès réseau à vCenter suffisant ; **CVSS 9,8** ; **aucun contournement** ; signalé par Mandiant. L'avis lui-même **ne déclare pas d'exploitation** ; l'exploitation vient du catalogue CISA (ajout 2026-11-20, `forensicTriage: Yes`, `knownRansomwareCampaignUse: Unknown`).
+- **Versions corrigées (avis) :** vCenter **9.1.x → 9.1.1.0200** ; **9.0.x → 9.0.2.0200** ; **8.0 → 8.0 U3m** ; **7.0 → contacter le support Broadcom (contrat de support étendu)** ; VCF 5.x → 5.2.5 (KB88287) ; Telco Cloud Platform/Infrastructure : KB463116. Quatre autres CVE dans le même avis (CVE-2026-123891 à -123894, CVSS 6,7 à 9,8) : **non détaillées ici**.
+- **Ce que tu vérifies :** si tu as vCenter, sa version exacte ; **son interface est-elle joignable depuis Internet ou depuis des réseaux non-admin** ? (accès réseau suffisant selon l'avis). À faire avant lundi 23/11 (échéance CISA).
+
+### 2. Cisco Expressway — CVE-2026-76466 (KEV ; **mais l'avis Cisco dit ne pas connaître d'exploitation** — divergence à noter)
+- **Avis lu :** cisco-sa-vcs-static-cred-hr7EWZ8t (publié 2026-10-21 ; lu le 2026-11-21). Identifiants codés en dur / cookies persistants, validation insuffisante des certificats clients du **clustering** quand *TLS Verify Mode* est activé ; exécution de commandes en **root** ; **CVSS 9,8** ; **aucun contournement**. Affecté : Expressway-C et -E (virtuels et physiques) **configurés en cluster**. **Corrigé :** X15.5.3 et antérieur → **X15.5.20** ; X14 et antérieur → migrer vers une version corrigée.
+- **Divergence :** CISA l'a ajouté au KEV le 2026-11-20 ; la page Cisco que j'ai lue (version 1.0) dit que le PSIRT n'a **pas connaissance** d'usage malveillant. Les deux sont exacts à leur date de lecture ; je ne sais pas laquelle est la plus récente.
+- **Ce que tu vérifies :** si tu as Expressway en cluster : version (X15.5.20 ou supérieure ?) ; exposition de l'Expressway-E (il est par nature en bordure).
+
+**SonicWall CVE-2026-19868 (échéance 2026-11-20, passée) et Synology DSM CVE-2024-10441 (2026-11-21, aujourd'hui)** : déjà consignés. **Pannes :** non vérifiées. **Issue ATLAS :** aucune.

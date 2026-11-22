@@ -478,3 +478,45 @@ tr.col-ignoree td { opacity: 0.5; }
 label.coul { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--encre); cursor: pointer; padding: 3px 0; }
 label.coul input[type="color"] { width: 34px; height: 26px; padding: 0; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; background: none; cursor: pointer; }
 label.coul i { display: none; }
+
+/* ================================================================
+   Apparence « Noir studio » : noir pur, texte gris clair en majuscules
+   espacées, aucun arrondi ni ombre, des filets fins, beaucoup de vide.
+   ================================================================ */
+body.theme-studio {
+  --bg: #000; --bg2: #000; --carte: #000; --carte2: #0b0b0b;
+  --encre: #e8e8e8; --sourd: #8c8c8c; --trait: rgba(255, 255, 255, 0.16); --acc: #e8e8e8;
+  font-family: "Helvetica Neue", Arial, "Segoe UI", system-ui, sans-serif;
+}
+.theme-studio *, .theme-studio *::before, .theme-studio *::after { border-radius: 0 !important; box-shadow: none !important; }
+/* Titres, onglets, boutons : majuscules larges, gris, blanc au survol. */
+.theme-studio .barre strong, .theme-studio h2, .theme-studio h3, .theme-studio legend,
+.theme-studio button, .theme-studio summary, .theme-studio .modes button, .theme-studio .onglets button,
+.theme-studio .f-ligne label, .theme-studio .f-branche label, .theme-studio th {
+  text-transform: uppercase; letter-spacing: 0.12em; font-weight: 400;
+}
+.theme-studio button, .theme-studio summary { font-size: 11.5px; background: transparent; border-color: transparent; color: #bfbfbf; padding: 7px 12px; }
+.theme-studio button:hover, .theme-studio summary:hover, .theme-studio select:hover { color: #fff; border-color: transparent; background: transparent; }
+.theme-studio button[aria-selected="true"], .theme-studio button[aria-checked="true"] { color: #fff; border-color: transparent; background: transparent; text-decoration: underline; text-underline-offset: 6px; text-decoration-thickness: 1px; }
+.theme-studio button.primaire { background: #fff; color: #000; border-color: #fff; font-weight: 500; }
+.theme-studio button.primaire:hover { background: #d9d9d9; color: #000; }
+.theme-studio select, .theme-studio input, .theme-studio textarea { background: #000; border: 0; border-bottom: 1px solid var(--trait); }
+.theme-studio input:focus, .theme-studio select:focus { border-bottom-color: #fff; }
+.theme-studio :focus-visible { outline: 1px solid #fff; outline-offset: 3px; }
+.theme-studio .barre { background: #000; border-bottom: 1px solid var(--trait); }
+.theme-studio .barre .local, .theme-studio .signature { background: transparent; border-color: transparent; color: #8c8c8c; text-transform: uppercase; letter-spacing: 0.1em; font-size: 10.5px; }
+.theme-studio .f-bloc, .theme-studio .f-branche, .theme-studio .f-bloc.f-liaison, .theme-studio .f-branche.f-raccord { background: transparent; border: 0; border-top: 1px solid var(--trait); }
+.theme-studio .f-pastille { background: #fff !important; color: #000; }
+.theme-studio .f-types [data-g] { background: transparent; border: 1px solid transparent; }
+.theme-studio .f-types [data-g][aria-checked="true"] { border-color: #fff; text-decoration: none; }
+.theme-studio .legende, .theme-studio .fiche, .theme-studio dialog.colonnes, .theme-studio .menu-corps { background: #000; border: 1px solid var(--trait); }
+.theme-studio .f-quand, .theme-studio .f-aide-branche, .theme-studio .f-raccord legend, .theme-studio .f-liaison h3, .theme-studio .f-liaison .f-aide-branche { color: #8c8c8c; }
+/* Plan 2D : fond noir, cadres réduits à un filet. */
+.theme-studio .cadre-site { fill: #000; stroke: rgba(255, 255, 255, 0.22); }
+.theme-studio .cadre-entete { fill: transparent; }
+.theme-studio .cadre-point { fill: #050505; stroke: rgba(255, 255, 255, 0.14); }
+.theme-studio .barre button, .theme-studio .barre summary { letter-spacing: 0.07em; padding: 6px 8px; }
+.theme-studio .topos { flex-wrap: nowrap; }
+.theme-studio .g-resume rect { fill: #000; stroke: rgba(255, 255, 255, 0.55); }
+.theme-studio .minicarte { background: #000; border: 1px solid var(--trait); }
+.theme-studio .mc-vue { stroke: #fff; fill: rgba(255, 255, 255, 0.06); }

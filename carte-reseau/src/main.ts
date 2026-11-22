@@ -544,6 +544,10 @@ $("b-couleurs").addEventListener("click", () => {
       <h2>Couleurs</h2>
       <p class="aide-col">Cliquez une pastille pour changer sa couleur : le plan 2D, la 3D, le PDF, le SVG et la visionneuse suivent. Vos couleurs sont retenues sur ce poste.</p>
       <div class="blocs-col">
+        <h3>Apparence</h3><div class="grille-coul themes">
+          <label class="coul"><input type="radio" name="theme" value="standard" ${couleurs.theme !== "studio" ? "checked" : ""} /><span>Standard</span></label>
+          <label class="coul"><input type="radio" name="theme" value="studio" ${couleurs.theme === "studio" ? "checked" : ""} /><span>Noir studio — noir pur, majuscules, sans arrondis</span></label>
+        </div>
         <h3>Câbles</h3><div class="grille-coul">
           ${(Object.keys(MEDIAS) as Media[]).map((m) => ligne(`m:${m}`, MEDIAS[m], (COULEUR_MEDIA as Record<string, string>)[m], "trait")).join("")}
           ${ligne("t:trunk", "Trunk (étiquettes, liseré)", COULEUR_TRUNK, "trait")}
@@ -565,6 +569,7 @@ $("b-couleurs").addEventListener("click", () => {
   };
   d.addEventListener("input", (ev) => {
     const i = ev.target as HTMLInputElement;
+    if (i.name === "theme") { couleurs = { ...couleurs, theme: i.value as "standard" | "studio" }; enregistrer(); return; }
     const [t, k] = (i.dataset.cle ?? "").split(":");
     if (!k) return;
     if (t === "m") couleurs = { ...couleurs, medias: { ...couleurs.medias, [k]: i.value } };
@@ -574,7 +579,7 @@ $("b-couleurs").addEventListener("click", () => {
   });
   d.addEventListener("click", (ev) => {
     if ((ev.target as HTMLElement).dataset.a !== "defaut") return;
-    couleurs = {};
+    couleurs = { theme: couleurs.theme };   // l'apparence choisie reste
     enregistrer();
     rendre();
   });

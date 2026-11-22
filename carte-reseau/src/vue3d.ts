@@ -820,6 +820,10 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     // Le brouillard de profondeur suit la taille de la carte : réglé pour un
     // petit réseau, il effaçait sols et caméras d'un grand réseau dézoomé.
     const diag = Math.max(40, emprise.getSize(new THREE.Vector3()).length());
+    // Apparence « Noir studio » : fond et brouillard noirs.
+    const fond = document.body.classList.contains("theme-studio") ? 0x000000 : 0x07090d;
+    (scene.background as THREE.Color).setHex(fond);
+    (scene.fog as THREE.Fog).color.setHex(fond);
     (scene.fog as THREE.Fog).near = diag * 1.6;
     (scene.fog as THREE.Fog).far = diag * 4;
     cam.far = Math.max(3000, diag * 6);

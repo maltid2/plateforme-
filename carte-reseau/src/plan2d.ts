@@ -356,15 +356,15 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
       const nSw = eqs.filter((e) => e.genre === "switch").length;
       const resume = `${eqs.length} équipement${eqs.length > 1 ? "s" : ""} · ${nSw} switch${nSw > 1 ? "s" : ""}`;
       if (c.type === "site") {
-        el("rect", { x: c.x, y: c.y, width: c.w, height: c.h, rx: 0.9, fill: avecPoints.has(c.site) ? "#0A0E14" : "#0D1118",
+        el("rect", { class: "cadre-site", x: c.x, y: c.y, width: c.w, height: c.h, rx: 0.9, fill: avecPoints.has(c.site) ? "#0A0E14" : "#0D1118",
           stroke: "rgba(255,255,255,0.12)", "stroke-width": 0.06 }, gs);
-        el("path", { d: `M ${c.x} ${c.y + 1.6} V ${c.y + 0.9} Q ${c.x} ${c.y} ${c.x + 0.9} ${c.y} H ${c.x + c.w - 0.9} Q ${c.x + c.w} ${c.y} ${c.x + c.w} ${c.y + 0.9} V ${c.y + 1.6} Z`,
+        el("path", { class: "cadre-entete", d: `M ${c.x} ${c.y + 1.6} V ${c.y + 0.9} Q ${c.x} ${c.y} ${c.x + 0.9} ${c.y} H ${c.x + c.w - 0.9} Q ${c.x + c.w} ${c.y} ${c.x + c.w} ${c.y + 0.9} V ${c.y + 1.6} Z`,
           fill: "rgba(141,124,255,0.09)" }, gs);
         texte(gs, c.nom, { x: c.x + 0.9, y: c.y + 1.08, "font-size": 0.72, "font-weight": 800, fill: "#F5F7FA" });
         const nPts = cadres.filter((x) => x.type === "point" && x.site === c.site).length;
         texte(gs, nPts ? `${nPts} lieux · ${resume}` : resume, { x: c.x + c.w - 0.9, y: c.y + 1.04, "text-anchor": "end", "font-size": 0.38, fill: "#8B98A8" });
       } else {
-        el("rect", { x: c.x, y: c.y, width: c.w, height: c.h, rx: 0.7, fill: "#0F141C", stroke: "rgba(61,220,151,0.28)", "stroke-width": 0.05 }, gpt);
+        el("rect", { class: "cadre-point", x: c.x, y: c.y, width: c.w, height: c.h, rx: 0.7, fill: "#0F141C", stroke: "rgba(61,220,151,0.28)", "stroke-width": 0.05 }, gpt);
         el("circle", { cx: c.x + 0.85, cy: c.y + 0.82, r: 0.2, fill: "none", stroke: "#3DDC97", "stroke-width": 0.07 }, gpt);
         el("circle", { cx: c.x + 0.85, cy: c.y + 0.82, r: 0.06, fill: "#3DDC97" }, gpt);
         texte(gpt, c.nom, { x: c.x + 1.25, y: c.y + 0.98, "font-size": 0.5, "font-weight": 700, fill: "#E3F9EE" });

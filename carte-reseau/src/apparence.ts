@@ -30,7 +30,7 @@ export let COULEUR_TRUNK = "#B4A6FF";
 export const COULEUR_MEDIA = { fibre: "#FF9F43", cuivre: "#4FC3F7", dac: "#2DD4BF", coax: "#D08C5B", serie: "#F472B6", usb: "#B8C4D6", radio: "#F2C94C", vpn: "#A99CFF", inconnu: "#8B98A8" } as const;
 
 /* ---------- couleurs choisies par l'utilisateur ---------- */
-export type Couleurs = { genres?: Partial<Record<Genre, string>>; medias?: Partial<Record<string, string>>; trunk?: string };
+export type Couleurs = { genres?: Partial<Record<Genre, string>>; medias?: Partial<Record<string, string>>; trunk?: string; theme?: "standard" | "studio" };
 /** Les couleurs d'origine, pour « Rétablir ». */
 export const COULEURS_DEFAUT = {
   genres: Object.fromEntries(Object.entries(APPARENCE).map(([g, a]) => [g, a.couleur])) as Record<Genre, string>,
@@ -50,4 +50,6 @@ export function appliquerCouleurs(c: Couleurs | null | undefined) {
     m[k] = v && HEX.test(v) ? v : COULEURS_DEFAUT.medias[k];
   });
   COULEUR_TRUNK = c?.trunk && HEX.test(c.trunk) ? c.trunk : COULEURS_DEFAUT.trunk;
+  // Apparence de l'interface : « Noir studio » = noir pur, majuscules espacées, sans arrondis.
+  if (typeof document !== "undefined") document.body.classList.toggle("theme-studio", c?.theme === "studio");
 }

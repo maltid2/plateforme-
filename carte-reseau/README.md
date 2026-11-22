@@ -182,6 +182,10 @@ zoomant, on retrouve les façades et les ports. Boutons ＋ − ⤢ et
 
 ## Couleurs
 
+Dans **Couleurs › Apparence** : *Standard*, ou *Noir studio* (inspiré des
+sites d'agences de design : noir pur, texte gris clair en majuscules
+espacées, sans arrondis ni ombres, filets fins, beaucoup de vide).
+
 Bouton **Couleurs** (en haut) : une pastille par type de câble (RJ45, fibre,
 DAC, coaxial, série, USB, radio, VPN, trunk) et par type d'équipement. Le plan
 2D, la 3D, le PDF, le SVG et la visionneuse exportée suivent ; les couleurs

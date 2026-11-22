@@ -5,13 +5,14 @@ user-invocable: true
 argument-hint: "[page ou composant à habiller]"
 metadata:
   source: "https://530degres.agency/works/ — observé le 22/11/2026 (rendu réel + styles calculés)"
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Style « Noir studio »
 
-Appris en observant le site d'une agence de design 3D (530°, page *Works*)
-dans un vrai navigateur : captures d'écran et styles calculés. L'idée : le
+Appris en observant le site d'une agence de design 3D (530°, page *Works* et
+une page projet) dans un vrai navigateur : captures d'écran, styles
+calculés au repos **et pendant les interactions** (survol, clic, défilement). L'idée : le
 haut de gamme vient de **la retenue**. Moins d'éléments, mieux alignés, et le
 contenu (images, données, câbles…) apporte seul la couleur.
 
@@ -27,6 +28,19 @@ contenu (images, données, câbles…) apporte seul la couleur.
 | Décor des vignettes | aucun : ni bordure, ni arrondi, ni ombre, ni légende visible au repos ; le titre apparaît au survol, posé sur l'image |
 | Accueil | une vidéo plein écran, le menu par-dessus, rien d'autre |
 | Couleur | uniquement dans les visuels ; l'interface reste noir, gris et blanc |
+
+## Les interactions observées (mesurées)
+
+| Interaction | Ce qui se passe | Valeurs relevées |
+| --- | --- | --- |
+| Curseur | une **croix** remplace la flèche partout | image 28 × 28 px, point actif au centre (`14 14`) |
+| Survol d'une vignette | l'**image s'efface**, le **titre apparaît à sa place** (petit, majuscules, gris clair) et suit légèrement la souris | titre 10 px, `#BFBFBF`, `opacity 0 → 1` en `0.4s ease-out` ; image `opacity 0.3s ease-out`, `transform 0.4s ease-out` |
+| Vignettes | des **vidéos courtes muettes en boucle**, toutes en lecture en même temps : la grille « respire » sans qu'on touche à rien | `<video autoplay muted loop playsinline>` |
+| Mouvement de la vignette | apparition / déplacement doux, rapide au début, très lent à la fin | `transform, opacity 0.5s cubic-bezier(0.165, 0.84, 0.44, 1)` (« ease-out-quart ») |
+| Menu | gris au repos, **blanc au survol**, rien d'autre (ni fond, ni soulignement animé) | `#BFBFBF → #FFFFFF` |
+| Fond de page | change de couleur en douceur d'une page à l'autre | `background-color 0.3s` |
+| Défilement | la page Works **tient en un seul écran** (aucun défilement) : tout se voit d'un coup | hauteur de page = hauteur de fenêtre |
+| Clic sur un projet | page projet : **titre à gauche** (28 px, majuscules, sur 2 lignes), **année tout à droite**, court texte en casse normale ; puis les médias en **grand, bord à bord, 2 colonnes sans gouttière**, la première décalée à droite (composition asymétrique), vidéos en lecture auto | texte 28 px `#BFBFBF` |
 
 ## Les principes (ce qu'il faut en retenir)
 
@@ -51,7 +65,15 @@ contenu (images, données, câbles…) apporte seul la couleur.
    couleur. On ne rajoute pas de couleur d'accent à l'interface.
 7. **Le détail vient à l'interaction.** Les légendes et titres secondaires
    n'apparaissent qu'au survol ou en zoomant ; au repos, la page reste nue.
-8. **Une seule action principale.** Le bouton principal est le seul élément
+8. **Le mouvement est doux et court.** Une seule courbe pour tout le site
+   (ease-out-quart), 0,3 à 0,5 s ; on anime l'opacité et la position, jamais
+   les couleurs criardes ni les rebonds.
+9. **Le survol échange, il ne décore pas.** Au survol, une chose disparaît
+   (l'image) pour en révéler une autre (le titre) ; pas d'ombre, pas de zoom
+   exagéré, pas de cadre qui s'allume.
+10. **Un curseur signature.** Une croix fine, comme un viseur : c'est le seul
+   « ornement » du site.
+11. **Une seule action principale.** Le bouton principal est le seul élément
    plein : fond blanc, texte noir. Tous les autres boutons sont du texte.
 
 ## Jetons prêts à l'emploi
@@ -106,6 +128,38 @@ Grille type « galerie » (comme la page Works) :
 .grille-studio > *:hover .titre { opacity: 1; }
 ```
 
+Interactions prêtes à l'emploi (curseur en SVG intégré : fonctionne hors
+ligne, aucune image à télécharger) :
+
+```css
+:root { --doux: cubic-bezier(0.165, 0.84, 0.44, 1); }   /* ease-out-quart */
+/* Curseur croix, point actif au centre */
+.theme-studio, .theme-studio button, .theme-studio a, .theme-studio svg {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E%3Cpath d='M14 3v22M3 14h22' stroke='white' stroke-width='1.2'/%3E%3C/svg%3E") 14 14, crosshair;
+}
+.theme-studio input, .theme-studio textarea { cursor: text; }
+/* Survol : l'image s'efface, le titre prend sa place */
+.vignette { position: relative; transition: transform .5s var(--doux), opacity .5s var(--doux); }
+.vignette img, .vignette video { transition: opacity .3s ease-out, transform .4s ease-out; }
+.vignette .titre { position: absolute; inset: 0; display: grid; place-items: center; opacity: 0;
+  font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: #bfbfbf; transition: opacity .4s ease-out; }
+.vignette:hover img, .vignette:hover video { opacity: 0; }
+.vignette:hover .titre { opacity: 1; }
+/* Menu : gris → blanc, rien d'autre */
+nav a { color: #bfbfbf; transition: color .3s var(--doux); }
+nav a:hover { color: #fff; }
+/* Respecter les réglages d'accessibilité */
+@media (prefers-reduced-motion: reduce) { * { transition-duration: 0s !important; animation: none !important; } }
+```
+
+```js
+// Le titre suit légèrement la souris dans la vignette (comme sur le site).
+document.querySelectorAll(".vignette").forEach((v) => v.addEventListener("pointermove", (e) => {
+  const r = v.getBoundingClientRect(), t = v.querySelector(".titre");
+  t.style.transform = `translate(${(e.clientX - r.left - r.width / 2) * 0.15}px, ${(e.clientY - r.top - r.height / 2) * 0.15}px)`;
+}));
+```
+
 ## Mode d'emploi
 
 1. Commencer par **retirer** : fonds de cartes, arrondis, ombres, dégradés,
@@ -116,7 +170,10 @@ Grille type « galerie » (comme la page Works) :
 4. Aligner sur une grille régulière, élargir les gouttières, laisser du vide.
 5. Garder la couleur pour les données seulement.
 6. Cacher le détail secondaire jusqu'au survol ou au zoom.
-7. Vérifier : une capture d'écran en noir et blanc doit rester lisible
+7. Ajouter le mouvement en dernier : une seule courbe douce, le survol qui
+   échange (image → titre), le curseur croix ; couper les animations si
+   l'utilisateur a demandé moins de mouvement.
+8. Vérifier : une capture d'écran en noir et blanc doit rester lisible
    (hiérarchie par la taille, la casse et l'espace, pas par la couleur).
 
 ## À ne pas faire
@@ -127,6 +184,8 @@ Grille type « galerie » (comme la page Works) :
 - Pas de police téléchargée si la page doit rester hors ligne ou sous une
   politique de sécurité stricte (`font-src 'none'`) : la police large de
   l'agence est payante ; on l'approche avec Helvetica / Arial + espacement.
+- Pas de rebond, de secousse, d'animation longue (> 0,6 s) ni de mouvement
+  qui gêne la lecture ; pas de vidéo avec le son.
 - Ne pas imposer ce style : le proposer **en option** à côté de l'apparence
   habituelle.
 
@@ -144,3 +203,6 @@ apparence au choix : **Couleurs › Apparence › Noir studio**.
   résumé (`.g-resume rect`) noires à liseré blanc.
 - 3D : fond et brouillard noirs quand la classe est présente (`src/vue3d.ts`).
 - Les couleurs des câbles et des équipements restent : ce sont les données.
+- Interactions reprises : curseur croix sur la carte et les boutons, survol
+  gris → blanc, transitions ease-out-quart, mouvement coupé si le poste
+  demande moins d'animations.

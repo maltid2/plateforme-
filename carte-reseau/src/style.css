@@ -520,3 +520,12 @@ body.theme-studio {
 .theme-studio .g-resume rect { fill: #000; stroke: rgba(255, 255, 255, 0.55); }
 .theme-studio .minicarte { background: #000; border: 1px solid var(--trait); }
 .theme-studio .mc-vue { stroke: #fff; fill: rgba(255, 255, 255, 0.06); }
+/* Noir studio — interactions : curseur croix, gris → blanc, mouvement doux (ease-out-quart). */
+.theme-studio { --doux: cubic-bezier(0.165, 0.84, 0.44, 1); }
+.theme-studio, .theme-studio button, .theme-studio summary, .theme-studio .hote, .theme-studio svg, .theme-studio label {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E%3Cpath d='M14 3v22M3 14h22' stroke='white' stroke-width='1.2'/%3E%3C/svg%3E") 14 14, crosshair;
+}
+.theme-studio input, .theme-studio textarea, .theme-studio .editeur { cursor: text; }
+.theme-studio button, .theme-studio summary, .theme-studio a { transition: color 0.3s var(--doux), background 0.3s var(--doux), opacity 0.3s var(--doux); }
+.theme-studio .noeud { transition: opacity 0.4s ease-out; }
+@media (prefers-reduced-motion: reduce) { .theme-studio * { transition-duration: 0s !important; } }

@@ -1,6 +1,6 @@
 # Cours MINERVE — plan de montée en compétence
 
-Synthèses : [22-25 octobre](2026-10-25-synthese-de-la-semaine.md) · [26 octobre - 1er novembre](2026-11-01-synthese-de-la-semaine.md) · [2-8 novembre](2026-11-08-synthese-de-la-semaine.md) · [9-15 novembre](2026-11-15-synthese-de-la-semaine.md).
+Synthèses : [22-25 octobre](2026-10-25-synthese-de-la-semaine.md) · [26 octobre - 1er novembre](2026-11-01-synthese-de-la-semaine.md) · [2-8 novembre](2026-11-08-synthese-de-la-semaine.md) · [9-15 novembre](2026-11-15-synthese-de-la-semaine.md) · [16-22 novembre](2026-11-22-synthese-de-la-semaine.md).
 
 Analyse de l'examen FEDE (janvier 2025) : [`anglais-examen-fede-cu-b4-analyse.md`](anglais-examen-fede-cu-b4-analyse.md).
 
@@ -111,6 +111,7 @@ Statuts : `vu` · `à revoir` · `acquis`. Mis à jour à chaque fiche.
 | Sécurité infra : SSLVPN et SAML, contournement du MFA (SonicWall CVE-2026-19868) | 4 | 2026-11-19 | vu (fiche rédigée, en attente de lecture) |
 | Projet : relire un commit de mise à jour de sécurité (lockfile, plage `^`, `npm audit`) | 1/5 | 2026-11-20 | vu (fiche rédigée, en attente de lecture) |
 | Poste de travail : NCSI, « connecté sans accès Internet » (sonde active, proxy, portail captif) | 2/6 | 2026-11-21 | vu (fiche rédigée, en attente de lecture) |
+| Synthèse de la semaine 16-22 novembre + bloc d'anglais (15 termes, texte à trous Cisco) | 1/2/3/4/AD/SQL | 2026-11-22 | à revoir (aucune réponse ni copie reçue) |
 
 ## Calibrage
 

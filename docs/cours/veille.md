@@ -849,3 +849,10 @@ Déjà suivie ; fiche du jour. Avis SonicWall illisible : versions non établies
 - **Ce que tu vérifies :** si tu as Expressway en cluster : version (X15.5.20 ou supérieure ?) ; exposition de l'Expressway-E (il est par nature en bordure).
 
 **SonicWall CVE-2026-19868 (échéance 2026-11-20, passée) et Synology DSM CVE-2024-10441 (2026-11-21, aujourd'hui)** : déjà consignés. **Pannes :** non vérifiées. **Issue ATLAS :** aucune.
+
+---
+
+## 2026-11-22 (dimanche)
+
+**Catalogue CISA (KEV) :** version **2026.11.20**, **1790** entrées, **inchangée depuis le 21 novembre** (aucune entrée ajoutée depuis le 2026-11-20). Rappels déjà consignés : Synology DSM CVE-2024-10441 (échéance 2026-11-21, passée) ; vCenter CVE-2026-123890 et Cisco Expressway CVE-2026-76466 : **2026-11-23**. Pas de nouvel avis de ta liste lu aujourd'hui ; pannes non vérifiées ; aucune issue ATLAS.
+**Note d'exploitation :** le dépôt local était revenu sur `main` ; la branche de travail a été recréée à partir de la version poussée sur `origin` (aucun commit perdu).

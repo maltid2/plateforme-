@@ -856,3 +856,10 @@ Déjà suivie ; fiche du jour. Avis SonicWall illisible : versions non établies
 
 **Catalogue CISA (KEV) :** version **2026.11.20**, **1790** entrées, **inchangée depuis le 21 novembre** (aucune entrée ajoutée depuis le 2026-11-20). Rappels déjà consignés : Synology DSM CVE-2024-10441 (échéance 2026-11-21, passée) ; vCenter CVE-2026-123890 et Cisco Expressway CVE-2026-76466 : **2026-11-23**. Pas de nouvel avis de ta liste lu aujourd'hui ; pannes non vérifiées ; aucune issue ATLAS.
 **Note d'exploitation :** le dépôt local était revenu sur `main` ; la branche de travail a été recréée à partir de la version poussée sur `origin` (aucun commit perdu).
+
+---
+
+## 2026-11-23 (lundi)
+
+**Catalogue CISA (KEV) :** version **2026.11.20**, **1790** entrées, **inchangée** depuis le 21 novembre (aucune entrée ajoutée après le 2026-11-20). **Échéance aujourd'hui (2026-11-23) :** vCenter CVE-2026-123890 et Cisco Expressway CVE-2026-76466 (voir entrées du 21 novembre, non répétées). Pas de nouvel avis de ta liste lu ; pannes non vérifiées ; aucune issue ATLAS.
+**Fiche :** réseau, table MAC contre table ARP (RFC 826 lue ; guides Cisco illisibles, partie commutateur signalée « non revérifiée »).

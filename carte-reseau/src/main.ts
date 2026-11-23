@@ -9,7 +9,7 @@ import { EXEMPLE_COMPLET, MODELES } from "./modeles.ts";
 import { CLASSIFICATION, imprimer } from "./impression.ts";
 import { creerPlan2D } from "./plan2d.ts";
 import * as projets from "./projets.ts";
-import { analyser, GENRES, MEDIAS, type Genre, type Inventaire, type Media, LIBELLE_CLE } from "./saisie.ts";
+import { analyser, GENRES, MEDIAS, type Genre, type Inventaire, type Liaison, type Media, LIBELLE_CLE } from "./saisie.ts";
 import type { Vue3D } from "./vue3d.ts";
 
 // Le modèle de la page, pris AVANT toute modification : il sert à produire
@@ -50,7 +50,7 @@ let vue: "2d" | "3d" | "baies" = "2d";
 let v3: Vue3D | null = null;
 
 const active = () => classeur.topologies.find((t) => t.id === classeur.active)!;
-const plan = creerPlan2D(hote2d, { choisir });
+const plan = creerPlan2D(hote2d, { choisir, lien: (l) => { if (!EMBARQUE) formulaire.editerLien(l); } });
 const editeur = creerEditeur($("editeur"), () => ({ inv, disp }), (texte) => {
   const t = active();
   t.texte = texte;
@@ -244,16 +244,8 @@ function recalculer() {
 }
 
 function dessiner() {
-  hote2d.querySelector(".vide")?.remove();
-  if (!inv.equipements.length) {
-    const d = document.createElement("div");
-    d.className = "vide";
-    d.innerHTML = `<div><b>La carte est vide : créez votre premier site.</b><br>
-      Dans le <b>Formulaire</b> : Site › <b>＋ Nouveau site…</b>, donnez-lui le nom que vous voulez,<br>
-      puis ajoutez ses switchs et ses caméras.<br>
-      Ou en <b>Texte</b> : <code>site NomDuSite</code> puis <code>switch SW-1 | 10.0.0.2</code></div>`;
-    hote2d.appendChild(d);
-  }
+  // Carte vide : un accueil avec les trois façons de commencer.
+  $("accueil").hidden = !!inv.equipements.length || !!EMBARQUE;
   plan.afficher(inv, disp, site);
   plan.selectionner(choisi);
   if (vue === "baies") dessinerBaies();
@@ -366,7 +358,7 @@ function remplirFiche() {
   if (!liens.length) fiche.append(h("p", "vide-fiche", "Aucune liaison déclarée."));
   else {
     const tab = document.createElement("table");
-    tab.innerHTML = `<thead><tr><th>Port</th><th>Branché sur</th><th>Mode</th></tr></thead>`;
+    tab.innerHTML = `<thead><tr><th>Port</th><th>Branché sur</th><th>Mode</th>${EMBARQUE ? "" : "<th></th>"}</tr></thead>`;
     const tb = document.createElement("tbody");
     liens.sort((x, y) => (x.monPort ?? "").localeCompare(y.monPort ?? "", "fr", { numeric: true })).forEach((x) => {
       const tr = document.createElement("tr");
@@ -374,14 +366,32 @@ function remplirFiche() {
       td(x.monPort ?? "—", "mono");
       td(lien(x.autre, x.sonPort));
       td(`${x.l.mode === "trunk" ? "trunk" : x.l.mode ?? ""}${x.l.vlans ? ` ${x.l.vlans}` : ""}${x.l.libelle ? ` · ${x.l.libelle}` : ""}`, x.l.mode === "trunk" ? "trunk" : "");
+      if (!EMBARQUE) {
+        // Chaque câble se modifie ou se supprime d'ici.
+        const act = h("td", "act");
+        const b1 = h("button", "", "✎") as HTMLButtonElement; b1.type = "button"; b1.title = "Modifier ce câble"; b1.onclick = () => formulaire.editerLien(x.l);
+        const b2 = h("button", "danger", "✕") as HTMLButtonElement; b2.type = "button"; b2.title = "Supprimer ce câble"; b2.onclick = () => formulaire.supprimerLien(x.l);
+        act.append(b1, b2); tr.append(act);
+      }
       tb.append(tr);
     });
     tab.append(tb);
     fiche.append(tab);
   }
-  const aller = h("button", "modifier", `✎ Modifier la ligne ${e.ligne}`) as HTMLButtonElement;
+  if (!EMBARQUE) {
+    // Les actions simples, en haut de la fiche : modifier, ajouter un câble, supprimer.
+    const actions = h("div", "actions-fiche");
+    const bouton = (txt: string, titre: string, f: () => void, cls = "") => {
+      const b = h("button", cls, txt) as HTMLButtonElement; b.type = "button"; b.title = titre; b.onclick = f; actions.append(b);
+    };
+    bouton("✎ Modifier", "Modifier cet équipement dans le formulaire", () => { mode("form"); formulaire.modifier(e.nom); });
+    bouton("＋ Câble", "Ajouter un câble depuis cet équipement", () => formulaire.editerLien({ a: e.nom, b: "", mode: undefined, ligne: 0, vlans: undefined, libelle: undefined, media: undefined } as unknown as Liaison));
+    bouton("🗑 Supprimer", "Supprimer cet équipement", () => { formulaire.supprimer(e.nom); }, "danger");
+    tete.after(actions);
+  }
+  const aller = h("button", "modifier", `Voir la ligne ${e.ligne} dans le texte`) as HTMLButtonElement;
   aller.type = "button";
-  aller.onclick = () => editeur.allerLigne(e.ligne);
+  aller.onclick = () => { mode("texte"); editeur.allerLigne(e.ligne); };
   fiche.append(aller);
   fiche.hidden = false;
 }
@@ -458,7 +468,28 @@ $("b-aide").addEventListener("click", (e) => {
   (e.currentTarget as HTMLElement).setAttribute("aria-expanded", String(!aide.hidden));
 });
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && choisi && document.activeElement?.tagName !== "TEXTAREA") choisir(null);
+  const saisie = /^(TEXTAREA|INPUT|SELECT)$/.test(document.activeElement?.tagName ?? "") || !!document.querySelector("dialog[open]");
+  if (e.key === "Escape" && choisi && !saisie) choisir(null);
+  // Suppr : supprimer l'équipement choisi sur la carte (avec confirmation).
+  if ((e.key === "Delete" || e.key === "Backspace") && choisi && !saisie && !EMBARQUE) { e.preventDefault(); formulaire.supprimer(choisi); }
+});
+
+/* ---------------- actions principales (au-dessus de la carte) ---------------- */
+const versAjout = () => {
+  mode("form");
+  const f = document.querySelector<HTMLElement>(".f-ajout");
+  f?.scrollIntoView({ behavior: "smooth", block: "start" });
+  setTimeout(() => f?.querySelector<HTMLInputElement>('[data-f="nom"]')?.focus(), 350);
+};
+$("a-equipement").addEventListener("click", versAjout);
+$("a-cable").addEventListener("click", () => formulaire.editerLien({ a: choisi ?? "", b: "" } as unknown as Liaison));
+$("a-excel").addEventListener("click", () => $("f-tableur").click());
+$("a-pdf").addEventListener("click", () => $("b-pdf").click());
+$("accueil").addEventListener("click", (e) => {
+  const k = (e.target as HTMLElement).closest<HTMLElement>("[data-accueil]")?.dataset.accueil;
+  if (k === "excel") $("f-tableur").click();
+  else if (k === "equipement") versAjout();
+  else if (k === "exemple") creer("Exemple (à supprimer)", EXEMPLE_COMPLET);
 });
 
 /* ---------------- fichiers ---------------- */
@@ -471,7 +502,7 @@ function telecharger(nom: string, contenu: BlobPart, type: string) {
 }
 const nomFichier = (n: string) => n.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^\w-]+/g, "_").slice(0, 60) || "carte";
 const date = () => new Date().toISOString().slice(0, 10);
-const fermerMenu = () => document.querySelector("details.menu")?.removeAttribute("open");
+const fermerMenu = () => document.querySelectorAll("details.menu").forEach((m) => m.removeAttribute("open"));
 
 $("b-sauvegarde").addEventListener("click", () => { fermerMenu(); telecharger(`topologie-reseau-sauvegarde-${date()}.json`, projets.exporter(classeur, auteur()), "application/json"); });
 

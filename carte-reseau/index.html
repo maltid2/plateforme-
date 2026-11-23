@@ -25,9 +25,14 @@
       <label for="topologie" class="sr">Topologie</label>
       <select id="topologie" aria-label="Topologie affichée"></select>
       <button id="t-nouvelle" type="button" title="Nouvelle topologie">＋ Nouvelle</button>
-      <button id="t-renommer" type="button" title="Renommer">Renommer</button>
-      <button id="t-dupliquer" type="button" title="Dupliquer">Dupliquer</button>
-      <button id="t-supprimer" type="button" title="Supprimer" class="danger">Supprimer</button>
+      <details class="menu menu-topo">
+        <summary title="Renommer, dupliquer ou supprimer cette topologie">⋯</summary>
+        <div class="menu-corps">
+          <button id="t-renommer" type="button">Renommer cette topologie</button>
+          <button id="t-dupliquer" type="button">Dupliquer</button>
+          <button id="t-supprimer" type="button" class="danger">Supprimer</button>
+        </div>
+      </details>
     </div>
 
     <div class="actions">
@@ -93,6 +98,13 @@
       title="Glisser pour élargir la saisie · double-clic : grand / normal · flèches ← →"></div>
 
     <section class="carte" aria-label="Carte">
+      <div class="actions-carte" role="toolbar" aria-label="Actions principales">
+        <button id="a-equipement" type="button" class="primaire">＋ Équipement</button>
+        <button id="a-cable" type="button">＋ Câble</button>
+        <button id="a-excel" type="button">⇪ Importer un Excel</button>
+        <button id="a-pdf" type="button">⎙ PDF</button>
+        <span class="astuce">Astuce : cliquez un équipement ou un câble sur la carte pour le modifier ou le supprimer.</span>
+      </div>
       <div class="outils">
         <div class="onglets" role="tablist">
           <button role="tab" id="v-2d" aria-selected="true">Plan 2D</button>
@@ -110,6 +122,15 @@
         <div id="hote-3d" class="hote" hidden></div>
         <div id="hote-baies" class="hote baies" hidden></div>
         <aside class="fiche" id="fiche" hidden></aside>
+        <div class="accueil" id="accueil" hidden>
+          <h2>Votre carte est vide</h2>
+          <p>Trois façons de commencer :</p>
+          <div class="accueil-choix">
+            <button type="button" data-accueil="excel"><b>⇪ Importer un Excel</b><span>Votre inventaire en tableau : l'outil le lit et dessine tout.</span></button>
+            <button type="button" data-accueil="equipement"><b>＋ Ajouter un équipement</b><span>Un switch, une caméra… avec le formulaire, pas à pas.</span></button>
+            <button type="button" data-accueil="exemple"><b>◎ Voir un exemple</b><span>Une carte complète à explorer, dans une topologie à part.</span></button>
+          </div>
+        </div>
         <div class="legende" id="legende"></div>
       </div>
     </section>

@@ -13,7 +13,7 @@ import { APPARENCE } from "./apparence.ts";
 import { lirePort } from "./facade.ts";
 import type { Disposition } from "./disposition.ts";
 import { PICTOS } from "./pictos.ts";
-import { GENRES, MEDIAS, ipPlus, type Equipement, type Genre, type Inventaire, type Liaison, type Media } from "./saisie.ts";
+import { GENRES, lireMedia as lireMediaTexte, MEDIAS, ipPlus, type Equipement, type Genre, type Inventaire, type Liaison, type Media } from "./saisie.ts";
 
 type Acces = {
   donnees: () => { inv: Inventaire; disp: Disposition };
@@ -758,15 +758,134 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     const e = inv.equipements.find((x) => x.nom === nom);
     if (!e) return;
     const groupe = inv.equipements.filter((x) => x.ligne === e.ligne);
-    const liens = inv.liaisons.filter((l) => groupe.some((g) => g.nom === l.a || g.nom === l.b) && l.ligne !== e.ligne);
-    const msg = groupe.length > 1
-      ? `Cette ligne crée ${groupe.length} équipements (${groupe[0].nom} … ${groupe[groupe.length - 1].nom}). Les supprimer tous ?`
-      : `Supprimer ${e.nom} ?`;
-    if (!confirm(msg + (liens.length ? `\n\n${liens.length} liaison(s) écrite(s) à part seront aussi retirées.` : ""))) return;
+    if (groupe.length > 1) {
+      // Créé avec d'autres sur une même ligne : on sépare d'abord, puis on ne retire que lui.
+      eclater(groupe, inv);
+      supprimer(nom);
+      return;
+    }
+    const liens = inv.liaisons.filter((l) => (l.a === e.nom || l.b === e.nom) && l.ligne !== e.ligne);
+    // Les câbles écrits sur la ligne d'un AUTRE équipement (« camera CAM-1 | sur SW-1:3 ») :
+    // on retire seulement le branchement, l'équipement reste.
+    const lignesEq = new Set(inv.equipements.filter((x) => x.nom !== e.nom).map((x) => x.ligne));
+    const nCables = liens.length;
+    if (!confirm(`Supprimer ${e.nom} ?` + (nCables ? `\n\nSes ${nCables} câble(s) seront retirés ; les équipements qui y étaient branchés restent.` : ""))) return;
     modifierTexte((lignes) => {
-      [...new Set([e.ligne, ...liens.map((l) => l.ligne)])].sort((a, b) => b - a).forEach((n) => lignes.splice(n - 1, 1));
+      liens.filter((l) => lignesEq.has(l.ligne)).forEach((l) => {
+        const brut = lignes[l.ligne - 1];
+        const retrait = brut.match(/^\s*/)?.[0] ?? "";
+        const [tete, ...champs] = brut.trim().split(/\s*\|\s*/);
+        const garde = champs.filter((c) => !(/^sur\s+/i.test(c) && new RegExp(`^sur\\s+${e.nom.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(:|$)`, "i").test(c)) && !lireMediaTexte(c) && !/^(trunk|access)$/i.test(c));
+        lignes[l.ligne - 1] = retrait + [tete, ...garde].join(" | ");
+      });
+      const aRetirer = [e.ligne, ...liens.filter((l) => !lignesEq.has(l.ligne)).map((l) => l.ligne)];
+      [...new Set(aRetirer)].sort((a, b) => b - a).forEach((n) => lignes.splice(n - 1, 1));
     });
     if (edition?.eq.nom === nom) vider();
+  }
+
+  /* ---------- un câble : le modifier ou le supprimer ---------- */
+  const memeLien = (x: Liaison, l: Liaison) => x.a === l.a && x.b === l.b && (x.portA ?? "") === (l.portA ?? "") && (x.portB ?? "") === (l.portB ?? "");
+  /** Retire un câble du texte. Renvoie le numéro de ligne où le réécrire (après l'équipement), ou null. */
+  let equipementDuLien = "";   // l'équipement dont la ligne portait « sur … » (vide pour une ligne « A -> B »)
+  function retirerLien(l0: Liaison): number | null {
+    equipementDuLien = "";
+    let { inv } = acces.donnees();
+    let l = inv.liaisons.find((x) => memeLien(x, l0));
+    if (!l) return null;
+    const sur = inv.equipements.filter((e) => e.ligne === l!.ligne);
+    if (sur.length > 1) {
+      // Câble créé par une ligne de groupe (« CAM x6 | sur SW:3 ») : une ligne par équipement d'abord.
+      eclater(sur, inv);
+      inv = acces.donnees().inv;
+      l = inv.liaisons.find((x) => memeLien(x, l0));
+      if (!l) return null;
+    }
+    const n = l.ligne;
+    const eq = inv.equipements.find((e) => e.ligne === n);
+    let ou: number | null = null;
+    modifierTexte((lignes) => {
+      if (!eq) { lignes.splice(n - 1, 1); ou = n; return; }           // ligne « A -> B » : on l'enlève
+      // Ligne d'équipement « … | sur SW:3 | fibre | trunk | vlan=30 » : on retire le branchement.
+      const brut = lignes[n - 1];
+      const retrait = brut.match(/^\s*/)?.[0] ?? "";
+      const [tete, ...champs] = brut.trim().split(/\s*\|\s*/);
+      const garde = champs.filter((c) => !/^sur\s+/i.test(c) && !/^(->|→|=>)/.test(c) && !lireMediaTexte(c) && !/^(trunk|access)$/i.test(c) && !/^vlans?\s*[=: ]/i.test(c));
+      lignes[n - 1] = retrait + [tete, ...garde].join(" | ");
+      equipementDuLien = eq.nom;
+      ou = n + 1;
+    });
+    return ou;
+  }
+  function supprimerLien(l: Liaison) {
+    if (!confirm(`Supprimer le câble ${l.a}${l.portA ? `:${l.portA}` : ""} ↔ ${l.b}${l.portB ? `:${l.portB}` : ""} ?`)) return;
+    retirerLien(l);
+  }
+  /** Fenêtre « Câble » : les deux bouts, leurs ports, le type, VLAN, trunk, remarque. */
+  function editerLien(l: Liaison) {
+    const { inv } = acces.donnees();
+    const tous = [...inv.equipements].sort((x, y) => x.site.localeCompare(y.site) || x.nom.localeCompare(y.nom));
+    const d = document.createElement("dialog");
+    d.className = "colonnes cable";
+    const nouveau = !l.b;
+    const optEq = (v: string) => (v ? "" : `<option value="">— choisir —</option>`) + tous.map((e) => `<option value="${echap(e.nom)}"${e.nom === v ? " selected" : ""}>${echap(e.nom)} · ${echap(e.site)}${e.point ? ` / ${echap(e.point)}` : ""}</option>`).join("");
+    d.innerHTML = `<form method="dialog">
+      <h2>${nouveau ? "Nouveau câble" : "Câble"}</h2>
+      <p class="aide-col">Changez un bout, un port ou le type de câble, puis Enregistrer. Seuls les ports libres sont proposés.</p>
+      <div class="blocs-col">
+        <div class="f-phrase"><span>De</span><label class="large"><select data-c="a">${optEq(l.a)}</select></label><label>port <select data-c="pa"></select></label></div>
+        <div class="f-phrase"><span>à</span><label class="large"><select data-c="b">${optEq(l.b)}</select></label><label>port <select data-c="pb"></select></label></div>
+        <div class="f-ligne">
+          <label>Type de câble<select data-c="media"><option value="">Automatique (SFP = fibre, sinon RJ45)</option>${(Object.keys(MEDIAS) as Media[]).map((m) => `<option value="${m}"${l.media === m ? " selected" : ""}>${MEDIAS[m]}</option>`).join("")}</select></label>
+          <label class="etroit">VLAN<input data-c="vlan" value="${echap(l.vlans ?? "")}" placeholder="10,20" autocomplete="off" /></label>
+          <label>Remarque<input data-c="libelle" value="${echap(l.libelle ?? "")}" autocomplete="off" /></label>
+        </div>
+        <label class="f-case"><input type="checkbox" data-c="trunk"${l.mode === "trunk" ? " checked" : ""} /> Trunk : plusieurs VLAN sur ce câble</label>
+      </div>
+      <div class="boutons-col">${nouveau ? "" : `<button type="button" class="danger" data-a="suppr">Supprimer ce câble</button>`}<span style="flex:1"></span><button value="annuler" type="submit">Annuler</button><button value="ok" type="submit" class="primaire">Enregistrer</button></div>
+    </form>`;
+    const q = <T extends HTMLElement>(k: string) => d.querySelector<T>(`[data-c="${k}"]`)!;
+    const ports = (cote: "a" | "b", garder?: string) => {
+      const nom = q<HTMLSelectElement>(cote).value;
+      const memeNom = nom === (cote === "a" ? l.a : l.b);
+      const liste = portsLibres(nom, memeNom ? garder : undefined);
+      const v = memeNom ? garder ?? "" : "";
+      const tout = v && !liste.includes(v) ? [v, ...liste] : liste;
+      options(q<HTMLSelectElement>(cote === "a" ? "pa" : "pb"), [{ v: "", t: tout.length ? "— sans port —" : "—" }, ...tout.map((p) => ({ v: p, t: p }))], v);
+    };
+    ports("a", l.portA); ports("b", l.portB);
+    d.addEventListener("change", (ev) => {
+      const c = (ev.target as HTMLElement).dataset.c;
+      if (c === "a") ports("a", l.portA);
+      if (c === "b") ports("b", l.portB);
+    });
+    d.addEventListener("click", (ev) => {
+      if ((ev.target as HTMLElement).dataset.a !== "suppr") return;
+      d.close("rien");
+      supprimerLien(l);
+    });
+    d.addEventListener("close", () => {
+      const ok = d.returnValue === "ok";
+      const v = {
+        a: q<HTMLSelectElement>("a").value, pa: q<HTMLSelectElement>("pa").value, b: q<HTMLSelectElement>("b").value, pb: q<HTMLSelectElement>("pb").value,
+        media: q<HTMLSelectElement>("media").value, vlan: q<HTMLInputElement>("vlan").value, trunk: q<HTMLInputElement>("trunk").checked, libelle: q<HTMLInputElement>("libelle").value,
+      };
+      d.remove();
+      if (!ok) return;
+      if (!v.a || !v.b || v.a === v.b) { alert("Choisissez deux équipements différents."); return; }
+      const ligne = [`${v.a}${v.pa ? `:${v.pa}` : ""} -> ${v.b}${v.pb ? `:${v.pb}` : ""}`, ...optionsLien(v.media, v.vlan, v.trunk), propre(v.libelle)].filter(Boolean).join(" | ");
+      const ou = nouveau ? null : retirerLien(l);
+      const enLigne = ou && equipementDuLien && equipementDuLien === v.a && !v.pa;
+      modifierTexte((lignes) => {
+        // Câble d'une caméra, d'un poste… : il reste écrit sur sa ligne (« sur SW-1:10 »).
+        if (enLigne) lignes[ou! - 2] = [lignes[ou! - 2], `sur ${v.b}${v.pb ? `:${v.pb}` : ""}`, ...optionsLien(v.media, v.vlan, v.trunk), propre(v.libelle)].filter(Boolean).join(" | ");
+        else if (ou && ou <= lignes.length + 1) lignes.splice(ou - 1, 0, ligne);
+        else { while (lignes.length && !lignes[lignes.length - 1].trim()) lignes.pop(); lignes.push(ligne, ""); }
+      });
+      acces.choisir(v.a);
+    });
+    document.body.append(d);
+    d.showModal();
   }
 
   /** La passerelle par défaut du site : sur la ligne « site … », créée au besoin. */
@@ -873,5 +992,8 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     },
     reinitialiser() { ctx.site = ""; ctx.point = ""; ctx.baie = ""; vider(); },
     modifier,
+    supprimer,
+    editerLien,
+    supprimerLien,
   };
 }

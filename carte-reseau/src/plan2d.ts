@@ -17,7 +17,7 @@ import type { Equipement, Inventaire, Liaison } from "./saisie.ts";
 
 const NS = "http://www.w3.org/2000/svg";
 
-type Rappels = { choisir: (nom: string | null) => void };
+type Rappels = { choisir: (nom: string | null) => void; lien?: (l: Liaison) => void };
 export type Plan2D = {
   afficher: (inv: Inventaire, d: Disposition, site: string | null) => void;
   selectionner: (nom: string | null, centrer?: boolean) => void;
@@ -329,6 +329,8 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
     const cadreDe = (nom: string) => { const e = parNom.get(nom)!; return cadrePoint.get(`${e.site}§${e.point ?? ""}`) ?? cadreSite.get(e.site)!; };
     const ajouterLien = (l: Liaison, e: SVGElement) => {
       [l.a, l.b].forEach((n) => { if (!liensDe.has(n)) liensDe.set(n, []); liensDe.get(n)!.push(e); });
+      // Un clic sur le câble l'ouvre (modifier ou supprimer).
+      if (cb.lien) { e.addEventListener("click", (ev) => { ev.stopPropagation(); cb.lien!(l); }); e.classList.add("cliquable"); }
     };
     const sortie = (p: Point, q: Point, c: { x: number; y: number; w: number; h: number }) => {
       const dx = q.x - p.x, dy = q.y - p.y;
@@ -483,6 +485,10 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
       const p = el("path", { class: "lien", d: c.d, fill: "none", ...sm, "stroke-width": trunk ? 0.2 : 0.085, opacity: trunk ? 1 : 0.8 }, gl);
       el("title", {}, p).textContent = decrireLien(l);
       ajouterLien(l, p);
+      // Zone de clic large et invisible : un câble fin se vise sans peine.
+      const zone = el("path", { class: "zone-lien", d: c.d, fill: "none", stroke: "transparent", "stroke-width": 0.5 }, gl);
+      el("title", {}, zone).textContent = `${decrireLien(l)}\nCliquer pour modifier ou supprimer`;
+      if (cb.lien) zone.addEventListener("click", (ev) => { ev.stopPropagation(); cb.lien!(l); });
       if (trunk) {
         el("path", { d: c.d, fill: "none", stroke: "#0D1118", "stroke-width": 0.05, opacity: 0.85, "pointer-events": "none" }, gl);
         const t = `TRUNK${l.vlans ? ` · VLAN ${l.vlans}` : ""}${l.media === "fibre" ? " · FIBRE" : ""}`;

@@ -180,6 +180,21 @@ baies, caméras, IP de passerelle) ; un clic dessus zoome sur ce site. En
 zoomant, on retrouve les façades et les ports. Boutons ＋ − ⤢ et
 **mini-carte** en bas à droite : cliquer ou glisser dessus pour se déplacer.
 
+## Modifier ou supprimer depuis la carte
+
+- **Cliquer un câble** sur le plan 2D ouvre la fenêtre *Câble* : changer un
+  bout, un port (seuls les ports libres sont proposés), le type, les VLAN, le
+  trunk, une remarque — ou **Supprimer ce câble**.
+- **Cliquer un équipement** ouvre sa fiche : **✎ Modifier** (formulaire),
+  **＋ Câble**, **🗑 Supprimer** ; dans la liste de ses câbles, ✎ et ✕ sur
+  chaque ligne. La touche **Suppr** supprime l'équipement choisi.
+- Supprimer un switch ne supprime pas ce qui y est branché : seuls les câbles
+  sont retirés (les équipements sont alors signalés « non reliés »).
+- Au-dessus de la carte : **＋ Équipement**, **＋ Câble**, **Importer un Excel**,
+  **PDF**. Carte vide : un accueil propose d'importer un Excel, d'ajouter un
+  équipement ou d'ouvrir un exemple. Renommer / dupliquer / supprimer une
+  topologie : menu **⋯** à côté de son nom.
+
 ## Couleurs
 
 Dans **Couleurs › Apparence** : *Standard*, ou *Noir studio* (inspiré des

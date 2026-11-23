@@ -529,3 +529,31 @@ body.theme-studio {
 .theme-studio button, .theme-studio summary, .theme-studio a { transition: color 0.3s var(--doux), background 0.3s var(--doux), opacity 0.3s var(--doux); }
 .theme-studio .noeud { transition: opacity 0.4s ease-out; }
 @media (prefers-reduced-motion: reduce) { .theme-studio * { transition-duration: 0s !important; } }
+/* Câbles cliquables sur le plan */
+.zone-lien { cursor: pointer; pointer-events: stroke; }
+.zone-lien:hover { stroke: rgba(255, 255, 255, 0.14); }
+.fiche .actions-fiche { display: flex; gap: 8px; padding: 10px 18px 0; flex-wrap: wrap; }
+.fiche .actions-fiche button { flex: 1; }
+.fiche td.act { white-space: nowrap; text-align: right; }
+.fiche td.act button { padding: 2px 7px; font-size: 12px; margin-left: 2px; }
+
+/* ---------- Interface simplifiée : actions principales, accueil ---------- */
+.actions-carte { display: flex; align-items: center; gap: 8px; padding: 10px 12px 0; flex-wrap: wrap; }
+.actions-carte button { padding: 8px 14px; font-weight: 600; }
+.actions-carte .astuce { color: var(--sourd); font-size: 12px; margin-left: 6px; }
+.menu-topo summary { padding: 6px 12px; font-weight: 700; }
+.accueil { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 6px; z-index: 4; background: var(--bg); padding: 24px; }
+.accueil[hidden] { display: none; }
+.accueil h2 { margin: 0; font-size: 22px; }
+.accueil p { margin: 0 0 14px; color: var(--sourd); }
+.accueil-choix { display: grid; grid-template-columns: repeat(3, minmax(180px, 240px)); gap: 14px; justify-content: center; }
+.accueil-choix button { display: flex; flex-direction: column; gap: 8px; text-align: left; padding: 18px; min-height: 120px; }
+.accueil-choix b { font-size: 15px; }
+.accueil-choix span { color: var(--sourd); font-size: 12.5px; font-weight: 400; }
+@media (max-width: 900px) { .accueil-choix { grid-template-columns: 1fr; } .actions-carte .astuce { display: none; } }
+body.lecture .actions-carte { display: none; }
+dialog.colonnes input:not([type="checkbox"]):not([type="radio"]):not([type="color"]) {
+  background: var(--carte); border: 1px solid var(--trait); border-radius: 9px; padding: 7px 10px; color: var(--encre); width: 100%;
+}
+dialog.cable .f-phrase { margin: 6px 0; }
+dialog.cable .f-ligne { margin-top: 10px; }

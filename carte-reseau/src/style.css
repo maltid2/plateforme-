@@ -591,3 +591,11 @@ dialog.cable .f-ligne { margin-top: 10px; }
 .cadre-entete { fill: rgba(var(--acc-rgb), 0.09); }
 .marque svg { color: var(--acc); }
 .g-resume rect[stroke="#8D7CFF"] { stroke: var(--acc); }
+
+/* Formulaire allégé : les détails rares sont repliés */
+details.f-plus { margin: 8px 0 0; }
+details.f-plus > summary { list-style: none; cursor: pointer; font-size: 12.5px; color: var(--sourd); background: transparent; border: 0; padding: 4px 0; }
+details.f-plus > summary::-webkit-details-marker { display: none; }
+details.f-plus > summary::before { content: "▸ "; color: var(--acc); }
+details.f-plus[open] > summary::before { content: "▾ "; }
+details.f-plus > summary:hover { color: var(--encre); }

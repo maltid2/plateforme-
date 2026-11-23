@@ -613,7 +613,8 @@ $("b-couleurs").addEventListener("click", () => {
           <label class="coul"><input type="radio" name="theme" value="studio" ${couleurs.theme === "studio" ? "checked" : ""} /><span>Noir studio — noir pur, majuscules, sans arrondis</span></label>
         </div>
         <h3>Accent de l'interface</h3><div class="grille-coul themes">
-          ${(Object.keys(ACCENTS) as Accent[]).map((k) => `<label class="coul"><input type="radio" name="accent" value="${k}" ${(couleurs.accent ?? "bleu") === k ? "checked" : ""} /><i class="carre" style="display:inline-block;width:16px;height:16px;border-radius:4px;background:${ACCENTS[k].acc}"></i><span>${ACCENTS[k].nom}</span></label>`).join("")}
+          ${(Object.keys(ACCENTS) as Accent[]).filter((k) => k !== "perso").map((k) => `<label class="coul"><input type="radio" name="accent" value="${k}" ${(couleurs.accent ?? "bleu") === k ? "checked" : ""} /><i class="carre" style="display:inline-block;width:16px;height:16px;border-radius:4px;background:${ACCENTS[k].acc}"></i><span>${ACCENTS[k].nom}</span></label>`).join("")}
+          <label class="coul"><input type="radio" name="accent" value="perso" ${couleurs.accent === "perso" ? "checked" : ""} /><input type="color" data-cle="a:perso" value="${couleurs.accentPerso ?? "#22C55E"}" /><span>Ma couleur (au choix)</span></label>
         </div>
         <h3>Fonds</h3><div class="grille-coul">
           ${ligne("f:carte", "Fond de la carte (2D et 3D)", couleurs.fondCarte ?? (couleurs.theme === "studio" ? "#000000" : "#07090d"), "carre")}
@@ -646,6 +647,7 @@ $("b-couleurs").addEventListener("click", () => {
     if (!k) return;
     if (t === "m") couleurs = { ...couleurs, medias: { ...couleurs.medias, [k]: i.value } };
     else if (t === "g") couleurs = { ...couleurs, genres: { ...couleurs.genres, [k]: i.value } };
+    else if (t === "a") { couleurs = { ...couleurs, accent: "perso", accentPerso: i.value }; d.querySelector<HTMLInputElement>('input[name="accent"][value="perso"]')!.checked = true; }
     else if (t === "f") couleurs = { ...couleurs, [k === "carte" ? "fondCarte" : "fondInterface"]: i.value };
     else couleurs = { ...couleurs, trunk: i.value };
     enregistrer();

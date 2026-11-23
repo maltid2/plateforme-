@@ -56,30 +56,36 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
         <label>Lieu <small>(école, bâtiment…)</small><select data-c="point"></select></label>
         <label>Baie<select data-c="baie"></select></label>
       </div>
-      <div class="f-ligne">
-        <label>Passerelle du site <small>(IP par défaut de tout le site)</small><input data-c="gw" placeholder="10.0.0.1" autocomplete="off" spellcheck="false" /></label>
-      </div>
+      <details class="f-plus">
+        <summary>Passerelle du site</summary>
+        <div class="f-ligne">
+          <label>IP de la passerelle <small>(par défaut pour tout le site)</small><input data-c="gw" placeholder="10.0.0.1" autocomplete="off" spellcheck="false" /></label>
+        </div>
+      </details>
     </section>
 
     <section class="f-bloc f-ajout">
       <h3 class="f-titre-ajout">Ajouter un équipement</h3>
       <div class="f-types" role="radiogroup" aria-label="Type d'équipement"></div>
       <div class="f-ligne">
-        <label class="large">Nom <small>(plusieurs noms : séparez-les par des virgules)</small><input data-f="nom" autocomplete="off" spellcheck="false" placeholder="SW-ACCUEIL, SW-ETAGE1, SW-ETAGE2" /></label>
+        <label class="large">Nom <small>(plusieurs : séparés par des virgules)</small><input data-f="nom" autocomplete="off" spellcheck="false" placeholder="SW-ACCUEIL, SW-ETAGE1, SW-ETAGE2" /></label>
         <label class="etroit">Nombre<input data-f="qte" type="number" min="1" max="200" value="1" /></label>
       </div>
       <div class="f-ligne">
-        <label>Adresse IP <small>(plusieurs : une par équipement, séparées par des virgules)</small><input data-f="ip" placeholder="10.0.0.2" autocomplete="off" spellcheck="false" /></label>
+        <label>Adresse IP <small>(une par équipement)</small><input data-f="ip" placeholder="10.0.0.2" autocomplete="off" spellcheck="false" /></label>
         <label>Modèle<input data-f="modele" placeholder="Cisco 9200, Dôme 4 MP…" autocomplete="off" /></label>
       </div>
-      <div class="f-ligne">
-        <label>IP passerelle <small>(vide = celle du site)</small><input data-f="gw" autocomplete="off" spellcheck="false" /></label>
-        <label>Masque <small>(du réseau)</small><input data-f="masque" placeholder="255.255.255.0 ou /24" autocomplete="off" spellcheck="false" /></label>
-      </div>
-      <div class="f-ligne">
-        <label>N° de série <small>(plusieurs : séparés par des virgules)</small><input data-f="serie" autocomplete="off" spellcheck="false" /></label>
-        <label>Adresse MAC <small>(idem)</small><input data-f="mac" placeholder="00:11:22:AA:BB:CC" autocomplete="off" spellcheck="false" /></label>
-      </div>
+      <details class="f-plus f-plus-eq">
+        <summary>Plus de détails · passerelle, masque, n° de série, MAC</summary>
+        <div class="f-ligne">
+          <label>IP passerelle <small>(vide = celle du site)</small><input data-f="gw" autocomplete="off" spellcheck="false" /></label>
+          <label>Masque<input data-f="masque" placeholder="255.255.255.0 ou /24" autocomplete="off" spellcheck="false" /></label>
+        </div>
+        <div class="f-ligne">
+          <label>N° de série <small>(un par équipement)</small><input data-f="serie" autocomplete="off" spellcheck="false" /></label>
+          <label>Adresse MAC <small>(une par équipement)</small><input data-f="mac" placeholder="00:11:22:AA:BB:CC" autocomplete="off" spellcheck="false" /></label>
+        </div>
+      </details>
       <div class="f-ligne f-switch">
         <label>Ports RJ45 <small>(un par switch : 24, 8, 48)</small><input data-f="ports" inputmode="numeric" list="l-rj45" value="24" autocomplete="off" spellcheck="false" /></label>
         <label>Cages SFP <small>(fibre · 4, 0, 2)</small><input data-f="sfp" inputmode="numeric" list="l-sfp" value="4" autocomplete="off" spellcheck="false" /></label>
@@ -93,7 +99,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
       </div>
       <fieldset class="f-branche f-raccord">
         <legend><span class="f-pastille">A</span> Où est branché l'équipement que vous ajoutez ?</legend>
-        <p class="f-quand">Une caméra, un poste… se branche sur <b>un port du switch</b> (ou d'un enregistreur, d'un serveur…). Un équipement à plusieurs ports (switch, serveur, NAS…) : remplissez <b>Ports RJ45 / Cages SFP</b> au-dessus, puis choisissez <b>son</b> port ici.</p>
+        <p class="f-quand">Le switch (ou l'enregistreur, le serveur…) et le port où arrive son câble.</p>
         <p class="f-aide-branche"></p>
         <div class="f-phrase">
           <span>Branché sur</span>
@@ -120,27 +126,14 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     </section>
 
     <section class="f-bloc f-liaison">
-      <h3><span class="f-pastille">B</span> Câble en plus entre deux équipements déjà créés</h3>
-      <p class="f-quand">Pour relier deux emplacements entre eux : trunk entre deux switchs, lien entre deux lieux ou deux sites, VPN ou lien de secours. Inutile pour brancher un nouvel équipement : faites-le dans <b>A</b> en l'ajoutant.</p>
-      <p class="f-aide-branche">Choisissez les deux bouts du câble : un équipement de chaque côté et son port.</p>
-      <div class="f-phrase">
-        <span>Relier</span>
-        <label class="large"><span class="sr">Premier équipement</span><select data-l="a"></select></label>
-        <label>port <select data-l="pa"></select></label>
+      <h3><span class="f-pastille">B</span> Câble entre deux équipements déjà créés</h3>
+      <p class="f-quand">Trunk entre deux switchs, lien entre deux lieux ou deux sites, VPN de secours…</p>
+      <div class="f-boutons"><button type="button" class="primaire" data-a="nouveau-cable">＋ Ajouter un câble</button></div>
+      <div hidden>
+        <select data-l="a"></select><select data-l="pa"></select><select data-l="b"></select><select data-l="pb"></select>
+        <select data-l="media"></select><input data-l="vlan" /><input data-l="libelle" /><input type="checkbox" data-l="trunk" />
+        <div class="f-schema" data-schema="relier"></div>
       </div>
-      <div class="f-phrase">
-        <span>avec</span>
-        <label class="large"><span class="sr">Second équipement</span><select data-l="b"></select></label>
-        <label>port <select data-l="pb"></select></label>
-      </div>
-      <div class="f-schema" data-schema="relier" aria-hidden="true"></div>
-      <div class="f-ligne">
-        <label>Type de câble<select data-l="media"><option value="">Automatique (SFP = fibre, sinon RJ45)</option>${(Object.keys(MEDIAS) as Media[]).map((m) => `<option value="${m}">${MEDIAS[m]}</option>`).join("")}</select></label>
-        <label class="etroit">VLAN<input data-l="vlan" placeholder="10,20" autocomplete="off" /></label>
-        <label>Remarque<input data-l="libelle" placeholder="lien opérateur, secours…" autocomplete="off" /></label>
-      </div>
-      <label class="f-case"><input type="checkbox" data-l="trunk" /> Trunk : plusieurs VLAN sur ce câble</label>
-      <div class="f-boutons"><button type="button" class="primaire" data-a="relier">Ajouter ce câble</button></div>
     </section>
 
     <section class="f-bloc f-inventaire">
@@ -702,6 +695,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     champ("modele").value = e.infos[0] ?? "";
     champ("gw").value = e.passerelleHeritee ? "" : e.passerelleIp ?? "";
     for (const k of ["masque", "serie", "mac"]) champ(k).value = e.kv.find(([c]) => c === k)?.[1] ?? "";
+    $<HTMLDetailsElement>(".f-plus-eq").open = ["gw", "masque", "serie", "mac"].some((k) => champ(k).value.trim());
     const kv = (re: RegExp) => e.kv.find(([k]) => re.test(k))?.[1] ?? "";
     champ("ports").value = kv(/^ports?$/i);
     champ("sfp").value = kv(/^sfp$/i);
@@ -970,6 +964,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     if (a === "ajouter") ajouter();
     else if (a === "annuler") vider();
     else if (a === "relier") relier();
+    else if (a === "nouveau-cable") editerLien({ a: "", b: "" } as unknown as Liaison);
     else if (a === "voir" && nom) acces.choisir(nom);
     else if (a === "modifier" && nom) modifier(nom);
     else if (a === "supprimer" && nom) supprimer(nom);
@@ -979,6 +974,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
   });
 
   remplirTypes();
+  actualiserType();   // dès le départ : champs du type choisi (pas de « Ports WAN » pour un switch)
 
   return {
     /** À appeler quand l'inventaire change (frappe, import, changement de topologie). */

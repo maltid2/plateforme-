@@ -30,16 +30,25 @@ export let COULEUR_TRUNK = "#93C5FD";
 export const COULEUR_MEDIA = { fibre: "#FF9F43", cuivre: "#4FC3F7", dac: "#2DD4BF", coax: "#D08C5B", serie: "#F472B6", usb: "#B8C4D6", radio: "#F2C94C", vpn: "#A99CFF", inconnu: "#8B98A8" } as const;
 
 /* ---------- couleurs choisies par l'utilisateur ---------- */
-export type Couleurs = { genres?: Partial<Record<Genre, string>>; medias?: Partial<Record<string, string>>; trunk?: string; theme?: "standard" | "studio"; fondCarte?: string; fondInterface?: string; accent?: Accent };
+export type Couleurs = { genres?: Partial<Record<Genre, string>>; medias?: Partial<Record<string, string>>; trunk?: string; theme?: "standard" | "studio"; fondCarte?: string; fondInterface?: string; accent?: Accent; accentPerso?: string };
 /** Couleur d'accent de l'interface : choisie pour rester lisible sur fond sombre (contraste AA)
  *  et ne pas se confondre avec les couleurs d'état (vert = OK, ambre = attention, rouge = erreur). */
-export type Accent = "bleu" | "cyan" | "graphite" | "violet";
+export type Accent = "bleu" | "vert" | "cyan" | "graphite" | "violet" | "perso";
 export const ACCENTS: Record<Accent, { nom: string; acc: string; rgb: string; clair: string; texte: string }> = {
   bleu:     { nom: "Bleu (recommandé)", acc: "#60A5FA", rgb: "96, 165, 250", clair: "#BFDBFE", texte: "#0B1220" },
+  vert:     { nom: "Vert", acc: "#34D399", rgb: "52, 211, 153", clair: "#A7F3D0", texte: "#052016" },
   cyan:     { nom: "Cyan technique", acc: "#22D3EE", rgb: "34, 211, 238", clair: "#A5F3FC", texte: "#062028" },
   graphite: { nom: "Graphite (neutre)", acc: "#CBD5E1", rgb: "203, 213, 225", clair: "#F1F5F9", texte: "#0F172A" },
   violet:   { nom: "Violet (ancien)", acc: "#8D7CFF", rgb: "141, 124, 255", clair: "#C9C1FF", texte: "#0B0A1A" },
+  perso:    { nom: "Ma couleur", acc: "#60A5FA", rgb: "96, 165, 250", clair: "#BFDBFE", texte: "#0B1220" },
 };
+/** Une couleur libre → ses variantes : version claire, et texte noir ou blanc selon la luminosité (contraste). */
+function accentDe(hex: string) {
+  const n = parseInt(hex.slice(1), 16), r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  const clair = "#" + [r, g, b].map((v) => Math.round(v + (255 - v) * 0.6).toString(16).padStart(2, "0")).join("");
+  const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  return { nom: "Ma couleur", acc: hex, rgb: `${r}, ${g}, ${b}`, clair, texte: lum > 0.5 ? "#0B1220" : "#FFFFFF" };
+}
 /** Fond de la carte choisi (2D et 3D), ou null pour celui de l'apparence. */
 export let FOND_CARTE: string | null = null;
 /** Les couleurs d'origine, pour « Rétablir ». */
@@ -68,7 +77,7 @@ export function appliquerCouleurs(c: Couleurs | null | undefined) {
     FOND_CARTE = c?.fondCarte && HEX.test(c.fondCarte) ? c.fondCarte : null;
     const b = document.body.style;
     // L'apparence Noir studio reste monochrome (accent blanc) ; sinon, l'accent choisi.
-    const a = ACCENTS[c?.accent ?? "bleu"] ?? ACCENTS.bleu;
+    const a = c?.accent === "perso" && c.accentPerso && HEX.test(c.accentPerso) ? accentDe(c.accentPerso) : ACCENTS[c?.accent ?? "bleu"] ?? ACCENTS.bleu;
     if (c?.theme === "studio") ["--acc", "--acc-rgb", "--acc-clair", "--acc-texte"].forEach((k) => b.removeProperty(k));
     else { b.setProperty("--acc", a.acc); b.setProperty("--acc-rgb", a.rgb); b.setProperty("--acc-clair", a.clair); b.setProperty("--acc-texte", a.texte); }
     if (FOND_CARTE) b.setProperty("--fond-carte", FOND_CARTE); else b.removeProperty("--fond-carte");

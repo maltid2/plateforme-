@@ -93,14 +93,16 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
   voile.className = "voile-cine";
   hote.insertBefore(voile, etiq.domElement);   // sous les étiquettes, au-dessus de l'image
   let cinema = false;
+  let clair = false;   // apparence « Clair » : salle lumineuse, fond blanc
   function appliquerAmbiance() {
     const c = document.body.classList.contains("theme-studio");
+    clair = document.body.classList.contains("theme-clair");
     cinema = c;
     // Les deux apparences ont un éclairage de studio (lumière principale,
     // contre-jour, rendu « film ») ; le Noir studio est plus contrasté.
     rnd.toneMapping = THREE.ACESFilmicToneMapping;
-    rnd.toneMappingExposure = c ? 1.2 : 1.12;
-    ciel.intensity = c ? 0.25 : 0.95;
+    rnd.toneMappingExposure = c ? 1.2 : clair ? 1.0 : 1.12;
+    ciel.intensity = c ? 0.25 : clair ? 1.7 : 0.95;
     soleil.intensity = c ? 0.35 : 1.1;
     contre.intensity = c ? 0 : 0.25;
     cle.color.setHex(c ? 0xffc48a : 0xfff1e0);
@@ -202,22 +204,25 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
 
   /* ---------- habillage des salles ---------- */
   // Sol technique : dalles de 60 cm, dessinées une fois sur un canvas.
-  const dalles = (() => {
+  /** Le sol technique en dalles : sombre, ou clair pour l'apparence « Clair ». */
+  const fabriquerDalles = (c: { fond: string; dalle: string; joint: string; trou: string }) => {
     const cv = document.createElement("canvas");
     cv.width = cv.height = 128;
     const g = cv.getContext("2d")!;
-    g.fillStyle = "#1a212b"; g.fillRect(0, 0, 128, 128);
-    g.fillStyle = "#1f2732"; g.fillRect(3, 3, 122, 122);
-    g.strokeStyle = "#11161d"; g.lineWidth = 3; g.strokeRect(1.5, 1.5, 125, 125);
+    g.fillStyle = c.fond; g.fillRect(0, 0, 128, 128);
+    g.fillStyle = c.dalle; g.fillRect(3, 3, 122, 122);
+    g.strokeStyle = c.joint; g.lineWidth = 3; g.strokeRect(1.5, 1.5, 125, 125);
     // Quelques dalles perforées (ventilation), comme dans un vrai local.
-    g.fillStyle = "#151b23";
+    g.fillStyle = c.trou;
     for (let i = 0; i < 6; i++) for (let j = 0; j < 6; j++) g.fillRect(22 + i * 15, 22 + j * 15, 5, 5);
     const t = new THREE.CanvasTexture(cv);
     t.wrapS = t.wrapT = THREE.RepeatWrapping;
     t.colorSpace = THREE.SRGBColorSpace;
     t.anisotropy = rnd.capabilities.getMaxAnisotropy();
     return t;
-  })();
+  };
+  const dallesSombres = fabriquerDalles({ fond: "#1a212b", dalle: "#1f2732", joint: "#11161d", trou: "#151b23" });
+  const dallesClaires = fabriquerDalles({ fond: "#dfe4ea", dalle: "#eef1f5", joint: "#c9d0d9", trou: "#d6dce4" });
   // Voyants des équipements : trois rythmes de clignotement, pour que la
   // baie vive sans que tout clignote en même temps.
   let voyants: THREE.MeshStandardMaterial[] = [];
@@ -501,7 +506,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     // Le terrain d'un site à plusieurs lieux : une dalle plus sombre dessous,
     // juste autour de ses salles.
     cadres.filter((c) => c.type === "site" && avecPoints.has(c.site)).map(rectSite).forEach((c) => {
-      const dalle = boite(c.w, 0.2, c.h, std(0x0a0d12, { roughness: 1, metalness: 0 }));
+      const dalle = boite(c.w, 0.2, c.h, std(clair ? 0xdde2e8 : 0x0a0d12, { roughness: 1, metalness: 0 }));
       dalle.position.set(c.x + c.w / 2, -0.32, c.y + c.h / 2);
       // Cliquable aussi : dézoomé, un clic entre deux lieux plonge dans le site entier.
       dalle.userData.salle = { x: c.x, y: c.y, w: c.w, h: c.h, site: true };
@@ -528,14 +533,16 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
       const cle = `${c.site}§${c.type === "point" ? c.point : ""}`;
       // Le sol de la salle.
       // Le sol technique, en dalles (une dalle ≈ 1,2 unité).
-      const tex = dalles.clone();
+      const tex = (clair ? dallesClaires : dallesSombres).clone();
       tex.repeat.set(c.w / 1.2, c.h / 1.2);
       tex.needsUpdate = true;
       jetables.push(tex);
       // En rendu cinéma : sol sombre et brillant, qui reflète la lumière.
       const matSol = cinema
         ? new THREE.MeshStandardMaterial({ map: tex, color: 0x3a3f48, roughness: 0.32, metalness: 0.55 })
-        : new THREE.MeshStandardMaterial({ map: tex, roughness: 0.6, metalness: 0.25 });
+        : clair
+          ? new THREE.MeshStandardMaterial({ map: tex, roughness: 0.8, metalness: 0.02 })
+          : new THREE.MeshStandardMaterial({ map: tex, roughness: 0.6, metalness: 0.25 });
       jetables.push(matSol);
       const sol = new THREE.Mesh(geo(new THREE.BoxGeometry(c.w, 0.2, c.h)), matSol);
       sol.position.set(c.x + c.w / 2, -0.1, c.y + c.h / 2);
@@ -648,7 +655,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
       // chemin de câbles en hauteur, au-dessus des baies.
       const hBaies = Math.max(4.2, ...baiesSalle.map((b) => b.H));
       const yChemin = hBaies + 0.55, hMur = yChemin + 0.9;
-      const mur = std(cinema ? 0x0c0d10 : 0x232b36, { roughness: 0.95, metalness: 0 });
+      const mur = std(cinema ? 0x0c0d10 : clair ? 0xe8ecf1 : 0x232b36, { roughness: 0.95, metalness: 0 });
       const plinthe = std(0x2f3a48, { roughness: 0.6 });
       ([[c.x + c.w / 2, c.y + 0.075, c.w, 0.15], [c.x + 0.075, c.y + c.h / 2, 0.15, c.h], [c.x + c.w - 0.075, c.y + c.h / 2, 0.15, c.h]] as const)
         .forEach(([x, z, w, dz]) => {
@@ -856,7 +863,8 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     // petit réseau, il effaçait sols et caméras d'un grand réseau dézoomé.
     const diag = Math.max(40, emprise.getSize(new THREE.Vector3()).length());
     // Apparence « Noir studio » : fond et brouillard noirs.
-    const fond = FOND_CARTE ? parseInt(FOND_CARTE.slice(1), 16) : document.body.classList.contains("theme-studio") ? 0x000000 : 0x07090d;
+    const fond = FOND_CARTE ? parseInt(FOND_CARTE.slice(1), 16)
+      : document.body.classList.contains("theme-studio") ? 0x000000 : document.body.classList.contains("theme-clair") ? 0xf5f7fa : 0x07090d;
     (scene.background as THREE.Color).setHex(fond);
     (scene.fog as THREE.Fog).color.setHex(fond);
     (scene.fog as THREE.Fog).near = diag * 1.6;

@@ -220,7 +220,7 @@ VLAN 30 », « SW-ACC1 port SFP1 → SW-CORE port SFP1 · fibre · trunk 10,30 �
 
 ## Couleurs
 
-Dans **Couleurs › Apparence** : *Standard*, ou *Noir studio* (inspiré des
+Dans **Couleurs › Apparence** : *Standard* (sombre), *Clair* (fond blanc, 2D et 3D), ou *Noir studio* (inspiré des
 sites d'agences de design : noir pur, texte gris clair en majuscules
 espacées, sans arrondis ni ombres, filets fins, beaucoup de vide).
 

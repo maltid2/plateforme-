@@ -599,6 +599,7 @@ $<HTMLInputElement>("f-tableur").addEventListener("change", async (e) => {
   } catch (err) { alert((err as Error).message || "Fichier illisible."); }
 });
 /* ---------- couleurs ---------- */
+const fondDefaut = () => (couleurs.theme === "studio" ? "#000000" : couleurs.theme === "clair" ? "#f5f7fa" : "#07090d");
 $("b-couleurs").addEventListener("click", () => {
   const d = document.createElement("dialog");
   d.className = "colonnes couleurs";
@@ -610,7 +611,8 @@ $("b-couleurs").addEventListener("click", () => {
       <p class="aide-col">Cliquez une pastille pour changer sa couleur : le plan 2D, la 3D, le PDF, le SVG et la visionneuse suivent. Vos couleurs sont retenues sur ce poste.</p>
       <div class="blocs-col">
         <h3>Apparence</h3><div class="grille-coul themes">
-          <label class="coul"><input type="radio" name="theme" value="standard" ${couleurs.theme !== "studio" ? "checked" : ""} /><span>Standard</span></label>
+          <label class="coul"><input type="radio" name="theme" value="standard" ${!couleurs.theme || couleurs.theme === "standard" ? "checked" : ""} /><span>Standard (sombre)</span></label>
+          <label class="coul"><input type="radio" name="theme" value="clair" ${couleurs.theme === "clair" ? "checked" : ""} /><span>Clair — fond blanc, 2D et 3D</span></label>
           <label class="coul"><input type="radio" name="theme" value="studio" ${couleurs.theme === "studio" ? "checked" : ""} /><span>Noir studio — noir pur, majuscules, sans arrondis</span></label>
         </div>
         <h3>Accent de l'interface</h3><div class="grille-coul themes">
@@ -618,8 +620,8 @@ $("b-couleurs").addEventListener("click", () => {
           <label class="coul"><input type="radio" name="accent" value="perso" ${couleurs.accent === "perso" ? "checked" : ""} /><input type="color" data-cle="a:perso" value="${couleurs.accentPerso ?? "#22C55E"}" /><span>Ma couleur (au choix)</span></label>
         </div>
         <h3>Fonds</h3><div class="grille-coul">
-          ${ligne("f:carte", "Fond de la carte (2D et 3D)", couleurs.fondCarte ?? (couleurs.theme === "studio" ? "#000000" : "#07090d"), "carre")}
-          ${ligne("f:interface", "Fond de l'interface", couleurs.fondInterface ?? (couleurs.theme === "studio" ? "#000000" : "#07090d"), "carre")}
+          ${ligne("f:carte", "Fond de la carte (2D et 3D)", couleurs.fondCarte ?? fondDefaut(), "carre")}
+          ${ligne("f:interface", "Fond de l'interface", couleurs.fondInterface ?? fondDefaut(), "carre")}
         </div>
         <h3>Câbles</h3><div class="grille-coul">
           ${(Object.keys(MEDIAS) as Media[]).map((m) => ligne(`m:${m}`, MEDIAS[m], (COULEUR_MEDIA as Record<string, string>)[m], "trait")).join("")}
@@ -642,7 +644,14 @@ $("b-couleurs").addEventListener("click", () => {
   };
   d.addEventListener("input", (ev) => {
     const i = ev.target as HTMLInputElement;
-    if (i.name === "theme") { couleurs = { ...couleurs, theme: i.value as "standard" | "studio" }; enregistrer(); return; }
+    if (i.name === "theme") {
+      // Changer d'apparence remet les fonds de l'apparence (sinon un fond sombre choisi resterait sur le thème clair).
+      const { fondCarte: _fc, fondInterface: _fi, ...reste } = couleurs;
+      couleurs = { ...reste, theme: i.value as "standard" | "studio" | "clair" };
+      enregistrer();
+      d.querySelectorAll<HTMLInputElement>('input[data-cle^="f:"]').forEach((x) => { x.value = i.value === "clair" ? "#f5f7fa" : i.value === "studio" ? "#000000" : "#07090d"; });
+      return;
+    }
     if (i.name === "accent") { couleurs = { ...couleurs, accent: i.value as Accent }; enregistrer(); return; }
     const [t, k] = (i.dataset.cle ?? "").split(":");
     if (!k) return;

@@ -2,8 +2,8 @@ import type { Genre } from "./saisie.ts";
 
 /** Une couleur et un sigle par type : la carte se lit avant les étiquettes. */
 export const APPARENCE: Record<Genre, { couleur: string; sigle: string }> = {
-  passerelle: { couleur: "#E2E8F0", sigle: "GW" },
-  parefeu:    { couleur: "#FF7A59", sigle: "FW" },
+  passerelle: { couleur: "#F97316", sigle: "GW" },
+  parefeu:    { couleur: "#EF4444", sigle: "FW" },
   switch:     { couleur: "#4FA3FF", sigle: "SW" },
   camera:     { couleur: "#3DDC97", sigle: "CAM" },
   nvr:        { couleur: "#2BB39A", sigle: "NVR" },
@@ -30,7 +30,7 @@ export let COULEUR_TRUNK = "#93C5FD";
 export const COULEUR_MEDIA = { fibre: "#FF9F43", cuivre: "#4FC3F7", dac: "#2DD4BF", coax: "#D08C5B", serie: "#F472B6", usb: "#B8C4D6", radio: "#F2C94C", vpn: "#A99CFF", inconnu: "#8B98A8" } as const;
 
 /* ---------- couleurs choisies par l'utilisateur ---------- */
-export type Couleurs = { genres?: Partial<Record<Genre, string>>; medias?: Partial<Record<string, string>>; trunk?: string; theme?: "standard" | "studio"; fondCarte?: string; fondInterface?: string; accent?: Accent; accentPerso?: string };
+export type Couleurs = { genres?: Partial<Record<Genre, string>>; medias?: Partial<Record<string, string>>; trunk?: string; theme?: "standard" | "studio" | "clair"; fondCarte?: string; fondInterface?: string; accent?: Accent; accentPerso?: string };
 /** Couleur d'accent de l'interface : choisie pour rester lisible sur fond sombre (contraste AA)
  *  et ne pas se confondre avec les couleurs d'état (vert = OK, ambre = attention, rouge = erreur). */
 export type Accent = "bleu" | "vert" | "cyan" | "graphite" | "violet" | "perso";
@@ -73,6 +73,7 @@ export function appliquerCouleurs(c: Couleurs | null | undefined) {
   // Apparence de l'interface : « Noir studio » = noir pur, majuscules espacées, sans arrondis.
   if (typeof document !== "undefined") {
     document.body.classList.toggle("theme-studio", c?.theme === "studio");
+    document.body.classList.toggle("theme-clair", c?.theme === "clair");
     // Fonds choisis : carte (2D et 3D) et interface (panneaux, barre).
     FOND_CARTE = c?.fondCarte && HEX.test(c.fondCarte) ? c.fondCarte : null;
     const b = document.body.style;

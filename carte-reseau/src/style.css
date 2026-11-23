@@ -603,3 +603,63 @@ details.f-plus > summary:hover { color: var(--encre); }
 .minicarte.inutile { display: none; }
 .zooms [data-z="tout"] { display: none; }   /* « Recentrer » fait la même chose */
 #filtre-site[hidden], #l-cams[hidden] { display: none !important; }
+
+/* ================================================================
+   Apparence « Clair » : fond blanc, textes sombres, mêmes repères.
+   Les façades de switch restent réalistes (sombres), comme sur l'export PDF.
+   ================================================================ */
+body.theme-clair {
+  --bg: #f5f7fa; --bg2: #eef1f5; --carte: #ffffff; --carte2: #f3f5f8;
+  --encre: #0f172a; --sourd: #475569; --trait: rgba(15, 23, 42, 0.13);
+  --erreur: #dc2626; --attention: #b45309; --ok: #047857;
+  color-scheme: light;
+}
+.theme-clair .barre { background: #ffffff; border-bottom: 1px solid var(--trait); }
+.theme-clair .menu-corps, .theme-clair .suggestions, .theme-clair dialog.colonnes { background: #ffffff; color: var(--encre); border-color: var(--trait); box-shadow: 0 18px 50px -18px rgba(15, 23, 42, 0.35); }
+.theme-clair dialog.colonnes::backdrop { background: rgba(15, 23, 42, 0.35); }
+.theme-clair .fiche { background: rgba(255, 255, 255, 0.98); box-shadow: 0 24px 60px -24px rgba(15, 23, 42, 0.45); }
+.theme-clair .legende, .theme-clair .zooms, .theme-clair .minicarte { background: rgba(255, 255, 255, 0.95); }
+.theme-clair .gouttiere { background: #eef1f5; color: #94a3b8; }
+.theme-clair code, .theme-clair kbd { background: rgba(15, 23, 42, 0.06); }
+.theme-clair .alertes li:hover, .theme-clair .f-voir:hover { background: rgba(15, 23, 42, 0.04); }
+.theme-clair .fiche td, .theme-clair .blocs-col td { border-bottom-color: rgba(15, 23, 42, 0.07); }
+.theme-clair .onglets button[aria-selected="true"] { color: var(--encre); }
+.theme-clair .f-branche { border-color: rgba(15, 23, 42, 0.18); }
+.theme-clair .f-ou { background: linear-gradient(180deg, rgba(5, 150, 105, 0.06), #fff); border-color: rgba(5, 150, 105, 0.25); }
+.theme-clair .f-liste h5, .theme-clair .b-site h4, .theme-clair .f-aide-branche, .theme-clair .f-raccord legend { color: #047857; }
+.theme-clair .f-phrase .f-moi { color: var(--encre); }
+.theme-clair .f-liaison h3, .theme-clair .f-liaison .f-aide-branche { color: var(--sourd); }
+.theme-clair .mini .p { background: #e2e8f0; border-color: #94a3b8; }
+.theme-clair .alertes .attention, .theme-clair .alertes li.attention { color: #92400e; }
+.theme-clair .explication .alerte-ligne { color: #92400e; }
+/* Éditeur de texte : coloration lisible sur fond clair */
+.theme-clair .coloration textarea, .theme-clair .editeur textarea { caret-color: #0f172a; }
+.theme-clair .editeur textarea { caret-color: #0f172a; }
+.theme-clair .c-com { color: #94a3b8; }
+.theme-clair .c-type { color: #7c3aed; }
+.theme-clair .c-nom { color: #0f172a; }
+.theme-clair .c-qte, .theme-clair .c-vlan { color: #b45309; }
+.theme-clair .c-sep { color: #cbd5e1; }
+.theme-clair .c-ip { color: #1d4ed8; }
+.theme-clair .c-site { color: #047857; }
+.theme-clair .c-port { color: #c2410c; }
+.theme-clair .c-fleche, .theme-clair .c-mot { color: #0369a1; }
+.theme-clair .c-cle { color: #64748b; }
+.theme-clair .c-val { color: #4d7c0f; }
+.theme-clair .c-info { color: #475569; }
+/* Plan 2D : survol et chemin de dépannage visibles sur blanc */
+.theme-clair .lien.actif { stroke: #0f172a !important; }
+.theme-clair .lien.sur-chemin { stroke: #d97706 !important; }
+/* Étiquettes 3D sur fond clair */
+.theme-clair .etiquette3d { background: rgba(255, 255, 255, 0.92); color: #0f172a; border: 1px solid rgba(15, 23, 42, 0.15); }
+.theme-clair .etiquette3d.site { background: none; border: 0; color: #0f172a; text-shadow: 0 1px 4px #fff; }
+.theme-clair .etiquette3d.point { color: #047857; }
+.theme-clair .etiquette3d.resume, .theme-clair .etiquette3d.plateau { color: #047857; background: rgba(255, 255, 255, 0.92); }
+.theme-clair .etiquette3d.resume-site { color: #064e3b; background: rgba(236, 253, 245, 0.95); }
+.theme-clair .etiquette3d.baie { background: rgba(255, 255, 255, 0.95); color: #1e3a8a; }
+.theme-clair .etiquette3d.port { background: #ffffff; color: #0f172a; }
+.theme-clair .voile-cine { display: none; }
+.theme-clair .minicarte .mc-site { fill: #e2e8f0; stroke: rgba(15, 23, 42, 0.3); }
+.theme-clair .minicarte .mc-lieu { fill: #d1fae5; stroke: rgba(4, 120, 87, 0.5); }
+.theme-clair .minicarte .mc-vue { fill: rgba(var(--acc-rgb), 0.15); }
+.theme-clair .f-apercu code { color: #334155; }

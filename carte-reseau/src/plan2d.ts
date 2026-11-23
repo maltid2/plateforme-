@@ -174,11 +174,11 @@ export function svgFacade(e: Equipement, f: Facade, inv: Inventaire, largeurPx =
  */
 const CLAIR: Record<string, string> = {
   "#07090d": "#ffffff", "#0d1118": "#f4f6f8", "#141922": "#ffffff", "#0a0e14": "#eef1f4", "#0f141c": "#ffffff",
-  "#f5f7fa": "#111418", "#8b98a8": "#56606c", "#e3f9ee": "#0d4f33", "#c2b9ff": "#4b3cc4",
+  "#f5f7fa": "#111418", "#8b98a8": "#56606c", "#121821": "#ffffff", "#b9c3cf": "#475569", "#9fb3c8": "#475569", "#e3f9ee": "#0d4f33", "#c2b9ff": "#4b3cc4",
   "rgba(255,255,255,0.11)": "#c5ccd4", "rgba(255,255,255,0.12)": "#c5ccd4", "rgba(148,163,184,0.10)": "rgba(148,163,184,0.16)",
   "rgba(61,220,151,0.28)": "#7fd6ae", "url(#g-grille)": "none",
 };
-function eclaircir(svg: SVGSVGElement) {
+function eclaircir(svg: Element) {
   svg.querySelectorAll<SVGElement>("*").forEach((n) => {
     const dansNoeud = !!n.closest(".noeud");
     if (dansNoeud && !n.classList.contains("nom-carte")) return;
@@ -550,6 +550,9 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
         "font-size": fs * 0.72, fill: k === 2 ? "#C2B9FF" : "#B9C3CF", "font-family": k === 2 ? "ui-monospace, monospace" : "inherit" }));
     });
     cadresAffiches = cadres;
+    // Apparence « Clair » : le plan prend les couleurs de la version imprimable
+    // (fond blanc, cadres gris clair, textes sombres ; façades inchangées).
+    if (document.body.classList.contains("theme-clair")) eclaircir(monde);
 
     // Mini-carte : les cadres des sites et des lieux, à l'échelle.
     miniCadres.replaceChildren();

@@ -89,7 +89,7 @@ function dessinerFacade(g: SVGGElement, e: Equipement, f: Facade, inv: Inventair
   [0, 1].forEach((k) => el("circle", { cx: x0 + 0.4 + k * 0.2, cy: y0 + 1.7, r: 0.055, fill: "#3DDC97" }, g));
   // IP de la passerelle par défaut, sous l'IP de l'équipement.
   if (e.passerelleIp)
-    texte(g, `GW ${e.passerelleIp}`, { x: x0 + 0.75, y: y0 + 1.75, "font-size": 0.17, fill: "#A99CFF", "font-family": "ui-monospace, monospace" });
+    texte(g, `GW ${e.passerelleIp}`, { x: x0 + 0.75, y: y0 + 1.75, "font-size": 0.17, fill: "#9FB3C8", "font-family": "ui-monospace, monospace" });
 
   const parNom = new Map(inv.equipements.map((x) => [x.nom, x]));
   const brancheDe = new Map<Port, ReturnType<Facade["branches"]["get"]>>();
@@ -131,7 +131,7 @@ function dessinerFacade(g: SVGGElement, e: Equipement, f: Facade, inv: Inventair
   const occupes = brancheDe.size, total = f.ports.filter((p) => p.type !== "autre").length;
   // À gauche, sous le nom : les câbles partent des ports, plus à droite.
   texte(g, `${occupes}/${total} ports utilisés`, { x: x0, y: y0 + FH + (e.baie ? 1.0 : 0.62), "font-size": 0.26, fill: "#6B7A8C" });
-  if (e.baie) texte(g, `▤ baie ${e.baie}`, { x: x0, y: y0 + FH + 0.62, "font-size": 0.26, fill: "#A99CFF", "font-weight": 600 });
+  if (e.baie) texte(g, `▤ baie ${e.baie}`, { x: x0, y: y0 + FH + 0.62, "font-size": 0.26, fill: "#9FB3C8", "font-weight": 600 });
 }
 
 /* ---------------- carte simple ---------------- */
@@ -149,7 +149,7 @@ function dessinerCarte(g: SVGGElement, e: Equipement) {
   texte(g, e.ip ?? "", { x: x0 + 1.55, y: y0 + 1.05, "font-size": 0.22, fill: "#B9C3CF", "font-family": "ui-monospace, monospace" });
   const vlan = e.kv.find(([k]) => /^vlan$/i.test(k))?.[1];
   if (vlan) texte(g, `VLAN ${vlan}`, { x: x0 + 1.55, y: y0 + 1.3, "font-size": 0.18, fill: "#8B98A8" });
-  if (e.passerelleIp) texte(g, `GW ${e.passerelleIp}`, { x: x0 + 1.55, y: y0 + 1.5, "font-size": 0.16, fill: "#A99CFF", "font-family": "ui-monospace, monospace" });
+  if (e.passerelleIp) texte(g, `GW ${e.passerelleIp}`, { x: x0 + 1.55, y: y0 + 1.5, "font-size": 0.16, fill: "#9FB3C8", "font-family": "ui-monospace, monospace" });
   texte(g, court(e.nom), { class: "nom-carte", x: 0, y: y0 + CARTE_H + 0.5, "text-anchor": "middle", "font-size": 0.38, "font-weight": 600, fill: "#F5F7FA",
     stroke: "#0D1118", "stroke-width": 0.14, "paint-order": "stroke" });
 }
@@ -176,7 +176,7 @@ export function svgFacade(e: Equipement, f: Facade, inv: Inventaire, largeurPx =
 const CLAIR: Record<string, string> = {
   "#07090d": "#ffffff", "#0d1118": "#f4f6f8", "#141922": "#ffffff", "#0a0e14": "#eef1f4", "#0f141c": "#ffffff",
   "#f5f7fa": "#111418", "#8b98a8": "#56606c", "#e3f9ee": "#0d4f33", "#c2b9ff": "#4b3cc4",
-  "rgba(255,255,255,0.11)": "#c5ccd4", "rgba(255,255,255,0.12)": "#c5ccd4", "rgba(141,124,255,0.09)": "rgba(141,124,255,0.12)",
+  "rgba(255,255,255,0.11)": "#c5ccd4", "rgba(255,255,255,0.12)": "#c5ccd4", "rgba(148,163,184,0.10)": "rgba(148,163,184,0.16)",
   "rgba(61,220,151,0.28)": "#7fd6ae", "url(#g-grille)": "none",
 };
 function eclaircir(svg: SVGSVGElement) {
@@ -363,7 +363,7 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
         el("rect", { class: "cadre-site", x: c.x, y: c.y, width: c.w, height: c.h, rx: 0.9, fill: avecPoints.has(c.site) ? "#0A0E14" : "#0D1118",
           stroke: "rgba(255,255,255,0.12)", "stroke-width": 0.06 }, gs);
         el("path", { class: "cadre-entete", d: `M ${c.x} ${c.y + 1.6} V ${c.y + 0.9} Q ${c.x} ${c.y} ${c.x + 0.9} ${c.y} H ${c.x + c.w - 0.9} Q ${c.x + c.w} ${c.y} ${c.x + c.w} ${c.y + 0.9} V ${c.y + 1.6} Z`,
-          fill: "rgba(141,124,255,0.09)" }, gs);
+          fill: "rgba(148,163,184,0.10)" }, gs);
         texte(gs, c.nom, { x: c.x + 0.9, y: c.y + 1.08, "font-size": 0.72, "font-weight": 800, fill: "#F5F7FA" });
         const nPts = cadres.filter((x) => x.type === "point" && x.site === c.site).length;
         texte(gs, nPts ? `${nPts} lieux · ${resume}` : resume, { x: c.x + c.w - 0.9, y: c.y + 1.04, "text-anchor": "end", "font-size": 0.38, fill: "#8B98A8" });

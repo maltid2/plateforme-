@@ -1,4 +1,4 @@
-import { APPARENCE, appliquerCouleurs, COULEUR_MEDIA, COULEUR_TRUNK, type Couleurs } from "./apparence.ts";
+import { ACCENTS, APPARENCE, appliquerCouleurs, COULEUR_MEDIA, COULEUR_TRUNK, type Accent, type Couleurs } from "./apparence.ts";
 import { disposer, type Disposition } from "./disposition.ts";
 import { creerEditeur } from "./editeur.ts";
 import { cheminPasserelle, lirePort } from "./facade.ts";
@@ -612,6 +612,9 @@ $("b-couleurs").addEventListener("click", () => {
           <label class="coul"><input type="radio" name="theme" value="standard" ${couleurs.theme !== "studio" ? "checked" : ""} /><span>Standard</span></label>
           <label class="coul"><input type="radio" name="theme" value="studio" ${couleurs.theme === "studio" ? "checked" : ""} /><span>Noir studio — noir pur, majuscules, sans arrondis</span></label>
         </div>
+        <h3>Accent de l'interface</h3><div class="grille-coul themes">
+          ${(Object.keys(ACCENTS) as Accent[]).map((k) => `<label class="coul"><input type="radio" name="accent" value="${k}" ${(couleurs.accent ?? "bleu") === k ? "checked" : ""} /><i class="carre" style="display:inline-block;width:16px;height:16px;border-radius:4px;background:${ACCENTS[k].acc}"></i><span>${ACCENTS[k].nom}</span></label>`).join("")}
+        </div>
         <h3>Fonds</h3><div class="grille-coul">
           ${ligne("f:carte", "Fond de la carte (2D et 3D)", couleurs.fondCarte ?? (couleurs.theme === "studio" ? "#000000" : "#07090d"), "carre")}
           ${ligne("f:interface", "Fond de l'interface", couleurs.fondInterface ?? (couleurs.theme === "studio" ? "#000000" : "#07090d"), "carre")}
@@ -638,6 +641,7 @@ $("b-couleurs").addEventListener("click", () => {
   d.addEventListener("input", (ev) => {
     const i = ev.target as HTMLInputElement;
     if (i.name === "theme") { couleurs = { ...couleurs, theme: i.value as "standard" | "studio" }; enregistrer(); return; }
+    if (i.name === "accent") { couleurs = { ...couleurs, accent: i.value as Accent }; enregistrer(); return; }
     const [t, k] = (i.dataset.cle ?? "").split(":");
     if (!k) return;
     if (t === "m") couleurs = { ...couleurs, medias: { ...couleurs.medias, [k]: i.value } };
@@ -648,7 +652,7 @@ $("b-couleurs").addEventListener("click", () => {
   });
   d.addEventListener("click", (ev) => {
     if ((ev.target as HTMLElement).dataset.a !== "defaut") return;
-    couleurs = { theme: couleurs.theme };   // l'apparence choisie reste
+    couleurs = { theme: couleurs.theme, accent: couleurs.accent };   // l'apparence et l'accent choisis restent
     enregistrer();
     rendre();
   });

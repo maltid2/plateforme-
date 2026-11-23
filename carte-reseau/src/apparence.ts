@@ -2,7 +2,7 @@ import type { Genre } from "./saisie.ts";
 
 /** Une couleur et un sigle par type : la carte se lit avant les étiquettes. */
 export const APPARENCE: Record<Genre, { couleur: string; sigle: string }> = {
-  passerelle: { couleur: "#8D7CFF", sigle: "GW" },
+  passerelle: { couleur: "#E2E8F0", sigle: "GW" },
   parefeu:    { couleur: "#FF7A59", sigle: "FW" },
   switch:     { couleur: "#4FA3FF", sigle: "SW" },
   camera:     { couleur: "#3DDC97", sigle: "CAM" },
@@ -20,7 +20,7 @@ export const APPARENCE: Record<Genre, { couleur: string; sigle: string }> = {
 export const COULEUR_LIEN = "#5E7A9B";
 export const COULEUR_INTERSITE = "#8D7CFF";
 /** Un trunk se repère de loin : violet clair, plus épais qu'un lien d'accès. */
-export let COULEUR_TRUNK = "#B4A6FF";
+export let COULEUR_TRUNK = "#93C5FD";
 
 /**
  * Couleur d'un câble = son support. Fibre orange (la couleur des jarretières
@@ -30,7 +30,16 @@ export let COULEUR_TRUNK = "#B4A6FF";
 export const COULEUR_MEDIA = { fibre: "#FF9F43", cuivre: "#4FC3F7", dac: "#2DD4BF", coax: "#D08C5B", serie: "#F472B6", usb: "#B8C4D6", radio: "#F2C94C", vpn: "#A99CFF", inconnu: "#8B98A8" } as const;
 
 /* ---------- couleurs choisies par l'utilisateur ---------- */
-export type Couleurs = { genres?: Partial<Record<Genre, string>>; medias?: Partial<Record<string, string>>; trunk?: string; theme?: "standard" | "studio"; fondCarte?: string; fondInterface?: string };
+export type Couleurs = { genres?: Partial<Record<Genre, string>>; medias?: Partial<Record<string, string>>; trunk?: string; theme?: "standard" | "studio"; fondCarte?: string; fondInterface?: string; accent?: Accent };
+/** Couleur d'accent de l'interface : choisie pour rester lisible sur fond sombre (contraste AA)
+ *  et ne pas se confondre avec les couleurs d'état (vert = OK, ambre = attention, rouge = erreur). */
+export type Accent = "bleu" | "cyan" | "graphite" | "violet";
+export const ACCENTS: Record<Accent, { nom: string; acc: string; rgb: string; clair: string; texte: string }> = {
+  bleu:     { nom: "Bleu (recommandé)", acc: "#60A5FA", rgb: "96, 165, 250", clair: "#BFDBFE", texte: "#0B1220" },
+  cyan:     { nom: "Cyan technique", acc: "#22D3EE", rgb: "34, 211, 238", clair: "#A5F3FC", texte: "#062028" },
+  graphite: { nom: "Graphite (neutre)", acc: "#CBD5E1", rgb: "203, 213, 225", clair: "#F1F5F9", texte: "#0F172A" },
+  violet:   { nom: "Violet (ancien)", acc: "#8D7CFF", rgb: "141, 124, 255", clair: "#C9C1FF", texte: "#0B0A1A" },
+};
 /** Fond de la carte choisi (2D et 3D), ou null pour celui de l'apparence. */
 export let FOND_CARTE: string | null = null;
 /** Les couleurs d'origine, pour « Rétablir ». */
@@ -58,6 +67,10 @@ export function appliquerCouleurs(c: Couleurs | null | undefined) {
     // Fonds choisis : carte (2D et 3D) et interface (panneaux, barre).
     FOND_CARTE = c?.fondCarte && HEX.test(c.fondCarte) ? c.fondCarte : null;
     const b = document.body.style;
+    // L'apparence Noir studio reste monochrome (accent blanc) ; sinon, l'accent choisi.
+    const a = ACCENTS[c?.accent ?? "bleu"] ?? ACCENTS.bleu;
+    if (c?.theme === "studio") ["--acc", "--acc-rgb", "--acc-clair", "--acc-texte"].forEach((k) => b.removeProperty(k));
+    else { b.setProperty("--acc", a.acc); b.setProperty("--acc-rgb", a.rgb); b.setProperty("--acc-clair", a.clair); b.setProperty("--acc-texte", a.texte); }
     if (FOND_CARTE) b.setProperty("--fond-carte", FOND_CARTE); else b.removeProperty("--fond-carte");
     if (c?.fondInterface && HEX.test(c.fondInterface)) { b.setProperty("--bg", c.fondInterface); b.setProperty("--bg2", c.fondInterface); }
     else { b.removeProperty("--bg"); b.removeProperty("--bg2"); }

@@ -75,7 +75,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
   const soleil = new THREE.DirectionalLight(0xffffff, 1.5);
   soleil.position.set(30, 70, 60);
   scene.add(soleil);
-  const contre = new THREE.DirectionalLight(0x8d7cff, 0.35);
+  const contre = new THREE.DirectionalLight(0x7fb2ff, 0.35);
   contre.position.set(-40, 30, -50);
   scene.add(contre);
 

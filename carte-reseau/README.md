@@ -224,7 +224,7 @@ Dans **Couleurs › Apparence** : *Standard*, ou *Noir studio* (inspiré des
 sites d'agences de design : noir pur, texte gris clair en majuscules
 espacées, sans arrondis ni ombres, filets fins, beaucoup de vide).
 
-Bouton **Couleurs** (en haut) : le **fond de la carte** (2D et 3D) et le **fond de l'interface**, puis une pastille par type de câble (RJ45, fibre,
+Bouton **Couleurs** (en haut) : l'**accent de l'interface** — Bleu (par défaut), Cyan technique, Graphite neutre ou Violet (ancien), choisis pour rester lisibles sur fond sombre et ne pas se confondre avec les couleurs d'état (vert = OK, ambre = attention, rouge = erreur) — ; le **fond de la carte** (2D et 3D) et le **fond de l'interface**, puis une pastille par type de câble (RJ45, fibre,
 DAC, coaxial, série, USB, radio, VPN, trunk) et par type d'équipement. Le plan
 2D, la 3D, le PDF, le SVG et la visionneuse exportée suivent ; les couleurs
 sont retenues sur le poste, et **Couleurs d'origine** revient aux réglages de

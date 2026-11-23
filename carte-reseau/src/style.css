@@ -563,3 +563,22 @@ dialog.cable .f-ligne { margin-top: 10px; }
 .explication[hidden] { display: none; }
 .explication .n { display: inline-block; font-family: var(--mono); font-size: 11px; color: var(--sourd); margin-right: 8px; }
 .explication .alerte-ligne { color: #ffd166; margin-top: 4px; }
+
+/* Rendu 3D « cinéma » (Noir studio) : léger vignettage, fixe (rien ne bouge seul). */
+.voile-cine { position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background: radial-gradient(ellipse at 50% 45%, transparent 62%, rgba(0, 0, 0, 0.45) 100%); }
+.voile-cine[hidden] { display: none; }
+/* Étiquettes 3D sobres : majuscules espacées, gris, sans cadre coloré */
+.theme-studio .etiquette3d { background: rgba(0, 0, 0, 0.7); border-color: rgba(255, 255, 255, 0.22); color: #ececec; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; font-size: 11px; }
+.theme-studio .etiquette3d.site { background: none; font-size: 13px; letter-spacing: 0.16em; color: #fff; text-shadow: none; }
+.theme-studio .etiquette3d.resume, .theme-studio .etiquette3d.plateau { color: #e8e8e8; border-color: rgba(255, 255, 255, 0.3); }
+.theme-studio .etiquette3d.port { text-transform: none; letter-spacing: 0; }
+
+/* Dépannage : chemin de l'équipement choisi jusqu'à sa passerelle */
+.chemin-actif .noeud:not(.sur-chemin):not(.choisi) { opacity: 0.28; transition: opacity 0.25s ease-out; }
+.chemin-actif .lien:not(.sur-chemin):not(.actif) { opacity: 0.12 !important; }
+.chemin-actif .port-etiq { opacity: 0.35; }
+.lien.sur-chemin { stroke: #ffd166 !important; opacity: 1 !important; stroke-width: 0.16 !important; }
+.theme-studio .lien.sur-chemin { stroke: #ffffff !important; }
+.fiche ol.chemin { margin: 0; padding-left: 18px; font-size: 12px; line-height: 1.6; }
+.fiche ol.chemin li::marker { color: #ffd166; }

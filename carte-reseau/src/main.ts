@@ -316,6 +316,20 @@ function remplirFiche() {
     p.append(lien(ch.passerelle.nom), ch.passerelle.ip ? ` (${ch.passerelle.ip})` : "");
     ligne("Équipement passerelle", p);
     if (ch.via) ligne("Remonte par", `port ${ch.via}${ch.sauts.length > 1 ? ` · via ${ch.sauts.slice(0, -1).join(" › ")}` : ""}`);
+    // Dépannage : chaque saut jusqu'à la passerelle, avec ses ports (allumé aussi sur le plan).
+    const etapes = [e.nom, ...ch.sauts];
+    const ol = document.createElement("ol");
+    ol.className = "chemin";
+    for (let i = 0; i + 1 < etapes.length; i++) {
+      const a = etapes[i], b = etapes[i + 1];
+      const l = inv.liaisons.find((x) => (x.a === a && x.b === b) || (x.a === b && x.b === a));
+      const [pa, pb] = l ? (l.a === a ? [l.portA, l.portB] : [l.portB, l.portA]) : [undefined, undefined];
+      const li = document.createElement("li");
+      li.append(lien(a), pa ? ` port ${pa}` : "", " → ", lien(b), pb ? ` port ${pb}` : "",
+        l?.media ? ` · ${MEDIAS[l.media]}` : "", l?.mode === "trunk" ? ` · trunk${l.vlans ? ` ${l.vlans}` : ""}` : l?.vlans ? ` · VLAN ${l.vlans}` : "");
+      ol.append(li);
+    }
+    ligne("Chemin", ol);
   } else if (e.genre !== "passerelle" && e.genre !== "parefeu" && !e.passerelleIp) ligne("Passerelle", "aucune déclarée sur ce site");
   e.infos.slice(1).forEach((i) => ligne("Info", i));
   // N° de série, MAC, masque d'abord, puis les autres informations (colonnes Excel en plus…).

@@ -210,6 +210,14 @@ zoomant, on retrouve les façades et les ports. Boutons ＋ − ⤢ et
   équipement ou d'ouvrir un exemple. Renommer / dupliquer / supprimer une
   topologie : menu **⋯** à côté de son nom.
 
+## Dépannage
+
+Cliquer un équipement (ou le chercher par nom ou IP) **allume son chemin
+jusqu'à la passerelle** sur le plan 2D — équipements et câbles traversés —
+et estompe le reste. Sa fiche détaille le chemin saut par saut, avec les
+ports, le type de câble et les VLAN : « CAM-13 → SW-ACC1 port 5 · RJ45 ·
+VLAN 30 », « SW-ACC1 port SFP1 → SW-CORE port SFP1 · fibre · trunk 10,30 »…
+
 ## Couleurs
 
 Dans **Couleurs › Apparence** : *Standard*, ou *Noir studio* (inspiré des

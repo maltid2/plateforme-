@@ -11,7 +11,7 @@
  */
 import { APPARENCE, COULEUR_MEDIA } from "./apparence.ts";
 import { CARTE_H, CARTE_W, NOM_H, type Disposition, type Point } from "./disposition.ts";
-import { FH, PH, PW, type Facade, type Port } from "./facade.ts";
+import { cheminPasserelle, FH, PH, PW, type Facade, type Port } from "./facade.ts";
 import { PICTOS } from "./pictos.ts";
 import type { Equipement, Inventaire, Liaison } from "./saisie.ts";
 
@@ -208,6 +208,7 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
   const liensDe = new Map<string, SVGElement[]>();
   let choisi: string | null = null;
   let pos = new Map<string, Point>();
+  let invCourant: Inventaire | null = null;
   let cadresAffiches: Disposition["cadres"] = [];
 
   // Mini-carte et boutons de zoom : hors du SVG du plan, ils ne partent
@@ -317,6 +318,7 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
     noeuds.clear();
     liensDe.clear();
     pos = d.pos;
+    invCourant = inv;
     const visibles = new Set(inv.equipements.filter((e) => !site || e.site === site).map((e) => e.nom));
     const parNom = new Map(inv.equipements.map((e) => [e.nom, e]));
     const cadres = d.cadres.filter((c) => !site || c.site === site);
@@ -569,8 +571,22 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
     if (cible) liensDe.get(cible)?.forEach((e) => e.classList.add("actif"));
   }
   function marquer(nom: string | null) {
-    noeuds.forEach((g) => g.classList.remove("choisi"));
+    noeuds.forEach((g) => g.classList.remove("choisi", "sur-chemin"));
+    liensDe.forEach((l) => l.forEach((e) => e.classList.remove("sur-chemin")));
+    svg.classList.remove("chemin-actif");
     if (nom) noeuds.get(nom)?.classList.add("choisi");
+    // Dépannage : le chemin de l'équipement jusqu'à sa passerelle s'allume
+    // (équipements et câbles traversés), le reste s'estompe.
+    const ch = nom && invCourant ? cheminPasserelle(nom, invCourant) : null;
+    if (nom && ch) {
+      const etapes = [nom, ...ch.sauts];
+      etapes.forEach((n) => noeuds.get(n)?.classList.add("sur-chemin"));
+      for (let i = 0; i + 1 < etapes.length; i++) {
+        const b = new Set(liensDe.get(etapes[i + 1]) ?? []);
+        (liensDe.get(etapes[i]) ?? []).filter((e) => b.has(e)).forEach((e) => e.classList.add("sur-chemin"));
+      }
+      svg.classList.add("chemin-actif");
+    }
     survoler(null);
   }
 

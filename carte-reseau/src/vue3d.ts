@@ -70,13 +70,44 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
   ctrl.maxPolarAngle = Math.PI * 0.49;
   ctrl.screenSpacePanning = true;
 
-  scene.add(new THREE.HemisphereLight(0xcfdcff, 0x0b0e14, 1.25));
+  const ciel = new THREE.HemisphereLight(0xcfdcff, 0x0b0e14, 1.25);
+  scene.add(ciel);
   const soleil = new THREE.DirectionalLight(0xffffff, 1.5);
   soleil.position.set(30, 70, 60);
   scene.add(soleil);
   const contre = new THREE.DirectionalLight(0x8d7cff, 0.35);
   contre.position.set(-40, 30, -50);
   scene.add(contre);
+
+  /* ---------- Rendu « cinéma » (apparence Noir studio, esprit 530°) ----------
+   * Studio noir, une lumière chaude qui découpe les volumes, un contre-jour
+   * froid, sol sombre et brillant, léger vignettage. Aucun passage de rendu
+   * en plus (pas de latence) et rien ne bouge tout seul : c'est un outil de
+   * dépannage, la vue reste où on la met. */
+  const cle = new THREE.DirectionalLight(0xffc48a, 0);       // lumière chaude, de face en hauteur
+  cle.position.set(-35, 55, 70);
+  const decoupe = new THREE.DirectionalLight(0x7fb2ff, 0);   // contre-jour froid, de derrière
+  decoupe.position.set(30, 25, -80);
+  scene.add(cle, decoupe);
+  const voile = document.createElement("div");   // vignettage + grain, par-dessus l'image
+  voile.className = "voile-cine";
+  hote.insertBefore(voile, etiq.domElement);   // sous les étiquettes, au-dessus de l'image
+  let cinema = false;
+  function appliquerAmbiance() {
+    const c = document.body.classList.contains("theme-studio");
+    cinema = c;
+    // Les deux apparences ont un éclairage de studio (lumière principale,
+    // contre-jour, rendu « film ») ; le Noir studio est plus contrasté.
+    rnd.toneMapping = THREE.ACESFilmicToneMapping;
+    rnd.toneMappingExposure = c ? 1.2 : 1.12;
+    ciel.intensity = c ? 0.25 : 0.95;
+    soleil.intensity = c ? 0.35 : 1.1;
+    contre.intensity = c ? 0 : 0.25;
+    cle.color.setHex(c ? 0xffc48a : 0xfff1e0);
+    cle.intensity = c ? 2.6 : 1.25;
+    decoupe.intensity = c ? 1.6 : 0.8;
+    voile.hidden = !c;
+  }
 
   let racine = new THREE.Group();
   scene.add(racine);
@@ -357,6 +388,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
 
   /* ---------- la scène ---------- */
   function afficher(inv: Inventaire, d: Disposition, site: string | null) {
+    appliquerAmbiance();
     generation++;
     racine.traverse((o) => { if (o instanceof CSS2DObject) o.element.remove(); });
     scene.remove(racine);
@@ -500,7 +532,10 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
       tex.repeat.set(c.w / 1.2, c.h / 1.2);
       tex.needsUpdate = true;
       jetables.push(tex);
-      const matSol = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85, metalness: 0.1 });
+      // En rendu cinéma : sol sombre et brillant, qui reflète la lumière.
+      const matSol = cinema
+        ? new THREE.MeshStandardMaterial({ map: tex, color: 0x3a3f48, roughness: 0.32, metalness: 0.55 })
+        : new THREE.MeshStandardMaterial({ map: tex, roughness: 0.6, metalness: 0.25 });
       jetables.push(matSol);
       const sol = new THREE.Mesh(geo(new THREE.BoxGeometry(c.w, 0.2, c.h)), matSol);
       sol.position.set(c.x + c.w / 2, -0.1, c.y + c.h / 2);
@@ -613,7 +648,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
       // chemin de câbles en hauteur, au-dessus des baies.
       const hBaies = Math.max(4.2, ...baiesSalle.map((b) => b.H));
       const yChemin = hBaies + 0.55, hMur = yChemin + 0.9;
-      const mur = std(0x232b36, { roughness: 0.95, metalness: 0 });
+      const mur = std(cinema ? 0x0c0d10 : 0x232b36, { roughness: 0.95, metalness: 0 });
       const plinthe = std(0x2f3a48, { roughness: 0.6 });
       ([[c.x + c.w / 2, c.y + 0.075, c.w, 0.15], [c.x + 0.075, c.y + c.h / 2, 0.15, c.h], [c.x + c.w - 0.075, c.y + c.h / 2, 0.15, c.h]] as const)
         .forEach(([x, z, w, dz]) => {

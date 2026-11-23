@@ -480,7 +480,7 @@ function remplirFiche() {
   }
 
   fiche.append(h("h3", "", `Câbles (${liens.length})`));
-  if (!liens.length) fiche.append(h("p", "vide-fiche", "Aucune liaison déclarée."));
+  if (!liens.length) fiche.append(h("p", "vide-fiche", "Aucun câble déclaré."));
   else {
     const tab = document.createElement("table");
     tab.innerHTML = `<thead><tr><th>Port</th><th>Branché sur</th><th>Câble · VLAN</th>${EMBARQUE ? "" : "<th></th>"}</tr></thead>`;

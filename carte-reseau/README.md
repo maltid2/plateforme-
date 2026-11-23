@@ -192,8 +192,16 @@ L'éditeur colore la syntaxe, souligne les erreurs et propose les sites, les
 
 Dézoomé, chaque site et chaque lieu affiche une **carte résumé** (switchs,
 baies, caméras, IP de passerelle) ; un clic dessus zoome sur ce site. En
-zoomant, on retrouve les façades et les ports. Boutons ＋ − ⤢ et
-**mini-carte** en bas à droite : cliquer ou glisser dessus pour se déplacer.
+zoomant, on retrouve les façades et les ports. Molette ou boutons ＋ − pour
+zoomer, glisser pour se déplacer, **Recentrer** pour tout revoir ; la
+**mini-carte** (en bas à droite, quand la carte dépasse l'écran) se clique ou
+se glisse.
+
+## Aide
+
+Bouton **Aide** (en haut à droite) : une fenêtre à onglets — *Formulaire*,
+*Texte*, *Carte et dépannage*, *Clavier* — qui s'ouvre sur le mode en cours.
+Elle est aussi dans la visionneuse (onglets utiles à la lecture seulement).
 
 ## Modifier ou supprimer depuis la carte
 
@@ -205,6 +213,16 @@ zoomant, on retrouve les façades et les ports. Boutons ＋ − ⤢ et
   chaque ligne. La touche **Suppr** supprime l'équipement choisi.
 - Supprimer un switch ne supprime pas ce qui y est branché : seuls les câbles
   sont retirés (les équipements sont alors signalés « non reliés »).
+- **Tout se rattrape** : après une suppression ou une modification, le message
+  en bas de l'écran propose **Annuler** ; `Ctrl+Z` (hors d'un champ) revient
+  aussi en arrière, plusieurs fois de suite.
+- Les questions de l'outil (nom d'un nouveau site, confirmation avant de
+  supprimer une topologie, résultat d'un import) s'affichent dans ses
+  propres fenêtres : `Entrée` valide, `Échap` annule.
+- Liste des remarques sous la saisie : en mode *Formulaire*, un clic montre
+  l'équipement concerné sur la carte ; en mode *Texte*, il va à la ligne
+  (« L.12 »). Un conflit de port nomme les deux équipements : « Port 3 de
+  SW-1 déjà utilisé par CAM-1 : AP-1 doit aller sur un autre port ».
 - Au-dessus de la carte : **＋ Équipement**, **＋ Câble**, **Importer un Excel**,
   **PDF**. Carte vide : un accueil propose d'importer un Excel, d'ajouter un
   équipement ou d'ouvrir un exemple. Renommer / dupliquer / supprimer une
@@ -213,8 +231,9 @@ zoomant, on retrouve les façades et les ports. Boutons ＋ − ⤢ et
 ## Dépannage
 
 Cliquer un équipement (ou le chercher par nom ou IP) **allume son chemin
-jusqu'à la passerelle** sur le plan 2D — équipements et câbles traversés —
-et estompe le reste. Sa fiche détaille le chemin saut par saut, avec les
+jusqu'à la passerelle** — sur le plan 2D (équipements et câbles traversés,
+le reste estompé), dans les **Baies** (équipements du chemin encadrés) et en
+**3D** (câbles du chemin en or, équipements encadrés). Sa fiche détaille le chemin saut par saut, avec les
 ports, le type de câble et les VLAN : « CAM-13 → SW-ACC1 port 5 · RJ45 ·
 VLAN 30 », « SW-ACC1 port SFP1 → SW-CORE port SFP1 · fibre · trunk 10,30 »…
 
@@ -224,7 +243,7 @@ Dans **Couleurs › Apparence** : *Standard* (sombre), *Clair* (fond blanc, 2D e
 sites d'agences de design : noir pur, texte gris clair en majuscules
 espacées, sans arrondis ni ombres, filets fins, beaucoup de vide).
 
-Bouton **Couleurs** (en haut) : l'**accent de l'interface** — Bleu (par défaut), Cyan technique, Graphite neutre ou Violet (ancien), choisis pour rester lisibles sur fond sombre et ne pas se confondre avec les couleurs d'état (vert = OK, ambre = attention, rouge = erreur) — ; le **fond de la carte** (2D et 3D) et le **fond de l'interface**, puis une pastille par type de câble (RJ45, fibre,
+Bouton **Couleurs** (en haut) : l'**accent de l'interface** — Bleu (par défaut), Vert, Cyan technique, Graphite neutre, Violet ou une couleur libre, choisis pour rester lisibles sur fond sombre et ne pas se confondre avec les couleurs d'état (vert = OK, ambre = attention, rouge = erreur) — ; le **fond de la carte** (2D et 3D) et le **fond de l'interface**, puis une pastille par type de câble (RJ45, fibre,
 DAC, coaxial, série, USB, radio, VPN, trunk) et par type d'équipement. Le plan
 2D, la 3D, le PDF, le SVG et la visionneuse exportée suivent ; les couleurs
 sont retenues sur le poste, et **Couleurs d'origine** revient aux réglages de
@@ -247,6 +266,22 @@ bâtiments d'un site sont regroupés côte à côte.
 Le PDF et le SVG sont produits en version claire (fond blanc) pour
 l'impression ; les façades de switch restent réalistes.
 
+**Signature des documents** (*Fichiers › Signature des documents*) : le nom
+écrit sur le PDF, le SVG et la visionneuse (« établi par … »). Laissez-la
+vide pour ne rien signer.
+
+La **visionneuse** s'ouvre avec un bandeau « Lecture seule · exportée le … » :
+on sait tout de suite qu'on regarde une copie figée, sans menu d'édition.
+
+## Rapide, même sur un grand réseau
+
+Testé avec 12 sites et 350 équipements. Pendant la frappe, l'outil attend une
+courte pause avant de redessiner, et ne redessine que la vue affichée (le
+plan 2D, la 3D ou le formulaire cachés sont mis à jour quand on y revient, ou
+juste avant un export). La 3D n'est dessinée que lorsque quelque chose bouge :
+au repos, la carte graphique ne travaille pas. Sur ce réseau de test, une
+modification coûte environ 0,07 s en 2D et 0,4 s avec la 3D ouverte.
+
 ## Modifier l'outil (développeurs)
 
 ```bash
@@ -268,3 +303,8 @@ npm run fichier    # reconstruit topologie-reseau-v1.html et son empreinte SHA-2
 | `src/impression.ts` | dossier imprimable / PDF |
 | `src/projets.ts` | topologies multiples, sauvegarde et import |
 | `src/tableur.ts` | import Excel (.xlsx) / CSV, sans bibliothèque |
+| `src/main.ts` | l'interface : vues, fiche, recherche, menus, exports, annulation |
+| `src/explication.ts` | la ligne du curseur expliquée en français (mode Texte) |
+| `src/boites.ts` | petites fenêtres de l'outil (à la place de alert / prompt / confirm) |
+| `src/baies.ts`, `src/elevation.ts` | contenu des baies et vue de face (onglet Baies, PDF) |
+| `src/apparence.ts` | couleurs, apparences (standard, claire, noir studio), accents |

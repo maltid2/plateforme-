@@ -17,7 +17,7 @@
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
-html, body { margin: 0; height: 100%; }
+html, body { margin: 0; height: 100%; overflow: clip; }   /* la page elle-même ne défile jamais : seuls ses panneaux défilent */
 body {
   background: var(--bg);
   color: var(--encre);
@@ -344,14 +344,21 @@ body.lecture .local::after { content: " · lecture seule"; }
 .b-baie { flex: none; }
 .b-eq { cursor: pointer; }
 .b-eq:hover > svg, .b-eq:hover > rect { filter: brightness(1.25); }
-.b-eq.choisi > svg { outline: 2px solid var(--acc); }
+/* Sélection dans les baies : un cadre fin autour de l'équipement, sans le masquer */
+.b-eq.choisi > .b-sel { stroke: var(--acc); stroke-width: 0.14; }
+.b-eq.sur-chemin > .b-sel { stroke: #ffc44d; stroke-width: 0.12; stroke-dasharray: 0.3 0.15; }
 .b-vide { color: var(--sourd); }
 @media print {
   .i-baies .b-site h3 { font-size: 13pt; margin: 6px 0 2px; color: #111; }
   .i-baies .b-site h4 { font-size: 10pt; margin: 4px 0; color: #0d4f33; }
   .i-baies .b-rangee { gap: 8mm; }
   .i-titre-baies { font-size: 14pt; margin: 4px 0; }
-  .i-baies .b-site { break-inside: avoid; }
+  /* Une baie ne se coupe pas entre deux pages, et un titre reste avec ce qui suit :
+     plus de page avec un titre seul. */
+  .i-baies .b-baie { break-inside: avoid; }
+  .i-titre-baies, .i-baies .b-site h3, .i-baies .b-site h4 { break-after: avoid; }
+  /* À l'impression, aucune règle d'écran ne recolore le plan (fond, cadres). */
+  #impression .fond-plan { fill: #ffffff !important; }
 }
 
 /* ---------- niveaux de détail de la 3D ---------- */
@@ -385,9 +392,12 @@ body.lecture .local::after { content: " · lecture seule"; }
 .signature:disabled { cursor: default; opacity: 0.9; }
 
 /* Le bouton « Ajouter » reste visible en bas du formulaire, sans défiler. */
-.f-ajout .f-apercu, .f-ajout .f-boutons { position: sticky; z-index: 3; background: var(--carte); }
-.f-ajout .f-boutons { bottom: -14px; margin: 10px -14px -14px; padding: 10px 14px 14px; border-top: 1px solid var(--trait); border-radius: 0 0 14px 14px; box-shadow: 0 -10px 18px -12px rgba(0, 0, 0, 0.8); }
-.f-ajout .f-apercu { bottom: 44px; padding-top: 6px; }
+/* Seule la rangée de boutons colle en bas (fond plein) : elle ne cache plus de champs.
+   La « ligne écrite » reste à sa place, sur une ligne (le texte complet au survol). */
+.f-ajout .f-boutons { position: sticky; bottom: -18px; z-index: 3; background: var(--carte); margin: 10px -14px -14px; padding: 10px 14px 14px; border-top: 1px solid var(--trait); border-radius: 0 0 14px 14px; box-shadow: 0 -10px 18px -14px rgba(0, 0, 0, 0.6); }
+.f-ajout .f-apercu { position: static; }
+.f-apercu code { display: inline-block; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
+.f-apercu .f-alerte { display: block; margin-bottom: 4px; }
 
 .f-ligne label[hidden] { display: none; }
 
@@ -663,3 +673,19 @@ body.theme-clair {
 .theme-clair .minicarte .mc-lieu { fill: #d1fae5; stroke: rgba(4, 120, 87, 0.5); }
 .theme-clair .minicarte .mc-vue { fill: rgba(var(--acc-rgb), 0.15); }
 .theme-clair .f-apercu code { color: #334155; }
+.legende[hidden] { display: none; }
+/* Zoom et mini-carte : jamais sous la fiche ni sous la légende */
+.plan-outils { bottom: 12px; }
+.legende { max-width: calc(100% - 260px); }
+.vue:has(> .fiche:not([hidden])) .plan-outils { right: calc(min(390px, 100% - 24px) + 24px); }
+.vue:has(> .fiche:not([hidden])) .legende { max-width: calc(100% - min(390px, 100% - 24px) - 290px); }
+.fiche ol.chemin a, .fiche td a { white-space: nowrap; }
+
+/* Message en bas de l'écran (avec « Annuler ») */
+.toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 60; display: flex; align-items: center; gap: 14px;
+  padding: 10px 12px 10px 16px; border-radius: 12px; background: #0f172a; color: #f8fafc; border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 18px 44px -14px rgba(0, 0, 0, 0.7); font-size: 13.5px; max-width: min(720px, calc(100vw - 32px)); }
+.toast[hidden] { display: none; }
+.toast button { background: transparent; border: 1px solid rgba(255, 255, 255, 0.3); color: var(--acc-clair); font-weight: 700; padding: 5px 12px; }
+.toast button:hover { border-color: var(--acc); }
+.f-ou .f-ligne { align-items: flex-end; }

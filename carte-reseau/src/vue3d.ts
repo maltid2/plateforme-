@@ -13,11 +13,11 @@ import { CSS2DObject, CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRe
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
 import { APPARENCE, COULEUR_MEDIA, FOND_CARTE } from "./apparence.ts";
 import type { Cadre, Disposition } from "./disposition.ts";
-import { FH, type Facade } from "./facade.ts";
+import { cheminPasserelle, FH, type Facade } from "./facade.ts";
 import { svgFacade } from "./plan2d.ts";
 import { CAM_PAR_PLATEAU, EN_BAIE, HAUTEUR_U, svgSimple, U_PLATEAU } from "./baies.ts";
 import { PICTOS } from "./pictos.ts";
-import type { Equipement, Genre, Inventaire } from "./saisie.ts";
+import type { Equipement, Genre, Inventaire, Liaison } from "./saisie.ts";
 
 type Rappels = { choisir: (nom: string | null) => void };
 export type Vue3D = {
@@ -26,6 +26,8 @@ export type Vue3D = {
   cadrer: () => void;
   /** La scène en .glb : s'ouvre dans la Visionneuse 3D de Windows, Blender, PowerPoint… */
   exporterGLB: () => Promise<Blob>;
+  /** L'image de la vue 3D (dessinée juste avant la capture, sinon le canvas est vide). */
+  capturer: () => Promise<Blob | null>;
 };
 
 const U = 0.3;              // hauteur d'un U
@@ -92,6 +94,8 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
   const voile = document.createElement("div");   // vignettage + grain, par-dessus l'image
   voile.className = "voile-cine";
   hote.insertBefore(voile, etiq.domElement);   // sous les étiquettes, au-dessus de l'image
+  let invCourant: Inventaire | null = null;
+  let cablesDe = new Map<Liaison, THREE.Mesh>();   // le tube 3D de chaque câble (chemin de dépannage)
   let cinema = false;
   let clair = false;   // apparence « Clair » : salle lumineuse, fond blanc
   function appliquerAmbiance() {
@@ -394,6 +398,8 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
   /* ---------- la scène ---------- */
   function afficher(inv: Inventaire, d: Disposition, site: string | null) {
     appliquerAmbiance();
+    invCourant = inv;
+    cablesDe = new Map();
     generation++;
     racine.traverse((o) => { if (o instanceof CSS2DObject) o.element.remove(); });
     scene.remove(racine);
@@ -770,6 +776,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
       if (!A || !B) return;
       const ea = parNom.get(l.a)!, eb = parNom.get(l.b)!;
       const trunk = l.mode === "trunk";
+      const poser = (m: THREE.Mesh) => { racine.add(m); cablesDe.set(l, m); };
       const couleur = COULEUR_MEDIA[l.media ?? "inconnu"];
       if (salleDe.get(l.a) !== salleDe.get(l.b)) {
         // Entre deux lieux d'un site : arc bas. Entre deux sites : arc haut.
@@ -778,7 +785,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
         portEtiq(l.portB, B.port(l.portB), couleur);
         const dist = a.distanceTo(b);
         const m = a.clone().lerp(b, 0.5); m.y = Math.max(a.y, b.y) + dist * (ea.site === eb.site ? 0.14 : 0.28);
-        racine.add(cable([a, a.clone().lerp(m, 0.5).setY(m.y * 0.85), m, b.clone().lerp(m, 0.5).setY(m.y * 0.85), b], couleur,
+        poser(cable([a, a.clone().lerp(m, 0.5).setY(m.y * 0.85), m, b.clone().lerp(m, 0.5).setY(m.y * 0.85), b], couleur,
           l.media === "vpn" ? 0.06 : 0.09, l.media === "vpn" ? 0.6 : 0.95));
         const t = [l.libelle, l.media ? MEDIAS_COURTS[l.media] : ""].filter(Boolean).join(" · ");
         if (t) { const e = etiquette(t, "etiquette3d lien"); e.position.copy(m).add(new THREE.Vector3(0, 0.6, 0)); racine.add(e); }
@@ -794,7 +801,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
         // Dans la même baie : cordon de brassage devant la façade, ou jusqu'au plateau des caméras.
         const [h, bas] = pa.y > pb.y ? [pa, pb] : [pb, pa];
         const avance = 0.3 + Math.min(0.6, Math.abs(pa.y - pb.y) * 0.12);
-        racine.add(cable([h, h.clone().setZ(h.z + 0.12), new THREE.Vector3(h.x + 0.05, (h.y + bas.y) / 2, h.z + avance),
+        poser(cable([h, h.clone().setZ(h.z + 0.12), new THREE.Vector3(h.x + 0.05, (h.y + bas.y) / 2, h.z + avance),
           new THREE.Vector3(bas.x, bas.y + 0.15, bas.z + 0.15), bas], couleur, r));
         return;
       }
@@ -838,7 +845,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
           new THREE.Vector3(fin.x + o, y, fin.z + o), new THREE.Vector3(pCam.x, y - 0.1, pCam.z),
           new THREE.Vector3(pCam.x, pCam.y + 0.25, pCam.z), pCam,
         ];
-        racine.add(cable(arrondir(murale === A ? pts.reverse() : pts), couleur, r));
+        poser(cable(arrondir(murale === A ? pts.reverse() : pts), couleur, r));
         return;
       }
       // Sortie du port, descente devant la baie, course au sol, remontée.
@@ -849,7 +856,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
       const fin = descente(pb, B.enBaie).reverse();
       const sa = pts[pts.length - 1], sb = fin[0];
       pts.push(new THREE.Vector3(sa.x, 0.05, (sa.z + sb.z) / 2), new THREE.Vector3(sb.x, 0.05, (sa.z + sb.z) / 2), ...fin);
-      racine.add(cable(pts, couleur, r));
+      poser(cable(pts, couleur, r));
     });
 
     seuilTresLoin = Math.max(distancePour(PX_LOIN * 0.55), ...cadres.filter((c) => c.type === "site").map((c) => distanceCadrage(rectSite(c)) * 1.2));
@@ -1000,18 +1007,48 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     }
   }
 
+  /** Chemin de dépannage allumé : câbles passés en or, équipements encadrés. */
+  let cheminAllume: { mesh: THREE.Mesh; mat: THREE.Material | THREE.Material[] }[] = [];
+  let cadresChemin: THREE.Box3Helper[] = [];
+  const matChemin = new THREE.MeshStandardMaterial({ color: 0xffc44d, emissive: 0xffb020, emissiveIntensity: 0.9, roughness: 0.4 });
+  const eteindreChemin = () => {
+    cheminAllume.forEach(({ mesh, mat }) => { mesh.material = mat; });
+    cadresChemin.forEach((c) => { racine.remove(c); c.dispose(); });
+    cheminAllume = []; cadresChemin = [];
+  };
+  const couleurAccent = () => new THREE.Color(getComputedStyle(document.body).getPropertyValue("--acc").trim() || "#60a5fa");
+
   return {
     afficher,
     cadrer,
     exporterGLB,
+    capturer() {
+      rnd.render(scene, cam);
+      return new Promise((ok) => rnd.domElement.toBlob((b) => ok(b), "image/png"));
+    },
     selectionner(nom, centrer = false) {
       if (surbrillance) { racine.remove(surbrillance); surbrillance.dispose(); surbrillance = null; }
+      eteindreChemin();
       if (!nom) return;
       const o = objets.get(nom);
       if (!o) return;
       const bb = new THREE.Box3().setFromObject(o).expandByScalar(0.08);
-      surbrillance = new THREE.Box3Helper(bb, new THREE.Color(0x8d7cff));
+      surbrillance = new THREE.Box3Helper(bb, couleurAccent());
       racine.add(surbrillance);
+      // Dépannage : le chemin jusqu'à la passerelle, comme sur le plan 2D.
+      const ch = invCourant ? cheminPasserelle(nom, invCourant) : null;
+      if (ch && invCourant) {
+        const etapes = [nom, ...ch.sauts];
+        for (let i = 0; i + 1 < etapes.length; i++) {
+          const a = etapes[i], b = etapes[i + 1];
+          invCourant.liaisons.filter((l) => (l.a === a && l.b === b) || (l.a === b && l.b === a)).forEach((l) => {
+            const mesh = cablesDe.get(l);
+            if (mesh) { cheminAllume.push({ mesh, mat: mesh.material }); mesh.material = matChemin; }
+          });
+          const ob = objets.get(b);
+          if (ob) { const h = new THREE.Box3Helper(new THREE.Box3().setFromObject(ob).expandByScalar(0.06), new THREE.Color(0xffc44d)); racine.add(h); cadresChemin.push(h); }
+        }
+      }
       if (centrer) versObjet(nom);
     },
   };

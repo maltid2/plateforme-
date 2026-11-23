@@ -48,7 +48,7 @@ function dessinerBaie(b: Baie, inv: Inventaire, d: Disposition, clair: boolean, 
     const svg = f ? svgFacade(e, f, inv, 1200) : svgSimple(e, u);
     // Identifiants propres à chaque façade : plusieurs façades dans un même document.
     const p = `b${k}${e.nom.replace(/[^\w]/g, "")}-`;
-    o.push(`<g class="b-eq" data-nom="${echap(e.nom)}"><title>${echap(`${e.nom}${e.ip ? ` · ${e.ip}` : ""} · U${uHaut - u + 2}${u > 1 ? `-${uHaut + 1}` : ""}`)}</title>${poser(svg, MONTANT, y, L, h).replace(/id="(g-|c)/g, `id="${p}$1`).replace(/url\(#(g-|c)/g, `url(#${p}$1`)}</g>`);
+    o.push(`<g class="b-eq" data-nom="${echap(e.nom)}"><title>${echap(`${e.nom}${e.ip ? ` · ${e.ip}` : ""} · U${uHaut - u + 2}${u > 1 ? `-${uHaut + 1}` : ""}`)}</title>${poser(svg, MONTANT, y, L, h).replace(/id="(g-|c)/g, `id="${p}$1`).replace(/url\(#(g-|c)/g, `url(#${p}$1`)}<rect class="b-sel" x="${MONTANT - 0.08}" y="${y - 0.06}" width="${L + 0.16}" height="${h + 0.12}" rx="0.1" fill="none" stroke="none"/></g>`);
     o.push(`<rect x="${MONTANT - 0.45}" y="${y}" width="0.4" height="${h}" fill="${cadre}"/><rect x="${MONTANT + L + 0.05}" y="${y}" width="0.4" height="${h}" fill="${cadre}"/>`);
     void FH;
     uHaut -= u;
@@ -66,7 +66,8 @@ function dessinerBaie(b: Baie, inv: Inventaire, d: Disposition, clair: boolean, 
       o.push(`<g class="b-eq" data-nom="${echap(c.nom)}"><title>${echap(`${c.nom}${c.ip ? ` · ${c.ip}` : ""}`)}</title>
         <rect x="${cx - 1.3}" y="${y + 0.1}" width="2.6" height="${h - 0.5}" rx="0.25" fill="${clair ? "#ffffff" : "#121821"}" stroke="${col}" stroke-width="0.08"/>
         <g transform="translate(${cx - 0.5} ${y + 0.25}) scale(1)" fill="none" stroke="${col}" stroke-width="0.08" stroke-linecap="round" stroke-linejoin="round">${PICTOS.camera}</g>
-        <text x="${cx}" y="${y + h - 0.65}" text-anchor="middle" font-size="0.36" font-weight="700" fill="${texte}">${echap(court(c.nom, 13))}</text></g>`);
+        <text x="${cx}" y="${y + h - 0.65}" text-anchor="middle" font-size="0.36" font-weight="700" fill="${texte}">${echap(court(c.nom, 13))}</text>
+        <rect class="b-sel" x="${cx - 1.4}" y="${y}" width="2.8" height="${h - 0.3}" rx="0.3" fill="none" stroke="none"/></g>`);
     });
   }
   // Taille fixe : une baie de 12 U et une de 42 U gardent la même échelle, côte à côte.

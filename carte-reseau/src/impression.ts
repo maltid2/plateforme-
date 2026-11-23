@@ -26,7 +26,11 @@ export function imprimer(inv: Inventaire, svgPlan: string, titre: string, site: 
     return { txt: `${v}${p ? ` · port ${p}` : ""}`, l };
   };
   const presents = new Set(eqs.map((e) => e.genre));
-  const medias = new Set(inv.liaisons.map((l) => l.media).filter(Boolean) as Media[]);
+  // Les câbles du périmètre imprimé (un site filtré : seulement les siens).
+  const noms = new Set(eqs.map((e) => e.nom));
+  const liens = inv.liaisons.filter((l) => noms.has(l.a) || noms.has(l.b));
+  const medias = new Set(liens.map((l) => l.media).filter(Boolean) as Media[]);
+  const pl = (n: number, mot: string) => `${n} ${mot}${n > 1 ? "s" : ""}`;
 
   const val = (e: Equipement, k: string) => e.kv.find(([c]) => c === k)?.[1];
   const masqueDe = (e: Equipement) => val(e, "masque");
@@ -66,14 +70,14 @@ export function imprimer(inv: Inventaire, svgPlan: string, titre: string, site: 
     <section class="i-page i-plan">
       <header class="i-cartouche">
         <div><div class="i-classif">${echap(CLASSIFICATION)}</div><h1>${echap(titre)}</h1>
-          <div class="i-sous">${site ? `Site : ${echap(site)}` : `${sites.length} site${sites.length > 1 ? "s" : ""}`} · ${eqs.length} équipements · ${inv.liaisons.length} liaisons</div></div>
+          <div class="i-sous">${site ? `Site : ${echap(site)}` : pl(sites.length, "site")} · ${pl(eqs.length, "équipement")} · ${pl(liens.length, "câble")}</div></div>
         <dl>${auteur ? `<dt>Établi par</dt><dd>${echap(auteur)}</dd>` : ""}<dt>Date</dt><dd>${date}</dd><dt>Plan</dt><dd>Topologie réseau 2D</dd><dt>Version</dt><dd>${new Date().toISOString().slice(0, 16).replace("T", " ")}</dd></dl>
       </header>
       <div class="i-svg">${svgPlan.replace(/^(<svg[^>]*?) width="[\d.]+" height="[\d.]+"/, "$1")}</div>
       <footer class="i-legende">
         ${(Object.keys(APPARENCE) as Genre[]).filter((g) => presents.has(g)).map((g) => `<span><i style="background:${APPARENCE[g].couleur}"></i>${echap(GENRES[g].libelle)}</span>`).join("")}
         ${[...medias].map((m) => `<span><i class="t" style="background:${COULEUR_MEDIA[m]}"></i>${echap(MEDIAS[m])}</span>`).join("")}
-        <span><i class="t epais"></i>Trunk</span>
+        ${liens.some((l) => l.mode === "trunk") ? `<span><i class="t epais"></i>Trunk</span>` : ""}
       </footer>
     </section>
     ${baies && !baies.includes("b-vide") ? `<section class="i-page i-baies">

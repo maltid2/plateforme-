@@ -51,7 +51,11 @@ let vue: "2d" | "3d" | "baies" = "2d";
 let v3: Vue3D | null = null;
 
 const active = () => classeur.topologies.find((t) => t.id === classeur.active)!;
-const plan = creerPlan2D(hote2d, { choisir, lien: (l) => { if (!EMBARQUE) formulaire.editerLien(l); } });
+const plan = creerPlan2D(hote2d, {
+  choisir,
+  lien: (l) => { if (!EMBARQUE) formulaire.editerLien(l); },
+  margeDroite: () => (fiche.hidden ? 0 : fiche.offsetWidth + 24),
+});
 const editeur = creerEditeur($("editeur"), () => ({ inv, disp }), (texte) => {
   const t = active();
   t.texte = texte;
@@ -59,14 +63,52 @@ const editeur = creerEditeur($("editeur"), () => ({ inv, disp }), (texte) => {
   enregistrer();
   recalculer();
 });
+/* ---------------- message en bas de l'écran, avec « Annuler » ---------------- */
+const toast = document.createElement("div");
+toast.className = "toast";
+toast.setAttribute("role", "status");
+toast.hidden = true;
+document.body.append(toast);
+let minuteurToast = 0;
+function notifier(message: string, action?: { libelle: string; faire: () => void }) {
+  toast.replaceChildren(document.createTextNode(message));
+  if (action) {
+    const b = document.createElement("button");
+    b.type = "button"; b.textContent = action.libelle;
+    b.onclick = () => { toast.hidden = true; action.faire(); };
+    toast.append(b);
+  }
+  toast.hidden = false;
+  clearTimeout(minuteurToast);
+  minuteurToast = window.setTimeout(() => { toast.hidden = true; }, action ? 8000 : 3500);
+}
+
+/* ---------------- annulation des changements faits par l'outil ---------------- */
+// Supprimer, modifier un câble, ajouter… passent par le texte : on garde les
+// versions précédentes pour revenir en arrière (bouton « Annuler » ou Ctrl+Z).
+const pileAnnuler: string[] = [];
+let gesteEnCours = false;
+function annuler() {
+  const t = pileAnnuler.pop();
+  if (t === undefined) { notifier("Rien à annuler."); return; }
+  ecrireTexte(t, undefined, false);
+  notifier("Modification annulée.");
+}
+
 /** Le formulaire écrit dans le texte : même chemin que la frappe. */
-function ecrireTexte(texte: string) {
+function ecrireTexte(texte: string, annonce?: string, memoriser = true) {
+  // Plusieurs écritures dans un même geste (séparer un groupe puis supprimer) = une seule annulation.
+  if (memoriser && texte !== editeur.valeur && !gesteEnCours) {
+    pileAnnuler.push(editeur.valeur); if (pileAnnuler.length > 50) pileAnnuler.shift();
+    gesteEnCours = true; queueMicrotask(() => { gesteEnCours = false; });
+  }
   editeur.definir(texte);
   const t = active();
   t.texte = texte;
   t.modifie = Date.now();
   enregistrer();
   recalculer();
+  if (annonce) notifier(annonce, { libelle: "Annuler", faire: annuler });
 }
 const formulaire = creerFormulaire($("formulaire"), {
   donnees: () => ({ inv, disp }),
@@ -276,9 +318,10 @@ function choisir(nom: string | null, centrer = false) {
   choisi = nom;
   const e = nom ? inv.equipements.find((x) => x.nom === nom) : null;
   if (e && site && e.site !== site) { site = null; filtre.value = ""; dessiner(); }
+  remplirFiche();   // d'abord : le centrage tient compte de la place prise par la fiche
   plan.selectionner(nom, centrer && vue === "2d");
   v3?.selectionner(nom, centrer && vue === "3d");
-  remplirFiche();
+  marquerBaies();
 }
 
 function remplirFiche() {
@@ -308,15 +351,16 @@ function remplirFiche() {
   const dl = document.createElement("dl");
   const ligne = (k: string, v: string | Node) => { const dd = h("dd"); dd.append(v); dl.append(h("dt", "", k), dd); };
   ligne("Adresse IP", e.ip ?? "—");
-  if (e.passerelleIp) ligne("IP passerelle", `${e.passerelleIp}${e.passerelleHeritee ? ` · celle du ${e.passerelleHeritee}` : ""}`);
-  ligne("Site", e.site);
-  if (e.baie) ligne("Baie", e.baie);
+  ligne("Emplacement", [e.site, e.point, e.baie && `baie ${e.baie}`].filter(Boolean).join(" · "));
   const ch = cheminPasserelle(e.nom, inv);
-  if (ch) {
+  // Passerelle : une seule ligne (IP de passerelle, et l'équipement qui la porte s'il est sur la carte).
+  if (e.passerelleIp || ch) {
     const p = document.createElement("span");
-    p.append(lien(ch.passerelle.nom), ch.passerelle.ip ? ` (${ch.passerelle.ip})` : "");
-    ligne("Équipement passerelle", p);
-    if (ch.via) ligne("Remonte par", `port ${ch.via}${ch.sauts.length > 1 ? ` · via ${ch.sauts.slice(0, -1).join(" › ")}` : ""}`);
+    if (e.passerelleIp) p.append(e.passerelleIp);
+    if (ch) p.append(e.passerelleIp ? " · " : "", lien(ch.passerelle.nom), !e.passerelleIp && ch.passerelle.ip ? ` (${ch.passerelle.ip})` : "");
+    ligne("Passerelle", p);
+  } else if (e.genre !== "passerelle" && e.genre !== "parefeu") ligne("Passerelle", "aucune déclarée sur ce site");
+  if (ch) {
     // Dépannage : chaque saut jusqu'à la passerelle, avec ses ports (allumé aussi sur le plan).
     const etapes = [e.nom, ...ch.sauts];
     const ol = document.createElement("ol");
@@ -331,7 +375,7 @@ function remplirFiche() {
       ol.append(li);
     }
     ligne("Chemin", ol);
-  } else if (e.genre !== "passerelle" && e.genre !== "parefeu" && !e.passerelleIp) ligne("Passerelle", "aucune déclarée sur ce site");
+  }
   e.infos.slice(1).forEach((i) => ligne("Info", i));
   // N° de série, MAC, masque d'abord, puis les autres informations (colonnes Excel en plus…).
   const rang = (k: string) => { const i = ["masque", "serie", "mac"].indexOf(k); return i < 0 ? 9 : i; };
@@ -390,14 +434,16 @@ function remplirFiche() {
   if (!liens.length) fiche.append(h("p", "vide-fiche", "Aucune liaison déclarée."));
   else {
     const tab = document.createElement("table");
-    tab.innerHTML = `<thead><tr><th>Port</th><th>Branché sur</th><th>Mode</th>${EMBARQUE ? "" : "<th></th>"}</tr></thead>`;
+    tab.innerHTML = `<thead><tr><th>Port</th><th>Branché sur</th><th>Câble · VLAN</th>${EMBARQUE ? "" : "<th></th>"}</tr></thead>`;
     const tb = document.createElement("tbody");
     liens.sort((x, y) => (x.monPort ?? "").localeCompare(y.monPort ?? "", "fr", { numeric: true })).forEach((x) => {
       const tr = document.createElement("tr");
       const td = (v: string | Node, cls = "") => { const c = h("td", cls); c.append(v); tr.append(c); };
       td(x.monPort ?? "—", "mono");
       td(lien(x.autre, x.sonPort));
-      td(`${x.l.mode === "trunk" ? "trunk" : x.l.mode ?? ""}${x.l.vlans ? ` ${x.l.vlans}` : ""}${x.l.libelle ? ` · ${x.l.libelle}` : ""}`, x.l.mode === "trunk" ? "trunk" : "");
+      // « trunk · VLAN 10,30 », « VLAN 30 », le type de câble s'il est précisé, la remarque.
+      td([x.l.media ? MEDIAS[x.l.media] : "", x.l.mode === "trunk" ? "trunk" : "", x.l.vlans ? `VLAN ${x.l.vlans}` : "", x.l.libelle ?? ""].filter(Boolean).join(" · ") || "—",
+        x.l.mode === "trunk" ? "trunk" : "");
       if (!EMBARQUE) {
         // Chaque câble se modifie ou se supprime d'ici.
         const act = h("td", "act");
@@ -434,12 +480,20 @@ function remplirFiche() {
 function dessinerBaies() {
   const h = $("hote-baies");
   h.innerHTML = elevations(inv, disp, { site, camerasEnBaie: $<HTMLSelectElement>("o-cams").value === "baie" });
-  h.querySelectorAll(".b-eq").forEach((g) => g.classList.toggle("choisi", (g as SVGElement).dataset.nom === choisi));
+  marquerBaies();
+}
+/** Baies : l'équipement choisi encadré, et son chemin jusqu'à la passerelle (dépannage). */
+function marquerBaies() {
+  const ch = choisi ? cheminPasserelle(choisi, inv) : null;
+  const chemin = new Set(ch ? ch.sauts : []);
+  $("hote-baies").querySelectorAll<SVGElement>(".b-eq").forEach((g) => {
+    g.classList.toggle("choisi", g.dataset.nom === choisi);
+    g.classList.toggle("sur-chemin", chemin.has(g.dataset.nom ?? ""));
+  });
 }
 $("hote-baies").addEventListener("click", (e) => {
   const g = (e.target as Element).closest<SVGElement>(".b-eq");
   choisir(g?.dataset.nom ?? null);
-  $("hote-baies").querySelectorAll(".b-eq").forEach((x) => x.classList.toggle("choisi", (x as SVGElement).dataset.nom === choisi));
 });
 
 /**
@@ -465,7 +519,9 @@ async function montrer(v: "2d" | "3d" | "baies") {
   hote3d.hidden = v !== "3d";
   $("hote-baies").hidden = v !== "baies";
   if (v === "baies") dessinerBaies();
-  $("l-cams").hidden = v !== "3d";   // où poser les caméras : ne concerne que la 3D
+  $("l-cams").hidden = v === "2d";   // où poser les caméras : 3D et baies
+  legende.hidden = v === "baies";      // les baies ne dessinent pas de câbles
+  $("b-png").textContent = v === "3d" ? "Image de la vue 3D (.png)" : "Image du plan 2D (.png)";
   if (v === "3d" && !v3) {
     const m = await import("./vue3d.ts");
     m.options.cameras = $<HTMLSelectElement>("o-cams").value as "murs" | "baie";
@@ -482,13 +538,23 @@ async function montrer(v: "2d" | "3d" | "baies") {
 /* ---------------- événements ---------------- */
 
 filtre.addEventListener("change", () => { site = filtre.value || null; dessiner(); maj3D(true); plan.cadrer(); v3?.cadrer(); });
-recherche.addEventListener("change", () => {
+// Recherche : à la validation (Entrée, même pour relancer la même recherche)
+// ou au choix dans la liste ; un message si rien ne correspond.
+let derniereRecherche = "";
+function chercher(forcer: boolean) {
   const q = recherche.value.trim().toLowerCase();
   if (!q) return;
+  // « change » arrive aussi quand on quitte la case : on ne relance pas la même
+  // recherche (elle reconstruirait la fiche sous le clic). Entrée, elle, relance toujours.
+  if (!forcer && q === derniereRecherche) return;
+  derniereRecherche = q;
   const e = inv.equipements.find((x) => x.nom.toLowerCase() === q || x.ip === q)
     ?? inv.equipements.find((x) => x.nom.toLowerCase().includes(q) || (x.ip ?? "").startsWith(q));
   if (e) choisir(e.nom, true);
-});
+  else notifier(`Aucun équipement « ${recherche.value.trim()} ».`);
+}
+recherche.addEventListener("change", () => chercher(false));
+recherche.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); chercher(true); } });
 $("v-2d").addEventListener("click", () => montrer("2d"));
 $("v-3d").addEventListener("click", () => montrer("3d"));
 $("v-baies").addEventListener("click", () => montrer("baies"));
@@ -502,7 +568,9 @@ $("b-aide").addEventListener("click", (e) => {
 document.addEventListener("keydown", (e) => {
   const saisie = /^(TEXTAREA|INPUT|SELECT)$/.test(document.activeElement?.tagName ?? "") || !!document.querySelector("dialog[open]");
   if (e.key === "Escape" && choisi && !saisie) choisir(null);
-  // Suppr : supprimer l'équipement choisi sur la carte (avec confirmation).
+  // Ctrl+Z hors d'un champ : annule le dernier changement fait par l'outil.
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === "z" && !saisie && !EMBARQUE && pileAnnuler.length) { e.preventDefault(); annuler(); return; }
+  // Suppr : supprimer l'équipement choisi sur la carte (on peut annuler).
   if ((e.key === "Delete" || e.key === "Backspace") && choisi && !saisie && !EMBARQUE) { e.preventDefault(); formulaire.supprimer(choisi); }
 });
 
@@ -727,9 +795,10 @@ const LIBELLE_COLONNE: Record<string, string> = { type: "Type", ip: "IP", site: 
 $("b-svg").addEventListener("click", () => { fermerMenu(); telecharger(`${nomFichier(active().nom)}-plan.svg`, plan.exporter(true, auteur()), "image/svg+xml"); });
 $("b-png").addEventListener("click", async () => {
   fermerMenu();
-  if (vue === "3d") {
-    const c = hote3d.querySelector("canvas");
-    c?.toBlob((b) => b && telecharger(`${nomFichier(active().nom)}-3d.png`, b, "image/png"));
+  if (vue === "3d" && v3) {
+    // Capture dessinée à l'instant : sans cela, l'image WebGL sort vide.
+    const b = await v3.capturer();
+    if (b) telecharger(`${nomFichier(active().nom)}-3d.png`, b, "image/png");
     return;
   }
   // Le plan 2D est rasterisé en local, sans rien envoyer.

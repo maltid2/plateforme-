@@ -17,7 +17,12 @@ import type { Equipement, Inventaire, Liaison } from "./saisie.ts";
 
 const NS = "http://www.w3.org/2000/svg";
 
-type Rappels = { choisir: (nom: string | null) => void; lien?: (l: Liaison) => void };
+type Rappels = {
+  choisir: (nom: string | null) => void;
+  lien?: (l: Liaison) => void;
+  /** Largeur (px) cachée à droite par la fiche : on centre dans ce qui reste visible. */
+  margeDroite?: () => number;
+};
 export type Plan2D = {
   afficher: (inv: Inventaire, d: Disposition, site: string | null) => void;
   selectionner: (nom: string | null, centrer?: boolean) => void;
@@ -667,7 +672,12 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
       marquer(nom);
       if (nom && centrer) {
         const p = pos.get(nom);
-        if (p) { const w = Math.min(vb.w, 34), k = w / vb.w; allerA({ x: p.x - w / 2, y: p.y - (vb.h * k) / 2, w, h: vb.h * k }); }
+        if (p) {
+          const w = Math.min(vb.w, 34), k = w / vb.w;
+          // La fiche couvre la droite : l'équipement se centre dans la partie encore visible.
+          const decale = ((cb.margeDroite?.() ?? 0) / 2) * (w / Math.max(1, hote.clientWidth));
+          allerA({ x: p.x - w / 2 + decale, y: p.y - (vb.h * k) / 2, w, h: vb.h * k });
+        }
       }
     },
     cadrer,
@@ -679,9 +689,17 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
           fill: clair ? "#56606C" : "#8B98A8", "font-style": "italic" }, c);
         t.textContent = `Topologie réseau v1 · établi par ${signature} · ${new Date().toLocaleDateString("fr-FR")}`;
       }
-      // L'export garde tout le détail : pas de cartes résumé ni d'estompage.
-      c.classList.remove("resume", "saisi");
+      // L'export garde tout le détail : pas de cartes résumé ni d'estompage,
+      // ni sélection, ni chemin de dépannage allumé, ni zones de clic.
+      c.classList.remove("resume", "saisi", "chemin-actif");
       c.querySelector(".g-resume")?.remove();
+      c.querySelectorAll(".zone-lien").forEach((n) => n.remove());
+      c.querySelectorAll(".sur-chemin, .choisi, .actif").forEach((n) => n.classList.remove("sur-chemin", "choisi", "actif"));
+      // Les classes reliées au thème de l'écran (fond, cadres) ne doivent pas
+      // suivre le SVG dans le PDF : on fige leurs couleurs.
+      const fond = c.querySelector<SVGElement>(".fond-plan");
+      if (fond) { fond.setAttribute("fill", clair ? "#ffffff" : getComputedStyle(svg.querySelector(".fond-plan")!).fill || "#07090D"); fond.removeAttribute("class"); }
+      c.querySelectorAll(".cadre-site, .cadre-entete, .cadre-point").forEach((n) => n.removeAttribute("class"));
       if (clair) eclaircir(c);
       const m = 2;
       c.setAttribute("viewBox", `${bornes.x - m} ${bornes.y - m} ${bornes.w + 2 * m} ${bornes.h + 2 * m}`);

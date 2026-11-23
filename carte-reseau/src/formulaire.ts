@@ -18,7 +18,8 @@ import { GENRES, lireMedia as lireMediaTexte, MEDIAS, ipPlus, type Equipement, t
 type Acces = {
   donnees: () => { inv: Inventaire; disp: Disposition };
   texte: () => string;
-  ecrire: (t: string) => void;
+  /** Écrit le texte ; `annonce` : message affiché avec un bouton « Annuler ». */
+  ecrire: (t: string, annonce?: string) => void;
   choisir: (nom: string) => void;
   versTexte: (ligne: number) => void;
 };
@@ -29,7 +30,13 @@ const PREFIXE: Record<Genre, string> = {
   nas: "NAS", poste: "PC", imprimante: "IMP", telephone: "TEL", onduleur: "UPS", autre: "EQ",
 };
 const echap = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-const code = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^A-Za-z0-9]+/g, "").toUpperCase().slice(0, 6);
+/** « Site A » → « SITE-A », « Nanterre » → « NANTERRE » : lisible, sans couper un mot au milieu. */
+const code = (s: string) => {
+  const mots = s.normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().split(/[^A-Z0-9]+/).filter(Boolean);
+  let r = "";
+  for (const m of mots) { const t = r ? `${r}-${m}` : m; if (t.length > 14) break; r = t; }
+  return r || (mots[0] ?? "").slice(0, 14);
+};
 // Les séparateurs de la syntaxe ne doivent pas se glisser dans une valeur.
 const propre = (s: string) => s.replace(/[|;\t#]/g, " ").replace(/\s+/g, " ").trim();
 const nomPropre = (s: string) => propre(s).replace(/\s+/g, "-");
@@ -177,7 +184,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     if (ctx.site && !sites.includes(ctx.site)) sites.push(ctx.site);
     if (!ctx.site && sites.length) ctx.site = sites[0];
     // Aucun site encore : une invite, pour que « ＋ Nouveau site… » se choisisse vraiment.
-    options($('[data-c="site"]'), [...(sites.length ? [] : [{ v: "", t: "— créez votre premier site —" }]),
+    options($('[data-c="site"]'), [...(sites.length ? [] : [{ v: "", t: "— aucun site —" }]),
       ...sites.map((s) => ({ v: s, t: s })), { v: NOUVEAU, t: "＋ Nouveau site…" }], ctx.site);
     const eqSite = inv.equipements.filter((e) => e.site === ctx.site);
     const points = [...new Set(eqSite.map((e) => e.point).filter(Boolean) as string[])];
@@ -264,7 +271,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
   }
   function nomPropose() {
     const { inv } = acces.donnees();
-    const base = `${PREFIXE[genre]}-${code(ctx.point || ctx.site) || "X"}`;
+    const base = (code(ctx.point || ctx.site) ? `${PREFIXE[genre]}-${code(ctx.point || ctx.site)}` : PREFIXE[genre]);
     const pris = new Set(inv.equipements.map((e) => e.nom.toUpperCase()));
     for (let i = 1; i < 1000; i++) { const n = `${base}-${i}`; if (!pris.has(n) && !pris.has(`${n}-1`)) return n; }
     return base;
@@ -276,7 +283,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
   /** Nom de base d'un groupe sans nom tapé : CAM-ECOLE → CAM-ECOLE-1, -2… */
   function baseGroupe() {
     const { inv } = acces.donnees();
-    const base = `${PREFIXE[genre]}-${code(ctx.point || ctx.site) || "X"}`;
+    const base = (code(ctx.point || ctx.site) ? `${PREFIXE[genre]}-${code(ctx.point || ctx.site)}` : PREFIXE[genre]);
     const pris = new Set(inv.equipements.map((e) => e.nom.toUpperCase()));
     for (const suffixe of ["", ...Array.from({ length: 26 }, (_, i) => `-${String.fromCharCode(65 + i)}`)]) {
       const c = base + suffixe;
@@ -476,7 +483,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     const listeIp = champ("ip").value.split(",").map((x) => x.trim()).filter(Boolean);
     if (listeIp.length > 1 && listeIp.length !== combien())
       alerte += `<b class="f-alerte">⚠ ${listeIp.length} IP pour ${combien()} équipement${combien() > 1 ? "s" : ""}${listeIp.length < combien() ? " : les suivantes continueront après la dernière" : " : les IP en trop seront ignorées"}.</b> `;
-    $(".f-apercu").innerHTML = alerte + (l ? `<span>Ligne écrite :</span> <code>${echap(l.join("  ⏎  "))}</code>` : "");
+    $(".f-apercu").innerHTML = alerte + (l ? `<span>Ligne écrite :</span> <code title="${echap(l.join("\n"))}">${echap(l.join("  ⏎  "))}</code>` : "");
   }
 
   function vider() {
@@ -505,8 +512,15 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
   function actualiserType() {
     queueMicrotask(tableau);
     racine.querySelectorAll<HTMLElement>(".f-types [data-g]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.g === genre)));
-    // Ports RJ45 / SFP pour tous les équipements (serveur à 2 cartes, NAS, enregistreur PoE…).
-    racine.querySelector<HTMLElement>(".f-switch")!.hidden = false;
+    // Ports RJ45 / SFP : en vue pour un switch, une passerelle, un pare-feu ; pour
+    // une caméra, un poste… ils passent dans « Plus de détails » (rarement utiles).
+    const ligneSw = racine.querySelector<HTMLElement>(".f-switch")!, details = $<HTMLDetailsElement>(".f-plus-eq");
+    ligneSw.hidden = false;
+    if (A_FACADE.has(genre)) { if (ligneSw.parentElement === details) details.before(ligneSw); }
+    else if (ligneSw.parentElement !== details) details.append(ligneSw);
+    details.querySelector("summary")!.textContent = A_FACADE.has(genre)
+      ? "Plus de détails · passerelle, masque, n° de série, MAC"
+      : "Plus de détails · passerelle, masque, n° de série, MAC, ports";
     racine.querySelector<HTMLElement>(".f-wan")!.hidden = !avecWan();
     const vide = A_FACADE.has(genre) ? "" : " (vide = un seul port)";
     racine.querySelector<HTMLElement>(".f-switch label:first-child small")!.textContent = `(un par équipement : 24, 8, 48)${vide}`;
@@ -521,10 +535,10 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
   }
 
   /* ---------- texte ---------- */
-  function modifierTexte(fn: (lignes: string[]) => void) {
+  function modifierTexte(fn: (lignes: string[]) => void, annonce?: string) {
     const lignes = acces.texte().split("\n");
     fn(lignes);
-    acces.ecrire(lignes.join("\n"));
+    acces.ecrire(lignes.join("\n"), annonce);
   }
   /** Sans site choisi, on demande son nom : chaque équipement est rangé dans un site à vous. */
   function demanderSite(): boolean {
@@ -576,12 +590,12 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
             if (ligne.replace(/#.*$/, "").includes("|") || /->|→|=>|<-/.test(ligne)) lignes[i] = ligne.replace(re, (_m, avant) => `${avant}${nom}`);
           });
         }
-      });
+      }, `${nom} modifié.`);
     } else {
       modifierTexte((lignes) => {
         while (lignes.length && !lignes[lignes.length - 1].trim()) lignes.pop();
         lignes.push(...l, "");
-      });
+      }, crees.length > 1 ? `${crees.length} équipements ajoutés (${crees[0]} … ${crees[crees.length - 1]}).` : `${crees[0]} ajouté.`);
     }
     const vise = crees[0];
     vider();
@@ -701,6 +715,8 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     champ("sfp").value = kv(/^sfp$/i);
     champ("wan").value = kv(/^wan$/i) || (e.genre === "switch" ? "" : "1");
     actualiserType();
+    // Une caméra, un serveur… avec des ports déclarés : on montre ses ports.
+    if (!A_FACADE.has(e.genre) && (champ("ports").value || champ("sfp").value)) $<HTMLDetailsElement>(".f-plus-eq").open = true;
     if (lien) {
       const [v, p, mon] = lien.a === e.nom ? [lien.b, lien.portB, lien.portA] : [lien.a, lien.portA, lien.portB];
       champ<HTMLSelectElement>("vers").value = v;
@@ -763,7 +779,8 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     // on retire seulement le branchement, l'équipement reste.
     const lignesEq = new Set(inv.equipements.filter((x) => x.nom !== e.nom).map((x) => x.ligne));
     const nCables = liens.length;
-    if (!confirm(`Supprimer ${e.nom} ?` + (nCables ? `\n\nSes ${nCables} câble(s) seront retirés ; les équipements qui y étaient branchés restent.` : ""))) return;
+    // Pas de confirmation : un message « Annuler » permet de revenir en arrière.
+    const annonce = `${e.nom} supprimé${nCables ? ` (et ses ${nCables} câble${nCables > 1 ? "s" : ""} ; ce qui y était branché reste)` : ""}.`;
     modifierTexte((lignes) => {
       liens.filter((l) => lignesEq.has(l.ligne)).forEach((l) => {
         const brut = lignes[l.ligne - 1];
@@ -774,7 +791,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
       });
       const aRetirer = [e.ligne, ...liens.filter((l) => !lignesEq.has(l.ligne)).map((l) => l.ligne)];
       [...new Set(aRetirer)].sort((a, b) => b - a).forEach((n) => lignes.splice(n - 1, 1));
-    });
+    }, annonce);
     if (edition?.eq.nom === nom) vider();
   }
 
@@ -782,7 +799,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
   const memeLien = (x: Liaison, l: Liaison) => x.a === l.a && x.b === l.b && (x.portA ?? "") === (l.portA ?? "") && (x.portB ?? "") === (l.portB ?? "");
   /** Retire un câble du texte. Renvoie le numéro de ligne où le réécrire (après l'équipement), ou null. */
   let equipementDuLien = "";   // l'équipement dont la ligne portait « sur … » (vide pour une ligne « A -> B »)
-  function retirerLien(l0: Liaison): number | null {
+  function retirerLien(l0: Liaison, annonce?: string): number | null {
     equipementDuLien = "";
     let { inv } = acces.donnees();
     let l = inv.liaisons.find((x) => memeLien(x, l0));
@@ -808,12 +825,11 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
       lignes[n - 1] = retrait + [tete, ...garde].join(" | ");
       equipementDuLien = eq.nom;
       ou = n + 1;
-    });
+    }, annonce);
     return ou;
   }
   function supprimerLien(l: Liaison) {
-    if (!confirm(`Supprimer le câble ${l.a}${l.portA ? `:${l.portA}` : ""} ↔ ${l.b}${l.portB ? `:${l.portB}` : ""} ?`)) return;
-    retirerLien(l);
+    retirerLien(l, `Câble ${l.a}${l.portA ? `:${l.portA}` : ""} ↔ ${l.b}${l.portB ? `:${l.portB}` : ""} supprimé.`);
   }
   /** Fenêtre « Câble » : les deux bouts, leurs ports, le type, VLAN, trunk, remarque. */
   function editerLien(l: Liaison) {
@@ -875,7 +891,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
         if (enLigne) lignes[ou! - 2] = [lignes[ou! - 2], `sur ${v.b}${v.pb ? `:${v.pb}` : ""}`, ...optionsLien(v.media, v.vlan, v.trunk), propre(v.libelle)].filter(Boolean).join(" | ");
         else if (ou && ou <= lignes.length + 1) lignes.splice(ou - 1, 0, ligne);
         else { while (lignes.length && !lignes[lignes.length - 1].trim()) lignes.pop(); lignes.push(ligne, ""); }
-      });
+      }, nouveau ? "Câble ajouté." : "Câble modifié.");
       acces.choisir(v.a);
     });
     document.body.append(d);

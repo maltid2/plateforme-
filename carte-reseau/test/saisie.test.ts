@@ -504,3 +504,25 @@ test("Excel : colonnes aux titres inconnus, comprises d'après leur contenu, et 
   assert.equal(i2.liaisons.find((x) => x.a === "CAM-1")!.portB, undefined);
   assert.equal(i2.equipements.find((e) => e.nom === "CAM-1")!.kv.find(([k]) => k === "Physique")?.[1], "00:11:22:33:44:56");
 });
+
+test("écriture en français courant : branché sur, port, câble, ip, ports, baie…", () => {
+  const inv = analyser([
+    "site Lyon",
+    "switch SW-1 | ip 10.0.0.2 | 24 ports | 4 sfp | baie A1 | modèle Cisco 9200",
+    "camera CAM-1 | ip 10.0.30.11 | branchée sur SW-1 port 3 | vlan 30 | câble rj45",
+    "switch SW-2 | 8 ports | lieu École",
+    "câble SW-2 port 8 vers SW-1 port SFP1 | fibre | trunk",
+  ].join("\n"));
+  assert.deepEqual(inv.alertes.filter((a) => a.niveau === "erreur"), []);
+  const sw = inv.equipements.find((e) => e.nom === "SW-1")!;
+  assert.equal(sw.ip, "10.0.0.2");
+  assert.equal(sw.baie, "A1");
+  assert.equal(sw.kv.find(([k]) => k === "ports")?.[1], "24");
+  assert.equal(sw.kv.find(([k]) => k === "sfp")?.[1], "4");
+  assert.equal(sw.infos[0], "Cisco 9200");
+  const cam = inv.liaisons.find((l) => l.a === "CAM-1")!;
+  assert.deepEqual([cam.b, cam.portB, cam.vlans, cam.media], ["SW-1", "3", "30", "cuivre"]);
+  assert.equal(inv.equipements.find((e) => e.nom === "SW-2")!.point, "École");
+  const up = inv.liaisons.find((l) => l.a === "SW-2")!;
+  assert.deepEqual([up.portA, up.b, up.portB, up.media, up.mode], ["8", "SW-1", "SFP1", "fibre", "trunk"]);
+});

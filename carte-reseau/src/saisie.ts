@@ -102,6 +102,31 @@ export function lireMasque(v: string): number | null {
   return /^1*0*$/.test(bits) ? bits.indexOf("0") < 0 ? 32 : bits.indexOf("0") : null;
 }
 
+/**
+ * Écriture en français courant → écriture courte : « branché sur SW-1 port 3 »
+ * → « sur SW-1 port 3 », « ip 10.0.0.2 » → « 10.0.0.2 », « câble fibre » →
+ * « fibre », « 24 ports » → « ports=24 », « baie A1 » → « baie=A1 »…
+ * Les deux écritures marchent ; l'outil comprend l'une comme l'autre.
+ */
+export function naturel(brut: string): string {
+  const c = brut.trim();
+  let m: RegExpMatchArray | null;
+  if ((m = c.match(/^(?:branch[ée]e?s?|connect[ée]e?s?|reli[ée]e?s?|raccord[ée]e?s?)\s+(?:sur|à|a|au|avec)\s+(.+)$/i))) return `sur ${m[1]}`;
+  if ((m = c.match(/^(?:adresse\s+)?ip\s*[=: ]?\s*(\d{1,3}(?:\.\d{1,3}){3}(?:\/\d{1,2})?(?:\s*,\s*\d{1,3}(?:\.\d{1,3}){3})*)$/i))) return m[1];
+  if ((m = c.match(/^(?:c[âa]ble|liaison|support)\s*[=: ]?\s*(?:en\s+)?(\S.*)$/i)) && lireMedia(m[1].trim())) return m[1].trim();
+  if ((m = c.match(/^mod[eè]le\s*[=: ]\s*(.+)$/i)) || (m = c.match(/^mod[eè]le\s+(.+)$/i))) return m[1].trim();
+  if ((m = c.match(/^(?:lieu|b[âa]timent)\s*[=: ]?\s*(\S.*)$/i))) return `point=${m[1].trim()}`;
+  if ((m = c.match(/^(?:baie|rack)\s+(\S.*)$/i))) return `baie=${m[1].trim()}`;
+  if ((m = c.match(/^site\s+(\S.*)$/i))) return `site=${m[1].trim()}`;
+  if ((m = c.match(/^passerelle\s+(\d{1,3}(?:\.\d{1,3}){3}(?:\/\d{1,2})?)$/i))) return `passerelle=${m[1]}`;
+  if ((m = c.match(/^(\d+(?:\s*,\s*\d+)*)\s+ports?(?:\s+(?:rj45|cuivre))?$/i)) || (m = c.match(/^ports?(?:\s+rj45)?\s+(\d+(?:\s*,\s*\d+)*)$/i))) return `ports=${m[1]}`;
+  if ((m = c.match(/^(\d+(?:\s*,\s*\d+)*)\s+(?:sfp\+?|cages?\s+sfp)$/i)) || (m = c.match(/^sfp\s+(\d+(?:\s*,\s*\d+)*)$/i))) return `sfp=${m[1]}`;
+  if ((m = c.match(/^(?:n°\s*de\s*s[ée]rie|num[ée]ro\s+de\s+s[ée]rie|s[ée]rie)\s+(.+)$/i))) return `serie=${m[1].trim()}`;
+  if ((m = c.match(/^(?:adresse\s+)?mac\s+(.+)$/i))) return `mac=${m[1].trim()}`;
+  if ((m = c.match(/^masque\s+(.+)$/i))) return `masque=${m[1].trim()}`;
+  return c;
+}
+
 export function ipPlus(ip: string, k: number) {
   const [adr, masque] = ip.split("/");
   const o = adr.split(".").map(Number);
@@ -203,7 +228,11 @@ export function analyser(texte: string): Inventaire {
     const l = brut.replace(/(^|\s)(#|\/\/).*$/, "").trim();
     if (!l) return;
 
-    const [tete, ...champs] = l.split(/\s*[|;\t]\s*/);
+    let [tete, ...champs] = l.split(/\s*[|;\t]\s*/);
+    // En français courant : « câble SW-1 port 24 vers SW-2 port 24 » = « SW-1:24 -> SW-2:24 ».
+    const enClair = tete.match(/^(?:c[âa]ble|lien|liaison|relier)\s+(.+?)\s+(?:vers|avec|à|au|a|jusqu'à)\s+(.+)$/i);
+    if (enClair) tete = `${enClair[1]} -> ${enClair[2]}`;
+    champs = champs.map(naturel);
 
     // ----- liaison : « A:port -> B:port | libellé » -----
     if (FLECHE.test(tete)) {
@@ -292,7 +321,8 @@ export function analyser(texte: string): Inventaire {
     let baieLigne: string | undefined;
     let passerelleLigne: string | undefined;
     const optsInline: OptionsLien = {};
-    for (const c of champs) {
+    for (const brutChamp of champs) {
+      const c = naturel(brutChamp);
       if (!c) continue;
       if (IP.test(c)) ip = c;
       else if (c.includes(",") && c.split(",").every((x) => IP.test(x.trim()))) ips = c.split(",").map((x) => x.trim());
@@ -411,11 +441,25 @@ export function analyser(texte: string): Inventaire {
   };
   const portsPris = new Map<string, number>();
 
+  /** Nom inconnu : on propose le nom le plus proche (faute de frappe, tiret oublié…). */
+  const inconnu = (nom: string) => {
+    const cible = simple(nom).replace(/[^a-z0-9]/g, "");
+    const dist = (a: string, b: string) => {
+      const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+      for (let j = 1; j <= b.length; j++) d[0][j] = j;
+      for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++)
+        d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      return d[a.length][b.length];
+    };
+    const proche = equipements.map((e) => ({ nom: e.nom, d: dist(cible, simple(e.nom).replace(/[^a-z0-9]/g, "")) }))
+      .sort((x, y) => x.d - y.d)[0];
+    return `« ${nom} » n'existe pas.` + (proche && proche.d <= 2 ? ` Vouliez-vous dire « ${proche.nom} » ?` : ` Ajoutez-le (ex. : switch ${nom}) ou vérifiez l'orthographe.`);
+  };
   for (const r of brutes) {
     const A = lireExtremite(r.de), B = lireExtremite(r.vers);
     const as = trouver(A.nom), bs = trouver(B.nom);
-    if (!as.length) { alertes.push({ ligne: r.ligne, niveau: "erreur", msg: `Liaison : « ${A.nom} » n'est déclaré nulle part.` }); continue; }
-    if (!bs.length) { alertes.push({ ligne: r.ligne, niveau: "erreur", msg: `Liaison : « ${B.nom} » n'est déclaré nulle part.` }); continue; }
+    if (!as.length) { alertes.push({ ligne: r.ligne, niveau: "erreur", msg: inconnu(A.nom) }); continue; }
+    if (!bs.length) { alertes.push({ ligne: r.ligne, niveau: "erreur", msg: inconnu(B.nom) }); continue; }
     if (as.length > 1 && bs.length > 1) {
       alertes.push({ ligne: r.ligne, niveau: "erreur", msg: "Liaison : un seul des deux côtés peut être un groupe (NOM*)." }); continue;
     }

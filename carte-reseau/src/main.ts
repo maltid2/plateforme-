@@ -4,6 +4,7 @@ import { creerEditeur } from "./editeur.ts";
 import { cheminPasserelle, lirePort } from "./facade.ts";
 import { elevations } from "./elevation.ts";
 import { creerFormulaire } from "./formulaire.ts";
+import { expliquer } from "./explication.ts";
 import { colonnesDe, lireTableur, modeleCsv, SENS, tableurVersTexte, type Feuille, type Sens } from "./tableur.ts";
 import { EXEMPLE_COMPLET, MODELES } from "./modeles.ts";
 import { CLASSIFICATION, imprimer } from "./impression.ts";
@@ -75,6 +76,21 @@ const formulaire = creerFormulaire($("formulaire"), {
   versTexte: (ligne) => { mode("texte"); editeur.allerLigne(ligne); },
 });
 
+/* ---------------- la ligne du curseur, expliquée en français ---------------- */
+const boiteExplication = $("explication");
+function expliquerLigne(n = editeur.ligneCurseur()) {
+  const { sens, alertes } = expliquer(editeur.valeur, n, inv);
+  boiteExplication.replaceChildren();
+  const t = document.createElement("div");
+  t.className = "sens";
+  t.innerHTML = `<span class="n">Ligne ${n}</span>`;
+  t.append(document.createTextNode(sens ? `J'ai compris : ${sens}` : ""));
+  if (!sens && !alertes.length) t.append(document.createTextNode("—"));
+  boiteExplication.append(t);
+  alertes.forEach((a) => { const d = document.createElement("div"); d.className = "alerte-ligne"; d.textContent = `⚠ ${a}`; boiteExplication.append(d); });
+}
+editeur.surCurseur((n) => expliquerLigne(n));
+
 /* ---------------- formulaire / texte ---------------- */
 function mode(m: "form" | "texte") {
   $("m-form").setAttribute("aria-selected", String(m === "form"));
@@ -82,7 +98,8 @@ function mode(m: "form" | "texte") {
   $("formulaire").hidden = m !== "form";
   $("editeur").hidden = m !== "texte";
   $("modeles").hidden = m !== "texte";
-  if (m === "texte") editeur.focus();
+  $("explication").hidden = m !== "texte";
+  if (m === "texte") { editeur.focus(); expliquerLigne(); }
   try { localStorage.setItem("carte-reseau:mode", m); } catch { /* sans importance */ }
 }
 $("m-form").addEventListener("click", () => mode("form"));

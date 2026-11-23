@@ -7,44 +7,49 @@ export const MODELES: { id: string; titre: string; detail: string; texte: string
   {
     id: "site", titre: "Site", detail: "un site, sa passerelle, une baie",
     texte: `
-site Mon site | passerelle=192.168.1.1
+# Un site, sa box, et un switch dans la baie
+site Mon site | passerelle 192.168.1.1
 
 baie B1
-  passerelle GW-1 | 192.168.1.1 | Box fibre | ports=4 | wan=1
-  switch SW-1 | 192.168.1.2 | Modèle du switch | ports=24 | sfp=4 | sur GW-1:LAN1
+  passerelle GW-1 | ip 192.168.1.1 | modèle Box fibre | 4 ports | wan=1
+  switch SW-1 | ip 192.168.1.2 | modèle Mon switch | 24 ports | 4 sfp | branché sur GW-1 port LAN1
 `,
   },
   {
     id: "switchs", titre: "Switchs", detail: "plusieurs switchs aux noms différents",
     texte: `
-switch SW-ACCUEIL, SW-ETAGE1, SW-ETAGE2 | 192.168.1.10, 192.168.1.11, 192.168.1.12 | ports=24 | sfp=2 | sur SW-1:Te1
+# Trois switchs d'un coup : une IP et un port chacun, dans l'ordre des noms
+switch SW-ACCUEIL, SW-ETAGE1, SW-ETAGE2 | ip 192.168.1.10, 192.168.1.11, 192.168.1.12 | 24 ports | 2 sfp | branchés sur SW-1 port SFP1
 `,
   },
   {
     id: "cameras", titre: "Caméras", detail: "des caméras branchées sur un switch",
     texte: `
-camera CAM x6 | 192.168.30.11 | Modèle de caméra | sur SW-1:1 | vlan=30
+# Six caméras : CAM-1 à CAM-6, ports 1 à 6, IP qui se suivent
+camera CAM x6 | ip 192.168.30.11 | modèle Dôme 4 MP | branchées sur SW-1 port 1 | vlan 30
 `,
   },
   {
-    id: "trunk", titre: "Trunk", detail: "lien entre deux switchs, fibre, VLAN",
+    id: "trunk", titre: "Trunk", detail: "câble entre deux switchs, fibre, VLAN",
     texte: `
-SW-1:Te2 -> SW-2:Te1 | fibre | trunk | vlan=10,20,30
+# Un câble fibre entre deux switchs, qui transporte plusieurs VLAN
+câble SW-1 port SFP2 vers SW-2 port SFP1 | fibre | trunk | vlan 10,20,30
 `,
   },
   {
     id: "lieu", titre: "Lieu", detail: "un bâtiment ou une école dans un site",
     texte: `
-point Bâtiment 1 | passerelle=192.168.2.1
-switch SW-BAT1 | 192.168.2.2 | ports=8 | sfp=2 | sur SW-1:Te3 | fibre
-camera CAM-BAT1 x4 | 192.168.32.10 | sur SW-BAT1:1 | vlan=30
+# Un bâtiment dans le site, avec son switch et ses caméras
+lieu Bâtiment 1 | passerelle 192.168.2.1
+switch SW-BAT1 | ip 192.168.2.2 | 8 ports | 2 sfp | branché sur SW-1 port SFP3 | fibre
+camera CAM-BAT1 x4 | ip 192.168.32.10 | branchées sur SW-BAT1 port 1 | vlan 30
 `,
   },
   {
     id: "inter", titre: "Entre sites", detail: "liaison fibre ou VPN entre deux sites",
     texte: `
-SW-1:Te4 -> SW-AUTRE-SITE:Te1 | fibre | lien opérateur
-GW-1:WAN -> GW-AUTRE-SITE:WAN | vpn | secours
+# Deux sites reliés : un lien fibre, et un VPN de secours
+câble SW-1 port SFP4 vers SW-AUTRE-SITE port SFP1 | fibre | lien opérateur
 `,
   },
 ];

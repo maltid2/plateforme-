@@ -71,25 +71,24 @@
       </div>
       <div class="formulaire" id="formulaire"></div>
       <div class="aide" id="aide" hidden>
-        <h2>Écrire une topologie</h2>
-        <p><b>Équipement</b> — <code>type NOM | IP | modèle | @Site | sur SWITCH:port | vlan=20</code></p>
-        <p><b>Types</b> — <code>passerelle</code> <code>parefeu</code> <code>switch</code> <code>camera</code> <code>nvr</code> <code>borne</code> <code>serveur</code> <code>nas</code> <code>poste</code> <code>imprimante</code> <code>telephone</code> <code>onduleur</code> <code>autre</code></p>
-        <p><b>Switch</b> — <code>switch SW-1 | 10.0.0.2 | Cisco 9200 | @NomDuSite | ports=24 | sfp=4</code></p>
-        <p><b>Trunk</b> — <code>SW-1:Te1 -> SW-2:Te1 | trunk | vlan=10,20,30</code> (deux switchs reliés = trunk par défaut)</p>
-        <p><b>Plusieurs noms différents</b> — <code>switch SW-ACCUEIL, SW-ETAGE1, SW-ETAGE2 | 10.0.0.10 | sur SW-CORE:5</code> → IP et ports qui se suivent</p>
-        <p><b>Une IP précise pour chacun</b> — <code>switch SW-ACCUEIL, SW-ETAGE1, SW-ETAGE2 | 10.0.0.5, 10.0.0.9, 10.0.0.20</code> → dans l'ordre des noms</p>
-        <p><b>Ports différents pour chacun</b> — <code>switch SW-A, SW-B, SW-C | ports=24, 8, 48 | sfp=4, 0, 2</code> → un nombre par switch, dans l'ordre</p>
-        <p><b>Caméras d'un coup</b> — <code>camera CAM x6 | 10.0.30.11 | @NomDuSite | sur SW-2:3 | vlan=30</code> → ports 3 à 8, IP qui suivent</p>
-        <p><b>N° de série, MAC, masque</b> — <code>switch SW-1 | 10.0.0.2 | masque=255.255.255.0 | serie=FOC1234 | mac=00:11:22:AA:BB:CC</code> · pour plusieurs : <code>serie=A1, A2, A3</code> (un par nom)</p>
-        <p><b>Baie</b> — <code>baie A1</code> puis les lignes <b>en retrait</b> en dessous. <b>Site</b> — <code>site NomDuSite</code> ou <code>@NomDuSite</code> sur la ligne.</p>
-        <p><b>Ports</b> — <code>5</code>, <code>Gi1/0/5</code>, <code>Te1</code>, <code>SFP2</code>, <code>LAN1</code>, <code>WAN</code>. <code>#</code> commence un commentaire.</p>
-        <p><b>Clavier</b> — les suggestions s'ouvrent seules ; <kbd>↑</kbd><kbd>↓</kbd> pour choisir, <kbd>Entrée</kbd> ou <kbd>Tab</kbd> pour valider, <kbd>Ctrl</kbd>+<kbd>Espace</kbd> pour les rouvrir.</p>
+        <h2>Écrire sa carte en texte, simplement</h2>
+        <p><b>Une ligne = un équipement</b> (ou un câble). Les morceaux sont séparés par <code>|</code>. Sous l'éditeur, l'outil <b>explique en français</b> la ligne où vous êtes.</p>
+        <p><b>Un site</b> — <code>site Lyon</code> : les lignes suivantes sont à Lyon. <b>Un lieu</b> — <code>lieu École Jaurès</code>.</p>
+        <p><b>Un switch</b> — <code>switch SW-1 | ip 10.0.0.2 | 24 ports | 4 sfp | baie A1</code></p>
+        <p><b>Une caméra branchée</b> — <code>camera CAM-1 | ip 10.0.30.11 | branchée sur SW-1 port 3 | vlan 30</code></p>
+        <p><b>Plusieurs caméras d'un coup</b> — <code>camera CAM x6 | ip 10.0.30.11 | branchées sur SW-1 port 3</code> → CAM-1 à CAM-6, ports 3 à 8, IP qui se suivent</p>
+        <p><b>Un câble entre deux switchs</b> — <code>câble SW-1 port 24 vers SW-2 port 24 | fibre | trunk | vlan 10,20</code></p>
+        <p><b>Types</b> — <code>switch</code> <code>camera</code> <code>passerelle</code> <code>parefeu</code> <code>borne</code> <code>nvr</code> <code>serveur</code> <code>nas</code> <code>poste</code> <code>imprimante</code> <code>telephone</code> <code>onduleur</code> <code>autre</code></p>
+        <p><b>Câbles</b> — <code>rj45</code> <code>fibre</code> <code>dac</code> <code>coax</code> <code>rs485</code> <code>usb</code> <code>radio</code> <code>vpn</code> · <b>Infos</b> — <code>modèle Cisco 9200</code>, <code>série FOC123</code>, <code>mac 00:11:22:AA:BB:CC</code>, <code>masque 255.255.255.0</code>, <code>passerelle 10.0.0.1</code></p>
+        <p><b>Écriture courte</b> (pour aller vite, elle marche aussi) — <code>camera CAM-1 | 10.0.30.11 | sur SW-1:3</code> · <code>SW-1:24 -> SW-2:24 | fibre</code> · <code>@Lyon/École</code> · <code>ports=24</code></p>
+        <p><b>Clavier</b> — les suggestions s'ouvrent seules ; <kbd>↑</kbd><kbd>↓</kbd> pour choisir, <kbd>Entrée</kbd> pour valider, <kbd>Ctrl</kbd>+<kbd>Espace</kbd> pour les rouvrir. <code>#</code> commence une note.</p>
       </div>
       <div class="modeles" id="modeles" hidden role="toolbar" aria-label="Insérer un modèle">
         <span>Insérer :</span>
         <!-- boutons ajoutés par le script -->
       </div>
       <div class="editeur" id="editeur" hidden></div>
+      <div class="explication" id="explication" hidden aria-live="polite"></div>
       <div class="etat" id="etat" aria-live="polite"></div>
       <ul class="alertes" id="alertes"></ul>
     </section>

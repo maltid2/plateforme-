@@ -234,7 +234,11 @@ export function creerEditeur(racine: HTMLElement, contexte: Contexte, surChange:
     minuteur = window.setTimeout(() => surChange(ta.value), 180);
   }
 
-  ta.addEventListener("input", () => { changer(); montrer(); });
+  // La ligne du curseur : pour l'expliquer en français sous l'éditeur.
+  let auCurseur: ((n: number) => void) | null = null;
+  const signalerCurseur = () => auCurseur?.(ta.value.slice(0, ta.selectionStart).split("\n").length);
+  ["keyup", "click", "focus", "select"].forEach((t) => ta.addEventListener(t, signalerCurseur));
+  ta.addEventListener("input", () => { changer(); montrer(); signalerCurseur(); });
   ta.addEventListener("scroll", () => { synchro(); if (!liste.hidden) placerListe(); });
   ta.addEventListener("blur", () => setTimeout(fermer, 120));
   ta.addEventListener("click", fermer);
@@ -273,6 +277,9 @@ export function creerEditeur(racine: HTMLElement, contexte: Contexte, surChange:
       synchro();
     },
     focus() { ta.focus(); },
+    /** Appelé avec le numéro de la ligne du curseur, à chaque déplacement. */
+    surCurseur(f: (n: number) => void) { auCurseur = f; },
+    ligneCurseur() { return ta.value.slice(0, ta.selectionStart).split("\n").length; },
     /** Insère un bloc au curseur (annulable avec Ctrl+Z), sur des lignes à lui. */
     inserer(bloc: string) {
       ta.focus();

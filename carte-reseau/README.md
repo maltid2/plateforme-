@@ -137,6 +137,21 @@ s'enregistre d'abord en `.xlsx` depuis Excel.
 
 ## Saisir : le texte (pour aller vite)
 
+**Une ligne = un équipement ou un câble.** On peut l'écrire en français
+courant ; sous l'éditeur, l'outil **explique la ligne où se trouve le curseur**
+(« J'ai compris : Caméra « CAM-1 » · IP … · branché sur SW-1 port 3 ») et
+signale ce qui ne va pas, en proposant le bon nom en cas de faute de frappe.
+
+```text
+site Lyon
+switch SW-1 | ip 10.0.0.2 | 24 ports | 4 sfp | baie A1 | modèle Cisco 9200
+camera CAM x6 | ip 10.0.30.11 | branchées sur SW-1 port 3 | vlan 30
+câble SW-1 port SFP1 vers SW-2 port SFP1 | fibre | trunk | vlan 10,30
+```
+
+L'écriture courte ci-dessous marche aussi (les deux se mélangent librement).
+
+
 ```text
 site Lyon                         # les lignes suivantes sont à Lyon
 point École Jaurès                # … dans ce lieu

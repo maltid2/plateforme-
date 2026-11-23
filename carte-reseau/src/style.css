@@ -557,3 +557,9 @@ dialog.colonnes input:not([type="checkbox"]):not([type="radio"]):not([type="colo
 }
 dialog.cable .f-phrase { margin: 6px 0; }
 dialog.cable .f-ligne { margin-top: 10px; }
+
+/* La ligne du curseur, expliquée en français (onglet Texte) */
+.explication { margin: 6px 12px 0; padding: 9px 12px; border: 1px solid rgba(141, 124, 255, 0.35); background: rgba(141, 124, 255, 0.07); border-radius: 10px; font-size: 13px; line-height: 1.45; }
+.explication[hidden] { display: none; }
+.explication .n { display: inline-block; font-family: var(--mono); font-size: 11px; color: var(--sourd); margin-right: 8px; }
+.explication .alerte-ligne { color: #ffd166; margin-top: 4px; }

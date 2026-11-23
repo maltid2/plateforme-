@@ -481,6 +481,8 @@ const versAjout = () => {
   f?.scrollIntoView({ behavior: "smooth", block: "start" });
   setTimeout(() => f?.querySelector<HTMLInputElement>('[data-f="nom"]')?.focus(), 350);
 };
+// Le menu ⋯ (renommer, dupliquer, supprimer) se referme dès qu'on a choisi.
+document.querySelector(".menu-topo .menu-corps")?.addEventListener("click", () => setTimeout(fermerMenu, 0));
 $("a-equipement").addEventListener("click", versAjout);
 $("a-cable").addEventListener("click", () => formulaire.editerLien({ a: choisi ?? "", b: "" } as unknown as Liaison));
 $("a-excel").addEventListener("click", () => $("f-tableur").click());

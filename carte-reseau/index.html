@@ -17,17 +17,15 @@
     <div class="marque">
       <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="2" y="8" width="20" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M6 12h1.5M9 12h1.5M12 12h1.5" stroke="#3DDC97" stroke-width="1.8" stroke-linecap="round"/><circle cx="18" cy="12" r="1.2" fill="#FFD166"/></svg>
       <strong>Topologie réseau v1</strong>
-      <span class="local" title="Aucune donnée ne quitte ce PC : le fichier bloque toute connexion sortante.">● hors ligne · local</span>
-      <button id="b-signature" type="button" class="signature" title="Signature apposée sur les documents produits (PDF, plan, visionneuse). Cliquer pour la changer."></button>
     </div>
 
     <div class="topos">
       <label for="topologie" class="sr">Topologie</label>
       <select id="topologie" aria-label="Topologie affichée"></select>
-      <button id="t-nouvelle" type="button" title="Nouvelle topologie">＋ Nouvelle</button>
       <details class="menu menu-topo">
-        <summary title="Renommer, dupliquer ou supprimer cette topologie">⋯</summary>
+        <summary title="Nouvelle topologie, renommer, dupliquer, supprimer">⋯</summary>
         <div class="menu-corps">
+          <button id="t-nouvelle" type="button">＋ Nouvelle topologie</button>
           <button id="t-renommer" type="button">Renommer cette topologie</button>
           <button id="t-dupliquer" type="button">Dupliquer</button>
           <button id="t-supprimer" type="button" class="danger">Supprimer</button>
@@ -39,6 +37,8 @@
       <details class="menu">
         <summary>Fichiers</summary>
         <div class="menu-corps">
+          <button id="b-signature" type="button" title="Signature apposée sur les documents produits (PDF, plan, visionneuse)."></button>
+          <hr />
           <button id="b-sauvegarde" type="button">Sauvegarder toutes les topologies (.json)</button>
           <button id="b-restaurer" type="button">Restaurer une sauvegarde (.json)</button>
           <hr />

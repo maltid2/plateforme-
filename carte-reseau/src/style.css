@@ -599,3 +599,7 @@ details.f-plus > summary::-webkit-details-marker { display: none; }
 details.f-plus > summary::before { content: "▸ "; color: var(--acc); }
 details.f-plus[open] > summary::before { content: "▾ "; }
 details.f-plus > summary:hover { color: var(--encre); }
+/* Interface épurée : ce qui ne sert pas maintenant n'est pas affiché */
+.minicarte.inutile { display: none; }
+.zooms [data-z="tout"] { display: none; }   /* « Recentrer » fait la même chose */
+#filtre-site[hidden], #l-cams[hidden] { display: none !important; }

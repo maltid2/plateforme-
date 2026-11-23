@@ -129,8 +129,7 @@ function dessinerFacade(g: SVGGElement, e: Equipement, f: Facade, inv: Inventair
       : `Port ${p.id} · libre`;
   });
   const occupes = brancheDe.size, total = f.ports.filter((p) => p.type !== "autre").length;
-  // À gauche, sous le nom : les câbles partent des ports, plus à droite.
-  texte(g, `${occupes}/${total} ports utilisés`, { x: x0, y: y0 + FH + (e.baie ? 1.0 : 0.62), "font-size": 0.26, fill: "#6B7A8C" });
+  void occupes; void total;   // l'occupation des ports se lit dans la fiche, pas sur le plan
   if (e.baie) texte(g, `▤ baie ${e.baie}`, { x: x0, y: y0 + FH + 0.62, "font-size": 0.26, fill: "#9FB3C8", "font-weight": 600 });
 }
 
@@ -239,6 +238,9 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
     svg.classList.toggle("resume", pxParUnite < SEUIL_RESUME);
     miniVue.setAttribute("x", String(vb.x)); miniVue.setAttribute("y", String(vb.y));
     miniVue.setAttribute("width", String(vb.w)); miniVue.setAttribute("height", String(vb.h));
+    // Mini-carte : utile seulement quand une partie de la carte est hors de l'écran.
+    const tout = vb.x <= bornes.x + 0.5 && vb.y <= bornes.y + 0.5 && vb.x + vb.w >= bornes.x + bornes.w - 0.5 && vb.y + vb.h >= bornes.y + bornes.h - 0.5;
+    mini.classList.toggle("inutile", tout);
   };
 
   let anim = 0;
@@ -366,13 +368,13 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
           fill: "rgba(148,163,184,0.10)" }, gs);
         texte(gs, c.nom, { x: c.x + 0.9, y: c.y + 1.08, "font-size": 0.72, "font-weight": 800, fill: "#F5F7FA" });
         const nPts = cadres.filter((x) => x.type === "point" && x.site === c.site).length;
-        texte(gs, nPts ? `${nPts} lieux · ${resume}` : resume, { x: c.x + c.w - 0.9, y: c.y + 1.04, "text-anchor": "end", "font-size": 0.38, fill: "#8B98A8" });
+        void nPts; void resume;   // les compteurs restent sur les cartes résumé (vue dézoomée)
       } else {
         el("rect", { class: "cadre-point", x: c.x, y: c.y, width: c.w, height: c.h, rx: 0.7, fill: "#0F141C", stroke: "rgba(61,220,151,0.28)", "stroke-width": 0.05 }, gpt);
         el("circle", { cx: c.x + 0.85, cy: c.y + 0.82, r: 0.2, fill: "none", stroke: "#3DDC97", "stroke-width": 0.07 }, gpt);
         el("circle", { cx: c.x + 0.85, cy: c.y + 0.82, r: 0.06, fill: "#3DDC97" }, gpt);
         texte(gpt, c.nom, { x: c.x + 1.25, y: c.y + 0.98, "font-size": 0.5, "font-weight": 700, fill: "#E3F9EE" });
-        texte(gpt, resume, { x: c.x + c.w - 0.7, y: c.y + 0.96, "text-anchor": "end", "font-size": 0.32, fill: "#8B98A8" });
+
       }
     });
 

@@ -211,6 +211,7 @@ function recalculer() {
   if (site && !inv.sites.some((s) => s.nom === site)) site = null;
   if (choisi && !inv.equipements.some((e) => e.nom === choisi)) choisi = null;
 
+  filtre.hidden = inv.sites.length < 2;   // un seul site : rien à filtrer
   filtre.replaceChildren(new Option(`Tous les sites (${inv.sites.length})`, ""),
     ...inv.sites.map((s) => new Option(s.nom, s.nom, false, s.nom === site)));
   $("noms").replaceChildren(...inv.equipements.map((e) => new Option(e.nom, e.ip ? `${e.nom}` : e.nom)));
@@ -464,7 +465,7 @@ async function montrer(v: "2d" | "3d" | "baies") {
   hote3d.hidden = v !== "3d";
   $("hote-baies").hidden = v !== "baies";
   if (v === "baies") dessinerBaies();
-  $("l-cams").hidden = v === "2d";
+  $("l-cams").hidden = v !== "3d";   // où poser les caméras : ne concerne que la 3D
   if (v === "3d" && !v3) {
     const m = await import("./vue3d.ts");
     m.options.cameras = $<HTMLSelectElement>("o-cams").value as "murs" | "baie";
@@ -544,8 +545,8 @@ $("b-sauvegarde").addEventListener("click", () => { fermerMenu(); telecharger(`t
 const auteur = () => (EMBARQUE ? EMBARQUE.auteur ?? "" : projets.lireAuteur());
 function afficherSignature() {
   const b = $<HTMLButtonElement>("b-signature");
-  b.textContent = auteur() ? `✎ ${auteur()}` : "";
-  b.hidden = !auteur();
+  b.textContent = `Signature des documents : ${auteur() || "—"}`;
+  b.hidden = !!EMBARQUE;
   b.disabled = !!EMBARQUE;
 }
 $("b-signature").addEventListener("click", () => {

@@ -612,6 +612,10 @@ $("b-couleurs").addEventListener("click", () => {
           <label class="coul"><input type="radio" name="theme" value="standard" ${couleurs.theme !== "studio" ? "checked" : ""} /><span>Standard</span></label>
           <label class="coul"><input type="radio" name="theme" value="studio" ${couleurs.theme === "studio" ? "checked" : ""} /><span>Noir studio — noir pur, majuscules, sans arrondis</span></label>
         </div>
+        <h3>Fonds</h3><div class="grille-coul">
+          ${ligne("f:carte", "Fond de la carte (2D et 3D)", couleurs.fondCarte ?? (couleurs.theme === "studio" ? "#000000" : "#07090d"), "carre")}
+          ${ligne("f:interface", "Fond de l'interface", couleurs.fondInterface ?? (couleurs.theme === "studio" ? "#000000" : "#07090d"), "carre")}
+        </div>
         <h3>Câbles</h3><div class="grille-coul">
           ${(Object.keys(MEDIAS) as Media[]).map((m) => ligne(`m:${m}`, MEDIAS[m], (COULEUR_MEDIA as Record<string, string>)[m], "trait")).join("")}
           ${ligne("t:trunk", "Trunk (étiquettes, liseré)", COULEUR_TRUNK, "trait")}
@@ -638,6 +642,7 @@ $("b-couleurs").addEventListener("click", () => {
     if (!k) return;
     if (t === "m") couleurs = { ...couleurs, medias: { ...couleurs.medias, [k]: i.value } };
     else if (t === "g") couleurs = { ...couleurs, genres: { ...couleurs.genres, [k]: i.value } };
+    else if (t === "f") couleurs = { ...couleurs, [k === "carte" ? "fondCarte" : "fondInterface"]: i.value };
     else couleurs = { ...couleurs, trunk: i.value };
     enregistrer();
   });

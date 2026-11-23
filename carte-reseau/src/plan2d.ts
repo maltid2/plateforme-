@@ -198,7 +198,7 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
   hote.appendChild(svg);
   const defs = el("defs", {}, svg);
   defs.innerHTML = DEFS;
-  el("rect", { fill: "#07090D", x: -1e5, y: -1e5, width: 2e5, height: 2e5 }, svg);
+  el("rect", { class: "fond-plan", fill: "#07090D", x: -1e5, y: -1e5, width: 2e5, height: 2e5 }, svg);
   el("rect", { fill: "url(#g-grille)", x: -1e5, y: -1e5, width: 2e5, height: 2e5 }, svg);
   const monde = el("g", {}, svg);
 

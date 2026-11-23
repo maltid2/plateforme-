@@ -154,7 +154,7 @@ body.redim iframe, body.redim canvas, body.redim svg { pointer-events: none; }
 .onglets button { border: 0; border-radius: 0; background: transparent; padding: 6px 14px; }
 .onglets button[aria-selected="true"] { background: rgba(141, 124, 255, 0.2); color: #fff; font-weight: 600; }
 #recherche { flex: 1; min-width: 180px; }
-.vue { position: relative; flex: 1; min-height: 0; background: var(--bg); overflow: hidden; }
+.vue { position: relative; flex: 1; min-height: 0; background: var(--fond-carte, var(--bg)); overflow: hidden; }
 .hote { position: absolute; inset: 0; }
 .hote > svg { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
 .hote > svg.saisi { cursor: grabbing; }
@@ -582,3 +582,4 @@ dialog.cable .f-ligne { margin-top: 10px; }
 .theme-studio .lien.sur-chemin { stroke: #ffffff !important; }
 .fiche ol.chemin { margin: 0; padding-left: 18px; font-size: 12px; line-height: 1.6; }
 .fiche ol.chemin li::marker { color: #ffd166; }
+.fond-plan { fill: var(--fond-carte, var(--bg)); }

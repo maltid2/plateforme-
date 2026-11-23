@@ -11,7 +11,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { CSS2DObject, CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
-import { APPARENCE, COULEUR_MEDIA } from "./apparence.ts";
+import { APPARENCE, COULEUR_MEDIA, FOND_CARTE } from "./apparence.ts";
 import type { Cadre, Disposition } from "./disposition.ts";
 import { FH, type Facade } from "./facade.ts";
 import { svgFacade } from "./plan2d.ts";
@@ -856,7 +856,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     // petit réseau, il effaçait sols et caméras d'un grand réseau dézoomé.
     const diag = Math.max(40, emprise.getSize(new THREE.Vector3()).length());
     // Apparence « Noir studio » : fond et brouillard noirs.
-    const fond = document.body.classList.contains("theme-studio") ? 0x000000 : 0x07090d;
+    const fond = FOND_CARTE ? parseInt(FOND_CARTE.slice(1), 16) : document.body.classList.contains("theme-studio") ? 0x000000 : 0x07090d;
     (scene.background as THREE.Color).setHex(fond);
     (scene.fog as THREE.Fog).color.setHex(fond);
     (scene.fog as THREE.Fog).near = diag * 1.6;

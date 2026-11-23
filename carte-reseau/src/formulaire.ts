@@ -10,6 +10,7 @@
  * ou retirer des lignes. Les deux modes restent donc toujours d'accord.
  */
 import { APPARENCE } from "./apparence.ts";
+import { demander, informer } from "./boites.ts";
 import { lirePort } from "./facade.ts";
 import type { Disposition } from "./disposition.ts";
 import { PICTOS } from "./pictos.ts";
@@ -541,9 +542,9 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     acces.ecrire(lignes.join("\n"), annonce);
   }
   /** Sans site choisi, on demande son nom : chaque équipement est rangé dans un site à vous. */
-  function demanderSite(): boolean {
+  async function demanderSite(): Promise<boolean> {
     if (ctx.site) return true;
-    const v = propre(prompt("Dans quel site ? Donnez son nom (ville, agence, client…) :") ?? "");
+    const v = propre(await demander({ titre: "Dans quel site ?", texte: "Chaque équipement est rangé dans un site : donnez son nom (ville, agence, client…).", exemple: "Lyon", ok: "Continuer" }) ?? "");
     if (!v) return false;
     ctx.site = v;
     remplirOu();
@@ -551,8 +552,8 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     return true;
   }
 
-  function ajouter() {
-    if (!demanderSite()) return;
+  async function ajouter() {
+    if (!(await demanderSite())) return;
     const l = lignesAAjouter();
     if (!l) { champ("nom").focus(); return; }
     const noms = listeNoms(), nom = noms[0];
@@ -562,7 +563,9 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     const { inv } = acces.donnees();
     const doublons = crees.filter((n, i) => crees.indexOf(n) !== i || (!edition && inv.equipements.some((e) => e.nom.toLowerCase() === n.toLowerCase())));
     if (doublons.length) {
-      alert(`Ces noms existent déjà : ${[...new Set(doublons)].join(", ")}. Choisissez d'autres noms.`);
+      const d = [...new Set(doublons)];
+      await informer(d.length > 1 ? "Ces noms sont déjà pris" : "Ce nom est déjà pris",
+        `${d.join(", ")} ${d.length > 1 ? "existent" : "existe"} déjà sur la carte. Choisissez un autre nom.`);
       champ("nom").focus();
       return;
     }
@@ -604,7 +607,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
 
   function relier() {
     const a = lienC("a").value, b = lienC("b").value;
-    if (!a || !b || a === b) { alert("Choisissez deux équipements différents."); return; }
+    if (!a || !b || a === b) { void informer("Câble incomplet", "Choisissez deux équipements différents, un à chaque bout du câble."); return; }
     const pa = lienC("pa").value, pb = lienC("pb").value;
     const l = [`${a}${pa ? `:${pa}` : ""} -> ${b}${pb ? `:${pb}` : ""}`,
       ...optionsLien(lienC("media").value, lienC<HTMLInputElement>("vlan").value, lienC<HTMLInputElement>("trunk").checked)];
@@ -851,8 +854,9 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
           <label>Remarque<input data-c="libelle" value="${echap(l.libelle ?? "")}" autocomplete="off" /></label>
         </div>
         <label class="f-case"><input type="checkbox" data-c="trunk"${l.mode === "trunk" ? " checked" : ""} /> Trunk : plusieurs VLAN sur ce câble</label>
+        <p class="erreur-col" role="alert" hidden></p>
       </div>
-      <div class="boutons-col">${nouveau ? "" : `<button type="button" class="danger" data-a="suppr">Supprimer ce câble</button>`}<span style="flex:1"></span><button value="annuler" type="submit">Annuler</button><button value="ok" type="submit" class="primaire">Enregistrer</button></div>
+      <div class="boutons-col">${nouveau ? "" : `<button type="button" class="danger" data-a="suppr">Supprimer ce câble</button>`}<span style="flex:1"></span><button type="button" data-fermer>Annuler</button><button value="ok" type="submit" class="primaire">Enregistrer</button></div>
     </form>`;
     const q = <T extends HTMLElement>(k: string) => d.querySelector<T>(`[data-c="${k}"]`)!;
     const ports = (cote: "a" | "b", garder?: string) => {
@@ -870,9 +874,21 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
       if (c === "b") ports("b", l.portB);
     });
     d.addEventListener("click", (ev) => {
+      // « Annuler » n'envoie pas le formulaire : Entrée dans un champ enregistre.
+      if ((ev.target as Element).closest("[data-fermer]")) { d.close("annuler"); return; }
       if ((ev.target as HTMLElement).dataset.a !== "suppr") return;
       d.close("rien");
       supprimerLien(l);
+    });
+    // Enregistrer sans deux bouts différents : on le dit dans la fenêtre, sans la fermer.
+    d.querySelector("form")!.addEventListener("submit", (ev) => {
+      if ((ev.submitter as HTMLButtonElement | null)?.value !== "ok") return;
+      const a = q<HTMLSelectElement>("a").value, b = q<HTMLSelectElement>("b").value;
+      if (a && b && a !== b) return;
+      ev.preventDefault();
+      const m = d.querySelector<HTMLElement>(".erreur-col")!;
+      m.textContent = !a || !b ? "Choisissez l'équipement à chaque bout du câble." : "Les deux bouts sont le même équipement : choisissez-en un autre.";
+      m.hidden = false;
     });
     d.addEventListener("close", () => {
       const ok = d.returnValue === "ok";
@@ -882,7 +898,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
       };
       d.remove();
       if (!ok) return;
-      if (!v.a || !v.b || v.a === v.b) { alert("Choisissez deux équipements différents."); return; }
+      if (!v.a || !v.b || v.a === v.b) return;   // (vérifié avant de fermer)
       const ligne = [`${v.a}${v.pa ? `:${v.pa}` : ""} -> ${v.b}${v.pb ? `:${v.pb}` : ""}`, ...optionsLien(v.media, v.vlan, v.trunk), propre(v.libelle)].filter(Boolean).join(" | ");
       const ou = nouveau ? null : retirerLien(l);
       const enLigne = ou && equipementDuLien && equipementDuLien === v.a && !v.pa;
@@ -901,7 +917,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
   /** La passerelle par défaut du site : sur la ligne « site … », créée au besoin. */
   function passerelleDuSite(v: string) {
     const ip = propre(v);
-    if (ip && !/^\d{1,3}(\.\d{1,3}){3}(\/\d{1,2})?$/.test(ip)) { alert(`« ${ip} » n'est pas une adresse IP.`); return; }
+    if (ip && !/^\d{1,3}(\.\d{1,3}){3}(\/\d{1,2})?$/.test(ip)) { void informer("Adresse IP à corriger", `« ${ip} » n'est pas une adresse IP (exemple : 192.168.1.254).`); return; }
     if (!ctx.site) return;
     const echappe = ctx.site.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const re = new RegExp(`^(\\s*site\\s+${echappe})\\s*(\\|.*)?$`, "i");
@@ -929,16 +945,22 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     const c = t.dataset.c as keyof typeof ctx | undefined;
     if (c) {
       const sel = t as HTMLSelectElement;
-      if (sel.value === NOUVEAU) {
-        const libelle = c === "site" ? "Nom du nouveau site (ville, agence…) :" : c === "point" ? "Nom du nouveau lieu (école, bâtiment…) :" : "Nom de la nouvelle baie :";
-        const v = propre(prompt(libelle) ?? "");
-        if (v) ctx[c] = v;
-      } else ctx[c] = sel.value;
-      if (c === "site") { ctx.point = ""; ctx.baie = ""; champ<HTMLSelectElement>("vers").value = ""; }
-      if (c === "point") ctx.baie = "";
-      remplirOu();
-      if (!edition) proposerNom();
-      remplirBranche();
+      const choisir = (v: string) => {
+        ctx[c] = v;
+        if (c === "site") { ctx.point = ""; ctx.baie = ""; champ<HTMLSelectElement>("vers").value = ""; }
+        if (c === "point") ctx.baie = "";
+        remplirOu();
+        if (!edition) proposerNom();
+        remplirBranche();
+      };
+      if (sel.value !== NOUVEAU) { choisir(sel.value); return; }
+      const q = c === "site" ? { titre: "Nouveau site", texte: "Son nom : ville, agence, client…", exemple: "Lyon" }
+        : c === "point" ? { titre: "Nouveau lieu", texte: "Un lieu du site : école, bâtiment, étage…", exemple: "Bâtiment A" }
+          : { titre: "Nouvelle baie", texte: "Le nom de la baie (armoire réseau).", exemple: "Baie 1" };
+      void demander({ ...q, ok: "Créer" }).then((v) => {
+        const nom = propre(v ?? "");
+        if (nom) choisir(nom); else remplirOu();   // annulé : la liste revient à son choix
+      });
       return;
     }
     if (t.dataset.d) { depuisTableau(); return; }
@@ -977,7 +999,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     }
     const a = t.closest<HTMLElement>("[data-a]")?.dataset.a;
     const nom = t.closest<HTMLElement>(".f-eq")?.dataset.nom;
-    if (a === "ajouter") ajouter();
+    if (a === "ajouter") void ajouter();
     else if (a === "annuler") vider();
     else if (a === "relier") relier();
     else if (a === "nouveau-cable") editerLien({ a: "", b: "" } as unknown as Liaison);
@@ -986,7 +1008,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     else if (a === "supprimer" && nom) supprimer(nom);
   });
   racine.addEventListener("keydown", (ev) => {
-    if (ev.key === "Enter" && (ev.target as HTMLElement).closest(".f-ajout") && (ev.target as HTMLElement).tagName === "INPUT") { ev.preventDefault(); ajouter(); }
+    if (ev.key === "Enter" && (ev.target as HTMLElement).closest(".f-ajout") && (ev.target as HTMLElement).tagName === "INPUT") { ev.preventDefault(); void ajouter(); }
   });
 
   remplirTypes();

@@ -51,7 +51,8 @@ export function sauver(c: Classeur): boolean {
 /** La signature des documents produits : gardée sur ce poste, modifiable. */
 const CLE_AUTEUR = "carte-reseau:auteur";
 export const AUTEUR_DEFAUT = "Dyvan";
-export const lireAuteur = () => (lire(CLE_AUTEUR) ?? AUTEUR_DEFAUT).trim() || AUTEUR_DEFAUT;
+/** Signature enregistrée sur ce poste ; vide = on ne signe pas (choix respecté). */
+export const lireAuteur = () => { const v = lire(CLE_AUTEUR); return v === null ? AUTEUR_DEFAUT : v.trim(); };
 export const ecrireAuteur = (nom: string) => ecrire(CLE_AUTEUR, nom.trim());
 
 /** Fichier de sauvegarde complet (toutes les topologies). */

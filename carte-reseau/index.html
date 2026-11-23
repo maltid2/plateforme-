@@ -56,7 +56,7 @@
         </div>
       </details>
       <button id="b-couleurs" type="button" title="Choisir les couleurs des câbles et des équipements">Couleurs</button>
-      <button id="b-aide" type="button" aria-expanded="false">Aide</button>
+      <button id="b-aide" type="button" aria-haspopup="dialog">Aide</button>
       <input id="f-txt" type="file" accept=".txt,text/plain" hidden />
       <input id="f-json" type="file" accept=".json,application/json" hidden />
       <input id="f-tableur" type="file" accept=".xlsx,.csv,.xls,.txt" hidden />
@@ -70,19 +70,6 @@
         <button role="tab" id="m-texte" aria-selected="false">Texte <small>(rapide)</small></button>
       </div>
       <div class="formulaire" id="formulaire"></div>
-      <div class="aide" id="aide" hidden>
-        <h2>Écrire sa carte en texte, simplement</h2>
-        <p><b>Une ligne = un équipement</b> (ou un câble). Les morceaux sont séparés par <code>|</code>. Sous l'éditeur, l'outil <b>explique en français</b> la ligne où vous êtes.</p>
-        <p><b>Un site</b> — <code>site Lyon</code> : les lignes suivantes sont à Lyon. <b>Un lieu</b> — <code>lieu École Jaurès</code>.</p>
-        <p><b>Un switch</b> — <code>switch SW-1 | ip 10.0.0.2 | 24 ports | 4 sfp | baie A1</code></p>
-        <p><b>Une caméra branchée</b> — <code>camera CAM-1 | ip 10.0.30.11 | branchée sur SW-1 port 3 | vlan 30</code></p>
-        <p><b>Plusieurs caméras d'un coup</b> — <code>camera CAM x6 | ip 10.0.30.11 | branchées sur SW-1 port 3</code> → CAM-1 à CAM-6, ports 3 à 8, IP qui se suivent</p>
-        <p><b>Un câble entre deux switchs</b> — <code>câble SW-1 port 24 vers SW-2 port 24 | fibre | trunk | vlan 10,20</code></p>
-        <p><b>Types</b> — <code>switch</code> <code>camera</code> <code>passerelle</code> <code>parefeu</code> <code>borne</code> <code>nvr</code> <code>serveur</code> <code>nas</code> <code>poste</code> <code>imprimante</code> <code>telephone</code> <code>onduleur</code> <code>autre</code></p>
-        <p><b>Câbles</b> — <code>rj45</code> <code>fibre</code> <code>dac</code> <code>coax</code> <code>rs485</code> <code>usb</code> <code>radio</code> <code>vpn</code> · <b>Infos</b> — <code>modèle Cisco 9200</code>, <code>série FOC123</code>, <code>mac 00:11:22:AA:BB:CC</code>, <code>masque 255.255.255.0</code>, <code>passerelle 10.0.0.1</code></p>
-        <p><b>Écriture courte</b> (pour aller vite, elle marche aussi) — <code>camera CAM-1 | 10.0.30.11 | sur SW-1:3</code> · <code>SW-1:24 -> SW-2:24 | fibre</code> · <code>@Lyon/École</code> · <code>ports=24</code></p>
-        <p><b>Clavier</b> — les suggestions s'ouvrent seules ; <kbd>↑</kbd><kbd>↓</kbd> pour choisir, <kbd>Entrée</kbd> pour valider, <kbd>Ctrl</kbd>+<kbd>Espace</kbd> pour les rouvrir. <code>#</code> commence une note.</p>
-      </div>
       <div class="modeles" id="modeles" hidden role="toolbar" aria-label="Insérer un modèle">
         <span>Insérer :</span>
         <!-- boutons ajoutés par le script -->
@@ -133,6 +120,67 @@
       </div>
     </section>
   </main>
+
+  <dialog class="colonnes aide-fenetre" id="aide" aria-labelledby="aide-titre">
+    <form method="dialog">
+      <h2 id="aide-titre">Aide</h2>
+      <div class="onglets aide-onglets" role="tablist" aria-label="Sujets d'aide">
+        <button type="button" role="tab" data-aide="form">Formulaire</button>
+        <button type="button" role="tab" data-aide="texte">Texte</button>
+        <button type="button" role="tab" data-aide="carte">Carte et dépannage</button>
+        <button type="button" role="tab" data-aide="clavier">Clavier</button>
+      </div>
+      <div class="blocs-col aide-corps">
+        <section data-partie="form">
+          <ol class="aide-etapes">
+            <li><b>Où ?</b> Choisissez le site (et si besoin le lieu et la baie). Ils restent choisis d'un ajout à l'autre.</li>
+            <li><b>Quoi ?</b> Le type (switch, caméra, serveur…), un nom et une IP. Pour un switch : ses ports RJ45 et SFP.</li>
+            <li><b>Branché sur</b> : le switch et son port. Seuls les ports libres sont proposés. Plusieurs caméras d'un coup : indiquez la quantité, puis un port par caméra.</li>
+            <li><b>Ajouter</b> : l'équipement apparaît sur la carte.</li>
+          </ol>
+          <p><b>Relier deux switchs</b>, deux bâtiments ou deux sites : bouton <b>＋ Câble</b>, puis les deux bouts et leurs ports.</p>
+          <p><b>Corriger</b> : cliquez l'équipement ou le câble sur la carte, puis <b>Modifier</b> ou <b>Supprimer</b>. Une erreur ? Le bouton <b>Annuler</b> du message en bas, ou <kbd>Ctrl</kbd>+<kbd>Z</kbd>.</p>
+          <p><b>Un Excel déjà rempli ?</b> <b>⇪ Importer un Excel</b> : l'outil reconnaît les colonnes (vous pouvez les corriger) et dessine la carte.</p>
+        </section>
+        <section data-partie="texte" hidden>
+          <h3>Écrire sa carte en texte, simplement</h3>
+          <p><b>Une ligne = un équipement</b> (ou un câble). Les morceaux sont séparés par <code>|</code>. Sous l'éditeur, l'outil <b>explique en français</b> la ligne où vous êtes.</p>
+          <p><b>Un site</b> — <code>site Lyon</code> : les lignes suivantes sont à Lyon. <b>Un lieu</b> — <code>lieu École Jaurès</code>.</p>
+          <p><b>Un switch</b> — <code>switch SW-1 | ip 10.0.0.2 | 24 ports | 4 sfp | baie A1</code></p>
+          <p><b>Une caméra branchée</b> — <code>camera CAM-1 | ip 10.0.30.11 | branchée sur SW-1 port 3 | vlan 30</code></p>
+          <p><b>Plusieurs caméras d'un coup</b> — <code>camera CAM x6 | ip 10.0.30.11 | branchées sur SW-1 port 3</code> → CAM-1 à CAM-6, ports 3 à 8, IP qui se suivent</p>
+          <p><b>Un câble entre deux switchs</b> — <code>câble SW-1 port 24 vers SW-2 port 24 | fibre | trunk | vlan 10,20</code></p>
+          <p><b>Types</b> — <code>switch</code> <code>camera</code> <code>passerelle</code> <code>parefeu</code> <code>borne</code> <code>nvr</code> <code>serveur</code> <code>nas</code> <code>poste</code> <code>imprimante</code> <code>telephone</code> <code>onduleur</code> <code>autre</code></p>
+          <p><b>Câbles</b> — <code>rj45</code> <code>fibre</code> <code>dac</code> <code>coax</code> <code>rs485</code> <code>usb</code> <code>radio</code> <code>vpn</code> · <b>Infos</b> — <code>modèle Cisco 9200</code>, <code>série FOC123</code>, <code>mac 00:11:22:AA:BB:CC</code>, <code>masque 255.255.255.0</code>, <code>passerelle 10.0.0.1</code></p>
+          <p><b>Écriture courte</b> (pour aller vite, elle marche aussi) — <code>camera CAM-1 | 10.0.30.11 | sur SW-1:3</code> · <code>SW-1:24 -> SW-2:24 | fibre</code> · <code>@Lyon/École</code> · <code>ports=24</code></p>
+          <p><b>Clavier</b> — les suggestions s'ouvrent seules ; <kbd>↑</kbd><kbd>↓</kbd> pour choisir, <kbd>Entrée</kbd> pour valider, <kbd>Ctrl</kbd>+<kbd>Espace</kbd> pour les rouvrir. <code>#</code> commence une note.</p>
+        </section>
+        <section data-partie="carte" hidden>
+          <p><b>Cliquez un équipement</b> : sa fiche s'ouvre (IP, emplacement, ports, câbles) et son <b>chemin jusqu'à la passerelle</b> s'allume en or. C'est le point de départ d'un dépannage.</p>
+          <p><b>Cliquez un câble</b> pour le modifier (bouts, ports, type, VLAN) ou le supprimer.</p>
+          <p><b>Chercher</b> : un nom ou une IP, puis <kbd>Entrée</kbd>. La carte va jusqu'à l'équipement.</p>
+          <p><b>Plan 2D</b> : molette pour zoomer, glisser pour se déplacer, double-clic pour zoomer, <b>Recentrer</b> pour tout revoir.</p>
+          <p><b>Baies</b> : la façade de chaque baie, U par U, avec les ports branchés.</p>
+          <p><b>Vue 3D</b> : glisser pour tourner, clic droit (ou <kbd>Maj</kbd> + glisser) pour se déplacer, molette pour zoomer. Cliquez le sol d'un site pour y entrer ; de près, les numéros de port s'affichent sur les câbles.</p>
+          <p><b>Couleurs</b> : apparence sombre, claire ou noir studio, couleur d'accent, couleurs des câbles et des équipements.</p>
+          <p><b>Fichiers</b> : PDF imprimable, visionneuse à envoyer (lecture seule), images, plan SVG, maquette 3D, sauvegarde. Tout reste sur ce poste : l'outil ne se connecte à rien.</p>
+        </section>
+        <section data-partie="clavier" hidden>
+          <table class="aide-touches">
+            <tr><td><kbd>Entrée</kbd></td><td>dans la recherche : aller à l'équipement</td></tr>
+            <tr><td><kbd>Échap</kbd></td><td>fermer la fiche ou une fenêtre</td></tr>
+            <tr class="edition"><td><kbd>Suppr</kbd></td><td>supprimer l'équipement choisi sur la carte</td></tr>
+            <tr class="edition"><td><kbd>Ctrl</kbd>+<kbd>Z</kbd></td><td>annuler le dernier changement fait par l'outil (hors d'un champ)</td></tr>
+            <tr class="edition"><td><kbd>↑</kbd> <kbd>↓</kbd> puis <kbd>Entrée</kbd></td><td>texte : choisir une suggestion</td></tr>
+            <tr class="edition"><td><kbd>Ctrl</kbd>+<kbd>Espace</kbd></td><td>texte : rouvrir les suggestions</td></tr>
+            <tr class="edition"><td><kbd>Tab</kbd></td><td>texte : décaler la ligne (bloc d'une baie)</td></tr>
+            <tr class="edition"><td><kbd>←</kbd> <kbd>→</kbd></td><td>sur la séparation : élargir ou réduire la saisie</td></tr>
+          </table>
+        </section>
+      </div>
+      <div class="boutons-col"><button value="ok" type="submit" class="primaire">Fermer</button></div>
+    </form>
+  </dialog>
 
   <script type="module" src="/src/main.ts"></script>
 </body>

@@ -71,6 +71,8 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
   ctrl.enableDamping = true;
   ctrl.maxPolarAngle = Math.PI * 0.49;
   ctrl.screenSpacePanning = true;
+  // Pas plus près que 3 unités du point visé : la molette ne fait plus traverser murs et baies.
+  ctrl.minDistance = 3;
 
   const ciel = new THREE.HemisphereLight(0xcfdcff, 0x0b0e14, 1.25);
   scene.add(ciel);
@@ -118,6 +120,15 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
   let racine = new THREE.Group();
   scene.add(racine);
   let jetables: { dispose(): void }[] = [];
+  /**
+   * Ce qui ne sert plus est libéré APRÈS la première image de la nouvelle
+   * scène : libéré avant, la carte graphique recompilerait tous ses programmes
+   * (plusieurs dixièmes de seconde à chaque modification d'un grand réseau).
+   */
+  let aJeter: { dispose(): void }[] = [];
+  /** Rendu à la demande : on ne redessine que si quelque chose a changé. */
+  let aRendre = true;
+  let etatVoyants = "";   // voyants allumés / éteints à la dernière image
   let cliquables: THREE.Object3D[] = [];
   const objets = new Map<string, THREE.Object3D>();
   let surbrillance: THREE.Box3Helper | null = null;
@@ -160,6 +171,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     img.onload = () => {
       canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
       tex.needsUpdate = true;
+      aRendre = true;
     };
     img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
     cacheTex.set(svg, { tex, vu: generation });
@@ -168,23 +180,25 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
 
   // Matériaux et formes réutilisés : un grand réseau compte des milliers de
   // boîtes identiques (oreilles, montants, caméras). Les recréer une à une
-  // coûtait plusieurs secondes à l'ouverture de la 3D.
-  let cacheMat = new Map<string, THREE.Material>();
-  let cacheGeo = new Map<string, THREE.BufferGeometry>();
+  // coûtait plusieurs secondes à l'ouverture de la 3D. Comme les textures, ils
+  // sont gardés d'une modification à l'autre (câbles compris, tant que leur
+  // tracé ne change pas) : modifier une ligne ne refait que ce qui a changé.
+  const cacheMat = new Map<string, { m: THREE.Material; vu: number }>();
+  const cacheGeo = new Map<string, { g: THREE.BufferGeometry; vu: number }>();
   const std = (c: string | number, o: Partial<THREE.MeshStandardMaterialParameters> = {}) => {
     const cle = `${c}|${JSON.stringify(o)}`;
-    let m = cacheMat.get(cle) as THREE.MeshStandardMaterial | undefined;
-    if (!m) {
-      m = new THREE.MeshStandardMaterial({ color: c, roughness: 0.55, metalness: 0.25, ...o });
-      jetables.push(m);
-      cacheMat.set(cle, m);
-    }
+    const deja = cacheMat.get(cle);
+    if (deja) { deja.vu = generation; return deja.m as THREE.MeshStandardMaterial; }
+    const m = new THREE.MeshStandardMaterial({ color: c, roughness: 0.55, metalness: 0.25, ...o });
+    cacheMat.set(cle, { m, vu: generation });
     return m;
   };
   const geo = <T extends THREE.BufferGeometry>(g: T) => { jetables.push(g); return g; };
   const geoPartagee = (cle: string, faire: () => THREE.BufferGeometry) => {
-    let g = cacheGeo.get(cle);
-    if (!g) { g = geo(faire()); cacheGeo.set(cle, g); }
+    const deja = cacheGeo.get(cle);
+    if (deja) { deja.vu = generation; return deja.g; }
+    const g = faire();
+    cacheGeo.set(cle, { g, vu: generation });
     return g;
   };
   const boite = (w: number, h: number, d: number, m: THREE.Material | THREE.Material[]) =>
@@ -201,9 +215,11 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
   }
 
   function cable(points: THREE.Vector3[], couleur: string, rayon: number, opacite = 1) {
-    const c = new THREE.CatmullRomCurve3(points, false, "centripetal");
     const m = std(couleur, { roughness: 0.7, metalness: 0, transparent: opacite < 1, opacity: opacite });
-    return new THREE.Mesh(geo(new THREE.TubeGeometry(c, Math.max(32, points.length * 14), rayon, 6, false)), m);
+    // Le tube est gardé tant que le tracé ne bouge pas (même points, même épaisseur).
+    const cle = `t${rayon}|${points.map((p) => `${p.x.toFixed(3)},${p.y.toFixed(3)},${p.z.toFixed(3)}`).join(";")}`;
+    return new THREE.Mesh(geoPartagee(cle, () =>
+      new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points, false, "centripetal"), Math.max(32, points.length * 14), rayon, 6, false)), m);
   }
 
   /* ---------- habillage des salles ---------- */
@@ -403,15 +419,14 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     generation++;
     racine.traverse((o) => { if (o instanceof CSS2DObject) o.element.remove(); });
     scene.remove(racine);
-    jetables.forEach((j) => j.dispose());
+    aJeter.push(...jetables);
     jetables = [];
-    cacheMat = new Map();
-    cacheGeo = new Map();
     cliquables = [];
     objets.clear();
     surbrillance = null;
     racine = new THREE.Group();
     scene.add(racine);
+    etatVoyants = "";
     voyants = [0x3ddc97, 0x3ddc97, 0xffd166].map((c) => {
       const m = new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 1 });
       jetables.push(m);
@@ -861,8 +876,11 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
 
     seuilTresLoin = Math.max(distancePour(PX_LOIN * 0.55), ...cadres.filter((c) => c.type === "site").map((c) => distanceCadrage(rectSite(c)) * 1.2));
 
-    // Les textures qui ne servent plus sont libérées.
-    cacheTex.forEach((v, k) => { if (v.vu !== generation) { v.tex.dispose(); cacheTex.delete(k); } });
+    // Textures, matériaux et formes qui ne servent plus : libérés après la prochaine image.
+    cacheTex.forEach((v, k) => { if (v.vu !== generation) { aJeter.push(v.tex); cacheTex.delete(k); } });
+    cacheMat.forEach((v, k) => { if (v.vu !== generation) { aJeter.push(v.m); cacheMat.delete(k); } });
+    cacheGeo.forEach((v, k) => { if (v.vu !== generation) { aJeter.push(v.g); cacheGeo.delete(k); } });
+    aRendre = true;
 
     emprise = new THREE.Box3().setFromObject(racine);
     if (emprise.isEmpty()) emprise = new THREE.Box3(new THREE.Vector3(-5, 0, -5), new THREE.Vector3(5, 1, 5));
@@ -884,7 +902,8 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     const c = emprise.getCenter(new THREE.Vector3());
     const s = emprise.getSize(new THREE.Vector3());
     const demiFov = THREE.MathUtils.degToRad(cam.fov / 2);
-    const besoin = Math.max(s.x / Math.max(cam.aspect, 0.3), s.z * 1.25, 10) / 2;
+    // Marge autour de la scène : les noms des sites et les murs restent dans le cadre.
+    const besoin = (Math.max(s.x / Math.max(cam.aspect, 0.3), s.z * 1.25, 10) / 2) * 1.18;
     const dist = (besoin / Math.tan(demiFov)) * 1.05;
     const cible = c.clone().setY(0);
     voler(cible, cible.clone().add(new THREE.Vector3(0.05, 0.62, 0.78).normalize().multiplyScalar(dist)), premier);
@@ -895,6 +914,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
   let premier = true;
   let vol: { t0: number; c0: THREE.Vector3; c1: THREE.Vector3; p0: THREE.Vector3; p1: THREE.Vector3 } | null = null;
   function voler(cible: THREE.Vector3, position: THREE.Vector3, immediat = false) {
+    aRendre = true;
     if (immediat) { ctrl.target.copy(cible); cam.position.copy(position); ctrl.update(); vol = null; return; }
     vol = { t0: performance.now(), c0: ctrl.target.clone(), c1: cible.clone(), p0: cam.position.clone(), p1: position.clone() };
   }
@@ -951,6 +971,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     etiq.setSize(w, h);
     cam.aspect = w / h;
     cam.updateProjectionMatrix();
+    aRendre = true;
   };
   new ResizeObserver(taille).observe(hote);
   taille();
@@ -961,6 +982,11 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     if (t && (t.tagName === "TEXTAREA" || t.tagName === "INPUT")) derniereFrappe = performance.now();
   }, true);
 
+  // Rendu à la demande : la carte graphique reste au repos tant que rien ne
+  // bouge (pas de ventilateur qui s'emballe, rien ne ralentit le reste).
+  // On redessine quand la vue bouge, quand la scène ou la sélection change,
+  // et au rythme des voyants quand on est assez près pour les voir.
+  ctrl.addEventListener("change", () => { aRendre = true; });
   rnd.setAnimationLoop(() => {
     if (!hote.offsetParent) return; // onglet caché : on ne dessine rien
     // Pendant la frappe, la 3D se met en pause (la dernière image reste) :
@@ -972,22 +998,37 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
       ctrl.target.lerpVectors(vol.c0, vol.c1, k);
       cam.position.lerpVectors(vol.p0, vol.p1, k);
       if (t >= 1) vol = null;
+      aRendre = true;
     }
-    ctrl.update();
+    ctrl.update();   // l'inertie de la souris (et signale « change » si la vue bouge)
     // Vue d'ensemble : pastilles des caméras et noms de sites ; en zoomant,
     // la 3D détaillée et les noms d'équipements prennent le relais.
-    const tps = performance.now() / 1000;
-    voyants.forEach((m, i) => { m.emissiveIntensity = Math.sin(tps * (2.1 + i * 1.7) + i * 2) > -0.2 ? 1.4 : 0.15; });
     const dist = cam.position.distanceTo(ctrl.target);
     const loin = pxParUnite(dist) < PX_LOIN;
+    if (!loin) {
+      // Les voyants clignotent : une image seulement quand l'un d'eux change.
+      const tps = performance.now() / 1000;
+      const allumes = voyants.map((_, i) => Math.sin(tps * (2.1 + i * 1.7) + i * 2) > -0.2);
+      const cle = allumes.join();
+      if (cle !== etatVoyants) {
+        etatVoyants = cle;
+        voyants.forEach((m, i) => { m.emissiveIntensity = allumes[i] ? 1.4 : 0.15; });
+        aRendre = true;
+      }
+    }
+    if (!aRendre) return;
+    aRendre = false;
     apercu.visible = loin;
     etiq.domElement.classList.toggle("loin", loin);
     // Très loin (plusieurs sites à l'écran) : un résumé par site, rien d'autre.
     etiq.domElement.classList.toggle("tres-loin", dist > seuilTresLoin);
     // Tout près d'une baie : les numéros de port sur les câbles.
     etiq.domElement.classList.toggle("proche", pxParUnite(dist) > PX_LOIN * 9);
+    // Assez près pour lire les noms des caméras sans qu'ils se chevauchent.
+    etiq.domElement.classList.toggle("pres", pxParUnite(dist) > PX_LOIN * 4);
     rnd.render(scene, cam);
     etiq.render(scene, cam);
+    if (aJeter.length) { aJeter.forEach((j) => j.dispose()); aJeter = []; }
   });
 
   async function exporterGLB(): Promise<Blob> {
@@ -1027,6 +1068,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
       return new Promise((ok) => rnd.domElement.toBlob((b) => ok(b), "image/png"));
     },
     selectionner(nom, centrer = false) {
+      aRendre = true;
       if (surbrillance) { racine.remove(surbrillance); surbrillance.dispose(); surbrillance = null; }
       eteindreChemin();
       if (!nom) return;

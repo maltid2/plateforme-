@@ -88,7 +88,7 @@ function dessinerFacade(g: SVGGElement, e: Equipement, f: Facade, inv: Inventair
   const modele = e.infos[0] ?? (e.genre === "switch" ? "Switch" : e.genre === "parefeu" ? "Pare-feu" : "Passerelle");
   texte(g, court(modele.toUpperCase(), 22), { x: x0 + 0.34, y: y0 + 0.46, "font-size": 0.21, fill: "#8B98A8", "font-weight": 700, "letter-spacing": 0.02 });
   texte(g, court(e.nom, 13), { x: x0 + 0.34, y: y0 + 0.98, "font-size": 0.42, fill: "#F5F7FA", "font-weight": 800 });
-  texte(g, e.ip ?? "IP non renseignée", { x: x0 + 0.34, y: y0 + 1.38, "font-size": 0.27, fill: e.ip ? "#B9C3CF" : "#6B7A8C",
+  texte(g, e.ip ?? "sans IP", { x: x0 + 0.34, y: y0 + 1.38, "font-size": 0.27, fill: e.ip ? "#B9C3CF" : "#6B7A8C",
     "font-family": "ui-monospace, monospace" });
   // Voyants d'état.
   [0, 1].forEach((k) => el("circle", { cx: x0 + 0.4 + k * 0.2, cy: y0 + 1.7, r: 0.055, fill: "#3DDC97" }, g));

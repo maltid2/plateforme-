@@ -3,6 +3,7 @@ import { disposer, type Disposition } from "./disposition.ts";
 import { creerEditeur } from "./editeur.ts";
 import { cheminPasserelle, lirePort } from "./facade.ts";
 import { elevations } from "./elevation.ts";
+import { confirmer, demander, informer } from "./boites.ts";
 import { creerFormulaire } from "./formulaire.ts";
 import { expliquer } from "./explication.ts";
 import { colonnesDe, lireTableur, modeleCsv, SENS, tableurVersTexte, type Feuille, type Sens } from "./tableur.ts";
@@ -138,6 +139,7 @@ function mode(m: "form" | "texte") {
   $("m-form").setAttribute("aria-selected", String(m === "form"));
   $("m-texte").setAttribute("aria-selected", String(m === "texte"));
   $("formulaire").hidden = m !== "form";
+  if (m === "form" && formulairePerime) { formulairePerime = false; formulaire.actualiser(); }
   $("editeur").hidden = m !== "texte";
   $("modeles").hidden = m !== "texte";
   $("explication").hidden = m !== "texte";
@@ -217,7 +219,7 @@ function ouvrirTopologie(id: string) {
   listerTopologies();
   recalculer();
   maj3D(true);
-  plan.cadrer();
+  cadrerPlan();
   v3?.cadrer();
 }
 function creer(nom: string, texte: string) {
@@ -226,20 +228,22 @@ function creer(nom: string, texte: string) {
   ouvrirTopologie(t.id);
 }
 selTopo.addEventListener("change", () => ouvrirTopologie(selTopo.value));
-$("t-nouvelle").addEventListener("click", () => {
-  const nom = prompt("Nom de la nouvelle topologie :", "Nouvelle topologie");
-  if (nom?.trim()) creer(nom.trim(), "# Écrivez vos équipements ici. Commencez par :  site NOM\n\n");
-  editeur.focus();
+$("t-nouvelle").addEventListener("click", async () => {
+  fermerMenu();
+  const nom = await demander({ titre: "Nouvelle topologie", texte: "Une carte de plus : un client, un site, un projet…", valeur: "Nouvelle topologie", ok: "Créer" });
+  if (nom) creer(nom, "");
 });
-$("t-renommer").addEventListener("click", () => {
-  const nom = prompt("Nouveau nom :", active().nom);
-  if (!nom?.trim()) return;
-  active().nom = nom.trim();
+$("t-renommer").addEventListener("click", async () => {
+  fermerMenu();
+  const nom = await demander({ titre: "Renommer la topologie", valeur: active().nom, ok: "Renommer" });
+  if (!nom) return;
+  active().nom = nom;
   enregistrer(); listerTopologies();
 });
-$("t-dupliquer").addEventListener("click", () => creer(`${active().nom} (copie)`, active().texte));
-$("t-supprimer").addEventListener("click", () => {
-  if (!confirm(`Supprimer la topologie « ${active().nom} » ?\n\nCette action est définitive (sauf si vous avez une sauvegarde .json).`)) return;
+$("t-dupliquer").addEventListener("click", () => { fermerMenu(); creer(`${active().nom} (copie)`, active().texte); });
+$("t-supprimer").addEventListener("click", async () => {
+  fermerMenu();
+  if (!(await confirmer({ titre: `Supprimer « ${active().nom} » ?`, texte: "Toute cette topologie est effacée de ce poste. C'est définitif, sauf si vous en avez une sauvegarde (.json).", ok: "Supprimer", danger: true }))) return;
   classeur.topologies = classeur.topologies.filter((t) => t.id !== classeur.active);
   if (!classeur.topologies.length) classeur.topologies.push(projets.nouvelle("Nouvelle topologie", ""));
   ouvrirTopologie(classeur.topologies[0].id);
@@ -247,6 +251,8 @@ $("t-supprimer").addEventListener("click", () => {
 
 /* ---------------- rendu ---------------- */
 
+const dernieresCles = { sites: "", noms: "", alertes: "\u0000" };
+let formulairePerime = false;
 function recalculer() {
   inv = analyser(editeur.valeur);
   disp = disposer(inv);
@@ -254,9 +260,18 @@ function recalculer() {
   if (choisi && !inv.equipements.some((e) => e.nom === choisi)) choisi = null;
 
   filtre.hidden = inv.sites.length < 2;   // un seul site : rien à filtrer
-  filtre.replaceChildren(new Option(`Tous les sites (${inv.sites.length})`, ""),
-    ...inv.sites.map((s) => new Option(s.nom, s.nom, false, s.nom === site)));
-  $("noms").replaceChildren(...inv.equipements.map((e) => new Option(e.nom, e.ip ? `${e.nom}` : e.nom)));
+  // Listes refaites seulement si elles changent (grand réseau : chaque frappe compte).
+  const cleSites = inv.sites.map((s) => s.nom).join("\n") + "\n" + (site ?? "");
+  if (cleSites !== dernieresCles.sites) {
+    dernieresCles.sites = cleSites;
+    filtre.replaceChildren(new Option(`Tous les sites (${inv.sites.length})`, ""),
+      ...inv.sites.map((s) => new Option(s.nom, s.nom, false, s.nom === site)));
+  }
+  const cleNoms = inv.equipements.map((e) => e.nom).join("\n");
+  if (cleNoms !== dernieresCles.noms) {
+    dernieresCles.noms = cleNoms;
+    $("noms").replaceChildren(...inv.equipements.map((e) => new Option(e.nom)));
+  }
 
   const err = inv.alertes.filter((a) => a.niveau === "erreur").length;
   const att = inv.alertes.length - err;
@@ -266,7 +281,8 @@ function recalculer() {
     + (err ? ` · <span class="e">${err} erreur${err > 1 ? "s" : ""}</span>` : "")
     + (att ? ` · <span class="a">${att} remarque${att > 1 ? "s" : ""}</span>` : "")
     + (!err && !att && inv.equipements.length ? ` · <span class="ok">tout est relié ✓</span>` : "");
-  listeAlertes.replaceChildren(...inv.alertes.map((a) => {
+  const cleAlertes = inv.alertes.map((a) => `${a.ligne}|${a.niveau}|${a.msg}`).join("\n");
+  if (cleAlertes !== dernieresCles.alertes) listeAlertes.replaceChildren(...inv.alertes.map((a) => {
     const li = document.createElement("li");
     li.className = a.niveau;
     li.innerHTML = `<span class="n">L.${a.ligne}</span><span class="p">●</span><span></span>`;
@@ -275,8 +291,11 @@ function recalculer() {
     li.addEventListener("click", () => editeur.allerLigne(a.ligne));
     return li;
   }));
+  dernieresCles.alertes = cleAlertes;
   editeur.alertes(inv.alertes);
-  formulaire.actualiser();
+  // Formulaire caché (onglet Texte) : remis à jour quand on y revient.
+  if ($("formulaire").hidden) formulairePerime = true;
+  else { formulairePerime = false; formulaire.actualiser(); }
 
   const presents = new Set(inv.equipements.map((e) => e.genre));
   legende.replaceChildren(...(Object.keys(APPARENCE) as Genre[]).filter((g) => presents.has(g)).map((g) => {
@@ -306,11 +325,24 @@ function recalculer() {
 function dessiner() {
   // Carte vide : un accueil avec les trois façons de commencer.
   $("accueil").hidden = !!inv.equipements.length || !!EMBARQUE;
-  plan.afficher(inv, disp, site);
-  plan.selectionner(choisi);
+  planPerime = true;
+  if (vue === "2d") planAJour();
   if (vue === "baies") dessinerBaies();
   maj3D();
 }
+/**
+ * Le plan 2D n'est redessiné que s'il est affiché : en 3D ou dans les baies,
+ * il l'est au retour sur l'onglet 2D, ou juste avant un export.
+ */
+let planPerime = false, planACadrer = false;
+function planAJour() {
+  if (!planPerime) return;
+  planPerime = false;
+  plan.afficher(inv, disp, site);
+  plan.selectionner(choisi);
+  if (planACadrer) { planACadrer = false; plan.cadrer(); }
+}
+function cadrerPlan() { if (planPerime) planACadrer = true; else plan.cadrer(); }
 
 /* ---------------- fiche ---------------- */
 
@@ -518,6 +550,7 @@ async function montrer(v: "2d" | "3d" | "baies") {
   hote2d.hidden = v !== "2d";
   hote3d.hidden = v !== "3d";
   $("hote-baies").hidden = v !== "baies";
+  if (v === "2d") planAJour();   // rattrape les changements faits pendant que le plan était caché
   if (v === "baies") dessinerBaies();
   $("l-cams").hidden = v === "2d";   // où poser les caméras : 3D et baies
   legende.hidden = v === "baies";      // les baies ne dessinent pas de câbles
@@ -537,7 +570,7 @@ async function montrer(v: "2d" | "3d" | "baies") {
 
 /* ---------------- événements ---------------- */
 
-filtre.addEventListener("change", () => { site = filtre.value || null; dessiner(); maj3D(true); plan.cadrer(); v3?.cadrer(); });
+filtre.addEventListener("change", () => { site = filtre.value || null; dessiner(); maj3D(true); cadrerPlan(); v3?.cadrer(); });
 // Recherche : à la validation (Entrée, même pour relancer la même recherche)
 // ou au choix dans la liste ; un message si rien ne correspond.
 let derniereRecherche = "";
@@ -560,10 +593,21 @@ $("v-3d").addEventListener("click", () => montrer("3d"));
 $("v-baies").addEventListener("click", () => montrer("baies"));
 $<HTMLSelectElement>("o-cams").addEventListener("change", () => { if (vue === "baies") dessinerBaies(); });
 $("b-cadrer").addEventListener("click", () => (vue === "2d" ? plan.cadrer(false) : v3?.cadrer()));
-$("b-aide").addEventListener("click", (e) => {
-  const aide = $("aide");
-  aide.hidden = !aide.hidden;
-  (e.currentTarget as HTMLElement).setAttribute("aria-expanded", String(!aide.hidden));
+/* Aide : une fenêtre, un onglet par usage, ouverte sur le mode en cours. */
+const aide = $<HTMLDialogElement>("aide");
+function ongletAide(k: string) {
+  aide.querySelectorAll<HTMLButtonElement>("[data-aide]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.aide === k)));
+  aide.querySelectorAll<HTMLElement>("[data-partie]").forEach((p) => { p.hidden = p.dataset.partie !== k; });
+}
+aide.addEventListener("click", (e) => {
+  if (e.target === aide) { aide.close(); return; }   // clic à côté : on ferme
+  const b = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-aide]");
+  if (b) ongletAide(b.dataset.aide!);
+});
+if (EMBARQUE) aide.querySelectorAll<HTMLElement>('[data-aide="form"], [data-aide="texte"]').forEach((b) => { b.hidden = true; });
+$("b-aide").addEventListener("click", () => {
+  ongletAide(EMBARQUE ? "carte" : $("formulaire").hidden ? "texte" : "form");
+  aide.showModal();
 });
 document.addEventListener("keydown", (e) => {
   const saisie = /^(TEXTAREA|INPUT|SELECT)$/.test(document.activeElement?.tagName ?? "") || !!document.querySelector("dialog[open]");
@@ -613,15 +657,17 @@ $("b-sauvegarde").addEventListener("click", () => { fermerMenu(); telecharger(`t
 const auteur = () => (EMBARQUE ? EMBARQUE.auteur ?? "" : projets.lireAuteur());
 function afficherSignature() {
   const b = $<HTMLButtonElement>("b-signature");
-  b.textContent = `Signature des documents : ${auteur() || "—"}`;
+  b.textContent = `Signature des documents : ${auteur() || "aucune"}`;
   b.hidden = !!EMBARQUE;
   b.disabled = !!EMBARQUE;
 }
-$("b-signature").addEventListener("click", () => {
-  const v = prompt("Signature apposée sur les documents (PDF, plans, visionneuse) :", projets.lireAuteur());
+$("b-signature").addEventListener("click", async () => {
+  fermerMenu();
+  const v = await demander({ titre: "Signature des documents", texte: "Écrite sur les PDF, les plans et les visionneuses. Laissez vide pour ne rien signer.", valeur: projets.lireAuteur(), ok: "Enregistrer", vide: true });
   if (v === null) return;
   projets.ecrireAuteur(v.replace(/[<>]/g, "").slice(0, 60));
   afficherSignature();
+  notifier(v ? `Les documents seront signés « ${projets.lireAuteur()} ».` : "Les documents ne seront plus signés.");
 });
 afficherSignature();
 $("b-restaurer").addEventListener("click", () => { fermerMenu(); $("f-json").click(); });
@@ -632,8 +678,8 @@ $<HTMLInputElement>("f-json").addEventListener("change", async (e) => {
   try {
     const { ajoutees } = projets.importer(classeur, await f.text());
     enregistrer(); listerTopologies();
-    alert(ajoutees ? `${ajoutees} topologie${ajoutees > 1 ? "s" : ""} ajoutée${ajoutees > 1 ? "s" : ""}.` : "Rien de nouveau dans ce fichier.");
-  } catch (err) { alert((err as Error).message || "Fichier illisible."); }
+    notifier(ajoutees ? `${ajoutees} topologie${ajoutees > 1 ? "s" : ""} ajoutée${ajoutees > 1 ? "s" : ""} (menu des topologies).` : "Rien de nouveau dans ce fichier : ces topologies sont déjà là.");
+  } catch (err) { void informer("Sauvegarde illisible", (err as Error).message || "Ce fichier n'est pas une sauvegarde de l'outil (.json)."); }
 });
 $("b-enregistrer").addEventListener("click", () => { fermerMenu(); telecharger(`${nomFichier(active().nom)}.txt`, editeur.valeur, "text/plain;charset=utf-8"); });
 $("b-ouvrir").addEventListener("click", () => { fermerMenu(); $("f-txt").click(); });
@@ -655,16 +701,16 @@ $<HTMLInputElement>("f-tableur").addEventListener("change", async (e) => {
     const corrections = await choisirColonnes(feuilles);
     if (!corrections) return;
     const r = tableurVersTexte(feuilles, corrections);
-    if (!r.equipements) { alert("Aucun équipement trouvé : vérifiez que la colonne « Nom » est remplie."); return; }
+    if (!r.equipements) { void informer("Aucun équipement trouvé", "Vérifiez que la colonne « Nom » est remplie, puis réessayez."); return; }
     creer(f.name.replace(/\.(xlsx|xls|csv|txt)$/i, ""), r.texte);
     const nb = inv.alertes.filter((a) => a.niveau === "erreur").length;
     const pl = (n: number, mot: string) => `${n} ${mot}${n > 1 ? "s" : ""}`;
-    alert(`${pl(r.equipements, "équipement")} et ${pl(r.liaisons, "câble")} importés dans une nouvelle topologie « ${active().nom} ».`
+    void informer("Tableau importé", `${pl(r.equipements, "équipement")} et ${pl(r.liaisons, "câble")} dans une nouvelle topologie « ${active().nom} ».`
       + (r.onglets.length > 1 ? `\n\nOnglets :\n${r.onglets.map((o) => `  • ${o.nom} : ${o.lu}`).join("\n")}` : "")
       + (r.ignorees ? `\n\n${pl(r.ignorees, "ligne")} sans nom ou en double ignorée${r.ignorees > 1 ? "s" : ""}.` : "")
       + (r.manquantes.length ? `\nColonnes absentes (facultatives) : ${r.manquantes.map((c) => LIBELLE_COLONNE[c] ?? c).join(", ")}.` : "")
-      + (nb ? `\n${nb} point${nb > 1 ? "s" : ""} à corriger : voir la liste sous la saisie.` : ""));
-  } catch (err) { alert((err as Error).message || "Fichier illisible."); }
+      + (nb ? `\n${pl(nb, "point")} à corriger : voir la liste sous la saisie.` : ""));
+  } catch (err) { void informer("Fichier illisible", (err as Error).message || "Ce fichier ne peut pas être lu. Enregistrez-le en .xlsx ou .csv, puis réessayez."); }
 });
 /* ---------- couleurs ---------- */
 const fondDefaut = () => (couleurs.theme === "studio" ? "#000000" : couleurs.theme === "clair" ? "#f5f7fa" : "#07090d");
@@ -765,9 +811,10 @@ function choisirColonnes(feuilles: Feuille[]): Promise<Map<string, Sens> | null>
         <td class="ex-col">${c.exemples.filter(Boolean).map(esc).join(" · ") || "—"}</td>
         <td><select data-cle="${esc(c.cle)}">${SENS.map(([v, t]) => `<option value="${v}"${v === c.sens ? " selected" : ""}>${t}</option>`).join("")}</select></td></tr>`).join("")}
       </tbody></table></section>`).join("")}</div>
-    <div class="boutons-col"><button value="annuler" type="submit">Annuler</button><button value="ok" type="submit" class="primaire">Importer</button></div>
+    <div class="boutons-col"><button type="button" data-fermer>Annuler</button><button value="ok" type="submit" class="primaire">Importer</button></div>
   </form>`;
   document.body.append(d);
+  d.addEventListener("click", (ev) => { if ((ev.target as Element).closest("[data-fermer]")) d.close("annuler"); });
   d.addEventListener("change", (ev) => {
     const sel = ev.target as HTMLSelectElement;
     const cle = sel.dataset.cle;
@@ -792,7 +839,7 @@ function choisirColonnes(feuilles: Feuille[]): Promise<Map<string, Sens> | null>
   });
 }
 const LIBELLE_COLONNE: Record<string, string> = { type: "Type", ip: "IP", site: "Site", vers: "Branché sur", port: "Port" };
-$("b-svg").addEventListener("click", () => { fermerMenu(); telecharger(`${nomFichier(active().nom)}-plan.svg`, plan.exporter(true, auteur()), "image/svg+xml"); });
+$("b-svg").addEventListener("click", () => { fermerMenu(); planAJour(); telecharger(`${nomFichier(active().nom)}-plan.svg`, plan.exporter(true, auteur()), "image/svg+xml"); });
 $("b-png").addEventListener("click", async () => {
   fermerMenu();
   if (vue === "3d" && v3) {
@@ -802,6 +849,7 @@ $("b-png").addEventListener("click", async () => {
     return;
   }
   // Le plan 2D est rasterisé en local, sans rien envoyer.
+  planAJour();
   const svg = plan.exporter(true, auteur());
   const img = new Image();
   img.onload = () => {
@@ -812,7 +860,7 @@ $("b-png").addEventListener("click", async () => {
   };
   img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
 });
-$("b-pdf").addEventListener("click", () => { fermerMenu(); imprimer(inv, plan.exporter(true), active().nom, site,
+$("b-pdf").addEventListener("click", () => { fermerMenu(); planAJour(); imprimer(inv, plan.exporter(true), active().nom, site,
   elevations(inv, disp, { site, clair: true, camerasEnBaie: $<HTMLSelectElement>("o-cams").value === "baie" }), auteur()); });
 $("b-glb").addEventListener("click", async () => {
   fermerMenu();
@@ -840,5 +888,9 @@ plan.cadrer();
 try { if (localStorage.getItem("carte-reseau:mode") === "texte" && !EMBARQUE) mode("texte"); } catch { /* sans importance */ }
 if (EMBARQUE) {
   document.title = `${EMBARQUE.nom} · Topologie réseau v1 (lecture seule)`;
-  $("etat").insertAdjacentHTML("afterbegin", `<span class="e">Lecture seule</span> · exporté le ${new Date(EMBARQUE.exporte).toLocaleString("fr-FR")}${EMBARQUE.auteur ? ` par ${EMBARQUE.auteur.replace(/[<>&]/g, "")}` : ""} · `);
+  // Bandeau visible dans la barre du haut : on sait tout de suite qu'on regarde une copie figée.
+  const bandeau = document.createElement("span");
+  bandeau.className = "bandeau-lecture";
+  bandeau.textContent = `Lecture seule · exportée le ${new Date(EMBARQUE.exporte).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" })}${EMBARQUE.auteur ? ` · établie par ${EMBARQUE.auteur}` : ""}`;
+  document.querySelector(".marque")?.append(bandeau);
 }

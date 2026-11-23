@@ -40,7 +40,7 @@ button.danger:hover { border-color: rgba(255, 91, 91, 0.6); color: #ffb3b3; }
 :focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
 code, kbd { font-family: var(--mono); font-size: 12px; background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 5px; }
 kbd { border: 1px solid var(--trait); }
-.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.sr { position: fixed; top: 0; left: 0; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }   /* invisible, et sans agrandir la page */
 
 /* ---------- barre ---------- */
 .barre {
@@ -81,10 +81,20 @@ body.redim iframe, body.redim canvas, body.redim svg { pointer-events: none; }
   .separateur { display: none; }
 }
 .saisie { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--trait); background: var(--bg); }
-.aide { padding: 10px 16px 12px; border-bottom: 1px solid var(--trait); font-size: 12.5px; color: var(--sourd); max-height: 46%; overflow: auto; background: var(--bg2); }
-.aide h2 { margin: 2px 0 6px; font-size: 13px; color: var(--encre); }
-.aide p { margin: 5px 0; }
-.aide b { color: var(--encre); }
+/* Aide : une fenêtre à onglets */
+dialog.aide-fenetre { width: min(760px, 94vw); }
+.aide-onglets { margin: 8px 20px 4px; align-self: flex-start; }
+.aide-corps { font-size: 13.5px; line-height: 1.55; color: var(--sourd); padding-bottom: 14px; }
+.aide-corps section { padding-top: 6px; }
+.aide-corps h3 { color: var(--encre); font-size: 14px; margin: 8px 0 6px; }
+.aide-corps p { margin: 8px 0; }
+.aide-corps b { color: var(--encre); }
+.aide-etapes { margin: 6px 0 10px; padding-left: 22px; }
+.aide-etapes li { margin: 6px 0; }
+.aide-touches { width: 100%; border-collapse: collapse; }
+.aide-touches td { padding: 7px 8px; border-bottom: 1px solid var(--trait); vertical-align: top; }
+.aide-touches td:first-child { white-space: nowrap; width: 1%; padding-right: 18px; }
+body.lecture .aide-touches .edition { display: none; }
 
 /* ---------- éditeur ---------- */
 .editeur {
@@ -294,10 +304,14 @@ button.primaire:hover { background: var(--acc-clair); }
 /* ---------- visionneuse (lecture seule) ---------- */
 body.lecture .saisie, body.lecture #t-nouvelle, body.lecture #t-renommer, body.lecture #t-dupliquer, body.lecture #t-supprimer,
 body.lecture #b-sauvegarde, body.lecture #b-restaurer, body.lecture #b-enregistrer, body.lecture #b-ouvrir, body.lecture #b-exemple,
-body.lecture #b-visionneuse, body.lecture #b-aide, body.lecture .menu-corps hr, body.lecture .fiche .modifier { display: none; }
+body.lecture #b-visionneuse, body.lecture .menu-corps hr, body.lecture .fiche .modifier { display: none; }
 body.lecture .atelier { grid-template-columns: 1fr; }
 body.lecture .separateur { display: none; }
-body.lecture .local::after { content: " · lecture seule"; }
+/* La visionneuse : on regarde, on cherche, on exporte ; on ne modifie rien. */
+body.lecture .menu-topo, body.lecture #b-tableur, body.lecture #b-modele-tableur, body.lecture #b-signature { display: none; }
+/* Visionneuse : une seule topologie, son nom s'affiche comme un titre (pas de liste). */
+body.lecture #topologie { appearance: none; -webkit-appearance: none; border: 0; background: transparent; font-weight: 700; padding-right: 4px; pointer-events: none; }
+.bandeau-lecture { margin-left: 10px; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; color: #92400e; background: #fef3c7; border: 1px solid #fcd34d; white-space: nowrap; }
 
 /* ---------- impression / PDF ---------- */
 #impression { display: none; }
@@ -481,6 +495,15 @@ dialog.colonnes h2 { margin: 0; padding: 16px 20px 4px; font-size: 17px; }
 tr.col-info td:first-child b { color: var(--sourd); }
 tr.col-ignoree td { opacity: 0.5; }
 .boutons-col { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px 16px; border-top: 1px solid rgba(255,255,255,0.08); }
+/* Petites fenêtres (à la place de alert / prompt / confirm du navigateur) */
+dialog.boite { width: min(480px, 92vw); }
+dialog.boite h2 { padding-bottom: 8px; }
+dialog.boite .blocs-col { padding-bottom: 16px; }
+.boite-texte { white-space: pre-line; line-height: 1.5; color: var(--encre); opacity: 0.86; padding-bottom: 16px; }
+.erreur-col { margin: 10px 0 0; color: #FF8A8A; font-weight: 600; font-size: 13px; }
+.theme-clair .erreur-col { color: #C62828; }
+button.danger.plein { background: #DC2626; border-color: #DC2626; color: #fff; font-weight: 700; }
+button.danger.plein:hover { background: #EF4444; color: #fff; }
 /* Numéro de port sur un câble, en 3D : petit, n'apparaît qu'en zoomant. */
 .etiquette3d.port { font-size: 9px; font-weight: 700; padding: 0 3px; line-height: 13px; border: 1px solid #4FC3F7; background: rgba(7, 9, 13, 0.9); color: #F5F7FA; border-radius: 4px; font-family: ui-monospace, monospace; }
 .etiquette3d.port { display: none; }
@@ -689,3 +712,6 @@ body.theme-clair {
 .toast button { background: transparent; border: 1px solid rgba(255, 255, 255, 0.3); color: var(--acc-clair); font-weight: 700; padding: 5px 12px; }
 .toast button:hover { border-color: var(--acc); }
 .f-ou .f-ligne { align-items: flex-end; }
+/* 3D : les noms des caméras n'apparaissent que de près (sinon ils se chevauchent) */
+.etiquette3d.petite { display: none; }
+.pres .etiquette3d.petite { display: block; }

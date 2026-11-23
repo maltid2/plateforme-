@@ -84,6 +84,7 @@ export function creerEditeur(racine: HTMLElement, contexte: Contexte, surChange:
   const ta = racine.querySelector<HTMLTextAreaElement>("textarea")!;
   const liste = racine.querySelector<HTMLUListElement>(".suggestions")!;
   let alertes: Alerte[] = [];
+  let cleAlertes = "\u0000";
   let sugg: Suggestion[] = [];
   let choix = 0;
 
@@ -104,9 +105,12 @@ export function creerEditeur(racine: HTMLElement, contexte: Contexte, surChange:
     }).join("");
     synchro();
   }
+  // Défilement mémorisé à chaque « scroll » : le relire juste après avoir
+  // recoloré le texte forçait le navigateur à tout remettre en page (lent).
+  let defX = 0, defY = 0;
   function synchro() {
-    pre.style.transform = `translate(${-ta.scrollLeft}px, ${-ta.scrollTop}px)`;
-    gouttiere.style.transform = `translateY(${-ta.scrollTop}px)`;
+    pre.style.transform = `translate(${-defX}px, ${-defY}px)`;
+    gouttiere.style.transform = `translateY(${-defY}px)`;
   }
 
   /* ---------- suggestions ---------- */
@@ -239,7 +243,7 @@ export function creerEditeur(racine: HTMLElement, contexte: Contexte, surChange:
   const signalerCurseur = () => auCurseur?.(ta.value.slice(0, ta.selectionStart).split("\n").length);
   ["keyup", "click", "focus", "select"].forEach((t) => ta.addEventListener(t, signalerCurseur));
   ta.addEventListener("input", () => { changer(); montrer(); signalerCurseur(); });
-  ta.addEventListener("scroll", () => { synchro(); if (!liste.hidden) placerListe(); });
+  ta.addEventListener("scroll", () => { defX = ta.scrollLeft; defY = ta.scrollTop; synchro(); if (!liste.hidden) placerListe(); });
   ta.addEventListener("blur", () => setTimeout(fermer, 120));
   ta.addEventListener("click", fermer);
   ta.addEventListener("keydown", (e) => {
@@ -265,8 +269,15 @@ export function creerEditeur(racine: HTMLElement, contexte: Contexte, surChange:
 
   return {
     get valeur() { return ta.value; },
-    definir(v: string) { ta.value = v; ta.scrollTop = 0; peindre(); },
-    alertes(a: Alerte[]) { alertes = a; peindre(); },
+    definir(v: string) { ta.value = v; ta.scrollTop = 0; defX = defY = 0; peindre(); },
+    alertes(a: Alerte[]) {
+      // Mêmes remarques qu'avant : le texte a déjà été recoloré à la frappe.
+      const cle = a.map((x) => `${x.ligne}|${x.niveau}|${x.msg}`).join("\n");
+      if (cle === cleAlertes) return;
+      cleAlertes = cle;
+      alertes = a;
+      peindre();
+    },
     allerLigne(n: number) {
       const lignes = ta.value.split("\n");
       const debut = lignes.slice(0, n - 1).reduce((t, l) => t + l.length + 1, 0);

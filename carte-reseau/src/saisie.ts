@@ -439,7 +439,7 @@ export function analyser(texte: string): Inventaire {
     const e = parNom.get(simple(motif));
     return e ? [e] : [];
   };
-  const portsPris = new Map<string, number>();
+  const portsPris = new Map<string, { par: string }>();
 
   /** Nom inconnu : on propose le nom le plus proche (faute de frappe, tiret oublié…). */
   const inconnu = (nom: string) => {
@@ -495,8 +495,10 @@ export function analyser(texte: string): Inventaire {
             msg: `Le port ${port} n'existe pas sur ${eq} : ${borne} ${lu.type === "sfp" ? "cages SFP" : "ports RJ45"} déclarés.` });
         const cle = `${simple(eq)}:${simple(port)}`;
         const deja = portsPris.get(cle);
-        if (deja) alertes.push({ ligne: r.ligne, niveau: "attention", msg: `Port ${port} de ${eq} déjà utilisé (ligne ${deja}).` });
-        else portsPris.set(cle, r.ligne);
+        // On nomme les deux équipements en conflit : c'est ce qu'on cherche sur le terrain.
+        const par = eq === l.a ? l.b : l.a;
+        if (deja) alertes.push({ ligne: r.ligne, niveau: "attention", msg: `Port ${port} de ${eq} déjà utilisé par ${deja.par} : ${par} doit aller sur un autre port.` });
+        else portsPris.set(cle, { par });
       }
       liaisons.push(l);
     }

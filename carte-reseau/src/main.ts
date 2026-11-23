@@ -122,12 +122,12 @@ const formulaire = creerFormulaire($("formulaire"), {
 /* ---------------- la ligne du curseur, expliquée en français ---------------- */
 const boiteExplication = $("explication");
 function expliquerLigne(n = editeur.ligneCurseur()) {
-  const { sens, alertes } = expliquer(editeur.valeur, n, inv);
+  const { sens, alertes, compris } = expliquer(editeur.valeur, n, inv);
   boiteExplication.replaceChildren();
   const t = document.createElement("div");
   t.className = "sens";
   t.innerHTML = `<span class="n">Ligne ${n}</span>`;
-  t.append(document.createTextNode(sens ? `J'ai compris : ${sens}` : ""));
+  t.append(document.createTextNode(compris ? `J'ai compris : ${sens}` : sens));
   if (!sens && !alertes.length) t.append(document.createTextNode("—"));
   boiteExplication.append(t);
   alertes.forEach((a) => { const d = document.createElement("div"); d.className = "alerte-ligne"; d.textContent = `⚠ ${a}`; boiteExplication.append(d); });
@@ -139,6 +139,7 @@ function mode(m: "form" | "texte") {
   $("m-form").setAttribute("aria-selected", String(m === "form"));
   $("m-texte").setAttribute("aria-selected", String(m === "texte"));
   $("formulaire").hidden = m !== "form";
+  document.body.classList.toggle("mode-texte", m === "texte");   // « L.12 » ne parle qu'en mode Texte
   if (m === "form" && formulairePerime) { formulairePerime = false; formulaire.actualiser(); }
   $("editeur").hidden = m !== "texte";
   $("modeles").hidden = m !== "texte";
@@ -277,7 +278,15 @@ function recalculer() {
   const att = inv.alertes.length - err;
   const nSw = inv.equipements.filter((e) => e.genre === "switch").length;
   const nTrunk = inv.liaisons.filter((l) => l.mode === "trunk").length;
-  etat.innerHTML = `<b>${inv.sites.length}</b> site${inv.sites.length > 1 ? "s" : ""} · <b>${nSw}</b> switch${nSw > 1 ? "s" : ""} · <b>${inv.equipements.length}</b> équipements · <b>${inv.liaisons.length}</b> liaisons dont <b>${nTrunk}</b> trunk${nTrunk > 1 ? "s" : ""}`
+  // Carte vide : rien à compter (l'accueil propose de commencer).
+  etat.hidden = !inv.equipements.length && !inv.alertes.length;
+  const compte = (n: number, mot: string) => `<b>${n}</b> ${mot}${n > 1 ? "s" : ""}`;
+  etat.innerHTML = [
+    compte(inv.sites.length, "site"),
+    nSw ? compte(nSw, "switch") : "",
+    compte(inv.equipements.length, "équipement"),
+    inv.liaisons.length ? `${compte(inv.liaisons.length, "câble")}${nTrunk ? ` dont ${compte(nTrunk, "trunk")}` : ""}` : "aucun câble",
+  ].filter(Boolean).join(" · ")
     + (err ? ` · <span class="e">${err} erreur${err > 1 ? "s" : ""}</span>` : "")
     + (att ? ` · <span class="a">${att} remarque${att > 1 ? "s" : ""}</span>` : "")
     + (!err && !att && inv.equipements.length ? ` · <span class="ok">tout est relié ✓</span>` : "");
@@ -287,8 +296,16 @@ function recalculer() {
     li.className = a.niveau;
     li.innerHTML = `<span class="n">L.${a.ligne}</span><span class="p">●</span><span></span>`;
     (li.lastChild as HTMLElement).textContent = a.msg;
-    li.title = "Aller à la ligne";
-    li.addEventListener("click", () => editeur.allerLigne(a.ligne));
+    li.title = "Voir où c'est";
+    li.addEventListener("click", () => {
+      // Formulaire : l'équipement concerné sur la carte. Texte : la ligne.
+      if (!$("formulaire").hidden) {
+        const nom = inv.equipements.find((x) => x.ligne === a.ligne)?.nom ?? inv.liaisons.find((x) => x.ligne === a.ligne)?.a;
+        if (nom) { choisir(nom, true); return; }
+        mode("texte");
+      }
+      editeur.allerLigne(a.ligne);
+    });
     return li;
   }));
   dernieresCles.alertes = cleAlertes;
@@ -462,7 +479,7 @@ function remplirFiche() {
     }
   }
 
-  fiche.append(h("h3", "", `Liaisons (${liens.length})`));
+  fiche.append(h("h3", "", `Câbles (${liens.length})`));
   if (!liens.length) fiche.append(h("p", "vide-fiche", "Aucune liaison déclarée."));
   else {
     const tab = document.createElement("table");
@@ -878,6 +895,10 @@ $("b-visionneuse").addEventListener("click", () => {
   telecharger(`${nomFichier(active().nom)}-visionneuse.html`, html, "text/html;charset=utf-8");
 });
 document.addEventListener("click", (e) => { if (!(e.target as Element).closest("details.menu")) fermerMenu(); });
+// Un seul menu ouvert à la fois (Fichiers ou ⋯).
+document.querySelectorAll<HTMLDetailsElement>("details.menu").forEach((m) => m.addEventListener("toggle", () => {
+  if (m.open) document.querySelectorAll<HTMLDetailsElement>("details.menu").forEach((x) => { if (x !== m) x.open = false; });
+}));
 
 /* ---------------- démarrage ---------------- */
 

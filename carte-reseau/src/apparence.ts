@@ -39,7 +39,7 @@ export const ACCENTS: Record<Accent, { nom: string; acc: string; rgb: string; cl
   vert:     { nom: "Vert", acc: "#34D399", rgb: "52, 211, 153", clair: "#A7F3D0", texte: "#052016" },
   cyan:     { nom: "Cyan technique", acc: "#22D3EE", rgb: "34, 211, 238", clair: "#A5F3FC", texte: "#062028" },
   graphite: { nom: "Graphite (neutre)", acc: "#CBD5E1", rgb: "203, 213, 225", clair: "#F1F5F9", texte: "#0F172A" },
-  violet:   { nom: "Violet (ancien)", acc: "#8D7CFF", rgb: "141, 124, 255", clair: "#C9C1FF", texte: "#0B0A1A" },
+  violet:   { nom: "Violet", acc: "#8D7CFF", rgb: "141, 124, 255", clair: "#C9C1FF", texte: "#0B0A1A" },
   perso:    { nom: "Ma couleur", acc: "#60A5FA", rgb: "96, 165, 250", clair: "#BFDBFE", texte: "#0B1220" },
 };
 /** Une couleur libre → ses variantes : version claire, et texte noir ou blanc selon la luminosité (contraste). */

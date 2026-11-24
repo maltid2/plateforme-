@@ -113,6 +113,7 @@ Statuts : `vu` · `à revoir` · `acquis`. Mis à jour à chaque fiche.
 | Poste de travail : NCSI, « connecté sans accès Internet » (sonde active, proxy, portail captif) | 2/6 | 2026-11-21 | vu (fiche rédigée, en attente de lecture) |
 | Synthèse de la semaine 16-22 novembre + bloc d'anglais (15 termes, texte à trous Cisco) | 1/2/3/4/AD/SQL | 2026-11-22 | à revoir (aucune réponse ni copie reçue) |
 | Réseau : table MAC contre table ARP (apprentissage, inondation, RFC 826) | 2 | 2026-11-23 | vu (fiche rédigée, en attente de lecture) |
+| Active Directory : SPN, quel compte porte le service (unicité, erreurs KDC) | AD | 2026-11-24 | vu (fiche rédigée, en attente de lecture) ; calibrage AD toujours sans réponse |
 
 ## Calibrage
 

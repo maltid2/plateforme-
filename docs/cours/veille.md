@@ -863,3 +863,12 @@ Déjà suivie ; fiche du jour. Avis SonicWall illisible : versions non établies
 
 **Catalogue CISA (KEV) :** version **2026.11.20**, **1790** entrées, **inchangée** depuis le 21 novembre (aucune entrée ajoutée après le 2026-11-20). **Échéance aujourd'hui (2026-11-23) :** vCenter CVE-2026-123890 et Cisco Expressway CVE-2026-76466 (voir entrées du 21 novembre, non répétées). Pas de nouvel avis de ta liste lu ; pannes non vérifiées ; aucune issue ATLAS.
 **Fiche :** réseau, table MAC contre table ARP (RFC 826 lue ; guides Cisco illisibles, partie commutateur signalée « non revérifiée »).
+
+---
+
+## 2026-11-24 (mardi)
+
+**Catalogue CISA (KEV) :** version **2026.11.23**, **1792** entrées (+2 depuis 2026.11.20), ajoutées le 2026-11-23 (échéance 2026-11-26) : Project MONAI MONAI Label CVE-2026-133968 ; N-able MailAssure CVE-2026-134624 : **éditeurs hors de ta liste, avis non lus**.
+**Échéances confirmées dans le flux, aujourd'hui 2026-11-24 :** Microsoft Office Outlook CVE-2026-124194 (usurpation réseau, « interaction utilisateur manquante ») ; Cisco BroadWorks CVE-2026-20320 (XXE, lecture de configuration sensible, non authentifié) ; Google Chromium CVE-2026-125350 (use-after-free, composant XML, exécution de code dans le bac à sable). Ajoutées au KEV le 2026-11-10. Descriptions lues dans le flux ; **avis éditeurs non relus aujourd'hui**, donc ni versions affectées ni corrigées. **À faire :** version d'Outlook et du navigateur Chromium (Chrome, Edge) sur les postes ; si BroadWorks : version et exposition.
+Pas de nouvel avis de ta liste lu ; pannes non vérifiées ; aucune issue ATLAS.
+**Fiche :** AD, SPN (Microsoft Learn lu).

@@ -10,6 +10,7 @@ import { CONTACT_HREF } from "@/lib/contact";
 
 const LINKS = [
   { label: "Produit", href: "#features" },
+  { label: "Jumeau 3D", href: "#jumeau" },
   { label: "Sécurité", href: "#security" },
   { label: "FAQ", href: "#faq" },
   { label: "Contact", href: CONTACT_HREF },

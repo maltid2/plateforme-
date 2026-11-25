@@ -14,7 +14,7 @@ const SEV_COULEUR: Record<Severite, string> = { crit: "#FF5B5B", high: "#FF9F43"
  * trois rappels ; tout ce qui est lisible — fil d'Ariane, étages, fiche —
  * est rendu ici, donc reste dans le flux React et dans le thème du site.
  */
-export default function Jumeau() {
+export default function Jumeau({ pleinEcran = false }: { pleinEcran?: boolean } = {}) {
   const hote = useRef<HTMLDivElement>(null);
   const pilote = useRef<Pilote | null>(null);
   const [iEtage, setEtage] = useState(0);
@@ -102,7 +102,7 @@ export default function Jumeau() {
   }
 
   return (
-    <div className="relative h-[clamp(420px,62vh,660px)] w-full overflow-hidden rounded-2xl border border-line bg-bg">
+    <div className={`relative w-full overflow-hidden rounded-2xl border border-line bg-bg ${pleinEcran ? "h-full" : "h-[clamp(420px,62vh,660px)]"}`}>
       <div ref={hote} className="absolute inset-0" aria-hidden="true" />
 
       {etat !== "prete" && (

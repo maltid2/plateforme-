@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "plateforme-mods": {
+      "source": {
+        "source": "directory",
+        "path": "./.claude/mods"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "blast-radius@plateforme-mods": true
+  }
+}

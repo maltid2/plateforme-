@@ -1,0 +1,14 @@
+{
+  "name": "plateforme-mods",
+  "owner": { "name": "SentinelScope" },
+  "metadata": {
+    "description": "Mods embarqués dans le dépôt, pour qu'ils suivent le projet au lieu de dépendre d'une installation locale."
+  },
+  "plugins": [
+    {
+      "name": "blast-radius",
+      "source": "./blast-radius",
+      "description": "Retient les commandes shell destructrices et montre ce qu'elles changeraient, avec Procéder et Annuler."
+    }
+  ]
+}

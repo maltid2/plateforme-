@@ -872,3 +872,11 @@ Déjà suivie ; fiche du jour. Avis SonicWall illisible : versions non établies
 **Échéances confirmées dans le flux, aujourd'hui 2026-11-24 :** Microsoft Office Outlook CVE-2026-124194 (usurpation réseau, « interaction utilisateur manquante ») ; Cisco BroadWorks CVE-2026-20320 (XXE, lecture de configuration sensible, non authentifié) ; Google Chromium CVE-2026-125350 (use-after-free, composant XML, exécution de code dans le bac à sable). Ajoutées au KEV le 2026-11-10. Descriptions lues dans le flux ; **avis éditeurs non relus aujourd'hui**, donc ni versions affectées ni corrigées. **À faire :** version d'Outlook et du navigateur Chromium (Chrome, Edge) sur les postes ; si BroadWorks : version et exposition.
 Pas de nouvel avis de ta liste lu ; pannes non vérifiées ; aucune issue ATLAS.
 **Fiche :** AD, SPN (Microsoft Learn lu).
+
+---
+
+## 2026-11-25 (mercredi)
+
+**Catalogue CISA (KEV) :** version **2026.11.24**, **1795** entrées (+3 depuis 2026.11.23), toutes ajoutées le 2026-11-24, échéance **2026-11-27** : Optimizely Web Experimentation CVE-2026-132224 ; Idunno AntiCsrf CVE-2026-131914 (désérialisation) ; Drupal Core CVE-2026-132165 (installateur). **Aucun éditeur de ta liste ; avis non lus.** Rappel : échéances du 24 novembre (Outlook, Chromium, BroadWorks) passées.
+Pas de nouvel avis de ta liste lu ; pannes non vérifiées ; aucune issue ATLAS.
+**Fiche :** SQL, sous-requêtes `IN` et semi-jointure (documentation MariaDB lue).

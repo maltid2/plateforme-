@@ -1,0 +1,4 @@
+
+# Bytecode Python des scripts de compétences
+__pycache__/
+*.pyc

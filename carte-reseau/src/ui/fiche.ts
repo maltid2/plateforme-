@@ -8,6 +8,7 @@ import { APPARENCE, COULEUR_TRUNK } from "../apparence.ts";
 import type { Disposition } from "../disposition.ts";
 import { cheminPasserelle, lirePort } from "../facade.ts";
 import { GENRES, LIBELLE_CLE, MEDIAS, type Equipement, type Inventaire, type Liaison } from "../saisie.ts";
+import { icone } from "./icones.ts";
 
 export type ContexteFiche = {
   eq: Equipement | null; inv: Inventaire; disp: Disposition; lectureSeule: boolean;
@@ -35,7 +36,8 @@ export function dessinerFiche(fiche: HTMLElement, ctx: ContexteFiche) {
   };
 
   fiche.replaceChildren();
-  const fermer = h("button", "fermer", "×") as HTMLButtonElement;
+  const fermer = h("button", "fermer") as HTMLButtonElement;
+  fermer.innerHTML = icone("fermer");
   fermer.type = "button"; fermer.setAttribute("aria-label", "Fermer la fiche");
   fermer.onclick = () => choisir(null);
   const tete = h("div", "tete");
@@ -142,8 +144,8 @@ export function dessinerFiche(fiche: HTMLElement, ctx: ContexteFiche) {
       if (!ctx.lectureSeule) {
         // Chaque câble se modifie ou se supprime d'ici.
         const act = h("td", "act");
-        const b1 = h("button", "", "✎") as HTMLButtonElement; b1.type = "button"; b1.title = "Modifier ce câble"; b1.onclick = () => ctx.editerLien(x.l);
-        const b2 = h("button", "danger", "✕") as HTMLButtonElement; b2.type = "button"; b2.title = "Supprimer ce câble"; b2.onclick = () => ctx.supprimerLien(x.l);
+        const b1 = h("button", "") as HTMLButtonElement; b1.innerHTML = icone("crayon"); b1.type = "button"; b1.title = "Modifier ce câble"; b1.setAttribute("aria-label", "Modifier ce câble"); b1.onclick = () => ctx.editerLien(x.l);
+        const b2 = h("button", "danger") as HTMLButtonElement; b2.innerHTML = icone("corbeille"); b2.type = "button"; b2.title = "Supprimer ce câble"; b2.setAttribute("aria-label", "Supprimer ce câble"); b2.onclick = () => ctx.supprimerLien(x.l);
         act.append(b1, b2); tr.append(act);
       }
       tb.append(tr);
@@ -154,12 +156,12 @@ export function dessinerFiche(fiche: HTMLElement, ctx: ContexteFiche) {
   if (!ctx.lectureSeule) {
     // Les actions simples, en haut de la fiche : modifier, ajouter un câble, supprimer.
     const actions = h("div", "actions-fiche");
-    const bouton = (txt: string, titre: string, f: () => void, cls = "") => {
-      const b = h("button", cls, txt) as HTMLButtonElement; b.type = "button"; b.title = titre; b.onclick = f; actions.append(b);
+    const bouton = (ic: string, txt: string, titre: string, f: () => void, cls = "") => {
+      const b = h("button", cls) as HTMLButtonElement; b.innerHTML = icone(ic); b.append(txt); b.type = "button"; b.title = titre; b.onclick = f; actions.append(b);
     };
-    bouton("✎ Modifier", "Modifier cet équipement dans le formulaire", () => ctx.modifier(e.nom));
-    bouton("＋ Câble", "Ajouter un câble depuis cet équipement", () => ctx.editerLien({ a: e.nom, b: "", mode: undefined, ligne: 0, vlans: undefined, libelle: undefined, media: undefined } as unknown as Liaison));
-    bouton("🗑 Supprimer", "Supprimer cet équipement", () => ctx.supprimer(e.nom), "danger");
+    bouton("crayon", "Modifier", "Modifier cet équipement dans le formulaire", () => ctx.modifier(e.nom));
+    bouton("cable", "Câble", "Ajouter un câble depuis cet équipement", () => ctx.editerLien({ a: e.nom, b: "", mode: undefined, ligne: 0, vlans: undefined, libelle: undefined, media: undefined } as unknown as Liaison));
+    bouton("corbeille", "Supprimer", "Supprimer cet équipement", () => ctx.supprimer(e.nom), "danger");
     tete.after(actions);
   }
   const aller = h("button", "modifier", `Voir la ligne ${e.ligne} dans le texte`) as HTMLButtonElement;

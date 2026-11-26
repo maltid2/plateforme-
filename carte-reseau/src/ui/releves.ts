@@ -61,6 +61,6 @@ export async function telechargerScript() {
   telecharger("Relever les switchs.bat", script.replace(/\r?\n/g, "\r\n"), "application/octet-stream");
   void informer("Script de relevé des switchs", "1. Créez un dossier (ex. « Carto Réseau ») et mettez-y « Relever les switchs.bat » et plink.exe (outil de PuTTY).\n"
     + "2. Double-cliquez le script sur un PC du réseau des switchs : il demande le site, les IP des switchs et les identifiants, puis relève chaque switch.\n"
-    + "3. Ici : ⇪ Relevés des switchs, et choisissez le dossier « Sites › votre site » (ou « Log Switch »).\n\n"
+    + "3. Ici : Importer › Relevés des switchs, et choisissez le dossier « Sites › votre site » (ou « Log Switch »).\n\n"
     + "Le script ne fait que lire (show …). Les sauvegardes de configuration qu'il range dans « Config Switch » ne sont jamais lues par cette page.");
 }

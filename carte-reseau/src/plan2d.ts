@@ -13,6 +13,7 @@ import { APPARENCE, COULEUR_MEDIA } from "./apparence.ts";
 import { CARTE_H, CARTE_W, NOM_H, type Disposition, type Point } from "./disposition.ts";
 import { cheminPasserelle, FH, PH, PW, type Facade, type Port } from "./facade.ts";
 import { PICTOS } from "./pictos.ts";
+import { icone } from "./ui/icones.ts";
 import type { Equipement, Inventaire, Liaison } from "./saisie.ts";
 
 const NS = "http://www.w3.org/2000/svg";
@@ -221,9 +222,9 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
   outils.className = "plan-outils";
   outils.innerHTML = `
     <div class="zooms" role="group" aria-label="Zoom">
-      <button type="button" data-z="plus" title="Zoomer" aria-label="Zoomer">＋</button>
-      <button type="button" data-z="moins" title="Dézoomer" aria-label="Dézoomer">−</button>
-      <button type="button" data-z="tout" title="Tout afficher" aria-label="Tout afficher">⤢</button>
+      <button type="button" data-z="plus" title="Zoomer" aria-label="Zoomer">${icone("plus")}</button>
+      <button type="button" data-z="moins" title="Dézoomer" aria-label="Dézoomer">${icone("moins")}</button>
+      <button type="button" data-z="tout" title="Tout afficher" aria-label="Tout afficher">${icone("recentrer")}</button>
     </div>
     <svg class="minicarte" xmlns="${NS}" aria-label="Mini-carte : cliquer pour s'y rendre"><g class="mc-cadres"></g><rect class="mc-vue"/></svg>`;
   hote.appendChild(outils);

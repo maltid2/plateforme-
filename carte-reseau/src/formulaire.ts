@@ -11,6 +11,7 @@
  */
 import { APPARENCE } from "./apparence.ts";
 import { demander, informer } from "./boites.ts";
+import { icone } from "./ui/icones.ts";
 import { lirePort } from "./facade.ts";
 import type { Disposition } from "./disposition.ts";
 import { PICTOS } from "./pictos.ts";
@@ -136,7 +137,7 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
     <section class="f-bloc f-liaison">
       <h3><span class="f-pastille">B</span> Câble entre deux équipements déjà créés</h3>
       <p class="f-quand">Trunk entre deux switchs, lien entre deux lieux ou deux sites, VPN de secours…</p>
-      <div class="f-boutons"><button type="button" class="primaire" data-a="nouveau-cable">＋ Ajouter un câble</button></div>
+      <div class="f-boutons"><button type="button" class="primaire" data-a="nouveau-cable">${icone("cable")}Ajouter un câble</button></div>
       <div hidden>
         <select data-l="a"></select><select data-l="pa"></select><select data-l="b"></select><select data-l="pb"></select>
         <select data-l="media"></select><input data-l="vlan" /><input data-l="libelle" /><input type="checkbox" data-l="trunk" />
@@ -677,8 +678,8 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
           const b = brancheDe(e);
           html.push(`<div class="f-eq" data-nom="${echap(e.nom)}" style="--c:${APPARENCE[e.genre].couleur}">
             <button type="button" class="f-voir" data-a="voir" title="Voir sur la carte"><i></i><b>${echap(e.nom)}</b><span>${echap(e.ip ?? "")}</span>${b ? `<em>→ ${echap(b)}</em>` : ""}</button>
-            <button type="button" class="f-mini" data-a="modifier" title="Modifier" aria-label="Modifier ${echap(e.nom)}">✎</button>
-            <button type="button" class="f-mini danger" data-a="supprimer" title="Supprimer" aria-label="Supprimer ${echap(e.nom)}">✕</button>
+            <button type="button" class="f-mini" data-a="modifier" title="Modifier" aria-label="Modifier ${echap(e.nom)}">${icone("crayon")}</button>
+            <button type="button" class="f-mini danger" data-a="supprimer" title="Supprimer" aria-label="Supprimer ${echap(e.nom)}">${icone("corbeille")}</button>
           </div>`);
         });
       });

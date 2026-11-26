@@ -23,9 +23,9 @@
       <label for="topologie" class="sr">Topologie</label>
       <select id="topologie" aria-label="Topologie affichée"></select>
       <details class="menu menu-topo">
-        <summary title="Nouvelle topologie, renommer, dupliquer, supprimer">⋯</summary>
+        <summary title="Nouvelle topologie, renommer, dupliquer, supprimer" aria-label="Actions sur la topologie"><i data-ic="plus3"></i></summary>
         <div class="menu-corps">
-          <button id="t-nouvelle" type="button">＋ Nouvelle topologie</button>
+          <button id="t-nouvelle" type="button"><i data-ic="plus"></i>Nouvelle topologie</button>
           <button id="t-renommer" type="button">Renommer cette topologie</button>
           <button id="t-dupliquer" type="button">Dupliquer</button>
           <button id="t-supprimer" type="button" class="danger">Supprimer</button>
@@ -35,33 +35,29 @@
 
     <div class="actions">
       <details class="menu">
-        <summary>Fichiers</summary>
-        <div class="menu-corps">
+        <summary><i data-ic="dossier"></i>Fichiers</summary>
+        <div class="menu-corps menu-fichiers">
+          <div class="menu-titre">Documents à partager</div>
+          <button id="b-pdf" type="button"><i data-ic="imprimer"></i><span><b>Dossier imprimable · PDF</b><small>Plan 2D, baies, tableau des équipements</small></span></button>
+          <button id="b-visionneuse" type="button"><i data-ic="exemple"></i><span><b>Visionneuse 2D + 3D (.html)</b><small>Lecture seule, s'ouvre partout sans installation</small></span></button>
+          <button id="b-svg" type="button"><i data-ic="tableau"></i><span><b>Plan 2D (.svg)</b><small>Vectoriel : Visio, Word, Inkscape</small></span></button>
+          <button id="b-png" type="button"><i data-ic="tableau"></i><span><b>Image de la vue affichée (.png)</b></span></button>
+          <button id="b-glb" type="button"><i data-ic="reseau"></i><span><b>Maquette 3D (.glb)</b><small>Visionneuse 3D de Windows, Blender…</small></span></button>
+          <hr />
+          <div class="menu-titre edition">Topologies</div>
+          <button id="b-sauvegarde" type="button"><i data-ic="dossier"></i><span><b>Sauvegarder toutes les topologies (.json)</b></span></button>
+          <button id="b-restaurer" type="button"><i data-ic="importer"></i><span><b>Restaurer une sauvegarde (.json)</b></span></button>
+          <button id="b-enregistrer" type="button"><i data-ic="liste"></i><span><b>Exporter cette topologie (.txt)</b></span></button>
+          <button id="b-ouvrir" type="button"><i data-ic="liste"></i><span><b>Ouvrir une topologie (.txt)</b></span></button>
+          <hr />
+          <div class="menu-titre edition">Outils</div>
+          <button id="b-script" type="button"><i data-ic="reseau"></i><span><b>Script de relevé des switchs (.bat)</b><small>À lancer sur un PC du réseau des switchs</small></span></button>
+          <button id="b-modele-tableur" type="button"><i data-ic="tableau"></i><span><b>Modèle de tableau à remplir (.csv)</b></span></button>
           <button id="b-signature" type="button" title="Signature apposée sur les documents produits (PDF, plan, visionneuse)."></button>
-          <hr />
-          <button id="b-sauvegarde" type="button">Sauvegarder toutes les topologies (.json)</button>
-          <button id="b-restaurer" type="button">Restaurer une sauvegarde (.json)</button>
-          <hr />
-          <button id="b-enregistrer" type="button">Exporter cette topologie (.txt)</button>
-          <button id="b-ouvrir" type="button">Ouvrir une topologie (.txt)</button>
-          <hr />
-          <button id="b-releves-dossier" type="button">Importer les relevés des switchs (dossier du site ou « Log Switch »)</button>
-          <button id="b-releves" type="button">Importer des relevés de switchs (fichiers .txt)</button>
-          <button id="b-genetec" type="button">Comparer avec un export Genetec (.csv, .xlsx)</button>
-          <button id="b-script" type="button">Script de relevé des switchs (.bat, à lancer sur un PC du réseau)</button>
-          <hr />
-          <button id="b-tableur" type="button">Importer un tableau Excel ou CSV (.xlsx, .csv)</button>
-          <button id="b-modele-tableur" type="button">Modèle de tableau à remplir (.csv pour Excel)</button>
-          <hr />
-          <button id="b-pdf" type="button">Dossier imprimable · PDF (plan 2D, baies, tableau)</button>
-          <button id="b-visionneuse" type="button">Visionneuse interactive 2D + 3D (.html)</button>
-          <button id="b-glb" type="button">Maquette 3D (.glb · Visionneuse 3D Windows, Blender…)</button>
-          <button id="b-svg" type="button">Plan 2D vectoriel (.svg)</button>
-          <button id="b-png" type="button">Image de la vue affichée (.png)</button>
         </div>
       </details>
-      <button id="b-couleurs" type="button" title="Choisir les couleurs des câbles et des équipements">Couleurs</button>
-      <button id="b-aide" type="button" aria-haspopup="dialog">Aide</button>
+      <button id="b-couleurs" type="button" title="Apparence, accent, couleurs des câbles et des équipements"><i data-ic="palette"></i>Couleurs</button>
+      <button id="b-aide" type="button" aria-haspopup="dialog"><i data-ic="aide"></i>Aide</button>
       <input id="f-txt" type="file" accept=".txt,text/plain" hidden />
       <input id="f-json" type="file" accept=".json,application/json" hidden />
       <input id="f-tableur" type="file" accept=".xlsx,.csv,.xls,.txt" hidden />
@@ -93,12 +89,19 @@
 
     <section class="carte" aria-label="Carte">
       <div class="actions-carte" role="toolbar" aria-label="Actions principales">
-        <button id="a-equipement" type="button" class="primaire">＋ Équipement</button>
-        <button id="a-cable" type="button">＋ Câble</button>
-        <button id="a-releves" type="button" title="Le dossier créé par « Relever les switchs.bat » : la carte se dessine toute seule">⇪ Relevés des switchs</button>
-        <button id="a-excel" type="button">⇪ Importer un Excel</button>
-        <button id="a-pdf" type="button">⎙ PDF</button>
-        <button id="a-precos" type="button" class="a-precos" title="Sécurité, flux et comparaison avec Genetec, à partir de tout ce que contient la carte">⚑ Générer les préconisations</button>
+        <button id="a-equipement" type="button" class="primaire"><i data-ic="plus"></i>Équipement</button>
+        <button id="a-cable" type="button"><i data-ic="cable"></i>Câble</button>
+        <details class="menu menu-importer">
+          <summary><i data-ic="importer"></i>Importer</summary>
+          <div class="menu-corps">
+            <button id="a-releves" type="button"><i data-ic="reseau"></i><span><b>Relevés des switchs</b><small>Le dossier créé par « Relever les switchs.bat »</small></span></button>
+            <button id="b-releves" type="button"><i data-ic="liste"></i><span><b>Relevés : fichiers .txt un par un</b><small>Quelques switchs, ou le .json du collecteur</small></span></button>
+            <button id="a-excel" type="button"><i data-ic="tableau"></i><span><b>Tableau Excel ou CSV</b><small>Votre inventaire, une ligne par équipement</small></span></button>
+            <button id="a-genetec" type="button"><i data-ic="video"></i><span><b>Export Genetec</b><small>Comparer les caméras au réseau (préconisations)</small></span></button>
+          </div>
+        </details>
+        <button id="a-pdf" type="button"><i data-ic="imprimer"></i>PDF</button>
+        <button id="a-precos" type="button" class="a-precos" title="Sécurité, flux et comparaison avec Genetec, à partir de tout ce que contient la carte"><i data-ic="bouclier"></i>Générer les préconisations</button>
       </div>
       <div class="outils">
         <div class="onglets" role="tablist">
@@ -110,7 +113,7 @@
         <input id="recherche" type="search" placeholder="Chercher un nom ou une IP…" list="noms" />
         <datalist id="noms"></datalist>
         <label class="bascule" id="l-cams" hidden>Caméras <select id="o-cams" aria-label="Où représenter les caméras"><option value="baie">dans la baie</option><option value="murs">sur les murs</option></select></label>
-        <button id="b-cadrer" type="button" title="Tout afficher">Recentrer</button>
+        <button id="b-cadrer" type="button" title="Tout afficher"><i data-ic="recentrer"></i>Recentrer</button>
       </div>
       <div class="vue" id="vue">
         <div id="hote-2d" class="hote"></div>
@@ -121,10 +124,10 @@
           <h2>Votre carte est vide</h2>
           <p>Quatre façons de commencer :</p>
           <div class="accueil-choix">
-            <button type="button" data-accueil="releves"><b>⇪ Relevés des switchs</b><span>Le dossier créé par « Relever les switchs.bat » : switchs, câbles, ports, VLAN et caméras, tout seuls.</span></button>
-            <button type="button" data-accueil="excel"><b>⇪ Importer un Excel</b><span>Votre inventaire en tableau : l'outil le lit et dessine tout.</span></button>
-            <button type="button" data-accueil="equipement"><b>＋ Ajouter un équipement</b><span>Un switch, une caméra… avec le formulaire, pas à pas.</span></button>
-            <button type="button" data-accueil="exemple"><b>◎ Voir un exemple</b><span>Une carte complète à explorer, dans une topologie à part.</span></button>
+            <button type="button" data-accueil="releves"><i data-ic="reseau"></i><b>Relevés des switchs</b><span>Le dossier créé par « Relever les switchs.bat » : switchs, câbles, ports, VLAN et caméras, tout seuls.</span></button>
+            <button type="button" data-accueil="excel"><i data-ic="tableau"></i><b>Importer un Excel</b><span>Votre inventaire en tableau : l'outil le lit et dessine tout.</span></button>
+            <button type="button" data-accueil="equipement"><i data-ic="plus"></i><b>Ajouter un équipement</b><span>Un switch, une caméra… avec le formulaire, pas à pas.</span></button>
+            <button type="button" data-accueil="exemple"><i data-ic="exemple"></i><b>Voir un exemple</b><span>Une carte complète à explorer, dans une topologie à part.</span></button>
           </div>
         </div>
         <div class="legende" id="legende"></div>
@@ -149,10 +152,10 @@
             <li><b>Branché sur</b> : le switch et son port. Seuls les ports libres sont proposés. Plusieurs caméras d'un coup : indiquez la quantité, puis un port par caméra.</li>
             <li><b>Ajouter</b> : l'équipement apparaît sur la carte.</li>
           </ol>
-          <p><b>Relier deux switchs</b>, deux bâtiments ou deux sites : bouton <b>＋ Câble</b>, puis les deux bouts et leurs ports.</p>
+          <p><b>Relier deux switchs</b>, deux bâtiments ou deux sites : bouton <b>Câble</b>, puis les deux bouts et leurs ports.</p>
           <p><b>Corriger</b> : cliquez l'équipement ou le câble sur la carte, puis <b>Modifier</b> ou <b>Supprimer</b>. Une erreur ? Le bouton <b>Annuler</b> du message en bas, ou <kbd>Ctrl</kbd>+<kbd>Z</kbd>.</p>
-          <p><b>Un Excel déjà rempli ?</b> <b>⇪ Importer un Excel</b> : l'outil reconnaît les colonnes (vous pouvez les corriger) et dessine la carte.</p>
-          <p><b>Relever les switchs automatiquement</b> : <b>Fichiers › Script de relevé des switchs</b> donne « Relever les switchs.bat ». Lancez-le sur un PC du réseau (avec plink.exe de PuTTY à côté) : il interroge chaque switch et range les relevés dans <code>Sites › votre site › Log Switch</code>. Puis <b>⇪ Relevés des switchs</b> et choisissez ce dossier : switchs, câbles LLDP/CDP, ports, VLAN, caméras et anomalies sont repris tout seuls.</p>
+          <p><b>Un Excel déjà rempli ?</b> <b>Importer › Tableau Excel ou CSV</b> : l'outil reconnaît les colonnes (vous pouvez les corriger) et dessine la carte.</p>
+          <p><b>Relever les switchs automatiquement</b> : <b>Fichiers › Script de relevé des switchs</b> donne « Relever les switchs.bat ». Lancez-le sur un PC du réseau (avec plink.exe de PuTTY à côté) : il interroge chaque switch et range les relevés dans <code>Sites › votre site › Log Switch</code>. Puis <b>Importer › Relevés des switchs</b> et choisissez ce dossier : switchs, câbles LLDP/CDP, ports, VLAN, caméras et anomalies sont repris tout seuls.</p>
         </section>
         <section data-partie="texte" hidden>
           <h3>Écrire sa carte en texte, simplement</h3>
@@ -174,7 +177,7 @@
           <p><b>Plan 2D</b> : molette pour zoomer, glisser pour se déplacer, double-clic pour zoomer, <b>Recentrer</b> pour tout revoir.</p>
           <p><b>Baies</b> : la façade de chaque baie, U par U, avec les ports branchés.</p>
           <p><b>Vue 3D</b> : glisser pour tourner, clic droit (ou <kbd>Maj</kbd> + glisser) pour se déplacer, molette pour zoomer. Cliquez le sol d'un site pour y entrer ; de près, les numéros de port s'affichent sur les câbles.</p>
-          <p><b>⚑ Générer les préconisations</b> (une fois la carte faite) : sécurité et flux tirés de tout ce que contient la carte (cloisonnement de la vidéo, VLAN 1, trunks, ports libres actifs, versions à vérifier, IP en double…), matrice des flux pour le pare-feu, et <b>comparaison avec un export Genetec</b> : caméras hors ligne avec le switch et le port où aller voir, caméras non enregistrées, débits par switch. Un clic sur un équipement cité le montre sur le plan ; <b>Imprimer / PDF</b> pour le rapport.</p>
+          <p><b>Générer les préconisations</b> (une fois la carte faite) : sécurité et flux tirés de tout ce que contient la carte (cloisonnement de la vidéo, VLAN 1, trunks, ports libres actifs, versions à vérifier, IP en double…), matrice des flux pour le pare-feu, et <b>comparaison avec un export Genetec</b> : caméras hors ligne avec le switch et le port où aller voir, caméras non enregistrées, débits par switch. Un clic sur un équipement cité le montre sur le plan ; <b>Imprimer / PDF</b> pour le rapport.</p>
           <p><b>Couleurs</b> : apparence sombre, claire ou noir studio, couleur d'accent, couleurs des câbles et des équipements.</p>
           <p><b>Fichiers</b> : PDF imprimable, visionneuse à envoyer (lecture seule), images, plan SVG, maquette 3D, sauvegarde. Tout reste sur ce poste : l'outil ne se connecte à rien.</p>
         </section>

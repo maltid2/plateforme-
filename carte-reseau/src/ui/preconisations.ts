@@ -1,5 +1,5 @@
 /**
- * Le rapport de préconisations (bouton « ⚑ Générer les préconisations ») :
+ * Le rapport de préconisations (bouton « Générer les préconisations ») :
  * sécurité, flux et comparaison avec Genetec, dans une grande fenêtre
  * imprimable. L'export Genetec est gardé avec la topologie.
  */
@@ -106,7 +106,7 @@ export function creerPreconisations(ctx: ContextePreconisations) {
     }
     ctx.enregistrer();
     if (fenetre?.open) remplir();
-    else notifier(`Genetec : ${msgs.join(" · ")}. Comparaison dans « ⚑ Générer les préconisations ».`);
+    else notifier(`Genetec : ${msgs.join(" · ")}. Comparaison dans « Générer les préconisations ».`);
   }
 
   return {

@@ -77,7 +77,7 @@ d'écriture (double-clic : grand / normal) ; la largeur est mémorisée.
 
 ## Importer un tableau Excel ou CSV
 
-*Fichiers › Importer un tableau Excel ou CSV* : une ligne par équipement, et
+*Importer › Tableau Excel ou CSV* (au-dessus de la carte) : une ligne par équipement, et
 la topologie se dessine dans une **nouvelle topologie** (la vôtre n'est pas
 touchée). Le fichier est lu dans le navigateur ; rien n'est envoyé.
 
@@ -147,10 +147,9 @@ Le relevé automatique de **Cartographie Réseau** est intégré à l'outil.
    Ruckus, Dell, Allied, Extreme, D-Link, Zyxel, TP-Link) et n'envoie que des
    commandes de lecture (`show …`). Il range un fichier par switch dans
    `Sites › <site> › Log Switch`.
-2. Ici : **⇪ Relevés des switchs** (au-dessus de la carte) et choisissez le
+2. Ici : **Importer › Relevés des switchs** (au-dessus de la carte) et choisissez le
    dossier du site, `Log Switch`, ou même `Sites` entier (une topologie par
-   site). On peut aussi choisir des `.txt` un par un (*Fichiers › Importer des
-   relevés de switchs*), ou le `.json` du collecteur, et un export Genetec
+   site). On peut aussi choisir des `.txt` un par un (*Importer › Relevés : fichiers .txt un par un*), ou le `.json` du collecteur, et un export Genetec
    (`.csv`) pour les vrais noms des caméras.
 
 L'analyse est celle de Cartographie Réseau v3.2, reprise **sans modification**
@@ -174,7 +173,7 @@ se connecte aux switchs : lancez-le seulement sur le réseau des switchs, avec
 un compte en lecture si possible.
 
 L'export Excel de Cartographie Réseau (onglets Switchs, Liens, Équipements…)
-s'importe aussi avec **⇪ Importer un Excel**.
+s'importe aussi avec **Importer › Tableau Excel ou CSV**.
 
 ## Saisir : le texte (pour aller vite)
 
@@ -264,10 +263,15 @@ Elle est aussi dans la visionneuse (onglets utiles à la lecture seulement).
   l'équipement concerné sur la carte ; en mode *Texte*, il va à la ligne
   (« L.12 »). Un conflit de port nomme les deux équipements : « Port 3 de
   SW-1 déjà utilisé par CAM-1 : AP-1 doit aller sur un autre port ».
-- Au-dessus de la carte : **＋ Équipement**, **＋ Câble**, **Importer un Excel**,
-  **PDF**. Carte vide : un accueil propose d'importer un Excel, d'ajouter un
-  équipement ou d'ouvrir un exemple. Renommer / dupliquer / supprimer une
-  topologie : menu **⋯** à côté de son nom.
+- Au-dessus de la carte, sur une ligne : **Équipement**, **Câble**, **Importer**
+  (relevés des switchs, tableau Excel ou CSV, export Genetec), **PDF**, et à
+  droite **Générer les préconisations**. Carte vide : un accueil propose les
+  relevés, un Excel, le formulaire ou un exemple. Renommer / dupliquer /
+  supprimer une topologie : menu **⋯** à côté de son nom. Le menu **Fichiers**
+  est rangé en trois parties : documents à partager, topologies, outils.
+- Les remarques sous la saisie se replient sur trois lignes quand elles sont
+  nombreuses (**Tout voir**), et la légende de la carte se replie d'un clic :
+  le formulaire et le plan gardent leur place. Ces choix sont retenus.
 
 ## Dépannage
 
@@ -286,8 +290,7 @@ rapport, calculé sur le poste à partir de tout ce que la carte contient
 (saisie, Excel, relevés des switchs, export Genetec). Il est recalculé à chaque
 ouverture : rien à mettre à jour.
 
-**Comparaison avec Genetec.** Dans le rapport (ou *Fichiers › Comparer avec un
-export Genetec*), ajoutez l'export de Security Center : l'inventaire matériel
+**Comparaison avec Genetec.** Dans le rapport (ou *Importer › Export Genetec*), ajoutez l'export de Security Center : l'inventaire matériel
 (nom, IP, MAC, modèle, firmware, archiveur, **état**) et, pour les débits, la
 configuration des caméras (flux, débit, résolution). Colonnes reconnues en
 français ou en anglais, .csv ou .xlsx ; l'export est gardé avec la carte. Un

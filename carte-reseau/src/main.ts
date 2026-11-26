@@ -22,10 +22,12 @@ import { importerReleves, telechargerScript } from "./ui/releves.ts";
 import { installerExports } from "./ui/exports.ts";
 import { installerLargeurSaisie } from "./ui/largeur.ts";
 import { notifier } from "./ui/toast.ts";
+import { icone, poserIcones } from "./ui/icones.ts";
 
 // Le modèle de la page, pris AVANT toute modification : il sert à produire
 // la visionneuse autonome (même fichier, données incluses, lecture seule).
 const MODELE = { head: document.head.innerHTML, body: document.body.innerHTML };
+poserIcones();
 const EMBARQUE = (() => {
   const n = document.getElementById("carte-donnees");
   if (!n) return null;
@@ -205,6 +207,12 @@ $("t-supprimer").addEventListener("click", async () => {
 
 /* ---------------- rendu ---------------- */
 
+/** Préférences d'affichage retenues sur ce poste (remarques dépliées, légende repliée). */
+const CLE_PREFS = "carte-reseau:affichage";
+const prefs: { remarques: boolean; legendeRepliee: boolean } = (() => {
+  try { return { remarques: false, legendeRepliee: false, ...JSON.parse(localStorage.getItem(CLE_PREFS) ?? "{}") }; } catch { return { remarques: false, legendeRepliee: false }; }
+})();
+const garderPrefs = () => { try { localStorage.setItem(CLE_PREFS, JSON.stringify(prefs)); } catch { /* sans importance */ } };
 const dernieresCles = { sites: "", noms: "", alertes: "\u0000" };
 let formulairePerime = false;
 function recalculer() {
@@ -234,7 +242,7 @@ function recalculer() {
   // Carte vide : rien à compter (l'accueil propose de commencer).
   etat.hidden = !inv.equipements.length && !inv.alertes.length;
   const compte = (n: number, mot: string) => `<b>${n}</b> ${mot}${n > 1 ? "s" : ""}`;
-  etat.innerHTML = [
+  etat.innerHTML = `<span class="resume">${[
     compte(inv.sites.length, "site"),
     nSw ? compte(nSw, "switch") : "",
     compte(inv.equipements.length, "équipement"),
@@ -242,7 +250,18 @@ function recalculer() {
   ].filter(Boolean).join(" · ")
     + (err ? ` · <span class="e">${err} erreur${err > 1 ? "s" : ""}</span>` : "")
     + (att ? ` · <span class="a">${att} remarque${att > 1 ? "s" : ""}</span>` : "")
-    + (!err && !att && inv.equipements.length ? ` · <span class="ok">tout est relié ✓</span>` : "");
+    + (!err && !att && inv.equipements.length ? ` · <span class="ok">tout est relié ✓</span>` : "")}</span>`;
+  // Beaucoup de remarques : repliées sur trois lignes, « Tout voir » pour la suite.
+  const nb = inv.alertes.length;
+  listeAlertes.classList.toggle("repliees", nb > 3 && !prefs.remarques);
+  if (nb > 3) {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "voir";
+    b.textContent = prefs.remarques ? "Réduire" : `Tout voir (${nb})`;
+    b.setAttribute("aria-expanded", String(prefs.remarques));
+    b.onclick = () => { prefs.remarques = !prefs.remarques; garderPrefs(); recalculer(); };
+    etat.append(b);
+  }
   const cleAlertes = inv.alertes.map((a) => `${a.ligne}|${a.niveau}|${a.msg}`).join("\n");
   if (cleAlertes !== dernieresCles.alertes) listeAlertes.replaceChildren(...inv.alertes.map((a) => {
     const li = document.createElement("li");
@@ -268,7 +287,14 @@ function recalculer() {
   else { formulairePerime = false; formulaire.actualiser(); }
 
   const presents = new Set(inv.equipements.map((e) => e.genre));
-  legende.replaceChildren(...(Object.keys(APPARENCE) as Genre[]).filter((g) => presents.has(g)).map((g) => {
+  // La légende se replie (bouton « Légende ») pour dégager le bas de la carte.
+  const titre = document.createElement("button");
+  titre.type = "button"; titre.className = "legende-titre";
+  titre.innerHTML = `${icone("liste")}Légende`;
+  titre.setAttribute("aria-expanded", String(!prefs.legendeRepliee));
+  titre.onclick = () => { prefs.legendeRepliee = !prefs.legendeRepliee; garderPrefs(); legende.classList.toggle("repliee", prefs.legendeRepliee); titre.setAttribute("aria-expanded", String(!prefs.legendeRepliee)); };
+  legende.classList.toggle("repliee", prefs.legendeRepliee);
+  legende.replaceChildren(titre, ...(Object.keys(APPARENCE) as Genre[]).filter((g) => presents.has(g)).map((g) => {
     const s = document.createElement("span");
     s.innerHTML = `<i style="background:${APPARENCE[g].couleur}"></i>`;
     s.append(GENRES[g].libelle);
@@ -313,7 +339,6 @@ const preconisations = creerPreconisations({
   auteur: () => auteur(),
 });
 $("a-precos").addEventListener("click", () => { fermerMenu(); preconisations.ouvrir(); });
-$("b-genetec").addEventListener("click", () => { fermerMenu(); $("f-genetec").click(); });
 surFichiers("f-genetec", preconisations.importerGenetec);
 
 /**
@@ -401,7 +426,7 @@ async function montrer(v: Vue) {
   if (v === "baies") dessinerBaies();
   $("l-cams").hidden = v === "2d";   // où poser les caméras : 3D et baies
   legende.hidden = v === "baies";      // les baies ne dessinent pas de câbles
-  $("b-png").textContent = v === "3d" ? "Image de la vue 3D (.png)" : "Image du plan 2D (.png)";
+  $("b-png").querySelector("b")!.textContent = v === "3d" ? "Image de la vue 3D (.png)" : "Image du plan 2D (.png)";
   if (v === "3d" && !v3) {
     const m = await import("./vue3d.ts");
     m.options.cameras = $<HTMLSelectElement>("o-cams").value as "murs" | "baie";
@@ -473,11 +498,12 @@ const versAjout = () => {
   setTimeout(() => f?.querySelector<HTMLInputElement>('[data-f="nom"]')?.focus(), 350);
 };
 // Le menu ⋯ (renommer, dupliquer, supprimer) se referme dès qu'on a choisi.
-document.querySelector(".menu-topo .menu-corps")?.addEventListener("click", () => setTimeout(fermerMenu, 0));
+document.querySelectorAll(".menu-topo .menu-corps, .menu-importer .menu-corps").forEach((m) => m.addEventListener("click", () => setTimeout(fermerMenu, 0)));
 $("a-equipement").addEventListener("click", versAjout);
 $("a-cable").addEventListener("click", () => formulaire.editerLien({ a: choisi ?? "", b: "" } as unknown as Liaison));
-$("a-excel").addEventListener("click", () => $("f-tableur").click());
-$("a-releves").addEventListener("click", () => $("f-dossier").click());
+$("a-excel").addEventListener("click", () => { fermerMenu(); $("f-tableur").click(); });
+$("a-releves").addEventListener("click", () => { fermerMenu(); $("f-dossier").click(); });
+$("a-genetec").addEventListener("click", () => { fermerMenu(); $("f-genetec").click(); });
 $("a-pdf").addEventListener("click", () => $("b-pdf").click());
 $("accueil").addEventListener("click", (e) => {
   const k = (e.target as HTMLElement).closest<HTMLElement>("[data-accueil]")?.dataset.accueil;
@@ -529,7 +555,6 @@ $<HTMLInputElement>("f-txt").addEventListener("change", async (e) => {
   if (f) creer(f.name.replace(/\.txt$/i, ""), await f.text());
 });
 // Tableau Excel / CSV → nouvelle topologie (lu dans le navigateur, rien n'est envoyé).
-$("b-tableur").addEventListener("click", () => { fermerMenu(); $("f-tableur").click(); });
 $("b-modele-tableur").addEventListener("click", () => { fermerMenu(); telecharger("modele-topologie.csv", modeleCsv(), "text/csv;charset=utf-8"); });
 $<HTMLInputElement>("f-tableur").addEventListener("change", async (e) => {
   const f = (e.target as HTMLInputElement).files?.[0];
@@ -555,7 +580,6 @@ $<HTMLInputElement>("f-tableur").addEventListener("change", async (e) => {
   } catch (err) { void informer("Fichier illisible", (err as Error).message || "Ce fichier ne peut pas être lu. Enregistrez-le en .xlsx ou .csv, puis réessayez."); }
 });
 /* ---------- relevés des switchs (« Relever les switchs.bat ») ---------- */
-$("b-releves-dossier").addEventListener("click", () => { fermerMenu(); $("f-dossier").click(); });
 $("b-releves").addEventListener("click", () => { fermerMenu(); $("f-releves").click(); });
 const contexteReleves = { creer, ajouterGenetec: preconisations.ajouterGenetec, enregistrer };
 surFichiers("f-dossier", (l) => importerReleves(l, contexteReleves));

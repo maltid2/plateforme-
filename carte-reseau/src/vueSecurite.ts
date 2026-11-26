@@ -4,6 +4,7 @@
  */
 import type { Bilan, Gravite } from "./securite.ts";
 import { CLASSIFICATION } from "./impression.ts";
+import { icone } from "./ui/icones.ts";
 
 const echap = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const LIBELLE: Record<Gravite, string> = { critique: "Critique", importante: "Importante", conseil: "Conseil" };
@@ -33,7 +34,7 @@ export function rapportSecurite(b: Bilan, o: { titre: string; impression?: boole
         <span class="g-critique">${pl(n("critique"), "critique")}</span>
         <span class="g-importante">${pl(n("importante"), "importante")}</span>
         <span class="g-conseil">${pl(n("conseil"), "conseil")}</span>
-        ${o.impression ? "" : `<span class="s-esp"></span><button type="button" data-s="genetec">⇪ ${b.genetec.actif ? "Mettre à jour l'export Genetec" : "Comparer avec un export Genetec"}</button><button type="button" data-s="imprimer">⎙ Imprimer / PDF</button>`}
+        ${o.impression ? "" : `<span class="s-esp"></span><button type="button" data-s="genetec">${icone("video")}${b.genetec.actif ? "Mettre à jour l'export Genetec" : "Comparer avec un export Genetec"}</button><button type="button" data-s="imprimer">${icone("imprimer")}Imprimer / PDF</button>`}
       </div>
     </header>
     <section><h3>Préconisations</h3>${precos}</section>

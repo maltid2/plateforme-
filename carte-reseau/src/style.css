@@ -14,11 +14,19 @@
   --attention: #ffd166;
   --ok: #3ddc97;
   --mono: ui-monospace, "Cascadia Mono", "Consolas", "SFMono-Regular", Menlo, monospace;
+  /* Échelle commune : arrondis, hauteur des commandes, mouvement */
+  --r-s: 7px; --r: 9px; --r-l: 14px;
+  --h-cmd: 34px;
+  --t: 150ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ombre: 0 10px 30px -14px rgba(0, 0, 0, 0.75);
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }   /* « hidden » l'emporte toujours sur les styles d'affichage */
 html, body { margin: 0; height: 100%; overflow: clip; }   /* la page elle-même ne défile jamais : seuls ses panneaux défilent */
 body {
+  /* Texte en couleur d'accent (liens, boutons discrets), déclaré ici pour suivre l'accent choisi */
+  --acc-lien: var(--acc-clair);
   background: var(--bg);
   color: var(--encre);
   font: 14px/1.45 Inter, "Segoe UI", system-ui, -apple-system, sans-serif;
@@ -30,12 +38,22 @@ button, select, input { font: inherit; color: inherit; }
 button, select, input[type="search"], summary {
   background: var(--carte);
   border: 1px solid var(--trait);
-  border-radius: 9px;
+  border-radius: var(--r);
   padding: 6px 11px;
-  transition: border-color 0.12s, background 0.12s;
+  transition: border-color var(--t), background-color var(--t), color var(--t), box-shadow var(--t);
 }
 button, summary { cursor: pointer; }
-button:hover, summary:hover, select:hover { border-color: rgba(var(--acc-rgb), 0.55); }
+button:hover, summary:hover, select:hover { border-color: rgba(var(--acc-rgb), 0.55); background-color: var(--carte2); }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+/* Icônes au trait (ui/icones.ts) : elles prennent la couleur du texte */
+.ic { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+/* Boutons des barres : même hauteur, icône + texte alignés */
+.barre button, .barre summary, .actions-carte button, .actions-carte summary, .outils button,
+.fiche .actions-fiche button, .s-compteurs button, .boutons-col button, .f-boutons button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: var(--h-cmd); white-space: nowrap;
+}
+.outils select, .outils input[type="search"], .barre select { min-height: var(--h-cmd); }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; } }
 button.danger:hover { border-color: rgba(255, 91, 91, 0.6); color: #ffb3b3; }
 :focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
 code, kbd { font-family: var(--mono); font-size: 12px; background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 5px; }
@@ -57,7 +75,12 @@ kbd { border: 1px solid var(--trait); }
 .menu { position: relative; }
 .menu summary { list-style: none; }
 .menu summary::-webkit-details-marker { display: none; }
-.menu summary::after { content: " ▾"; color: var(--sourd); }
+.menu summary::after { content: ""; width: 6px; height: 6px; margin: -3px 0 0 2px; border: solid var(--sourd); border-width: 0 1.6px 1.6px 0; transform: rotate(45deg); }
+.menu-topo summary::after { display: none; }
+.menu-corps button > span { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; }
+.menu-corps button > span small { color: var(--sourd); font-size: 11.5px; font-weight: 400; }
+.menu-corps button { display: flex; align-items: center; gap: 10px; }
+.menu-corps button .ic { color: var(--acc-lien); }
 .menu-corps {
   position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; min-width: 300px;
   background: #121821; border: 1px solid var(--trait); border-radius: 12px; padding: 6px;
@@ -127,7 +150,7 @@ body.lecture .aide-touches .edition { display: none; }
 .c-sep { color: #3f4a58; }
 .c-ip { color: #82aaff; }
 .c-site { color: #3ddc97; }
-.c-mode { color: var(--acc-clair); font-weight: 700; }
+.c-mode { color: var(--acc-lien); font-weight: 700; }
 .c-vlan { color: #ffcb6b; }
 .c-port { color: #f78c6c; }
 .c-fleche { color: #89ddff; font-weight: 700; }
@@ -154,6 +177,13 @@ body.lecture .aide-touches .edition { display: none; }
 .etat .a { color: var(--attention); }
 .etat .ok { color: var(--ok); }
 .alertes { list-style: none; margin: 0; padding: 0 8px 8px; max-height: 26%; overflow: auto; background: var(--bg2); }
+/* Beaucoup de remarques : trois lignes visibles, « Tout voir » pour le reste (le formulaire garde sa place) */
+.alertes.repliees { max-height: 96px; overflow: hidden; -webkit-mask-image: linear-gradient(#000 60%, transparent); mask-image: linear-gradient(#000 60%, transparent); }
+.etat { display: flex; align-items: center; gap: 4px 10px; flex-wrap: wrap; }
+.etat .resume { flex: 1; min-width: 0; }
+.etat .e, .etat .a, .etat .ok { white-space: nowrap; }
+.etat .voir { border: 0; background: transparent; color: var(--acc-lien); font-size: 12px; font-weight: 600; padding: 2px 4px; min-height: 0; }
+.etat .voir:hover { text-decoration: underline; background: transparent; }
 .alertes li { display: flex; gap: 8px; align-items: baseline; padding: 5px 8px; border-radius: 6px; font-size: 12.5px; cursor: pointer; }
 .alertes li:hover { background: rgba(255,255,255,0.04); }
 .alertes .n { font-family: var(--mono); color: var(--sourd); min-width: 44px; }
@@ -207,13 +237,13 @@ body:not(.mode-texte) .alertes .n { display: none; }
 .fiche dt { color: var(--sourd); }
 .fiche dd { margin: 0; font-family: var(--mono); font-size: 12px; word-break: break-word; }
 .fiche h3 { margin: 16px 18px 8px; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sourd); }
-.fiche a { color: var(--acc-clair); cursor: pointer; text-decoration: underline; text-decoration-color: rgba(var(--acc-rgb),0.5); text-underline-offset: 2px; }
+.fiche a { color: var(--acc-lien); cursor: pointer; text-decoration: underline; text-decoration-color: rgba(var(--acc-rgb),0.5); text-underline-offset: 2px; }
 .fiche .port { color: #f78c6c; font-family: var(--mono); font-size: 12px; }
 .fiche table { width: calc(100% - 36px); margin: 0 18px; border-collapse: collapse; font-size: 12.5px; }
 .fiche th { text-align: left; font-weight: 600; color: var(--sourd); font-size: 11px; padding: 4px 6px; border-bottom: 1px solid var(--trait); }
 .fiche td { padding: 5px 6px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: top; }
 .fiche td.mono { font-family: var(--mono); color: #f78c6c; white-space: nowrap; }
-.fiche td.trunk { color: var(--acc-clair); font-weight: 600; }
+.fiche td.trunk { color: var(--acc-lien); font-weight: 600; }
 .fiche .fermer { position: absolute; top: 12px; right: 12px; width: 28px; height: 28px; padding: 0; border-radius: 50%; z-index: 2; }
 .fiche .modifier { margin: 14px 18px 0; font-size: 12.5px; }
 .fiche .vide-fiche { margin: 0 18px; color: var(--sourd); font-size: 12.5px; }
@@ -231,6 +261,11 @@ body:not(.mode-texte) .alertes .n { display: none; }
   position: absolute; left: 12px; bottom: 12px; display: flex; flex-wrap: wrap; gap: 4px 12px; max-width: calc(100% - 260px); font-size: 11.5px; color: var(--sourd); background: rgba(7, 9, 13, 0.78); padding: 6px 10px; border-radius: 9px; pointer-events: none; border: 1px solid var(--trait);
 }
 .legende span { display: inline-flex; align-items: center; gap: 5px; }
+.legende-titre { pointer-events: auto; display: inline-flex; align-items: center; gap: 6px; border: 0; background: transparent; padding: 0 4px 0 0; color: var(--encre); font-size: 11.5px; font-weight: 700; min-height: 0; flex-basis: 100%; }
+.legende-titre:hover { background: transparent; color: var(--acc-lien); }
+.legende-titre .ic { width: 14px; height: 14px; }
+.legende.repliee > span { display: none; }
+.legende.repliee .legende-titre { flex-basis: auto; padding: 0; }
 .legende i { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
 .legende i.trait { width: 16px; height: 3px; border-radius: 2px; }
 .vide { position: absolute; inset: 0; display: grid; place-items: center; color: var(--sourd); text-align: center; padding: 24px; line-height: 1.8; pointer-events: none; }
@@ -306,8 +341,7 @@ body.lecture #b-visionneuse, body.lecture .menu-corps hr, body.lecture .fiche .m
 body.lecture .atelier { grid-template-columns: 1fr; }
 body.lecture .separateur { display: none; }
 /* La visionneuse : on regarde, on cherche, on exporte ; on ne modifie rien. */
-body.lecture .menu-topo, body.lecture #b-tableur, body.lecture #b-modele-tableur, body.lecture #b-signature,
-body.lecture #b-releves, body.lecture #b-releves-dossier, body.lecture #b-script { display: none; }
+body.lecture .menu-topo, body.lecture #b-modele-tableur, body.lecture #b-signature, body.lecture #b-script { display: none; }
 /* Visionneuse : une seule topologie, son nom s'affiche comme un titre (pas de liste). */
 body.lecture #topologie { appearance: none; -webkit-appearance: none; border: 0; background: transparent; font-weight: 700; padding-right: 4px; pointer-events: none; }
 .bandeau-lecture { margin-left: 10px; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; color: #92400e; background: #fef3c7; border: 1px solid #fcd34d; white-space: nowrap; }
@@ -401,7 +435,7 @@ body.lecture #topologie { appearance: none; -webkit-appearance: none; border: 0;
 .legende:empty, .plan-outils[hidden] { display: none; }
 
 /* ---------- signature ---------- */
-.signature { font-size: 12px; padding: 3px 10px; border-radius: 999px; color: var(--acc-clair); background: rgba(var(--acc-rgb), 0.12); border-color: rgba(var(--acc-rgb), 0.35); }
+.signature { font-size: 12px; padding: 3px 10px; border-radius: 999px; color: var(--acc-lien); background: rgba(var(--acc-rgb), 0.12); border-color: rgba(var(--acc-rgb), 0.35); }
 .signature:disabled { cursor: default; opacity: 0.9; }
 
 /* Le bouton « Ajouter » reste visible en bas du formulaire, sans défiler. */
@@ -418,7 +452,7 @@ body.lecture #topologie { appearance: none; -webkit-appearance: none; border: 0;
 .modeles[hidden] { display: none; }
 .modeles > span { color: var(--sourd); margin-right: 2px; }
 .modeles button { padding: 3px 9px; font-size: 12px; border-radius: 999px; }
-.modeles button.exemple { margin-left: auto; border-color: rgba(var(--acc-rgb), 0.45); color: var(--acc-clair); }
+.modeles button.exemple { margin-left: auto; border-color: rgba(var(--acc-rgb), 0.45); color: var(--acc-lien); }
 
 .f-branche legend small { font-weight: 400; color: var(--sourd); }
 .f-aide-branche { margin: 2px 0 6px; font-size: 12px; color: #a7f0cf; line-height: 1.4; }
@@ -452,8 +486,8 @@ body.lecture #topologie { appearance: none; -webkit-appearance: none; border: 0;
 .f-raccord legend { color: #a7f0cf; }
 .f-bloc.f-liaison { border: 1px solid rgba(var(--acc-rgb), 0.5); background: rgba(var(--acc-rgb), 0.06); border-radius: 12px; }
 .f-liaison .f-pastille { background: var(--acc); }
-.f-liaison h3 { color: var(--acc-clair); }
-.f-liaison .f-aide-branche { color: var(--acc-clair); }
+.f-liaison h3 { color: var(--acc-lien); }
+.f-liaison .f-aide-branche { color: var(--acc-lien); }
 
 /* Une case par équipement (plusieurs switchs / caméras d'un coup). */
 .f-detail { margin: 8px 0 0; }
@@ -482,7 +516,7 @@ dialog.colonnes form { display: flex; flex-direction: column; max-height: 88vh; 
 dialog.colonnes h2 { margin: 0; padding: 16px 20px 4px; font-size: 17px; }
 .aide-col { margin: 0; padding: 0 20px 10px; color: var(--sourd); font-size: 13px; }
 .blocs-col { overflow: auto; padding: 0 20px; }
-.blocs-col h3 { font-size: 13px; margin: 14px 0 6px; color: var(--acc-clair); }
+.blocs-col h3 { font-size: 13px; margin: 14px 0 6px; color: var(--acc-lien); }
 .attention-col { color: #FFD166; font-weight: 600; }
 .blocs-col table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 .blocs-col th { text-align: left; color: var(--sourd); font-weight: 500; padding: 4px 6px; border-bottom: 1px solid rgba(255,255,255,0.08); }
@@ -570,7 +604,9 @@ body.theme-studio {
 
 /* ---------- Interface simplifiée : actions principales, accueil ---------- */
 .actions-carte { display: flex; align-items: center; gap: 8px; padding: 10px 12px 0; flex-wrap: wrap; }
-.actions-carte button { padding: 8px 14px; font-weight: 600; }
+.actions-carte > button, .actions-carte > .menu > summary { padding: 0 14px; font-weight: 600; }
+.menu-importer .menu-corps { left: 0; right: auto; min-width: 340px; }
+.menu-importer .menu-corps button { padding: 9px 10px; }
 .menu-topo summary { padding: 6px 12px; font-weight: 700; }
 .accueil { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 6px; z-index: 4; background: var(--bg); padding: 24px; }
 .accueil[hidden] { display: none; }
@@ -636,6 +672,7 @@ details.f-plus > summary:hover { color: var(--encre); }
    Les façades de switch restent réalistes (sombres), comme sur l'export PDF.
    ================================================================ */
 body.theme-clair {
+  --acc-lien: color-mix(in srgb, var(--acc) 55%, #0f172a);   /* accent assombri : lisible sur blanc */
   --bg: #f5f7fa; --bg2: #eef1f5; --carte: #ffffff; --carte2: #f3f5f8;
   --encre: #0f172a; --sourd: #475569; --trait: rgba(15, 23, 42, 0.13);
   --erreur: #dc2626; --attention: #b45309; --ok: #047857;
@@ -701,7 +738,7 @@ body.theme-clair {
   padding: 10px 12px 10px 16px; border-radius: 12px; background: #0f172a; color: #f8fafc; border: 1px solid rgba(255, 255, 255, 0.14);
   box-shadow: 0 18px 44px -14px rgba(0, 0, 0, 0.7); font-size: 13.5px; max-width: min(720px, calc(100vw - 32px)); }
 .toast[hidden] { display: none; }
-.toast button { background: transparent; border: 1px solid rgba(255, 255, 255, 0.3); color: var(--acc-clair); font-weight: 700; padding: 5px 12px; }
+.toast button { background: transparent; border: 1px solid rgba(255, 255, 255, 0.3); color: var(--acc-lien); font-weight: 700; padding: 5px 12px; }
 .toast button:hover { border-color: var(--acc); }
 .f-ou .f-ligne { align-items: flex-end; }
 /* 3D : les noms des caméras n'apparaissent que de près (sinon ils se chevauchent) */
@@ -720,7 +757,7 @@ body.theme-clair {
 .s-esp { flex: 1; }
 .g-critique { color: #ff8a8a; border-color: rgba(239, 68, 68, 0.5); background: rgba(239, 68, 68, 0.1); }
 .g-importante { color: #fbbf24; border-color: rgba(245, 158, 11, 0.5); background: rgba(245, 158, 11, 0.1); }
-.g-conseil { color: var(--acc-clair); border-color: rgba(var(--acc-rgb), 0.45); background: rgba(var(--acc-rgb), 0.08); }
+.g-conseil { color: var(--acc-lien); border-color: rgba(var(--acc-rgb), 0.45); background: rgba(var(--acc-rgb), 0.08); }
 .s-preco { border: 1px solid var(--trait); border-left-width: 4px; border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; background: var(--carte, rgba(255,255,255,0.02)); color: var(--encre); background-color: var(--carte, transparent); }
 .s-preco.g-critique { border-left-color: #ef4444; }
 .s-preco.g-importante { border-left-color: #f59e0b; }
@@ -729,14 +766,14 @@ body.theme-clair {
 .s-badge { font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
 .s-preco.g-critique .s-badge { color: #ff8a8a; }
 .s-preco.g-importante .s-badge { color: #fbbf24; }
-.s-preco.g-conseil .s-badge { color: var(--acc-clair); }
+.s-preco.g-conseil .s-badge { color: var(--acc-lien); }
 .s-dom { color: var(--sourd); }
 .s-preco h4 { margin: 4px 0 6px; font-size: 15px; }
 .s-preco p { margin: 4px 0; font-size: 13px; line-height: 1.5; }
 .s-preco small { color: var(--sourd); font-size: 11.5px; }
 .s-eqs { display: flex; flex-wrap: wrap; gap: 5px; margin: 8px 0 6px; }
 .s-eq { font: 600 11.5px var(--mono, monospace); padding: 2px 8px; border-radius: 6px; border: 1px solid var(--trait); background: transparent; color: var(--encre); }
-button.s-eq:hover { border-color: var(--acc); color: var(--acc-clair); }
+button.s-eq:hover { border-color: var(--acc); color: var(--acc-lien); }
 .s-plus { color: var(--sourd); font-size: 12px; align-self: center; }
 .s-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 .s-table th { text-align: left; color: var(--sourd); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--trait); }
@@ -784,6 +821,27 @@ article.s-preco { color: var(--encre); background: var(--carte, transparent); }
 @media print { .i-secu article.s-preco { color: #111; background: #fff; } }
 
 /* Bouton « Générer les préconisations » : en fin de barre, bien visible sans voler la vedette à « Équipement » */
-.actions-carte .a-precos { margin-left: auto; border-color: rgba(var(--acc-rgb), 0.55); color: var(--acc-clair); font-weight: 700; }
+.actions-carte .a-precos { margin-left: auto; border-color: rgba(var(--acc-rgb), 0.55); color: var(--acc-lien); font-weight: 700; }
 .actions-carte .a-precos:hover { background: rgba(var(--acc-rgb), 0.12); }
 .theme-clair .actions-carte .a-precos { color: #1d4ed8; }
+
+/* ---------- icônes dans les petits boutons ---------- */
+.fiche .fermer, .zooms button, .f-mini, .fiche td.act button { display: inline-flex; align-items: center; justify-content: center; }
+.fiche td.act button { padding: 4px 6px; }
+.fiche td.act .ic, .f-mini .ic { width: 14px; height: 14px; }
+.zooms button .ic { width: 15px; height: 15px; }
+/* ---------- accueil : quatre cartes, l'icône en couleur d'accent ---------- */
+.accueil-choix button { border-radius: var(--r-l); transition: border-color var(--t), background-color var(--t), transform var(--t); }
+.accueil-choix button:hover { transform: translateY(-1px); box-shadow: var(--ombre); }
+.accueil-choix .ic { width: 22px; height: 22px; color: var(--acc); }
+
+/* Menus : entrées alignées à gauche (les boutons des barres sont centrés) */
+.barre .menu-corps button, .actions-carte .menu-corps button { justify-content: flex-start; text-align: left; white-space: normal; }
+/* Thème clair : ports et numéros lisibles sur blanc */
+.theme-clair .fiche .port, .theme-clair .fiche td.mono { color: #c2410c; }
+.menu-titre { font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--sourd); padding: 6px 10px 2px; }
+.menu-fichiers { min-width: 380px; }
+#b-signature { color: var(--sourd); font-size: 12.5px; }
+body.lecture .menu-corps .edition { display: none; }
+/* Noir studio : les sous-titres des menus restent en minuscules (lisibles) */
+.theme-studio .menu-corps small { text-transform: none; letter-spacing: 0; }

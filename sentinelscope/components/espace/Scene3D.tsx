@@ -22,12 +22,15 @@ export default function Scene3D({
   apercu,
   titre,
   texte,
+  mobile,
 }: {
   charger: () => Promise<{ demarrer: Demarrer }>;
   classe: string;
   apercu: { src: string; alt: string; largeur: number; hauteur: number };
   titre: string;
   texte: string;
+  /** Remplace l'image fixe quand le module a une vraie version sans 3D. */
+  mobile?: React.ReactNode;
 }) {
   const racine = useRef<HTMLDivElement>(null);
   const [large, setLarge] = useState<boolean | null>(null);
@@ -64,6 +67,7 @@ export default function Scene3D({
         <Retour />
         <h1 className="text-2xl font-bold tracking-tight">{titre}</h1>
         <p className="mt-2 text-sm text-muted">{texte}</p>
+        {mobile ? <div className="mt-6">{mobile}</div> : (
         <figure className="mt-6 overflow-hidden rounded-2xl border border-line">
           <Image src={apercu.src} alt={apercu.alt} width={apercu.largeur} height={apercu.hauteur} className="h-auto w-full" sizes="100vw" priority />
           <figcaption className="border-t border-line px-4 py-3 text-xs text-muted">
@@ -72,6 +76,7 @@ export default function Scene3D({
               : "Aperçu. La scène se parcourt sur écran large."}
           </figcaption>
         </figure>
+        )}
       </main>
     );
   }

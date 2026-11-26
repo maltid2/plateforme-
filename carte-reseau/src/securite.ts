@@ -255,7 +255,9 @@ export function analyserSecurite(inv: Inventaire, genetec?: Genetec | null): Bil
     if (introuvables.length) {
       ajouter({ gravite: "importante", domaine: "Vidéo (Genetec)", titre: `${introuvables.length} ${introuvables.length > 1 ? "caméras hors ligne et non localisées" : "caméra hors ligne et non localisée"}`,
         constat: enumerer(introuvables.map((r) => `${nomU(r)}${r.unite.ip ? ` · ${r.unite.ip}` : ""}`), 12),
-        preco: "Hors ligne dans Genetec et absentes de la carte : la retrouver (switch non relevé, câble arraché, caméra déposée), puis relever le switch concerné.",
+        preco: introuvables.length > 1
+          ? "Hors ligne dans Genetec et absentes de la carte : les retrouver (switch non relevé, câble arraché, caméra déposée), puis relever les switchs concernés."
+          : "Hors ligne dans Genetec et absente de la carte : la retrouver (switch non relevé, câble arraché, caméra déposée), puis relever le switch concerné.",
         equipements: introuvables.filter((r) => r.eq).map((r) => r.eq!.nom), reference: "ISO 27001 A.5.9 · A.8.16" });
     }
     const absentesEnLigne = cg.absentes.filter((r) => r.etat !== "hors ligne");

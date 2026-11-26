@@ -4,6 +4,7 @@ import { creerEditeur } from "./editeur.ts";
 import { cheminPasserelle, lirePort } from "./facade.ts";
 import { elevations } from "./elevation.ts";
 import { confirmer, demander, informer } from "./boites.ts";
+import { cartoVersTexte, estExportCarto } from "./carto.ts";
 import { creerFormulaire } from "./formulaire.ts";
 import { expliquer } from "./explication.ts";
 import { colonnesDe, lireTableur, modeleCsv, SENS, tableurVersTexte, type Feuille, type Sens } from "./tableur.ts";
@@ -714,15 +715,18 @@ $<HTMLInputElement>("f-tableur").addEventListener("change", async (e) => {
   if (!f) return;
   try {
     const feuilles = await lireTableur(f.name, await f.arrayBuffer());
-    // Avant d'importer : ce que l'outil a compris de chaque colonne, à corriger si besoin.
-    const corrections = await choisirColonnes(feuilles);
-    if (!corrections) return;
-    const r = tableurVersTexte(feuilles, corrections);
+    // Export Excel de « Cartographie Réseau » (relevé automatique des switchs) :
+    // son format est connu, pas besoin de vérifier les colonnes.
+    const carto = estExportCarto(feuilles);
+    // Sinon : ce que l'outil a compris de chaque colonne, à corriger si besoin.
+    const corrections = carto ? null : await choisirColonnes(feuilles);
+    if (!carto && !corrections) return;
+    const r = carto ? cartoVersTexte(feuilles) : tableurVersTexte(feuilles, corrections!);
     if (!r.equipements) { void informer("Aucun équipement trouvé", "Vérifiez que la colonne « Nom » est remplie, puis réessayez."); return; }
     creer(f.name.replace(/\.(xlsx|xls|csv|txt)$/i, ""), r.texte);
     const nb = inv.alertes.filter((a) => a.niveau === "erreur").length;
     const pl = (n: number, mot: string) => `${n} ${mot}${n > 1 ? "s" : ""}`;
-    void informer("Tableau importé", `${pl(r.equipements, "équipement")} et ${pl(r.liaisons, "câble")} dans une nouvelle topologie « ${active().nom} ».`
+    void informer(carto ? "Relevé Cartographie Réseau importé" : "Tableau importé", `${pl(r.equipements, "équipement")} et ${pl(r.liaisons, "câble")} dans une nouvelle topologie « ${active().nom} ».`
       + (r.onglets.length > 1 ? `\n\nOnglets :\n${r.onglets.map((o) => `  • ${o.nom} : ${o.lu}`).join("\n")}` : "")
       + (r.ignorees ? `\n\n${pl(r.ignorees, "ligne")} sans nom ou en double ignorée${r.ignorees > 1 ? "s" : ""}.` : "")
       + (r.manquantes.length ? `\nColonnes absentes (facultatives) : ${r.manquantes.map((c) => LIBELLE_COLONNE[c] ?? c).join(", ")}.` : "")

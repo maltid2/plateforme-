@@ -135,6 +135,31 @@ passent sur le lien (trunk).
 Excel. Formats lus : `.xlsx` (tous les onglets) et `.csv` ; un ancien `.xls`
 s'enregistre d'abord en `.xlsx` depuis Excel.
 
+### Depuis un relevé automatique (Cartographie Réseau)
+
+Le script **« Relever les switchs.bat »** interroge les switchs (SSH, show
+version, CDP/LLDP, tables MAC/ARP) et l'outil **Cartographie Réseau v3.x**
+analyse ces relevés. Pour en faire la carte 2D / Baies / 3D :
+
+1. dans Cartographie Réseau : **Exporter › Excel (.xlsx)** ;
+2. ici : **⇪ Importer un Excel** et choisir ce fichier.
+
+L'export est reconnu tout seul (pas de fenêtre de colonnes). Sont repris : le
+site (onglet *Synthèse*), les switchs avec IP, modèle, n° de série, firmware
+et emplacement (qui devient le lieu/bâtiment), les liens LLDP/CDP avec leurs
+ports, la fibre ou le cuivre et les VLAN des trunks, et les équipements
+**branchés directement** (caméras avec nom Genetec, IP, MAC, VLAN,
+archiveur). Les ports RJ45 / SFP sont déduits du modèle (« C9300-48P » → 48,
+« 6200F 48G 4SFP+ » → 48 + 4 SFP) et les ports d'uplink (« 1/1/49 »,
+« Gi1/1/1 ») deviennent les cages SFP. Les switchs non relevés restent sur la
+carte avec la raison (« Identifiants refusés »…). Les équipements vus
+seulement derrière un lien entre switchs ne sont pas placés : on ne sait pas
+où ils sont branchés.
+
+Le script de relevé reste **à part**, volontairement : lui se connecte aux
+switchs avec des identifiants ; ce fichier-ci ne se connecte jamais à rien,
+il lit seulement l'export.
+
 ## Saisir : le texte (pour aller vite)
 
 **Une ligne = un équipement ou un câble.** On peut l'écrire en français
@@ -303,6 +328,7 @@ npm run fichier    # reconstruit topologie-reseau-v1.html et son empreinte SHA-2
 | `src/impression.ts` | dossier imprimable / PDF |
 | `src/projets.ts` | topologies multiples, sauvegarde et import |
 | `src/tableur.ts` | import Excel (.xlsx) / CSV, sans bibliothèque |
+| `src/carto.ts` | lecture de l'export Excel de Cartographie Réseau (relevé automatique) |
 | `src/main.ts` | l'interface : vues, fiche, recherche, menus, exports, annulation |
 | `src/explication.ts` | la ligne du curseur expliquée en français (mode Texte) |
 | `src/boites.ts` | petites fenêtres de l'outil (à la place de alert / prompt / confirm) |

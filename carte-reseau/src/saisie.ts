@@ -85,7 +85,11 @@ export function cleKv(brut: string): string {
   return k;
 }
 /** Libellé lisible d'une clé (fiche, dossier PDF). */
-export const LIBELLE_CLE: Record<string, string> = { serie: "N° de série", mac: "Adresse MAC", masque: "Masque", VLAN: "VLAN" };
+export const LIBELLE_CLE: Record<string, string> = {
+  serie: "N° de série", mac: "Adresse MAC", masque: "Masque", VLAN: "VLAN",
+  // Informations venues du relevé automatique (Cartographie Réseau)
+  firmware: "Firmware", releve: "Relevé", archiveur: "Archiveur", lldp: "Nom LLDP", source: "Source",
+};
 
 /** « 00-11-22-AA-BB-CC », « 0011.22aa.bbcc », « 001122AABBCC » → « 00:11:22:AA:BB:CC » ; sinon null. */
 export function lireMac(v: string): string | null {

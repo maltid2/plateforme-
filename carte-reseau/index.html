@@ -45,6 +45,10 @@
           <button id="b-enregistrer" type="button">Exporter cette topologie (.txt)</button>
           <button id="b-ouvrir" type="button">Ouvrir une topologie (.txt)</button>
           <hr />
+          <button id="b-releves-dossier" type="button">Importer les relevés des switchs (dossier du site ou « Log Switch »)</button>
+          <button id="b-releves" type="button">Importer des relevés de switchs (fichiers .txt)</button>
+          <button id="b-script" type="button">Script de relevé des switchs (.bat, à lancer sur un PC du réseau)</button>
+          <hr />
           <button id="b-tableur" type="button">Importer un tableau Excel ou CSV (.xlsx, .csv)</button>
           <button id="b-modele-tableur" type="button">Modèle de tableau à remplir (.csv pour Excel)</button>
           <hr />
@@ -60,6 +64,8 @@
       <input id="f-txt" type="file" accept=".txt,text/plain" hidden />
       <input id="f-json" type="file" accept=".json,application/json" hidden />
       <input id="f-tableur" type="file" accept=".xlsx,.csv,.xls,.txt" hidden />
+      <input id="f-releves" type="file" accept=".txt,.log,.json,.csv" multiple hidden />
+      <input id="f-dossier" type="file" webkitdirectory multiple hidden />
     </div>
   </header>
 
@@ -87,6 +93,7 @@
       <div class="actions-carte" role="toolbar" aria-label="Actions principales">
         <button id="a-equipement" type="button" class="primaire">＋ Équipement</button>
         <button id="a-cable" type="button">＋ Câble</button>
+        <button id="a-releves" type="button" title="Le dossier créé par « Relever les switchs.bat » : la carte se dessine toute seule">⇪ Relevés des switchs</button>
         <button id="a-excel" type="button">⇪ Importer un Excel</button>
         <button id="a-pdf" type="button">⎙ PDF</button>
       </div>
@@ -109,8 +116,9 @@
         <aside class="fiche" id="fiche" hidden></aside>
         <div class="accueil" id="accueil" hidden>
           <h2>Votre carte est vide</h2>
-          <p>Trois façons de commencer :</p>
+          <p>Quatre façons de commencer :</p>
           <div class="accueil-choix">
+            <button type="button" data-accueil="releves"><b>⇪ Relevés des switchs</b><span>Le dossier créé par « Relever les switchs.bat » : switchs, câbles, ports, VLAN et caméras, tout seuls.</span></button>
             <button type="button" data-accueil="excel"><b>⇪ Importer un Excel</b><span>Votre inventaire en tableau : l'outil le lit et dessine tout.</span></button>
             <button type="button" data-accueil="equipement"><b>＋ Ajouter un équipement</b><span>Un switch, une caméra… avec le formulaire, pas à pas.</span></button>
             <button type="button" data-accueil="exemple"><b>◎ Voir un exemple</b><span>Une carte complète à explorer, dans une topologie à part.</span></button>
@@ -141,7 +149,7 @@
           <p><b>Relier deux switchs</b>, deux bâtiments ou deux sites : bouton <b>＋ Câble</b>, puis les deux bouts et leurs ports.</p>
           <p><b>Corriger</b> : cliquez l'équipement ou le câble sur la carte, puis <b>Modifier</b> ou <b>Supprimer</b>. Une erreur ? Le bouton <b>Annuler</b> du message en bas, ou <kbd>Ctrl</kbd>+<kbd>Z</kbd>.</p>
           <p><b>Un Excel déjà rempli ?</b> <b>⇪ Importer un Excel</b> : l'outil reconnaît les colonnes (vous pouvez les corriger) et dessine la carte.</p>
-          <p><b>Un relevé automatique des switchs ?</b> Dans Cartographie Réseau, exportez en Excel, puis <b>⇪ Importer un Excel</b> ici : switchs, liens LLDP/CDP, ports, VLAN et caméras sont repris tels quels.</p>
+          <p><b>Relever les switchs automatiquement</b> : <b>Fichiers › Script de relevé des switchs</b> donne « Relever les switchs.bat ». Lancez-le sur un PC du réseau (avec plink.exe de PuTTY à côté) : il interroge chaque switch et range les relevés dans <code>Sites › votre site › Log Switch</code>. Puis <b>⇪ Relevés des switchs</b> et choisissez ce dossier : switchs, câbles LLDP/CDP, ports, VLAN, caméras et anomalies sont repris tout seuls.</p>
         </section>
         <section data-partie="texte" hidden>
           <h3>Écrire sa carte en texte, simplement</h3>

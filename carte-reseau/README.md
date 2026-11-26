@@ -135,30 +135,46 @@ passent sur le lien (trunk).
 Excel. Formats lus : `.xlsx` (tous les onglets) et `.csv` ; un ancien `.xls`
 s'enregistre d'abord en `.xlsx` depuis Excel.
 
-### Depuis un relevé automatique (Cartographie Réseau)
+### Relever les switchs automatiquement
 
-Le script **« Relever les switchs.bat »** interroge les switchs (SSH, show
-version, CDP/LLDP, tables MAC/ARP) et l'outil **Cartographie Réseau v3.x**
-analyse ces relevés. Pour en faire la carte 2D / Baies / 3D :
+Le relevé automatique de **Cartographie Réseau** est intégré à l'outil.
 
-1. dans Cartographie Réseau : **Exporter › Excel (.xlsx)** ;
-2. ici : **⇪ Importer un Excel** et choisir ce fichier.
+1. **Fichiers › Script de relevé des switchs** donne `Relever les switchs.bat`
+   (aussi dans `releve-switchs/`). Mettez-le dans un dossier avec `plink.exe`
+   (outil de PuTTY) et lancez-le **sur un PC du réseau des switchs** : il
+   demande le site, les IP et les identifiants, reconnaît la marque (Cisco,
+   Aruba CX, HP/ProCurve, Planet, Netgear, ComNet, MikroTik, Huawei, Juniper,
+   Ruckus, Dell, Allied, Extreme, D-Link, Zyxel, TP-Link) et n'envoie que des
+   commandes de lecture (`show …`). Il range un fichier par switch dans
+   `Sites › <site> › Log Switch`.
+2. Ici : **⇪ Relevés des switchs** (au-dessus de la carte) et choisissez le
+   dossier du site, `Log Switch`, ou même `Sites` entier (une topologie par
+   site). On peut aussi choisir des `.txt` un par un (*Fichiers › Importer des
+   relevés de switchs*), ou le `.json` du collecteur, et un export Genetec
+   (`.csv`) pour les vrais noms des caméras.
 
-L'export est reconnu tout seul (pas de fenêtre de colonnes). Sont repris : le
-site (onglet *Synthèse*), les switchs avec IP, modèle, n° de série, firmware
-et emplacement (qui devient le lieu/bâtiment), les liens LLDP/CDP avec leurs
-ports, la fibre ou le cuivre et les VLAN des trunks, et les équipements
-**branchés directement** (caméras avec nom Genetec, IP, MAC, VLAN,
-archiveur). Les ports RJ45 / SFP sont déduits du modèle (« C9300-48P » → 48,
-« 6200F 48G 4SFP+ » → 48 + 4 SFP) et les ports d'uplink (« 1/1/49 »,
-« Gi1/1/1 ») deviennent les cages SFP. Les switchs non relevés restent sur la
-carte avec la raison (« Identifiants refusés »…). Les équipements vus
-seulement derrière un lien entre switchs ne sont pas placés : on ne sait pas
-où ils sont branchés.
+L'analyse est celle de Cartographie Réseau v3.2, reprise **sans modification**
+(`src/releve/`) : CDP/LLDP, tables MAC et ARP, VLAN, trunks, LAG, PoE,
+erreurs. La carte reprend les switchs (IP, modèle, n° de série, firmware,
+emplacement → bâtiment), les câbles entre switchs avec leurs ports, la fibre
+ou le cuivre, la vitesse et les VLAN des trunks, et les caméras / serveurs
+**branchés directement** (IP, MAC, VLAN). Les ports RJ45 / SFP sont déduits du
+modèle (« C9300-48P » → 48) et les ports d'uplink (« 1/1/49 », « Gi1/1/1 »)
+deviennent les cages SFP. Les **anomalies** du relevé (liaison agrégée
+dégradée, VLAN natif différent, port en erreur, PoE presque saturé, switch
+non relevé…) s'affichent sur la fiche de chaque switch et sont listées à la
+fin du texte. Un équipement vu seulement derrière un lien entre switchs n'est
+pas placé : on ne sait pas où il est branché.
 
-Le script de relevé reste **à part**, volontairement : lui se connecte aux
-switchs avec des identifiants ; ce fichier-ci ne se connecte jamais à rien,
-il lit seulement l'export.
+**Sécurité** : la page ne se connecte toujours à rien ; elle lit les fichiers
+que le script a écrits. Les **sauvegardes de configuration** (`Config Switch`,
+qui peuvent contenir des mots de passe) ne sont **jamais lues**, même choisies
+par erreur (reconnues à leur dossier, leur nom et leur en-tête). Le script, lui,
+se connecte aux switchs : lancez-le seulement sur le réseau des switchs, avec
+un compte en lecture si possible.
+
+L'export Excel de Cartographie Réseau (onglets Switchs, Liens, Équipements…)
+s'importe aussi avec **⇪ Importer un Excel**.
 
 ## Saisir : le texte (pour aller vite)
 
@@ -329,6 +345,9 @@ npm run fichier    # reconstruit topologie-reseau-v1.html et son empreinte SHA-2
 | `src/projets.ts` | topologies multiples, sauvegarde et import |
 | `src/tableur.ts` | import Excel (.xlsx) / CSV, sans bibliothèque |
 | `src/carto.ts` | lecture de l'export Excel de Cartographie Réseau (relevé automatique) |
+| `src/releve.ts` | relevés des switchs (.txt du script) → carte, anomalies |
+| `src/releve/` | moteur d'analyse de Cartographie Réseau v3.2, repris tel quel |
+| `releve-switchs/` | `Relever les switchs.bat` et `commandes.txt` (le script qui interroge les switchs) |
 | `src/main.ts` | l'interface : vues, fiche, recherche, menus, exports, annulation |
 | `src/explication.ts` | la ligne du curseur expliquée en français (mode Texte) |
 | `src/boites.ts` | petites fenêtres de l'outil (à la place de alert / prompt / confirm) |

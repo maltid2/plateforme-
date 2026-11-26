@@ -1,0 +1,275 @@
+﻿# version-commandes: 6
+# Commandes envoyées aux switchs, rangées par marque. Le script reconnaît la marque tout seul
+# (show version / display version, bannière de connexion) puis envoie la section qui correspond.
+# - Une commande par ligne. Les lignes qui commencent par # sont ignorées.
+# - « sauvegarde: » = commande de sauvegarde de la configuration (rangée à part, dans Config Switch).
+# - Une commande refusée par un switch (« Invalid input », « Unknown command ») n'est pas grave : les autres passent.
+# - « cmd1 || cmd2 || cmd3 » : cmd2 n'est envoyée que si cmd1 est refusée, etc. (variantes selon la gamme ou le nombre de ports).
+# - [defaut] sert quand la marque n'est pas reconnue.
+# - Vous pouvez modifier ce fichier : vos changements sont conservés tant que la ligne « version-commandes » ne change pas.
+
+[cisco]
+# Cisco IOS / IOS-XE (Catalyst) et Cisco Business / SG (terminal datadump)
+terminal length 0
+terminal datadump
+show version
+show inventory
+show ip interface brief
+show interfaces status
+show interfaces description
+show vlan brief
+show interfaces trunk
+show etherchannel summary
+show cdp neighbors detail
+show lldp neighbors detail
+show mac address-table
+show ip arp
+show spanning-tree summary
+show spanning-tree root
+show power inline
+show interfaces counters errors
+show logging | include MACFLAP|HOST_FLAP|MAC_MOVE
+sauvegarde: show running-config
+
+[arubacx]
+# Aruba CX (6000, 6100, 6300, 8xxx)
+no page
+show version
+show system
+show ip interface brief
+show interface brief
+show vlan
+show lacp aggregates
+show lacp interfaces
+show lldp neighbor-info detail
+show mac-address-table
+show arp
+show spanning-tree
+show power-over-ethernet brief
+show power-over-ethernet
+sauvegarde: show running-config
+
+[hp]
+# HP / Aruba ArubaOS-Switch (2530, 2540, 2930, 3810, 5400, ProCurve)
+no page
+show system
+show version
+show ip
+show interfaces brief
+show name
+show vlans
+show trunks
+show lacp
+show lldp info remote-device detail
+show cdp neighbors detail
+show mac-address
+show arp
+show spanning-tree
+show power-over-ethernet brief
+sauvegarde: show running-config
+
+[planet]
+# Planet, 3 familles :
+#  - ICLI (GS-5220 / IGS-5225… v5, ports « GigabitEthernet 1/1 ») : « show interface * status » ;
+#  - GE1 / XG1 (GS-5220-16S8CR v2) et gi1 (IGS-4215, GS-4210…) : la plage doit coller au nombre de ports
+#    (« Invalid port id » sinon) : on essaie de la plus grande à la plus petite.
+terminal length 0
+show version
+show info
+show interface * status || show interface GigabitEthernet 1-52 status || show interface GigabitEthernet 1-28 status || show interface GigabitEthernet 1-26 status || show interface GigabitEthernet 1-24 status || show interface GigabitEthernet 1-20 status || show interface GigabitEthernet 1-18 status || show interface GigabitEthernet 1-16 status || show interface GigabitEthernet 1-12 status || show interface GigabitEthernet 1-10 status || show interface GigabitEthernet 1-8 status || show interface GigabitEthernet 1-6 status || show interface GigabitEthernet 1-5 status
+show interface * switchport || show interface switchport Giga 1-52 || show interface switchport Giga 1-28 || show interface switchport Giga 1-26 || show interface switchport Giga 1-24 || show interface switchport Giga 1-20 || show interface switchport Giga 1-18 || show interface switchport Giga 1-16 || show interface switchport Giga 1-12 || show interface switchport Giga 1-10 || show interface switchport Giga 1-8 || show interface switchport Giga 1-6 || show interface switchport Giga 1-5
+show vlan
+show lldp neighbors || show lldp neighbor
+show mac address-table
+show ip arp || show arp
+show poe || show poe interface || show power inline
+sauvegarde: show running-config
+
+[netgear]
+# Netgear (M4xxx, GSM avec CLI, et gammes Smart à CLI simplifiée)
+terminal length 0
+show sysinfo
+show version
+show port all
+show interfaces status all
+show vlan brief
+show port-channel brief
+show lldp remote-device all
+show lldp neighbor
+show mac-addr-table
+show mac address-table
+show arp
+show spanning-tree
+show poe
+sauvegarde: show running-config
+
+[comnet]
+# ComNet CNGE… / CNFE… (invite « switch> », passage en « switch# » par enable ; sortie par logout)
+# Relevé réel (CNGE2FE8MSPOE+ v1.37) : show system accepté. Les autres sont celles du manuel ComNet.
+terminal length 0
+show system || show system-info
+show version
+show ip
+show interface status || show port status || show interface
+show vlan
+show lldp neighbor || show lldp neighbors || show lldp
+show mac-address-table || show mac address-table
+show spanning-tree
+show arp || show ip arp
+show poe || show poe status
+sauvegarde: show running-config || show config
+
+[mikrotik]
+# MikroTik RouterOS (CRS) : une connexion par commande
+/system identity print
+/system routerboard print
+/system resource print
+/ip address print without-paging
+/interface ethernet print without-paging
+/ip neighbor print detail without-paging
+/interface bridge host print without-paging
+/ip arp print without-paging
+sauvegarde: /export
+
+[huawei]
+# Huawei (VRP) et H3C / HPE Comware : commandes « display ». Celles de l'autre gamme sont refusées.
+screen-length 0 temporary
+screen-length disable
+display version
+display device
+display interface brief
+display vlan
+display lldp neighbor brief
+display lldp neighbor
+display lldp neighbor-information verbose
+display mac-address
+display arp
+display eth-trunk
+display link-aggregation summary
+display stp brief
+sauvegarde: display current-configuration
+
+[juniper]
+# Juniper EX (Junos)
+set cli screen-length 0
+set cli screen-width 0
+show version
+show chassis hardware
+show interfaces terse
+show interfaces descriptions
+show vlans
+show lldp neighbors
+show ethernet-switching table
+show arp no-resolve
+show lacp interfaces
+show spanning-tree bridge
+show poe interface
+sauvegarde: show configuration | display set
+
+[ruckus]
+# Ruckus / Brocade ICX (FastIron)
+skip-page-display
+show version
+show interfaces brief
+show vlan brief
+show lldp neighbors detail
+show mac-address
+show arp
+show lag brief
+show inline power
+sauvegarde: show running-config
+
+[dell]
+# Dell EMC / PowerConnect (OS6, N-series) et OS10
+terminal length 0
+show version
+show system
+show interfaces status
+show vlan
+show lldp remote-device all
+show lldp neighbors detail
+show mac address-table
+show arp
+show port-channel brief
+show spanning-tree
+sauvegarde: show running-config
+
+[allied]
+# Allied Telesis (AlliedWare Plus)
+terminal length 0
+show system
+show version
+show interface brief
+show vlan brief
+show lldp neighbors detail
+show mac address-table
+show arp
+show etherchannel
+show spanning-tree
+show power-inline
+sauvegarde: show running-config
+
+[extreme]
+# Extreme Networks (EXOS)
+disable clipaging
+show version
+show switch
+show ports no-refresh
+show vlan
+show lldp neighbors detailed
+show fdb
+show iparp
+show sharing
+sauvegarde: show configuration
+
+[dlink]
+# D-Link (DGS / DES, CLI « show switch ») : à vérifier selon la gamme
+disable clipaging
+show switch
+show ports
+show vlan
+show lldp remote_ports
+show fdb
+show arpentry
+sauvegarde: show config current_config
+
+[zyxel]
+# Zyxel (GS, XGS) : à vérifier selon la gamme
+show system-information
+show version
+show interfaces status
+show vlan
+show lldp info remote
+show mac address-table all
+show ip arp
+sauvegarde: show running-config
+
+[tplink]
+# TP-Link JetStream / Omada : à vérifier selon la gamme
+terminal length 0
+show system-info
+show interface status
+show vlan
+show lldp neighbor-information
+show mac address-table all
+show arp
+sauvegarde: show running-config
+
+[defaut]
+# Marque non reconnue : commandes les plus courantes (beaucoup seront refusées, ce n'est pas grave)
+terminal length 0
+terminal datadump
+no page
+show version
+show system
+show interfaces status
+show interface brief
+show vlan
+show lldp neighbors detail
+show lldp neighbor
+show cdp neighbors detail
+show mac address-table
+show mac-address
+show arp
+show ip arp
+sauvegarde: show running-config

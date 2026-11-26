@@ -48,3 +48,29 @@ test("Cartographie Réseau : ports d'après le modèle", () => {
   assert.deepEqual(portsDuModele("M4300-28G"), { rj: 24, sfp: 4 });
   assert.deepEqual(portsDuModele("Modèle inconnu"), {});
 });
+
+// Relevés bruts écrits par « Relever les switchs.bat » (fabriqués à partir des données d'exemple simulées).
+test("Relevés des switchs : du .txt brut à la carte, avec le moteur de Cartographie Réseau", async () => {
+  const { readdirSync } = await import("node:fs");
+  const { relevesVersTexte, aIgnorer } = await import("../src/releve.ts");
+  const d = new URL("./fixtures/releves/", import.meta.url);
+  const fichiers = readdirSync(d).map((nom) => ({ nom, texte: readFileSync(new URL(encodeURIComponent(nom), d), "utf8") }));
+  const r = relevesVersTexte([...fichiers, { nom: "SW-1 - 2026-11-20 1000.txt", chemin: "Sites/Melun/Config Switch", texte: "password secret" }]);
+  assert.equal(r.site, "Site exemple");
+  const inv = analyser(r.texte);
+  assert.deepEqual(inv.alertes, []);
+  assert.equal(inv.equipements.filter((e) => e.genre === "switch").length, 7 + 4);   // relevés + voisins LLDP/CDP
+  const l = inv.liaisons.find((x) => x.a === "SW-BAT-A" && x.b === "SW-COEUR-1")!;
+  assert.deepEqual([l.portA, l.portB, l.media, l.vlans], ["SFP1", "Te1/1/3", "fibre", "1,10,20,30"]);
+  assert.ok(inv.liaisons.some((x) => x.b === "SW-QUAI" && x.portB === "2"));   // caméra sur SW-QUAI port 2
+  assert.ok(r.anomalies.some((a) => a.gravite === "critique" && a.equipement === "SW-COEUR-2"));
+  assert.match(r.texte, /anomalies=1 dont 1 critique — ⛔ Po1 : Une liaison agrégée/);
+  // La sauvegarde de configuration n'est jamais lue.
+  assert.equal(aIgnorer({ nom: "x.txt", chemin: "Sites/Melun/Config Switch" }), "configuration sauvegardée (jamais lue)");
+  assert.ok(!r.texte.includes("secret"));
+  // Choisie fichier par fichier (sans le dossier) : reconnue à son nom, ou à son en-tête.
+  assert.ok(aIgnorer({ nom: "SW-COEUR-1 (10.10.0.1) - 2026-11-20 1000.txt" }));
+  const r2 = relevesVersTexte([...fichiers, { nom: "copie.txt", texte: "# Configuration (show running-config) - SW-1 (10.0.0.1) - site : X\r\nenable secret 5 abc" }]);
+  assert.ok(r2.fichiers.some((f) => f.nom === "copie.txt" && /configuration/.test(f.lu)));
+  assert.ok(!r2.texte.includes("enable secret"));
+});

@@ -1,0 +1,29 @@
+﻿# Relevé Carto Réseau - 10.10.0.13 - 13/11/2026 00:47 - site : Site exemple - script : v5.2 - marque : ComNet
+SW-QUAI# show system-info
+Model Name        : CNGE24MS
+System Name       : SW-QUAI
+System Location   : Quai de chargement
+MAC Address       : 00-D0-C9-01-00-13
+IP Address        : 10.10.0.13
+Firmware Version  : V2.4.1
+Serial Number     : CN24MS000013
+System Up Time    : 30 days 01:02:03
+SW-QUAI# show interface status
+Port   Name             Status      Vlan   Duplex  Speed   Type
+1      vers SW-COEUR-1  connected   trunk  full    1000    1000BASE-SX
+2      CAM-QUAI-01      connected   20     full    100     10/100BASE-TX
+3                       notconnect  20     auto    auto    10/100BASE-TX
+4                       notconnect  20     auto    auto    10/100BASE-TX
+SW-QUAI# show mac-address-table
+Vlan  Mac Address        Type     Ports
+----  -----------------  -------  -----
+1     70:CA:9B:10:20:00  Dynamic  1
+20    00:80:F0:01:00:41  Dynamic  2
+SW-QUAI# show lldp neighbor
+Local Port  Chassis ID         Remote Port   System Name
+----------  -----------------  ------------  ------------
+1           70:CA:9B:10:20:00  Gi1/0/3       SW-COEUR-1
+SW-QUAI# show arp
+IP Address       MAC Address        Interface
+10.10.0.1        70:CA:9B:10:20:00  VLAN10
+SW-QUAI# exit

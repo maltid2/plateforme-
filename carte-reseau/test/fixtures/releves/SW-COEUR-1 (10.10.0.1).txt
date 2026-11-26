@@ -1,0 +1,356 @@
+﻿# Relevé Carto Réseau - 10.10.0.1 - 13/11/2026 00:47 - site : Site exemple - script : v5.2 - marque : Cisco
+SW-COEUR-1# show version
+Cisco IOS XE Software, Version 17.06.05
+Cisco IOS Software [Bengaluru], Catalyst L3 Switch Software (CAT9K_IOSXE), Version 17.6.5, RELEASE SOFTWARE (fc2)
+Technical Support: http://www.cisco.com/techsupport
+Copyright (c) 1986-2023 by Cisco Systems, Inc.
+
+ROM: IOS-XE ROMMON
+BOOTLDR: System Bootstrap, Version 17.6.1r, RELEASE SOFTWARE (P)
+
+SW-COEUR-1 uptime is 1 year, 12 weeks, 3 days, 4 hours, 2 minutes
+Uptime for this control processor is 1 year, 12 weeks, 3 days, 4 hours, 4 minutes
+System returned to ROM by Power Failure or Unknown
+System image file is "flash:packages.conf"
+
+cisco C9300-48P (X86) processor with 1331521K/6147K bytes of memory.
+Processor board ID FOC2412X0AB
+48 Gigabit Ethernet interfaces
+4 Ten Gigabit Ethernet interfaces
+
+Base Ethernet MAC Address          : 70:ca:9b:10:20:00
+Motherboard Assembly Number        : 73-17952-06
+Model Revision Number              : B0
+System Serial Number               : FOC2412X0AB
+Model Number                       : C9300-48P
+
+Switch Ports Model              SW Version        SW Image              Mode
+------ ----- -----              ----------        ----------            ----
+*    1 52    C9300-48P          17.06.05          CAT9K_IOSXE           INSTALL
+SW-COEUR-1# show inventory
+NAME: "c93xx Stack", DESCR: "c93xx Stack"
+PID: C9300-48P         , VID: V02  , SN: FOC2412X0AB
+
+NAME: "Switch 1", DESCR: "C9300-48P"
+PID: C9300-48P         , VID: V02  , SN: FOC2412X0AB
+
+NAME: "Te1/1/3", DESCR: "SFP-10GBase-LR"
+PID: SFP-10G-LR          , VID: V02  , SN: FNS20000AAA
+SW-COEUR-1# show ip interface brief
+Interface              IP-Address      OK? Method Status                Protocol
+Vlan1                  unassigned      YES NVRAM  administratively down down
+Vlan10                 10.10.0.1       YES NVRAM  up                    up
+Vlan20                 10.20.0.1       YES NVRAM  up                    up
+Vlan30                 10.30.0.1       YES NVRAM  up                    up
+Vlan99                 10.10.99.1      YES NVRAM  up                    up
+GigabitEthernet0/0     unassigned      YES unset  down                  down
+SW-COEUR-1# show interfaces status
+
+Port         Name               Status       Vlan       Duplex  Speed Type
+Gi1/0/1                         notconnect   1            auto   auto 10/100/1000BaseTX
+Gi1/0/2      vers SW-PARKING    connected    trunk      a-full a-1000 10/100/1000BaseTX
+Gi1/0/3      vers SW-QUAI       connected    trunk      a-full a-1000 10/100/1000BaseTX
+Gi1/0/4      vers LOCAL-TECH    connected    trunk      a-full a-1000 10/100/1000BaseTX
+Gi1/0/5                         notconnect   1            auto   auto 10/100/1000BaseTX
+Gi1/0/6                         disabled     99           auto   auto 10/100/1000BaseTX
+Gi1/0/10     CAM-HALL-01        connected    20         a-full a-1000 10/100/1000BaseTX
+Gi1/0/11     CAM-HALL-02        connected    20         a-full a-1000 10/100/1000BaseTX
+Gi1/0/12     CAM-HALL-03        err-disabled 20           auto   auto 10/100/1000BaseTX
+Gi1/0/13     CAM-QUAI-EXT       connected    20         a-full  a-100 10/100/1000BaseTX
+Gi1/0/14                        notconnect   20           auto   auto 10/100/1000BaseTX
+Gi1/0/20     vers FW-SITE       connected    routed     a-full a-1000 10/100/1000BaseTX
+Te1/1/1      LAG COEUR-2        connected    trunk        full    10G SFP-10GBase-SR
+Te1/1/2      LAG COEUR-2        connected    trunk        full    10G SFP-10GBase-SR
+Te1/1/3      vers SW-BAT-A      connected    trunk        full    10G SFP-10GBase-LR
+Te1/1/4                         notconnect   1            full    10G unknown
+Po1          LAG COEUR-2        connected    trunk      a-full  a-10G N/A
+SW-COEUR-1# show interfaces description
+Interface                      Status         Protocol Description
+Gi1/0/2                        up             up       vers SW-PARKING port 25
+Gi1/0/3                        up             up       vers SW-QUAI port 1
+Gi1/0/4                        up             up       vers LOCAL-TECH 1/0/1
+Gi1/0/10                       up             up       CAM-HALL-01
+Te1/1/3                        up             up       vers SW-BAT-A 1/1/49 (fibre bat A)
+SW-COEUR-1# show vlan brief
+
+VLAN Name                             Status    Ports
+---- -------------------------------- --------- -------------------------------
+1    default                          active    Gi1/0/1, Gi1/0/5, Te1/1/4
+10   GESTION                          active
+20   CAMERAS                          active    Gi1/0/10, Gi1/0/11, Gi1/0/12, Gi1/0/13
+                                                Gi1/0/14
+30   CONTROLE-ACCES                   active
+99   INUTILISE                        active    Gi1/0/6
+1002 fddi-default                     act/unsup
+1003 token-ring-default               act/unsup
+SW-COEUR-1# show interfaces trunk
+
+Port        Mode             Encapsulation  Status        Native vlan
+Gi1/0/2     on               802.1q         trunking      1
+Gi1/0/3     on               802.1q         trunking      1
+Gi1/0/4     on               802.1q         trunking      1
+Te1/1/3     on               802.1q         trunking      1
+Po1         on               802.1q         trunking      1
+
+Port        Vlans allowed on trunk
+Gi1/0/2     1,20
+Gi1/0/3     1,20
+Gi1/0/4     1,10,20
+Te1/1/3     1,10,20,30
+Po1         1,10,20,30,40-45
+
+Port        Vlans allowed and active in management domain
+Gi1/0/2     1,20
+Gi1/0/3     1,20
+Gi1/0/4     1,10,20
+Te1/1/3     1,10,20,30
+Po1         1,10,20,30
+
+Port        Vlans in spanning tree forwarding state and not pruned
+Gi1/0/2     1,20
+Gi1/0/3     1,20
+Gi1/0/4     1,10,20
+Te1/1/3     1,10,20,30
+Po1         1,10,20,30
+SW-COEUR-1# show etherchannel summary
+Flags:  D - down        P - bundled in port-channel
+        I - stand-alone s - suspended
+        H - Hot-standby (LACP only)
+        R - Layer3      S - Layer2
+        U - in use      f - failed to allocate aggregator
+
+Number of channel-groups in use: 1
+Number of aggregators:           1
+
+Group  Port-channel  Protocol    Ports
+------+-------------+-----------+-----------------------------------------------
+1      Po1(SU)         LACP      Te1/1/1(P)  Te1/1/2(P)
+SW-COEUR-1# show cdp neighbors detail
+-------------------------
+Device ID: SW-COEUR-2.site.local
+Entry address(es):
+  IP address: 10.10.0.2
+Platform: cisco C9300-48P,  Capabilities: Router Switch IGMP
+Interface: TenGigabitEthernet1/1/1,  Port ID (outgoing port): TenGigabitEthernet1/1/1
+Holdtime : 151 sec
+
+Version :
+Cisco IOS Software [Amsterdam], Catalyst L3 Switch Software (CAT9K_IOSXE), Version 17.3.4, RELEASE SOFTWARE (fc3)
+
+advertisement version: 2
+VTP Management Domain: ''
+Native VLAN: 10
+Duplex: full
+Management address(es):
+  IP address: 10.10.0.2
+
+-------------------------
+Device ID: SW-COEUR-2.site.local
+Entry address(es):
+  IP address: 10.10.0.2
+Platform: cisco C9300-48P,  Capabilities: Router Switch IGMP
+Interface: TenGigabitEthernet1/1/2,  Port ID (outgoing port): TenGigabitEthernet1/1/2
+Holdtime : 151 sec
+
+Version :
+Cisco IOS Software [Amsterdam], Catalyst L3 Switch Software (CAT9K_IOSXE), Version 17.3.4, RELEASE SOFTWARE (fc3)
+
+advertisement version: 2
+Native VLAN: 10
+Duplex: full
+Management address(es):
+  IP address: 10.10.0.2
+
+
+Total cdp entries displayed : 2
+SW-COEUR-1# show lldp neighbors detail
+------------------------------------------------
+Local Intf: Te1/1/3
+Chassis id: 883a.30aa.bb00
+Port id: 1/1/49
+Port Description: vers SW-COEUR-1
+System Name: SW-BAT-A
+
+System Description:
+Aruba JL727A 6200F 48G CL4 4SFP+ 740W Swch ML.10.10.1000
+
+Time remaining: 101 seconds
+System Capabilities: B,R
+Enabled Capabilities: B,R
+Management Addresses:
+    IP: 10.10.0.11
+Auto Negotiation - not supported
+Physical media capabilities - not advertised
+Media Attachment Unit type - not advertised
+Vlan ID: 1
+
+------------------------------------------------
+Local Intf: Gi1/0/2
+Chassis id: 9457.a5cc.dd00
+Port id: 25
+Port Description: 25
+System Name: SW-PARKING
+
+System Description:
+Aruba JL261A 2930F-24G-PoE+-4SFP Switch, revision WC.16.10.0012, ROM WC.17.02.0006
+
+Time remaining: 99 seconds
+System Capabilities: B,R
+Enabled Capabilities: B
+Management Addresses:
+    IP: 10.10.0.12
+Vlan ID: 1
+
+------------------------------------------------
+Local Intf: Gi1/0/3
+Chassis id: 00d0.c901.0013
+Port id: 1
+Port Description: Port 1
+System Name: SW-QUAI
+
+System Description:
+ComNet CNGE24MS managed switch
+
+Time remaining: 95 seconds
+System Capabilities: B
+Enabled Capabilities: B
+Management Addresses - not advertised
+
+------------------------------------------------
+Local Intf: Gi1/0/4
+Chassis id: 0009.5baa.0014
+Port id: 1/0/1
+Port Description: vers COEUR-1
+System Name: SW-LOCAL-TECH
+
+System Description:
+M4300-28G ProSAFE 24-port 1G and 4-port 10G Stackable Managed Switch, 12.0.17.10
+
+Time remaining: 110 seconds
+System Capabilities: B,R
+Enabled Capabilities: B
+Management Addresses:
+    IP: 10.10.0.14
+
+------------------------------------------------
+Local Intf: Gi1/0/10
+Chassis id: accc.8e01.0010
+Port id: accc8e010010
+Port Description: eth0
+System Name: axis-accc8e010010
+
+System Description:
+AXIS P3265-LV Network Camera 10.12.182
+
+Time remaining: 108 seconds
+System Capabilities: S
+Enabled Capabilities: S
+Management Addresses:
+    IP: 10.20.0.10
+
+------------------------------------------------
+Local Intf: Gi1/0/20
+Chassis id: 0090.0b00.5001
+Port id: port1
+Port Description: LAN
+System Name: FW-SITE
+
+System Description:
+Pare-feu de site (exemple)
+
+Time remaining: 92 seconds
+System Capabilities: R
+Enabled Capabilities: R
+Management Addresses:
+    IP: 192.168.50.1
+
+
+Total entries displayed: 6
+SW-COEUR-1# show mac address-table
+          Mac Address Table
+-------------------------------------------
+
+Vlan    Mac Address       Type        Ports
+----    -----------       --------    -----
+ All    0100.0ccc.cccc    STATIC      CPU
+   1    7018.a7aa.bb01    DYNAMIC     Po1
+  10    883a.30aa.bb00    DYNAMIC     Te1/1/3
+  10    9457.a5cc.dd00    DYNAMIC     Gi1/0/2
+  10    00d0.c901.0013    DYNAMIC     Gi1/0/3
+  10    0009.5baa.0014    DYNAMIC     Gi1/0/4
+  20    accc.8e01.0010    DYNAMIC     Gi1/0/10
+  20    e430.2201.0011    DYNAMIC     Gi1/0/11
+  20    0011.2233.4455    DYNAMIC     Gi1/0/11
+  20    0011.2233.4455    DYNAMIC     Gi1/0/13
+  20    accc.8e01.0001    DYNAMIC     Te1/1/3
+  20    accc.8e01.0002    DYNAMIC     Te1/1/3
+  20    e430.2201.0201    DYNAMIC     Gi1/0/2
+  20    0080.f001.0041    DYNAMIC     Gi1/0/3
+  30    0040.8c01.0004    DYNAMIC     Te1/1/3
+Total Mac Addresses for this criterion: 15
+SW-COEUR-1# show ip arp
+Protocol  Address          Age (min)  Hardware Addr   Type   Interface
+Internet  10.10.0.1               -   70ca.9b10.2000  ARPA   Vlan10
+Internet  10.10.0.2               3   7018.a7aa.bb00  ARPA   Vlan10
+Internet  10.10.0.11              2   883a.30aa.bb00  ARPA   Vlan10
+Internet  10.10.0.12              2   9457.a5cc.dd00  ARPA   Vlan10
+Internet  10.10.0.13              2   00d0.c901.0013  ARPA   Vlan10
+Internet  10.10.0.14              1   0009.5baa.0014  ARPA   Vlan10
+Internet  10.20.0.10              1   accc.8e01.0010  ARPA   Vlan20
+Internet  10.20.0.11              1   e430.2201.0011  ARPA   Vlan20
+Internet  10.20.0.13              4   0011.2233.4455  ARPA   Vlan20
+Internet  10.20.1.1               1   accc.8e01.0001  ARPA   Vlan20
+Internet  10.20.1.2               1   accc.8e01.0002  ARPA   Vlan20
+Internet  10.20.2.1               2   e430.2201.0201  ARPA   Vlan20
+Internet  10.20.3.1               2   0080.f001.0041  ARPA   Vlan20
+Internet  10.30.1.4               5   0040.8c01.0004  ARPA   Vlan30
+SW-COEUR-1# show spanning-tree summary
+Switch is in rapid-pvst mode
+Root bridge for: VLAN0001, VLAN0010, VLAN0020, VLAN0030
+Extended system ID                      is enabled
+Portfast Default                        is disabled
+Loopguard Default                       is disabled
+
+Name                   Blocking Listening Learning Forwarding STP Active
+---------------------- -------- --------- -------- ---------- ----------
+VLAN0001                     0         0        0          5          5
+VLAN0010                     0         0        0          3          3
+VLAN0020                     0         0        0          9          9
+VLAN0030                     0         0        0          2          2
+---------------------- -------- --------- -------- ---------- ----------
+4 vlans                      0         0        0         19         19
+SW-COEUR-1# show spanning-tree root
+
+                                        Root    Hello Max Fwd
+Vlan                   Root ID          Cost    Time  Age Dly  Root Port
+---------------- -------------------- --------- ----- --- ---  ------------
+VLAN0001         24577 70ca.9b10.2000         0    2   20  15
+VLAN0010         24586 70ca.9b10.2000         0    2   20  15
+VLAN0020         24596 70ca.9b10.2000         0    2   20  15
+VLAN0030         24606 70ca.9b10.2000         0    2   20  15
+SW-COEUR-1# show power inline
+
+Module   Available     Used     Remaining
+          (Watts)     (Watts)    (Watts)
+------   ---------   --------   ---------
+1           715.0      210.4       504.6
+Interface Admin  Oper       Power   Device              Class Max
+                            (Watts)
+--------- ------ ---------- ------- ------------------- ----- ----
+Gi1/0/1   auto   off        0.0     n/a                 n/a   30.0
+Gi1/0/10  auto   on         12.9    AXIS P3265-LV       4     30.0
+Gi1/0/11  auto   on         6.5     Ieee PD             2     30.0
+Gi1/0/12  auto   faulty     0.0     n/a                 n/a   30.0
+Gi1/0/13  auto   on         15.4    Ieee PD             0     30.0
+Gi1/0/14  auto   off        0.0     n/a                 n/a   30.0
+SW-COEUR-1# show interfaces counters errors
+
+Port        Align-Err     FCS-Err    Xmit-Err     Rcv-Err  UnderSize  OutDiscards
+Gi1/0/1             0           0           0           0          0            0
+Gi1/0/2             0           0           0           0          0            0
+Gi1/0/10            0           0           0           0          0            0
+Gi1/0/13            0        1520           0        1520          0           12
+Te1/1/3             0           0           0           0          0            0
+SW-COEUR-1# show logging | include MACFLAP|HOST_FLAP|MAC_MOVE
+Nov 12 07:58:10.112: %SW_MATM-4-MACFLAP_NOTIF: Host 0011.2233.4455 in vlan 20 is flapping between port Gi1/0/11 and port Gi1/0/13
+SW-COEUR-1# exit

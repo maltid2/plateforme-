@@ -310,7 +310,8 @@ body.lecture #b-visionneuse, body.lecture .menu-corps hr, body.lecture .fiche .m
 body.lecture .atelier { grid-template-columns: 1fr; }
 body.lecture .separateur { display: none; }
 /* La visionneuse : on regarde, on cherche, on exporte ; on ne modifie rien. */
-body.lecture .menu-topo, body.lecture #b-tableur, body.lecture #b-modele-tableur, body.lecture #b-signature { display: none; }
+body.lecture .menu-topo, body.lecture #b-tableur, body.lecture #b-modele-tableur, body.lecture #b-signature,
+body.lecture #b-releves, body.lecture #b-releves-dossier, body.lecture #b-script { display: none; }
 /* Visionneuse : une seule topologie, son nom s'affiche comme un titre (pas de liste). */
 body.lecture #topologie { appearance: none; -webkit-appearance: none; border: 0; background: transparent; font-weight: 700; padding-right: 4px; pointer-events: none; }
 .bandeau-lecture { margin-left: 10px; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; color: #92400e; background: #fef3c7; border: 1px solid #fcd34d; white-space: nowrap; }
@@ -584,7 +585,7 @@ body.theme-studio {
 .accueil[hidden] { display: none; }
 .accueil h2 { margin: 0; font-size: 22px; }
 .accueil p { margin: 0 0 14px; color: var(--sourd); }
-.accueil-choix { display: grid; grid-template-columns: repeat(3, minmax(180px, 240px)); gap: 14px; justify-content: center; }
+.accueil-choix { display: grid; grid-template-columns: repeat(2, minmax(200px, 280px)); gap: 14px; justify-content: center; }
 .accueil-choix button { display: flex; flex-direction: column; gap: 8px; text-align: left; padding: 18px; min-height: 120px; }
 .accueil-choix b { font-size: 15px; }
 .accueil-choix span { color: var(--sourd); font-size: 12.5px; font-weight: 400; }

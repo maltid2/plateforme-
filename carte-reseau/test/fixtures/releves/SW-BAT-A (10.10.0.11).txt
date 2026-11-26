@@ -1,0 +1,194 @@
+﻿# Relevé Carto Réseau - 10.10.0.11 - 13/11/2026 00:47 - site : Site exemple - script : v5.2 - marque : Aruba CX
+SW-BAT-A# show version
+-----------------------------------------------------------------------------
+ArubaOS-CX
+(c) Copyright 2017-2022 Hewlett Packard Enterprise Development LP
+-----------------------------------------------------------------------------
+Version      : ML.10.10.1000
+Build Date   : 2022-06-01 10:13:21 UTC
+Build ID     : ArubaOS-CX:ML.10.10.1000:000000000000:202206011013
+Build SHA    : 0000000000000000000000000000000000000000
+Active Image : primary
+
+Service OS Version : ML.01.10.0002
+BIOS Version       : ML.01.0002
+SW-BAT-A# show system
+Hostname                      : SW-BAT-A
+System Description            : ML.10.10.1000
+System Contact                :
+System Location               : Batiment A - local R+0
+Vendor                        : Aruba
+Product Name                  : JL727A 6200F 48G CL4 4SFP+ 740W Swch
+Chassis Serial Nbr            : SG12KX0001
+Base MAC Address              : 88:3a:30:aa:bb:00
+ArubaOS-CX Version            : ML.10.10.1000
+Time Zone                     : UTC
+Up Time                       : 63 days, 4 hours, 12 minutes
+CPU Util (%)                  : 4
+Memory Usage (%)              : 22
+SW-BAT-A# show ip interface brief
+Interface       IP Address           Interface Status
+                                     link/admin
+vlan10          10.10.0.11/24        up/up
+SW-BAT-A# show interface brief
+--------------------------------------------------------------------------------------------------------
+Port       Native  Mode   Type           Enabled Status  Reason                  Speed   Description
+           VLAN                                                                  (Mb/s)
+--------------------------------------------------------------------------------------------------------
+1/1/1      20      access 1GbT           yes     up                              1000    CAM-A-001
+1/1/2      20      access 1GbT           yes     up                              1000    CAM-A-002
+1/1/3      20      access 1GbT           yes     up                              100     CAM-A-003
+1/1/4      30      access 1GbT           yes     up                              1000    CTRL-A-01
+1/1/5      20      access 1GbT           yes     down    Waiting for link        --      --
+1/1/6      20      access 1GbT           no      down    Administratively down   --      reserve
+1/1/48     1       trunk  1GbT           yes     up                              1000    vers SW-BAT-A-ETG
+1/1/49     1       trunk  SFP+LR         yes     up                              10000   vers SW-COEUR-1
+1/1/50     --      routed --             yes     down    No XCVR installed       --      --
+SW-BAT-A# show vlan
+--------------------------------------------------------------------------------------
+VLAN  Name                              Status  Reason          Type      Interfaces
+--------------------------------------------------------------------------------------
+1     DEFAULT_VLAN_1                    up      ok              default   1/1/48-1/1/49
+10    GESTION                           up      ok              static    1/1/49
+20    CAMERAS                           up      ok              static    1/1/1-1/1/3,1/1/5-1/1/6,1/1/48-1/1/49
+30    CONTROLE-ACCES                    up      ok              static    1/1/4,1/1/49
+SW-BAT-A# show lacp aggregates
+
+SW-BAT-A# show lacp interfaces
+
+SW-BAT-A# show lldp neighbor-info detail
+--------------------------------------------------------------------------------
+Port                           : 1/1/1
+Neighbor Entries               : 1
+Neighbor Entries Deleted       : 0
+Neighbor Chassis-Name          : axis-accc8e010001
+Neighbor Chassis-Description   : AXIS P3245-V Network Camera 10.12.182
+Neighbor Chassis-ID            : ac:cc:8e:01:00:01
+Neighbor Management-Address    : 10.20.1.1
+Chassis Capabilities Available :
+Chassis Capabilities Enabled   :
+Neighbor Port-ID               : eth0
+Neighbor Port-Desc             : eth0
+TTL                            : 120
+--------------------------------------------------------------------------------
+Port                           : 1/1/48
+Neighbor Entries               : 1
+Neighbor Entries Deleted       : 0
+Neighbor Chassis-Name          : SW-BAT-A-ETG
+Neighbor Chassis-Description   : PLANET GS-4210-24P2S
+Neighbor Chassis-ID            : a8:f7:e0:01:00:15
+Neighbor Management-Address    : 10.10.0.15
+Chassis Capabilities Available : Bridge
+Chassis Capabilities Enabled   : Bridge
+Neighbor Port-ID               : 25
+Neighbor Port-Desc             : GE25
+TTL                            : 120
+--------------------------------------------------------------------------------
+Port                           : 1/1/49
+Neighbor Entries               : 1
+Neighbor Entries Deleted       : 0
+Neighbor Chassis-Name          : SW-COEUR-1
+Neighbor Chassis-Description   : Cisco IOS Software [Bengaluru], Catalyst L3 Switch Software (CAT9K_IOSXE), Version 17.6.5
+Neighbor Chassis-ID            : 70:ca:9b:10:20:00
+Neighbor Management-Address    : 10.10.0.1
+Chassis Capabilities Available : Bridge, Router
+Chassis Capabilities Enabled   : Bridge, Router
+Neighbor Port-ID               : Te1/1/3
+Neighbor Port-Desc             : TenGigabitEthernet1/1/3
+TTL                            : 120
+--------------------------------------------------------------------------------
+Port                           : 1/1/7
+Neighbor Entries               : 1
+Neighbor Chassis-Name          : AP-HALL-01
+Neighbor Chassis-Description   : ArubaOS (MODEL: 515), Version 8.10.0.6 (Access Point, exemple)
+Neighbor Chassis-ID            : 20:4c:03:00:00:30
+Neighbor Management-Address    : 10.10.0.30
+Chassis Capabilities Available : Bridge, WLAN Access Point
+Chassis Capabilities Enabled   : Bridge, WLAN Access Point
+Neighbor Port-ID               : eth0
+Neighbor Port-Desc             : bond0
+TTL                            : 120
+--------------------------------------------------------------------------------
+Port                           : 1/1/8
+Neighbor Entries               : 1
+Neighbor Chassis-Name          : CAM-MULTI-HALL
+Neighbor Chassis-Description   : Hanwha Vision PNM-9000VQ Wisenet multi-capteurs (exemple)
+Neighbor Chassis-ID            : e4:30:22:00:00:31
+Neighbor Management-Address    : 10.10.0.31
+Chassis Capabilities Available : Bridge
+Chassis Capabilities Enabled   : Bridge
+Neighbor Port-ID               : eth0
+Neighbor Port-Desc             : eth0
+TTL                            : 120
+--------------------------------------------------------------------------------
+Port                           : 1/1/9
+Neighbor Entries               : 1
+Neighbor Chassis-Name          : SW-PONT-X
+Neighbor Chassis-Description   : 
+Neighbor Chassis-ID            : 02:aa:bb:00:00:32
+Neighbor Management-Address    : 10.10.0.32
+Chassis Capabilities Available : Bridge
+Chassis Capabilities Enabled   : Bridge
+Neighbor Port-ID               : 1
+Neighbor Port-Desc             : port1
+TTL                            : 120
+SW-BAT-A# show mac-address-table
+MAC age-time            : 300 seconds
+Number of MAC addresses : 8
+
+MAC Address          VLAN     Type                      Port
+--------------------------------------------------------------
+ac:cc:8e:01:00:01    20       dynamic                   1/1/1
+ac:cc:8e:01:00:02    20       dynamic                   1/1/2
+e8:27:25:01:00:03    20       dynamic                   1/1/3
+00:40:8c:01:00:04    30       dynamic                   1/1/4
+a8:f7:e0:01:00:15    1        dynamic                   1/1/48
+00:80:f0:01:00:31    20       dynamic                   1/1/48
+70:ca:9b:10:20:00    10       dynamic                   1/1/49
+70:ca:9b:10:20:03    1        dynamic                   1/1/49
+SW-BAT-A# show arp
+
+ARP IPv4 Entries:
+-----------------
+IPv4 Address     MAC                Port         Physical Port                   State     VRF
+10.10.0.1        70:ca:9b:10:20:00  vlan10       1/1/49                          reachable default
+
+Total Number Of ARP Entries Listed: 1.
+SW-BAT-A# show spanning-tree
+
+MST0
+  Root ID    Priority   : 32768
+             MAC-Address: 88:3a:30:aa:bb:00
+             This bridge is the root
+             Hello time(in seconds):2  Max Age(in seconds):20
+             Forward Delay(in seconds):15
+
+  Bridge ID  Priority   : 32768
+             MAC-Address: 88:3a:30:aa:bb:00
+             Hello time(in seconds):2  Max Age(in seconds):20
+             Forward Delay(in seconds):15
+
+Spanning tree status        : Enabled Protocol: MSTP
+
+PORT         ROLE           STATE      COST       PRIORITY   TYPE
+------------ -------------- ---------- ---------- ---------- ----------
+1/1/48       Designated     Forwarding 20000      128        P2P
+1/1/49       Designated     Forwarding 2000       128        P2P
+SW-BAT-A# show power-over-ethernet brief
+ Status and Configuration Information
+
+  Port    Power    Priority  PD Class  Power      Status
+          Enable             Type      (W)
+  ------- -------- --------- -------- ---------- ------------
+  1/1/1   yes      low       Type 2    13.2       delivering
+  1/1/2   yes      low       Type 2    12.8       delivering
+  1/1/3   yes      high      Type 2    25.5       delivering
+  1/1/4   yes      high      Type 1    6.1        delivering
+  1/1/5   yes      low       --        0.0        searching
+  1/1/6   no       low       --        0.0        disabled
+SW-BAT-A# show power-over-ethernet
+ System Power Status
+   PoE Power Available       : 740 W
+   PoE Power Drawn           : 630 W
+   PoE Power Reserved        : 640 W
+SW-BAT-A# exit

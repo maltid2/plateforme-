@@ -1,0 +1,215 @@
+﻿# Relevé Carto Réseau - 10.10.0.12 - 13/11/2026 00:47 - site : Site exemple - script : v5.2 - marque : HP / ArubaOS-Switch
+SW-PARKING# show version
+Image stamp:    /ws/swbuildm/rel_orlando_qaoff/code/build/anm(swbuildm_rel_orlando_qaoff_rel_orlando)
+                Jan 12 2022 10:24:11
+                WC.16.10.0012
+                1234
+Boot Image:     Primary
+
+Boot ROM Version:    WC.17.02.0006
+Active Boot ROM:     Primary
+SW-PARKING# show system
+
+ Status and Counters - General System Information
+
+  System Name        : SW-PARKING
+  System Contact     :
+  System Location    : Parking - baie P1
+
+  MAC Age Time (sec) : 300
+
+  Time Zone          : 0
+  Daylight Time Rule : None
+
+  Software revision  : WC.16.10.0012        Base MAC Addr      : 9457a5-ccdd00
+  ROM Version        : WC.17.02.0006        Serial Number      : CN12KP0001
+
+  Up Time            : 125 days             Memory   - Total   : 340,126,720
+  CPU Util (%)       : 3                               Free    : 212,444,036
+
+  IP Mgmt  - Pkts Rx : 1,203,442            Packet   - Total   : 6750
+             Pkts Tx : 1,188,101            Buffers    Free    : 5101
+SW-PARKING# show ip
+
+ Internet (IP) Service
+
+  IP Routing : Disabled
+
+  Default Gateway : 10.10.0.1
+  Default TTL     : 64
+  Arp Age         : 20
+  Domain Suffix   :
+  DNS server      :
+
+                    |                                            Proxy ARP
+  VLAN              | IP Config  IP Address      Subnet Mask     Std Local
+  ----------------- + ---------- --------------- --------------- --------
+  DEFAULT_VLAN      | Manual     10.10.0.12      255.255.255.0   No  No
+SW-PARKING# show interfaces brief
+
+ Status and Counters - Port Status
+
+                  | Intrusion                           MDI  Flow  Bcast
+  Port  Type      | Alert     Enabled Status Mode       Mode Ctrl  Limit
+  ----- --------- + --------- ------- ------ ---------- ---- ----- ------
+  1     100/1000T | No        Yes     Up     1000FDx    MDIX off   0
+  2     100/1000T | No        Yes     Up     1000FDx    MDIX off   0
+  3     100/1000T | No        Yes     Up     100FDx     MDI  off   0
+  4     100/1000T | No        Yes     Down   1000FDx    Auto off   0
+  5     100/1000T | No        Yes     Down   1000FDx    Auto off   0
+  24    100/1000T | No        Yes     Up     1000FDx    MDIX off   0
+  25    100/1000T | No        Yes     Up     1000FDx    MDIX off   0
+  26    100/1000T | No        Yes     Down   1000FDx    Auto off   0
+  27    SFP+SR    | No        Yes     Down   10GigFD    NA   off   0
+  28    SFP+SR    | No        Yes     Down   10GigFD    NA   off   0
+SW-PARKING# show name
+
+ Port Names
+  Port  Type      Name
+  ----- --------- ------------------------------------------------------------
+  1     100/1000T CAM-PARK-01
+  2     100/1000T CAM-PARK-02
+  3     100/1000T CAM-PARK-03
+  24    100/1000T vers SW-GARDE
+  25    100/1000T vers SW-COEUR-1
+SW-PARKING# show vlans
+
+ Status and Counters - VLAN Information
+
+  Maximum VLANs to support : 256
+  Primary VLAN : DEFAULT_VLAN
+  Management VLAN :
+
+  VLAN ID Name                             | Status     Voice Jumbo
+  ------- -------------------------------- + ---------- ----- -----
+  1       DEFAULT_VLAN                     | Port-based No    No
+  20      CAMERAS                          | Port-based No    No
+SW-PARKING# show trunks
+
+ Load Balancing Method:  L3-based (default)
+
+  Port | Name                             Type      | Group  Type
+  ---- + -------------------------------- --------- + ------ --------
+SW-PARKING# show lacp
+
+                           LACP
+
+   PORT   LACP      TRUNK     PORT      LACP      LACP
+   NUMB   ENABLED   GROUP     STATUS    PARTNER   STATUS
+   ----   -------   -------   -------   -------   -------
+SW-PARKING# show lldp info remote-device detail
+
+ LLDP Remote Device Information Detail
+
+  Local Port   : 25
+  ChassisType  : mac-address
+  ChassisId    : 70 ca 9b 10 20 00
+  PortType     : interface-name
+  PortId       : Gi1/0/2
+  SysName      : SW-COEUR-1
+  System Descr : Cisco IOS Software [Bengaluru], Catalyst L3 Switch Software (CAT9K_IOSXE), Version 17.6.5, RELEASE SOFTWARE (fc2)
+  PortDescr    : GigabitEthernet1/0/2
+  Pvid         : 1
+
+  System Capabilities Supported  : bridge, router
+  System Capabilities Enabled    : bridge, router
+
+  Remote Management Address
+     Type    : ipv4
+     Address : 10.10.0.1
+
+------------------------------------------------------------------------------
+  Local Port   : 24
+  ChassisType  : mac-address
+  ChassisId    : a0 f8 49 00 00 16
+  PortType     : local
+  PortId       : gi1
+  SysName      : SW-GARDE
+  System Descr : 24-Port Gigabit PoE Managed Switch
+  PortDescr    : gi1
+  Pvid         : 1
+
+  System Capabilities Supported  : bridge
+  System Capabilities Enabled    : bridge
+
+  Remote Management Address
+     Type    : ipv4
+     Address : 10.10.0.16
+
+------------------------------------------------------------------------------
+  Local Port   : 1
+  ChassisType  : mac-address
+  ChassisId    : e4 30 22 01 02 01
+  PortType     : mac-address
+  PortId       : e4 30 22 01 02 01
+  SysName      : CAM-PARK-01
+  System Descr : Hanwha Vision XNO-6080R (exemple)
+  PortDescr    : eth0
+
+  System Capabilities Supported  : station-only
+  System Capabilities Enabled    : station-only
+
+  Remote Management Address
+     Type    : ipv4
+     Address : 10.20.2.1
+SW-PARKING# show cdp neighbors detail
+
+ CDP neighbors information
+
+  Port : 25
+  Device ID : SW-COEUR-1.site.local
+  Address Type : IP
+  Address      : 10.10.0.1
+  Platform     : cisco C9300-48P
+  Capability   : Router Switch IGMP
+  Device Port  : GigabitEthernet1/0/2
+  Version      : Cisco IOS Software [Bengaluru], Version 17.6.5
+SW-PARKING# show mac-address
+
+ Status and Counters - Port Address Table
+
+  MAC Address   Port   VLAN
+  ------------- ------ ----
+  70ca9b-102000 25     1
+  e43022-010201 1      20
+  e43022-010202 2      20
+  e43022-010203 3      20
+  a0f849-000016 24     1
+  0080f0-010051 24     20
+SW-PARKING# show arp
+
+ IP ARP table
+
+  IP Address       MAC Address       Type    Port
+  ---------------  ----------------- ------- ----
+  10.10.0.1        70ca9b-102000     dynamic 25
+SW-PARKING# show spanning-tree
+
+ Multiple Spanning Tree (MST) Information
+
+  STP Enabled   : Yes
+  Force Version : RSTP-operation
+
+  IST Mapped VLANs : 1-4094
+
+  Switch MAC Address : 9457a5-ccdd00
+  Switch Priority    : 32768
+
+  CST Root MAC Address : 70ca9b-102000
+  CST Root Priority    : 24577
+  CST Root Path Cost   : 20000
+  CST Root Port        : 25
+SW-PARKING# show power-over-ethernet brief
+
+ Status and Configuration Information
+
+  Available: 370 W  Used: 96 W  Remaining: 274 W
+
+  PoE  | Power  Power    Alloc  Alloc  Actual Configured  Detection   Power
+  Port | Enable Priority By     Power  Power  Type        Status      Class
+  ---- + ------ -------- ------ ------ ------ ----------- ----------- -----
+  1    | Yes    low      usage  17 W   12.1 W             Delivering  4
+  2    | Yes    low      usage  17 W   11.8 W             Delivering  4
+  3    | Yes    low      usage  17 W   6.3 W              Delivering  2
+  4    | Yes    low      usage  0 W    0 W                Searching   0
+SW-PARKING# exit

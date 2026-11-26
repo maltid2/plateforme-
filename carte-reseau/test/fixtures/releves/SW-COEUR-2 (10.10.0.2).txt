@@ -1,0 +1,162 @@
+﻿# Relevé Carto Réseau - 10.10.0.2 - 13/11/2026 00:47 - site : Site exemple - script : v5.2 - marque : Cisco
+SW-COEUR-2# show version
+Cisco IOS XE Software, Version 17.03.04
+Cisco IOS Software [Amsterdam], Catalyst L3 Switch Software (CAT9K_IOSXE), Version 17.3.4, RELEASE SOFTWARE (fc3)
+Copyright (c) 1986-2021 by Cisco Systems, Inc.
+
+SW-COEUR-2 uptime is 21 weeks, 2 days, 1 hour, 40 minutes
+System image file is "flash:packages.conf"
+
+cisco C9300-48P (X86) processor with 1331521K/6147K bytes of memory.
+Processor board ID FOC2412X0CD
+
+Base Ethernet MAC Address          : 70:18:a7:aa:bb:00
+System Serial Number               : FOC2412X0CD
+Model Number                       : C9300-48P
+SW-COEUR-2# show inventory
+NAME: "Switch 1", DESCR: "C9300-48P"
+PID: C9300-48P         , VID: V02  , SN: FOC2412X0CD
+SW-COEUR-2# show ip interface brief
+Interface              IP-Address      OK? Method Status                Protocol
+Vlan10                 10.10.0.2       YES NVRAM  up                    up
+Vlan20                 10.20.0.2       YES NVRAM  up                    up
+SW-COEUR-2# show interfaces status
+
+Port         Name               Status       Vlan       Duplex  Speed Type
+Gi1/0/1      SRV-VMS-01         connected    20         a-full a-1000 10/100/1000BaseTX
+Gi1/0/5      vers SW-ENTREPOT   connected    trunk      a-full a-1000 10/100/1000BaseTX
+Gi1/0/6                         notconnect   1            auto   auto 10/100/1000BaseTX
+Te1/1/1      LAG COEUR-1        connected    trunk        full    10G SFP-10GBase-SR
+Te1/1/2      LAG COEUR-1        connected    trunk        full    10G SFP-10GBase-SR
+Po1          LAG COEUR-1        connected    trunk      a-full  a-10G N/A
+SW-COEUR-2# show vlan brief
+
+VLAN Name                             Status    Ports
+---- -------------------------------- --------- -------------------------------
+1    default                          active    Gi1/0/6
+10   GESTION                          active
+20   CAMERAS                          active    Gi1/0/1
+30   CONTROLE-ACCES                   active
+SW-COEUR-2# show interfaces trunk
+
+Port        Mode             Encapsulation  Status        Native vlan
+Gi1/0/5     on               802.1q         trunking      1
+Po1         on               802.1q         trunking      10
+
+Port        Vlans allowed on trunk
+Gi1/0/5     1,20
+Po1         1,10,20,30
+
+Port        Vlans allowed and active in management domain
+Gi1/0/5     1,20
+Po1         1,10,20,30
+
+Port        Vlans in spanning tree forwarding state and not pruned
+Gi1/0/5     1,20
+Po1         1,10,20,30
+SW-COEUR-2# show etherchannel summary
+Flags:  D - down        P - bundled in port-channel
+        I - stand-alone s - suspended
+        U - in use
+
+Number of channel-groups in use: 1
+Number of aggregators:           1
+
+Group  Port-channel  Protocol    Ports
+------+-------------+-----------+-----------------------------------------------
+1      Po1(SU)         LACP      Te1/1/1(P)  Te1/1/2(s)
+SW-COEUR-2# show cdp neighbors detail
+-------------------------
+Device ID: SW-COEUR-1.site.local
+Entry address(es):
+  IP address: 10.10.99.1
+Platform: cisco C9300-48P,  Capabilities: Router Switch IGMP
+Interface: TenGigabitEthernet1/1/1,  Port ID (outgoing port): TenGigabitEthernet1/1/1
+Holdtime : 140 sec
+
+Version :
+Cisco IOS Software [Bengaluru], Catalyst L3 Switch Software (CAT9K_IOSXE), Version 17.6.5, RELEASE SOFTWARE (fc2)
+
+Native VLAN: 1
+Duplex: full
+Management address(es):
+  IP address: 10.10.99.1
+SW-COEUR-2# show lldp neighbors detail
+------------------------------------------------
+Local Intf: Te1/1/1
+Chassis id: 70ca.9b10.2000
+Port id: Te1/1/1
+Port Description: TenGigabitEthernet1/1/1
+System Name: SW-COEUR-1
+
+System Description:
+Cisco IOS Software [Bengaluru], Catalyst L3 Switch Software (CAT9K_IOSXE), Version 17.6.5, RELEASE SOFTWARE (fc2)
+
+Time remaining: 101 seconds
+System Capabilities: B,R
+Enabled Capabilities: B,R
+Management Addresses:
+    IP: 10.10.99.1
+
+------------------------------------------------
+Local Intf: Gi1/0/5
+Chassis id: 5c83.8f00.0017
+Port id: Gi0/1
+Port Description: GigabitEthernet0/1
+System Name: SW-ENTREPOT
+
+System Description:
+Cisco IOS Software, C2960X Software (C2960X-UNIVERSALK9-M), Version 15.2(7)E4, RELEASE SOFTWARE (fc3)
+
+Time remaining: 98 seconds
+System Capabilities: B
+Enabled Capabilities: B
+Management Addresses:
+    IP: 10.10.0.17
+
+Total entries displayed: 2
+SW-COEUR-2# show mac address-table
+          Mac Address Table
+-------------------------------------------
+
+Vlan    Mac Address       Type        Ports
+----    -----------       --------    -----
+   1    70ca.9b10.2001    DYNAMIC     Po1
+  10    70ca.9b10.2000    DYNAMIC     Po1
+  20    d4ae.5201.0100    DYNAMIC     Gi1/0/1
+  20    5c83.8f00.0017    DYNAMIC     Gi1/0/5
+Total Mac Addresses for this criterion: 4
+SW-COEUR-2# show ip arp
+Protocol  Address          Age (min)  Hardware Addr   Type   Interface
+Internet  10.10.0.2               -   7018.a7aa.bb00  ARPA   Vlan10
+Internet  10.20.5.1               2   d4ae.5201.0100  ARPA   Vlan20
+SW-COEUR-2# show spanning-tree summary
+Switch is in rapid-pvst mode
+Root bridge for: VLAN0030
+SW-COEUR-2# show spanning-tree root
+
+                                        Root    Hello Max Fwd
+Vlan                   Root ID          Cost    Time  Age Dly  Root Port
+---------------- -------------------- --------- ----- --- ---  ------------
+VLAN0001         24577 70ca.9b10.2000         2    2   20  15  Po1
+VLAN0010         24586 70ca.9b10.2000         2    2   20  15  Po1
+VLAN0020         24596 70ca.9b10.2000         2    2   20  15  Po1
+VLAN0030          4126 7018.a7aa.bb00         0    2   20  15
+SW-COEUR-2# show power inline
+
+Module   Available     Used     Remaining
+          (Watts)     (Watts)    (Watts)
+------   ---------   --------   ---------
+1           715.0        0.0       715.0
+Interface Admin  Oper       Power   Device              Class Max
+                            (Watts)
+--------- ------ ---------- ------- ------------------- ----- ----
+Gi1/0/1   auto   off        0.0     n/a                 n/a   30.0
+SW-COEUR-2# show interfaces counters errors
+
+Port        Align-Err     FCS-Err    Xmit-Err     Rcv-Err  UnderSize  OutDiscards
+Gi1/0/1             0           0           0           0          0            0
+Te1/1/2             0          35           0          35          0            0
+SW-COEUR-2# show logging | include MACFLAP|HOST_FLAP|MAC_MOVE
+
+SW-COEUR-2# exit

@@ -1,0 +1,113 @@
+﻿# Relevé Carto Réseau - 10.10.0.14 - 13/11/2026 00:47 - site : Site exemple - script : v5.2 - marque : Netgear
+SW-LOCAL-TECH# show version
+
+Switch: 1
+
+System Description............................. M4300-28G ProSAFE 24-port 1G and 4-port 10G Stackable Managed Switch, 12.0.17.10, B1.0.0.17
+Machine Type................................... M4300-28G ProSAFE 24-port 1G and 4-port 10G Stackable Managed Switch
+Machine Model.................................. M4300-28G
+Serial Number.................................. 4XX1234N00014
+Part Number....................................
+Maintenance Level.............................. A
+Manufacturer................................... 0xbc00
+Burned In MAC Address.......................... 00:09:5B:AA:00:14
+Software Version............................... 12.0.17.10
+SW-LOCAL-TECH# show sysinfo
+
+System Description............................. M4300-28G ProSAFE 24-port 1G and 4-port 10G Stackable Managed Switch, 12.0.17.10, B1.0.0.17
+System Name.................................... SW-LOCAL-TECH
+System Location................................ Local technique
+System Contact.................................
+System Object ID............................... 1.3.6.1.4.1.4526.100.4.36
+System Up Time................................. 45 days 3 hrs 12 mins 1 secs
+SW-LOCAL-TECH# show port all
+
+                 Admin     Physical   Physical   Link   Link    LACP   Actor
+ Intf      Type  Mode      Mode       Status     Status Trap    Mode   Timeout
+--------- ------ --------- ---------- ---------- ------ ------- ------ --------
+1/0/1            Enable    Auto       1000 Full  Up     Enable  Enable long
+1/0/2            Enable    Auto                  Down   Enable  Enable long
+1/0/3            Enable    Auto       100 Full   Up     Enable  Enable long
+1/0/5            Enable    Auto       1000 Full  Up     Enable  Enable long
+1/0/6            Disable   Auto                  Down   Enable  Enable long
+SW-LOCAL-TECH# show vlan brief
+
+VLAN ID VLAN Name                        VLAN Type
+------- -------------------------------- -------------------
+1       default                          Default
+20      CAMERAS                          Static
+SW-LOCAL-TECH# show port-channel brief
+
+Logical Interface  Port-Channel Name  Link  Trap Flag  Type  Mbr Ports  Active Ports
+-----------------  -----------------  ----  ---------  ----  ---------  ------------
+SW-LOCAL-TECH# show lldp remote-device all
+
+LLDP Remote Device Summary
+
+Local
+Interface RemID   Chassis ID          Port ID           System Name
+--------- ------- ------------------- ----------------- -----------------
+1/0/1     1       70:CA:9B:10:20:00   Gi1/0/4           SW-COEUR-1
+1/0/5     2       00:09:5B:11:22:33   g1                SW-SANS-IP
+SW-LOCAL-TECH# show mac-addr-table
+
+VLAN ID  MAC Address         Interface  IfIndex  Status
+-------  ------------------  ---------  -------  ------------
+1        70:CA:9B:10:20:00   1/0/1      1        Learned
+20       00:80:F0:01:00:21   1/0/3      3        Learned
+1        00:09:5B:11:22:33   1/0/5      5        Learned
+SW-LOCAL-TECH# show arp
+
+IP Address       MAC Address        Interface   Type     Age
+---------------  -----------------  ----------  -------  -----------
+10.10.0.1        70:CA:9B:10:20:00  vlan 10     Dynamic  0h 1m 2s
+SW-LOCAL-TECH# show spanning-tree
+
+Bridge Priority................................ 32768
+Bridge Identifier.............................. 80:00:00:09:5B:AA:00:14
+Time Since Topology Change..................... 2 day 3 hr 10 min 5 sec
+Topology Change Count.......................... 4
+Topology Change in progress.................... FALSE
+Designated Root................................ 60:01:70:CA:9B:10:20:00
+Root Path Cost................................. 20000
+Root Port Identifier........................... 80:01
+Bridge Max Age................................. 20
+Spanning Tree Mode............................. RSTP
+SW-LOCAL-TECH# show lldp remote-device detail 1/0/1
+
+LLDP Remote Device Detail
+
+Local Interface: 1/0/1
+
+Remote Identifier: 1
+Chassis ID Subtype: MAC Address
+Chassis ID: 70:CA:9B:10:20:00
+Port ID Subtype: Interface Name
+Port ID: Gi1/0/4
+System Name: SW-COEUR-1
+System Description: Cisco IOS Software [Bengaluru], Catalyst L3 Switch Software (CAT9K_IOSXE), Version 17.6.5
+Port Description: GigabitEthernet1/0/4
+System Capabilities Supported: bridge, router
+System Capabilities Enabled: bridge, router
+Management Address:
+    Type: IPv4
+    Address: 10.10.0.1
+Time To Live: 108 seconds
+SW-LOCAL-TECH# show lldp remote-device detail 1/0/5
+
+LLDP Remote Device Detail
+
+Local Interface: 1/0/5
+
+Remote Identifier: 2
+Chassis ID Subtype: MAC Address
+Chassis ID: 00:09:5B:11:22:33
+Port ID Subtype: Interface Name
+Port ID: g1
+System Name: SW-SANS-IP
+System Description: Smart switch (exemple)
+Port Description: g1
+System Capabilities Supported: bridge
+System Capabilities Enabled: bridge
+Time To Live: 120 seconds
+SW-LOCAL-TECH# exit

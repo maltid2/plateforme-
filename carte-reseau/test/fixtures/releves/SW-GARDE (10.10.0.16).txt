@@ -1,0 +1,15 @@
+﻿# Relevé Carto Réseau - 10.10.0.16 - 13/11/2026 00:47 - site : Site exemple - script : v5.2 - marque : 
+SW-GARDE# show version
+Active-image: flash://system/images/image_sb.bin
+  Version: 3.1.0.57
+  MD5 Digest: 00000000000000000000000000000000
+  Date: 08-Apr-2021
+  Time: 15:03:13
+SW-GARDE# show system
+System Description:                       24-Port Gigabit PoE Managed Switch
+System Up Time (days,hour:min:sec):       12,03:14:15
+System Contact:
+System Name:                              SW-GARDE
+System Location:                          Poste de garde
+System MAC Address:                       a0:f8:49:00:00:16
+SW-GARDE# exit

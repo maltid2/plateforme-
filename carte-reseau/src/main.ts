@@ -648,10 +648,12 @@ document.querySelector(".menu-topo .menu-corps")?.addEventListener("click", () =
 $("a-equipement").addEventListener("click", versAjout);
 $("a-cable").addEventListener("click", () => formulaire.editerLien({ a: choisi ?? "", b: "" } as unknown as Liaison));
 $("a-excel").addEventListener("click", () => $("f-tableur").click());
+$("a-releves").addEventListener("click", () => $("f-dossier").click());
 $("a-pdf").addEventListener("click", () => $("b-pdf").click());
 $("accueil").addEventListener("click", (e) => {
   const k = (e.target as HTMLElement).closest<HTMLElement>("[data-accueil]")?.dataset.accueil;
   if (k === "excel") $("f-tableur").click();
+  else if (k === "releves") $("f-dossier").click();
   else if (k === "equipement") versAjout();
   else if (k === "exemple") creer("Exemple (à supprimer)", EXEMPLE_COMPLET);
 });
@@ -733,6 +735,69 @@ $<HTMLInputElement>("f-tableur").addEventListener("change", async (e) => {
       + (nb ? `\n${pl(nb, "point")} à corriger : voir la liste sous la saisie.` : ""));
   } catch (err) { void informer("Fichier illisible", (err as Error).message || "Ce fichier ne peut pas être lu. Enregistrez-le en .xlsx ou .csv, puis réessayez."); }
 });
+/* ---------- relevés des switchs (« Relever les switchs.bat ») ---------- */
+// Le script se connecte aux switchs ; cette page, elle, lit seulement les
+// fichiers qu'il a écrits. Les sauvegardes de configuration ne sont pas lues.
+$("b-releves-dossier").addEventListener("click", () => { fermerMenu(); $("f-dossier").click(); });
+$("b-releves").addEventListener("click", () => { fermerMenu(); $("f-releves").click(); });
+for (const id of ["f-dossier", "f-releves"]) {
+  $<HTMLInputElement>(id).addEventListener("change", async (e) => {
+    const i = e.target as HTMLInputElement;
+    const liste = [...(i.files ?? [])];
+    i.value = "";
+    if (liste.length) await importerReleves(liste);
+  });
+}
+$("b-script").addEventListener("click", async () => {
+  fermerMenu();
+  const { default: script } = await import("../releve-switchs/Relever les switchs.bat?raw");
+  telecharger("Relever les switchs.bat", script.replace(/\r?\n/g, "\r\n"), "application/octet-stream");
+  void informer("Script de relevé des switchs", "1. Créez un dossier (ex. « Carto Réseau ») et mettez-y « Relever les switchs.bat » et plink.exe (outil de PuTTY).\n"
+    + "2. Double-cliquez le script sur un PC du réseau des switchs : il demande le site, les IP des switchs et les identifiants, puis relève chaque switch.\n"
+    + "3. Ici : ⇪ Relevés des switchs, et choisissez le dossier « Sites › votre site » (ou « Log Switch »).\n\n"
+    + "Le script ne fait que lire (show …). Les sauvegardes de configuration qu'il range dans « Config Switch » ne sont jamais lues par cette page.");
+});
+
+/** Texte d'un relevé : UTF-8, ou l'ancien codage Windows si les accents sont cassés. */
+async function lireTexte(f: File): Promise<string> {
+  const octets = new Uint8Array(await f.arrayBuffer());
+  const t = new TextDecoder("utf-8").decode(octets);
+  return t.includes("\uFFFD") ? new TextDecoder("windows-1252").decode(octets) : t;
+}
+async function importerReleves(liste: File[]) {
+  try {
+    const { relevesVersTexte, aIgnorer, siteDuReleve } = await import("./releve.ts");
+    const fichiers = await Promise.all(liste.map(async (f) => {
+      const chemin = ((f as File & { webkitRelativePath?: string }).webkitRelativePath ?? "").split("/").slice(0, -1).join("/");
+      const base = { nom: f.name, chemin };
+      return aIgnorer(base) ? { ...base, texte: "" } : { ...base, texte: await lireTexte(f) };
+    }));
+    // Une topologie par site (le dossier « Sites » peut en contenir plusieurs).
+    const siteDe = (f: { chemin: string; texte: string }) => siteDuReleve(f.texte) || f.chemin.match(/(?:^|\/)Sites\/([^/]+)/i)?.[1] || "";
+    const sites = [...new Set(fichiers.map(siteDe).filter(Boolean))];
+    const groupes = sites.length ? sites.map((s) => ({ site: s, fichiers: fichiers.filter((f) => siteDe(f) === s || (!siteDe(f) && sites.length === 1)) })) : [{ site: "", fichiers }];
+    const bilans: string[] = [];
+    let crees = 0;
+    for (const g of groupes) {
+      try {
+        const r = relevesVersTexte(g.fichiers);
+        creer(r.site, r.texte);
+        crees++;
+        const nSw = r.onglets.find((o) => o.nom === "Switchs")?.lu ?? "";
+        const crit = r.anomalies.filter((a) => a.gravite === "critique").length;
+        const pl = (n: number, mot: string) => `${n} ${mot}${n > 1 ? "s" : ""}`;
+        bilans.push(`Site « ${r.site} » : ${nSw} relevés, ${pl(r.equipements, "équipement")}, ${pl(r.liaisons, "câble")}.`
+          + (r.anomalies.length ? `\n${pl(r.anomalies.length, "anomalie")}${crit ? ` dont ${crit} critique${crit > 1 ? "s" : ""}` : ""} : sur la fiche des switchs et à la fin du texte.` : "")
+          + (r.onglets.find((o) => o.nom === "Équipements" && /non placés/.test(o.lu)) ? `\n${r.onglets.find((o) => o.nom === "Équipements")!.lu}.` : ""));
+      } catch (err) { bilans.push(`${g.site ? `Site « ${g.site} » : ` : ""}${(err as Error).message}`); }
+    }
+    const ignores = fichiers.filter((f) => aIgnorer(f));
+    const configs = ignores.filter((f) => /configuration/.test(aIgnorer(f)!)).length;
+    void informer(crees ? (crees > 1 ? `${crees} sites importés` : "Relevés importés") : "Aucun relevé lu", bilans.join("\n\n")
+      + (configs ? `\n\n${configs} sauvegarde${configs > 1 ? "s" : ""} de configuration laissée${configs > 1 ? "s" : ""} de côté (jamais lue${configs > 1 ? "s" : ""}).` : ""));
+  } catch (err) { void informer("Relevés illisibles", (err as Error).message); }
+}
+
 /* ---------- couleurs ---------- */
 const fondDefaut = () => (couleurs.theme === "studio" ? "#000000" : couleurs.theme === "clair" ? "#f5f7fa" : "#07090d");
 $("b-couleurs").addEventListener("click", () => {

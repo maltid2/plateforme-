@@ -1,0 +1,3 @@
+# Le script de relevé garde ses fins de ligne Windows (CRLF) : cmd.exe en a besoin.
+*.bat -text
+releve-switchs/commandes.txt -text

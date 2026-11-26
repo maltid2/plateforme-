@@ -718,3 +718,75 @@ body.theme-clair {
 /* 3D : les noms des caméras n'apparaissent que de près (sinon ils se chevauchent) */
 .etiquette3d.petite { display: none; }
 .pres .etiquette3d.petite { display: block; }
+
+/* ================================================================
+   Onglet « Sécurité » : préconisations, flux, versions
+   ================================================================ */
+.hote.securite { overflow: auto; padding: 20px 24px 80px; }
+.secu { max-width: 1100px; margin: 0 auto; color: var(--encre); }
+.secu h2 { margin: 0 0 6px; font-size: 20px; }
+.secu h3 { margin: 26px 0 10px; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--sourd); }
+.s-note { color: var(--sourd); font-size: 12.5px; margin: 6px 0; max-width: 900px; }
+.s-vide { color: var(--sourd); }
+.s-compteurs { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+.s-compteurs > span:not(.s-esp) { padding: 4px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700; border: 1px solid; }
+.s-esp { flex: 1; }
+.g-critique { color: #ff8a8a; border-color: rgba(239, 68, 68, 0.5); background: rgba(239, 68, 68, 0.1); }
+.g-importante { color: #fbbf24; border-color: rgba(245, 158, 11, 0.5); background: rgba(245, 158, 11, 0.1); }
+.g-conseil { color: var(--acc-clair); border-color: rgba(var(--acc-rgb), 0.45); background: rgba(var(--acc-rgb), 0.08); }
+.s-preco { border: 1px solid var(--trait); border-left-width: 4px; border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; background: var(--carte, rgba(255,255,255,0.02)); }
+.s-preco.g-critique { border-left-color: #ef4444; }
+.s-preco.g-importante { border-left-color: #f59e0b; }
+.s-preco.g-conseil { border-left-color: var(--acc); }
+.s-preco { color: var(--encre); background-color: var(--carte, transparent); }
+.s-preco-tete { display: flex; gap: 10px; align-items: center; font-size: 11.5px; }
+.s-badge { font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
+.s-preco.g-critique .s-badge { color: #ff8a8a; }
+.s-preco.g-importante .s-badge { color: #fbbf24; }
+.s-preco.g-conseil .s-badge { color: var(--acc-clair); }
+.s-dom { color: var(--sourd); }
+.s-preco h4 { margin: 4px 0 6px; font-size: 15px; }
+.s-preco p { margin: 4px 0; font-size: 13px; line-height: 1.5; }
+.s-preco small { color: var(--sourd); font-size: 11.5px; }
+.s-eqs { display: flex; flex-wrap: wrap; gap: 5px; margin: 8px 0 6px; }
+.s-eq { font: 600 11.5px var(--mono, monospace); padding: 2px 8px; border-radius: 6px; border: 1px solid var(--trait); background: transparent; color: var(--encre); }
+button.s-eq:hover { border-color: var(--acc); color: var(--acc-clair); }
+.s-plus { color: var(--sourd); font-size: 12px; align-self: center; }
+.s-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.s-table th { text-align: left; color: var(--sourd); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--trait); }
+.s-table td { padding: 6px 8px; border-bottom: 1px solid var(--trait); vertical-align: top; }
+.s-table td.m { font-family: var(--mono, monospace); white-space: nowrap; }
+.s-table td.mf { font-family: var(--mono, monospace); font-size: 12px; min-width: 180px; }
+.s-dec { font-weight: 700; white-space: nowrap; }
+.s-dec.d-ok { color: var(--ok, #3ddc97); }
+.s-dec.d-non { color: #ff8a8a; }
+.s-dec.d-lim { color: #fbbf24; }
+.s-liste { margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.7; }
+.theme-clair .g-critique, .theme-clair .s-preco.g-critique .s-badge, .theme-clair .s-dec.d-non { color: #b91c1c; }
+.theme-clair .g-importante, .theme-clair .s-preco.g-importante .s-badge, .theme-clair .s-dec.d-lim { color: #b45309; }
+.theme-clair .g-conseil, .theme-clair .s-preco.g-conseil .s-badge { color: #1d4ed8; }
+@media print {
+  .i-secu { page: tableau; font-size: 9.5pt; }
+  .i-secu .secu { max-width: none; color: #111; }
+  .i-secu h2 { font-size: 15pt; margin: 4px 0; }
+  .i-secu h3 { color: #333; font-size: 10pt; margin: 12px 0 6px; break-after: avoid; }
+  .i-secu .s-note, .i-secu .s-dom, .i-secu small { color: #444; }
+  .i-secu .s-preco { background: #fff; border-color: #bbb; break-inside: avoid; padding: 6px 9px; margin-bottom: 6px; color: #111; }
+  .i-secu .s-preco.g-critique { border-left-color: #b91c1c; }
+  .i-secu .s-preco.g-importante { border-left-color: #b45309; }
+  .i-secu .s-preco.g-conseil { border-left-color: #1d4ed8; }
+  .i-secu .g-critique, .i-secu .s-preco.g-critique .s-badge, .i-secu .s-dec.d-non { color: #b91c1c; background: none; }
+  .i-secu .g-importante, .i-secu .s-preco.g-importante .s-badge, .i-secu .s-dec.d-lim { color: #b45309; background: none; }
+  .i-secu .g-conseil, .i-secu .s-preco.g-conseil .s-badge { color: #1d4ed8; background: none; }
+  .i-secu .s-dec.d-ok { color: #047857; }
+  .i-secu .s-eq { color: #111; border-color: #bbb; }
+  .i-secu .s-table th { color: #333; background: #eee; border: 1px solid #bbb; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .i-secu .s-table td { border: 1px solid #ccc; }
+  .i-secu .s-table tr { break-inside: avoid; }
+  .i-secu .s-preco, .i-secu .s-compteurs span, .i-secu .s-preco { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+/* Le rapport occupe toute la vue : la fiche d'un équipement ne le recouvre pas (elle revient sur le plan). */
+.vue:has(> #hote-securite:not([hidden])) > .fiche { display: none; }
+/* Les couleurs de gravité ne s'appliquent qu'aux pastilles et aux badges, pas au texte des cartes. */
+article.s-preco { color: var(--encre); background: var(--carte, transparent); }
+@media print { .i-secu article.s-preco { color: #111; background: #fff; } }

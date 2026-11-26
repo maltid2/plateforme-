@@ -278,6 +278,38 @@ le reste estompé), dans les **Baies** (équipements du chemin encadrés) et en
 ports, le type de câble et les VLAN : « CAM-13 → SW-ACC1 port 5 · RJ45 ·
 VLAN 30 », « SW-ACC1 port SFP1 → SW-CORE port SFP1 · fibre · trunk 10,30 »…
 
+## Sécurité et flux (onglet « Sécurité »)
+
+Des **préconisations** calculées sur le poste à partir de tout ce que la carte
+contient (saisie, Excel, relevés des switchs) ; elles se recalculent à chaque
+modification ou nouveau relevé, sans rien à mettre à jour :
+
+- **cloisonnement** : caméras sans VLAN, VLAN vidéo partagé avec des postes,
+  caméras et postes dans le même réseau IP, administration des switchs non
+  isolée, équipements dans le VLAN 1, VLAN natif 1 sur les trunks, trunks
+  ouverts à tous les VLAN, trunk vers un équipement terminal, absence de pare-feu ;
+- **accès** : ports libres restés actifs, plusieurs MAC sur un port d'accès
+  (switch non administré), clé SSH d'un switch modifiée, switchs non relevés,
+  équipements vus en LLDP/CDP mais pas relevés ;
+- **liaisons** : radio (chiffrement), VPN ;
+- **disponibilité** : un seul lien pour beaucoup de caméras, anomalies relevées ;
+- **inventaire et versions** : IP en double, équipements sans IP, versions
+  différentes sur un même modèle, versions inconnues.
+
+Chaque préconisation donne le constat, l'action, les équipements concernés
+(un clic les montre sur le plan) et la référence (ISO 27001:2022 annexe A,
+ANSSI). Suivent les **zones** (VLAN et réseaux par type d'équipement), une
+**matrice des flux préconisée** (caméras → enregistreurs en RTSP/ONVIF, postes
+→ logiciel vidéo, administration en SSH/HTTPS seulement, NTP, syslog, sortie
+Internet des caméras interdite, tout le reste interdit), le tableau des
+**versions à vérifier** et une liste de **contrôles sur place** (mots de passe
+par défaut, services inutiles…). **Imprimer / PDF** produit le rapport.
+
+**Pas de base CVE embarquée**, volontairement : sans connexion, elle serait
+périmée en quelques semaines et donnerait une fausse assurance. L'outil liste
+chaque couple modèle / version à comparer aux avis du CERT-FR et du
+constructeur depuis un poste connecté.
+
 ## Couleurs
 
 Dans **Couleurs › Apparence** : *Standard* (sombre), *Clair* (fond blanc, 2D et 3D), ou *Noir studio* (inspiré des
@@ -347,6 +379,7 @@ npm run fichier    # reconstruit topologie-reseau-v1.html et son empreinte SHA-2
 | `src/carto.ts` | lecture de l'export Excel de Cartographie Réseau (relevé automatique) |
 | `src/releve.ts` | relevés des switchs (.txt du script) → carte, anomalies |
 | `src/releve/` | moteur d'analyse de Cartographie Réseau v3.2, repris tel quel |
+| `src/securite.ts`, `src/vueSecurite.ts` | préconisations sécurité, matrice de flux, versions à vérifier ; onglet et rapport |
 | `releve-switchs/` | `Relever les switchs.bat` et `commandes.txt` (le script qui interroge les switchs) |
 | `src/main.ts` | l'interface : vues, fiche, recherche, menus, exports, annulation |
 | `src/explication.ts` | la ligne du curseur expliquée en français (mode Texte) |

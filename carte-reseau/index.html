@@ -102,6 +102,7 @@
           <button role="tab" id="v-2d" aria-selected="true">Plan 2D</button>
           <button role="tab" id="v-baies" aria-selected="false">Baies</button>
           <button role="tab" id="v-3d" aria-selected="false">Vue 3D</button>
+          <button role="tab" id="v-securite" aria-selected="false" title="Préconisations de sécurité et matrice des flux, tirées des données de la carte">Sécurité</button>
         </div>
         <select id="filtre-site" aria-label="Site affiché"></select>
         <input id="recherche" type="search" placeholder="Chercher un nom ou une IP…" list="noms" />
@@ -113,6 +114,7 @@
         <div id="hote-2d" class="hote"></div>
         <div id="hote-3d" class="hote" hidden></div>
         <div id="hote-baies" class="hote baies" hidden></div>
+        <div id="hote-securite" class="hote securite" hidden></div>
         <aside class="fiche" id="fiche" hidden></aside>
         <div class="accueil" id="accueil" hidden>
           <h2>Votre carte est vide</h2>
@@ -171,6 +173,7 @@
           <p><b>Plan 2D</b> : molette pour zoomer, glisser pour se déplacer, double-clic pour zoomer, <b>Recentrer</b> pour tout revoir.</p>
           <p><b>Baies</b> : la façade de chaque baie, U par U, avec les ports branchés.</p>
           <p><b>Vue 3D</b> : glisser pour tourner, clic droit (ou <kbd>Maj</kbd> + glisser) pour se déplacer, molette pour zoomer. Cliquez le sol d'un site pour y entrer ; de près, les numéros de port s'affichent sur les câbles.</p>
+          <p><b>Sécurité</b> : préconisations tirées des données de la carte (cloisonnement de la vidéo, VLAN 1, trunks, ports libres actifs, versions à vérifier, IP en double…), une matrice des flux à appliquer sur le pare-feu, et les points à contrôler sur place. Un clic sur un équipement cité le montre sur le plan ; <b>Imprimer / PDF</b> pour le rapport.</p>
           <p><b>Couleurs</b> : apparence sombre, claire ou noir studio, couleur d'accent, couleurs des câbles et des équipements.</p>
           <p><b>Fichiers</b> : PDF imprimable, visionneuse à envoyer (lecture seule), images, plan SVG, maquette 3D, sauvegarde. Tout reste sur ce poste : l'outil ne se connecte à rien.</p>
         </section>

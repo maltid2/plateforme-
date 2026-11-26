@@ -99,6 +99,37 @@ export function relevesVersTexte(fichiers: FichierReleve[]): ResultatReleve {
   ];
   const r = cartoVersTexte(feuilles);
 
+  // Faits utiles à la sécurité, tirés du relevé, écrits sur la ligne de chaque switch
+  // (ils restent dans la topologie et servent aux préconisations, même après rechargement).
+  const faits = new Map<string, string[]>();
+  const ajouter = (sw: string, kv: string) => faits.set(sw, [...(faits.get(sw) ?? []), kv]);
+  const parSw = new Map<string, any[]>();
+  (M.portRows || []).forEach((p: any) => parSw.set(p.switch, [...(parSw.get(p.switch) ?? []), p]));
+  const liste = (ps: string[]) => (ps.length > 6 ? `${ps.slice(0, 6).join(",")}…` : ps.join(","));
+  parSw.forEach((ports, sw) => {
+    const phys = ports.filter((p) => V.isPhysical(p.port));
+    const libres = phys.filter((p) => p.status === "Déconnecté" && !/disab|d[ée]sactiv|shut|admin/i.test(p.statusRaw || ""));
+    const acces = phys.filter((p) => p.status === "Connecté" && p.cls !== "switch" && p.cls !== "externe" && !/trunk/i.test(p.mode || ""));
+    const vlan1 = acces.filter((p) => String(p.vlan) === "1");
+    const multi = acces.filter((p) => (p.macCount || 0) > 2);
+    const ext = phys.filter((p) => p.cls === "externe");
+    if (phys.length) ajouter(sw, `ports-relevés=${phys.length}`);
+    if (libres.length) ajouter(sw, `ports-libres-actifs=${libres.length}`);
+    if (vlan1.length) ajouter(sw, `acces-vlan1=${liste(vlan1.map((p) => p.port))}`);
+    if (multi.length) ajouter(sw, `multi-mac=${liste(multi.map((p) => `${p.port} (${p.macCount} MAC)`))}`);
+    if (ext.length) ajouter(sw, `vers-non-releve=${liste(ext.map((p) => p.port))}`);
+  });
+  SV.switches.forEach((s: any) => {
+    const tr = Object.values(s.ext?.trunks || {}) as any[];
+    const natif1 = tr.filter((t) => String(t.native || "1") === "1" && !/^(po|port-channel)/i.test(t.port));
+    const nbVlan = (t: any) => (Array.isArray(t.allowed) ? t.allowed.length : V.expandVlans(String(t.allowed ?? "")).length);
+    const tous = tr.filter((t) => /all|1-4094|1-4095/i.test(String(t.allowed ?? "")) || nbVlan(t) > 1000);
+    if (natif1.length) ajouter(s.name, `trunk-natif-vlan1=${liste(natif1.map((t) => t.port))}`);
+    if (tous.length) ajouter(s.name, `trunk-tous-vlan=${liste(tous.map((t) => t.port))}`);
+    const date = s.ext?.releve?.date;
+    if (date) ajouter(s.name, `releve-date=${String(date).slice(0, 10)}`);
+  });
+
   const anomalies: Anomalie[] = A.map((a) => ({
     gravite: a.sev === "crit" ? "critique" : a.sev === "warn" ? "attention" : "info",
     equipement: a.sw || "", port: a.port || "", texte: a.simple || a.titre || "",
@@ -109,6 +140,7 @@ export function relevesVersTexte(fichiers: FichierReleve[]): ResultatReleve {
   anomalies.filter((a) => a.gravite !== "info" && a.equipement).forEach((a) => parSwitch.set(a.equipement, [...(parSwitch.get(a.equipement) ?? []), a]));
   texte = texte.split("\n").map((l) => {
     const m = l.match(/^switch (\S+) \|/);
+    if (m && faits.has(m[1])) l = `${l} | ${faits.get(m[1])!.join(" | ")}`;
     const liste = m ? parSwitch.get(m[1]) : undefined;
     if (!liste) return l;
     const crit = liste.filter((a) => a.gravite === "critique").length;

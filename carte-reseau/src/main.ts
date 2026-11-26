@@ -5,6 +5,8 @@ import { cheminPasserelle, lirePort } from "./facade.ts";
 import { elevations } from "./elevation.ts";
 import { confirmer, demander, informer } from "./boites.ts";
 import { cartoVersTexte, estExportCarto } from "./carto.ts";
+import { analyserSecurite } from "./securite.ts";
+import { rapportSecurite } from "./vueSecurite.ts";
 import { creerFormulaire } from "./formulaire.ts";
 import { expliquer } from "./explication.ts";
 import { colonnesDe, lireTableur, modeleCsv, SENS, tableurVersTexte, type Feuille, type Sens } from "./tableur.ts";
@@ -49,7 +51,8 @@ let inv: Inventaire = analyser("");
 let disp: Disposition = disposer(inv);
 let site: string | null = null;
 let choisi: string | null = null;
-let vue: "2d" | "3d" | "baies" = "2d";
+type Vue = "2d" | "3d" | "baies" | "securite";
+let vue: Vue = "2d";
 let v3: Vue3D | null = null;
 
 const active = () => classeur.topologies.find((t) => t.id === classeur.active)!;
@@ -346,7 +349,35 @@ function dessiner() {
   planPerime = true;
   if (vue === "2d") planAJour();
   if (vue === "baies") dessinerBaies();
+  if (vue === "securite") dessinerSecurite();
   maj3D();
+}
+/* ---------------- sécurité et flux ---------------- */
+function dessinerSecurite() {
+  const h = $("hote-securite");
+  const haut = h.scrollTop;
+  h.innerHTML = inv.equipements.length
+    ? rapportSecurite(analyserSecurite(inv), { titre: active().nom })
+    : `<div class="secu"><p class="s-vide">La carte est vide : ajoutez des équipements ou importez les relevés des switchs pour obtenir les préconisations.</p></div>`;
+  h.scrollTop = haut;
+}
+$("hote-securite").addEventListener("click", (e) => {
+  const t = e.target as HTMLElement;
+  const nom = t.closest<HTMLElement>("[data-nom]")?.dataset.nom;
+  if (nom) { void montrer("2d").then(() => choisir(nom, true)); return; }
+  if (t.closest("[data-s=imprimer]")) imprimerSecurite();
+});
+function imprimerSecurite() {
+  document.getElementById("impression")?.remove();
+  const d = document.createElement("div");
+  d.id = "impression";
+  d.innerHTML = `<section class="i-page i-secu">${rapportSecurite(analyserSecurite(inv), {
+    titre: active().nom, impression: true, auteur: auteur(),
+    date: new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" }) })}</section>`;
+  document.body.append(d);
+  const fin = () => { d.remove(); window.removeEventListener("afterprint", fin); };
+  window.addEventListener("afterprint", fin);
+  setTimeout(() => window.print(), 50);
 }
 /**
  * Le plan 2D n'est redessiné que s'il est affiché : en 3D ou dans les baies,
@@ -560,18 +591,21 @@ function maj3D(immediat = false) {
   if (immediat) faire(); else minuteur3D = window.setTimeout(faire, 450);
 }
 
-async function montrer(v: "2d" | "3d" | "baies") {
+async function montrer(v: Vue) {
   vue = v;
   $("v-2d").setAttribute("aria-selected", String(v === "2d"));
   $("v-3d").setAttribute("aria-selected", String(v === "3d"));
   $("v-baies").setAttribute("aria-selected", String(v === "baies"));
+  $("v-securite").setAttribute("aria-selected", String(v === "securite"));
+  $("hote-securite").hidden = v !== "securite";
+  if (v === "securite") dessinerSecurite();
   hote2d.hidden = v !== "2d";
   hote3d.hidden = v !== "3d";
   $("hote-baies").hidden = v !== "baies";
   if (v === "2d") planAJour();   // rattrape les changements faits pendant que le plan était caché
   if (v === "baies") dessinerBaies();
-  $("l-cams").hidden = v === "2d";   // où poser les caméras : 3D et baies
-  legende.hidden = v === "baies";      // les baies ne dessinent pas de câbles
+  $("l-cams").hidden = v !== "3d" && v !== "baies";   // où poser les caméras : 3D et baies
+  legende.hidden = v === "baies" || v === "securite";   // pas de câbles dessinés
   $("b-png").textContent = v === "3d" ? "Image de la vue 3D (.png)" : "Image du plan 2D (.png)";
   if (v === "3d" && !v3) {
     const m = await import("./vue3d.ts");
@@ -609,6 +643,7 @@ recherche.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preven
 $("v-2d").addEventListener("click", () => montrer("2d"));
 $("v-3d").addEventListener("click", () => montrer("3d"));
 $("v-baies").addEventListener("click", () => montrer("baies"));
+$("v-securite").addEventListener("click", () => montrer("securite"));
 $<HTMLSelectElement>("o-cams").addEventListener("change", () => { if (vue === "baies") dessinerBaies(); });
 $("b-cadrer").addEventListener("click", () => (vue === "2d" ? plan.cadrer(false) : v3?.cadrer()));
 /* Aide : une fenêtre, un onglet par usage, ouverte sur le mode en cours. */

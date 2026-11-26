@@ -6,7 +6,9 @@
  * changement de poste), la sauvegarde en fichier .json reste la référence à
  * classer avec vos documents.
  */
-export type Topologie = { id: string; nom: string; texte: string; modifie: number };
+import type { Genetec } from "./genetec.ts";
+/** `genetec` : le dernier export Genetec importé pour cette carte (comparaison vidéo ↔ réseau). */
+export type Topologie = { id: string; nom: string; texte: string; modifie: number; genetec?: Genetec };
 export type Classeur = { version: 1; active: string; topologies: Topologie[] };
 
 const CLE = "carte-reseau:classeur";

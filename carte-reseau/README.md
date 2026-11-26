@@ -278,11 +278,29 @@ le reste estompé), dans les **Baies** (équipements du chemin encadrés) et en
 ports, le type de câble et les VLAN : « CAM-13 → SW-ACC1 port 5 · RJ45 ·
 VLAN 30 », « SW-ACC1 port SFP1 → SW-CORE port SFP1 · fibre · trunk 10,30 »…
 
-## Sécurité et flux (onglet « Sécurité »)
+## Préconisations : sécurité, flux et Genetec
 
-Des **préconisations** calculées sur le poste à partir de tout ce que la carte
-contient (saisie, Excel, relevés des switchs) ; elles se recalculent à chaque
-modification ou nouveau relevé, sans rien à mettre à jour :
+Elles ne s'affichent pas sur la carte : une fois la carte faite, le bouton
+**⚑ Générer les préconisations** (au bout de la barre d'actions) ouvre le
+rapport, calculé sur le poste à partir de tout ce que la carte contient
+(saisie, Excel, relevés des switchs, export Genetec). Il est recalculé à chaque
+ouverture : rien à mettre à jour.
+
+**Comparaison avec Genetec.** Dans le rapport (ou *Fichiers › Comparer avec un
+export Genetec*), ajoutez l'export de Security Center : l'inventaire matériel
+(nom, IP, MAC, modèle, firmware, archiveur, **état**) et, pour les débits, la
+configuration des caméras (flux, débit, résolution). Colonnes reconnues en
+français ou en anglais, .csv ou .xlsx ; l'export est gardé avec la carte. Un
+export Genetec placé dans le dossier des relevés est pris aussi. Le rapport
+rapproche chaque caméra Genetec de la carte (MAC, puis IP, puis nom) et donne :
+les caméras **hors ligne avec le switch et le port où aller voir**, celles de
+Genetec introuvables sur le réseau, celles du réseau **absentes de Genetec (non
+enregistrées)**, les écarts d'IP ou de nom (bouton pour reprendre les noms
+Genetec sur la carte, annulable), les IP en double, le **débit vidéo par
+switch** (charge du lien montant quand il est unique et que sa vitesse est
+connue) et par archiveur, et les versions des caméras.
+
+Les préconisations portent sur :
 
 - **cloisonnement** : caméras sans VLAN, VLAN vidéo partagé avec des postes,
   caméras et postes dans le même réseau IP, administration des switchs non
@@ -379,7 +397,8 @@ npm run fichier    # reconstruit topologie-reseau-v1.html et son empreinte SHA-2
 | `src/carto.ts` | lecture de l'export Excel de Cartographie Réseau (relevé automatique) |
 | `src/releve.ts` | relevés des switchs (.txt du script) → carte, anomalies |
 | `src/releve/` | moteur d'analyse de Cartographie Réseau v3.2, repris tel quel |
-| `src/securite.ts`, `src/vueSecurite.ts` | préconisations sécurité, matrice de flux, versions à vérifier ; onglet et rapport |
+| `src/securite.ts`, `src/vueSecurite.ts` | préconisations sécurité, matrice de flux, versions à vérifier ; rapport |
+| `src/genetec.ts`, `src/genetecLecture.ts` | export Genetec : lecture, comparaison avec le réseau, débits |
 | `releve-switchs/` | `Relever les switchs.bat` et `commandes.txt` (le script qui interroge les switchs) |
 | `src/main.ts` | l'interface : vues, fiche, recherche, menus, exports, annulation |
 | `src/explication.ts` | la ligne du curseur expliquée en français (mode Texte) |

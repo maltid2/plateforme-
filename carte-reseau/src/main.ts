@@ -51,7 +51,7 @@ let inv: Inventaire = analyser("");
 let disp: Disposition = disposer(inv);
 let site: string | null = null;
 let choisi: string | null = null;
-type Vue = "2d" | "3d" | "baies" | "securite";
+type Vue = "2d" | "3d" | "baies";
 let vue: Vue = "2d";
 let v3: Vue3D | null = null;
 
@@ -349,29 +349,92 @@ function dessiner() {
   planPerime = true;
   if (vue === "2d") planAJour();
   if (vue === "baies") dessinerBaies();
-  if (vue === "securite") dessinerSecurite();
+  if (rapport?.open) remplirRapport();
   maj3D();
 }
-/* ---------------- sécurité et flux ---------------- */
-function dessinerSecurite() {
-  const h = $("hote-securite");
-  const haut = h.scrollTop;
-  h.innerHTML = inv.equipements.length
-    ? rapportSecurite(analyserSecurite(inv), { titre: active().nom })
-    : `<div class="secu"><p class="s-vide">La carte est vide : ajoutez des équipements ou importez les relevés des switchs pour obtenir les préconisations.</p></div>`;
-  h.scrollTop = haut;
+/* ---------------- préconisations (sécurité, flux, Genetec) ---------------- */
+// Pas sur la carte : un bouton, une fois la carte faite, ouvre le rapport.
+let rapport: HTMLDialogElement | null = null;
+const bilan = () => analyserSecurite(inv, active().genetec);
+function remplirRapport() {
+  const corps = rapport!.querySelector<HTMLElement>(".rapport-corps")!;
+  const haut = corps.scrollTop;
+  corps.innerHTML = inv.equipements.length
+    ? rapportSecurite(bilan(), { titre: active().nom })
+    : `<p class="s-vide">La carte est vide : ajoutez des équipements, importez un Excel ou les relevés des switchs, puis générez les préconisations.</p>`;
+  corps.scrollTop = haut;
 }
-$("hote-securite").addEventListener("click", (e) => {
-  const t = e.target as HTMLElement;
-  const nom = t.closest<HTMLElement>("[data-nom]")?.dataset.nom;
-  if (nom) { void montrer("2d").then(() => choisir(nom, true)); return; }
-  if (t.closest("[data-s=imprimer]")) imprimerSecurite();
+function ouvrirPreconisations() {
+  fermerMenu();
+  if (!rapport) {
+    rapport = document.createElement("dialog");
+    rapport.className = "colonnes rapport";
+    rapport.innerHTML = `<form method="dialog"><div class="rapport-corps"></div><div class="boutons-col"><button value="ok" type="submit" class="primaire">Fermer</button></div></form>`;
+    rapport.addEventListener("click", (e) => {
+      const t = e.target as HTMLElement;
+      if (t === rapport) { rapport!.close(); return; }
+      const nom = t.closest<HTMLElement>("[data-nom]")?.dataset.nom;
+      if (nom) { rapport!.close(); void montrer(vue === "3d" ? "3d" : "2d").then(() => choisir(nom, true)); return; }
+      const a = t.closest<HTMLElement>("[data-s]")?.dataset.s;
+      if (a === "imprimer") imprimerSecurite();
+      if (a === "genetec") $("f-genetec").click();
+      if (a === "noms-genetec") renommerGenetec();
+    });
+    document.body.append(rapport);
+  }
+  remplirRapport();
+  rapport.showModal();
+}
+$("a-precos").addEventListener("click", ouvrirPreconisations);
+/** Les noms de Genetec remplacent ceux de la carte (« axis-accc8e010001 » → « CAM-BATA-Couloir-1 »). */
+function renommerGenetec() {
+  const c = bilan().genetec;
+  const pris = new Set(inv.equipements.map((e) => e.nom.toLowerCase()));
+  const paires: [string, string][] = [];
+  c.ecartsNom.forEach((r) => {
+    const nouveau = r.unite.nom.split(/\s*\/\s*/)[0].replace(/[\s:|#]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+    if (!nouveau || pris.has(nouveau.toLowerCase())) return;
+    pris.add(nouveau.toLowerCase());
+    paires.push([r.eq!.nom, nouveau]);
+  });
+  if (!paires.length) { notifier("Aucun nom à reprendre (déjà utilisés sur la carte)."); return; }
+  let texte = editeur.valeur;
+  for (const [ancien, nouveau] of paires) {
+    const re = new RegExp(`(^|[\\s>,:|])${ancien.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?=$|[\\s:|,<]|->)`, "gim");
+    texte = texte.replace(re, (_m, avant) => `${avant}${nouveau}`);
+  }
+  ecrireTexte(texte, `${paires.length} équipement${paires.length > 1 ? "s" : ""} renommé${paires.length > 1 ? "s" : ""} avec les noms Genetec.`);
+}
+
+/* Export Genetec : gardé avec la carte, comparé au réseau dans les préconisations. */
+$("b-genetec").addEventListener("click", () => { fermerMenu(); $("f-genetec").click(); });
+$<HTMLInputElement>("f-genetec").addEventListener("change", async (e) => {
+  const i = e.target as HTMLInputElement;
+  const liste = [...(i.files ?? [])];
+  i.value = "";
+  if (!liste.length) return;
+  const msgs: string[] = [];
+  for (const f of liste) {
+    try { msgs.push(`${f.name} : ${await ajouterGenetec(f)}`); } catch (err) { msgs.push((err as Error).message); }
+  }
+  enregistrer();
+  if (rapport?.open) remplirRapport();
+  else notifier(`Genetec : ${msgs.join(" · ")}. Comparaison dans « ⚑ Générer les préconisations ».`);
 });
+async function ajouterGenetec(f: File): Promise<string> {
+  const { lireGenetec, lignesCsv } = await import("./genetecLecture.ts");
+  const tableaux = /\.xlsx$/i.test(f.name)
+    ? (await lireTableur(f.name, await f.arrayBuffer())).map((x) => x.lignes)
+    : [lignesCsv(await lireTexte(f))];
+  const r = lireGenetec(tableaux, f.name, active().genetec);
+  active().genetec = r.genetec;
+  return r.msg;
+}
 function imprimerSecurite() {
   document.getElementById("impression")?.remove();
   const d = document.createElement("div");
   d.id = "impression";
-  d.innerHTML = `<section class="i-page i-secu">${rapportSecurite(analyserSecurite(inv), {
+  d.innerHTML = `<section class="i-page i-secu">${rapportSecurite(bilan(), {
     titre: active().nom, impression: true, auteur: auteur(),
     date: new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" }) })}</section>`;
   document.body.append(d);
@@ -596,16 +659,13 @@ async function montrer(v: Vue) {
   $("v-2d").setAttribute("aria-selected", String(v === "2d"));
   $("v-3d").setAttribute("aria-selected", String(v === "3d"));
   $("v-baies").setAttribute("aria-selected", String(v === "baies"));
-  $("v-securite").setAttribute("aria-selected", String(v === "securite"));
-  $("hote-securite").hidden = v !== "securite";
-  if (v === "securite") dessinerSecurite();
   hote2d.hidden = v !== "2d";
   hote3d.hidden = v !== "3d";
   $("hote-baies").hidden = v !== "baies";
   if (v === "2d") planAJour();   // rattrape les changements faits pendant que le plan était caché
   if (v === "baies") dessinerBaies();
-  $("l-cams").hidden = v !== "3d" && v !== "baies";   // où poser les caméras : 3D et baies
-  legende.hidden = v === "baies" || v === "securite";   // pas de câbles dessinés
+  $("l-cams").hidden = v === "2d";   // où poser les caméras : 3D et baies
+  legende.hidden = v === "baies";      // les baies ne dessinent pas de câbles
   $("b-png").textContent = v === "3d" ? "Image de la vue 3D (.png)" : "Image du plan 2D (.png)";
   if (v === "3d" && !v3) {
     const m = await import("./vue3d.ts");
@@ -643,7 +703,6 @@ recherche.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preven
 $("v-2d").addEventListener("click", () => montrer("2d"));
 $("v-3d").addEventListener("click", () => montrer("3d"));
 $("v-baies").addEventListener("click", () => montrer("baies"));
-$("v-securite").addEventListener("click", () => montrer("securite"));
 $<HTMLSelectElement>("o-cams").addEventListener("change", () => { if (vue === "baies") dessinerBaies(); });
 $("b-cadrer").addEventListener("click", () => (vue === "2d" ? plan.cadrer(false) : v3?.cadrer()));
 /* Aide : une fenêtre, un onglet par usage, ouverte sur le mode en cours. */
@@ -818,6 +877,11 @@ async function importerReleves(liste: File[]) {
         const r = relevesVersTexte(g.fichiers);
         creer(r.site, r.texte);
         crees++;
+        // Un export Genetec dans le lot (pas le _bilan.csv du script) : gardé pour la comparaison.
+        for (const f of liste.filter((x) => /\.(csv|xlsx)$/i.test(x.name) && !aIgnorer({ nom: x.name }))) {
+          try { await ajouterGenetec(f); } catch { /* pas un export Genetec */ }
+        }
+        enregistrer();
         const nSw = r.onglets.find((o) => o.nom === "Switchs")?.lu ?? "";
         const crit = r.anomalies.filter((a) => a.gravite === "critique").length;
         const pl = (n: number, mot: string) => `${n} ${mot}${n > 1 ? "s" : ""}`;

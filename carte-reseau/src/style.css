@@ -722,7 +722,6 @@ body.theme-clair {
 /* ================================================================
    Onglet « Sécurité » : préconisations, flux, versions
    ================================================================ */
-.hote.securite { overflow: auto; padding: 20px 24px 80px; }
 .secu { max-width: 1100px; margin: 0 auto; color: var(--encre); }
 .secu h2 { margin: 0 0 6px; font-size: 20px; }
 .secu h3 { margin: 26px 0 10px; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--sourd); }
@@ -761,6 +760,14 @@ button.s-eq:hover { border-color: var(--acc); color: var(--acc-clair); }
 .s-dec.d-ok { color: var(--ok, #3ddc97); }
 .s-dec.d-non { color: #ff8a8a; }
 .s-dec.d-lim { color: #fbbf24; }
+.s-sous { margin: 16px 0 6px; font-size: 13.5px; }
+.s-gen > span { border-color: var(--trait); }
+.g-ok { color: var(--ok, #3ddc97); border-color: rgba(61, 220, 151, 0.45) !important; background: rgba(61, 220, 151, 0.08); }
+.theme-clair .g-ok { color: #047857; }
+/* Préconisations : une grande fenêtre, le rapport défile dedans */
+dialog.rapport { width: min(1180px, 96vw); max-height: 92vh; }
+dialog.rapport form { max-height: 92vh; }
+dialog.rapport .rapport-corps { overflow: auto; padding: 18px 22px 10px; }
 .s-liste { margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.7; }
 .theme-clair .g-critique, .theme-clair .s-preco.g-critique .s-badge, .theme-clair .s-dec.d-non { color: #b91c1c; }
 .theme-clair .g-importante, .theme-clair .s-preco.g-importante .s-badge, .theme-clair .s-dec.d-lim { color: #b45309; }
@@ -785,8 +792,11 @@ button.s-eq:hover { border-color: var(--acc); color: var(--acc-clair); }
   .i-secu .s-table tr { break-inside: avoid; }
   .i-secu .s-preco, .i-secu .s-compteurs span, .i-secu .s-preco { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
-/* Le rapport occupe toute la vue : la fiche d'un équipement ne le recouvre pas (elle revient sur le plan). */
-.vue:has(> #hote-securite:not([hidden])) > .fiche { display: none; }
 /* Les couleurs de gravité ne s'appliquent qu'aux pastilles et aux badges, pas au texte des cartes. */
 article.s-preco { color: var(--encre); background: var(--carte, transparent); }
 @media print { .i-secu article.s-preco { color: #111; background: #fff; } }
+
+/* Bouton « Générer les préconisations » : en fin de barre, bien visible sans voler la vedette à « Équipement » */
+.actions-carte .a-precos { margin-left: auto; border-color: rgba(var(--acc-rgb), 0.55); color: var(--acc-clair); font-weight: 700; }
+.actions-carte .a-precos:hover { background: rgba(var(--acc-rgb), 0.12); }
+.theme-clair .actions-carte .a-precos { color: #1d4ed8; }

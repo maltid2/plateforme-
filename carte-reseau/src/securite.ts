@@ -15,6 +15,7 @@
  * l'ANSSI.
  */
 import { lireMasque, type Equipement, type Genre, type Inventaire } from "./saisie.ts";
+import { comparerGenetec, type Comparaison, type Genetec } from "./genetec.ts";
 
 export type Gravite = "critique" | "importante" | "conseil";
 export type Preco = {
@@ -23,7 +24,10 @@ export type Preco = {
 };
 export type Flux = { source: string; destination: string; flux: string; decision: "Autoriser" | "Restreindre" | "Interdire"; motif: string };
 export type Version = { modele: string; version: string; equipements: string[]; remarque: string };
-export type Bilan = { precos: Preco[]; flux: Flux[]; versions: Version[]; zones: { groupe: string; vlans: string; reseaux: string; nombre: number }[]; verifications: string[] };
+export type Bilan = {
+  precos: Preco[]; flux: Flux[]; versions: Version[]; zones: { groupe: string; vlans: string; reseaux: string; nombre: number }[]; verifications: string[];
+  genetec: Comparaison; sourcesGenetec: Genetec["sources"];
+};
 
 const val = (e: Equipement, k: string) => e.kv.find(([c]) => c.toLowerCase() === k)?.[1];
 const pl = (n: number, mot: string, pluriel = `${mot}s`) => `${n} ${n > 1 ? pluriel : mot}`;
@@ -46,7 +50,7 @@ const RESEAU: Genre[] = ["switch", "passerelle", "parefeu", "borne"];
 const VIDEO_SRV: Genre[] = ["nvr", "serveur", "nas"];
 const UTILISATEURS: Genre[] = ["poste", "imprimante", "telephone"];
 
-export function analyserSecurite(inv: Inventaire): Bilan {
+export function analyserSecurite(inv: Inventaire, genetec?: Genetec | null): Bilan {
   const precos: Preco[] = [];
   const ajouter = (p: Preco) => { precos.push({ ...p, equipements: [...new Set(p.equipements)] }); };
   const eq = inv.equipements;
@@ -235,12 +239,82 @@ export function analyserSecurite(inv: Inventaire): Bilan {
       preco: "Compléter l'inventaire : sans IP, impossible de contrôler les flux ou les mises à jour de ces équipements.",
       equipements: sansIp.map((e) => e.nom), reference: "ISO 27001 A.5.9" });
   }
+  /* ================= Genetec ↔ réseau ================= */
+  const cg = comparerGenetec(inv, genetec);
+  const ou = (r: { switch?: string; port?: string }) => (r.switch ? ` (${r.switch}${r.port ? ` port ${r.port}` : ""})` : "");
+  const nomU = (r: { unite: { nom: string; ip: string; mac: string }; eq: Equipement | null }) => r.eq?.nom ?? (r.unite.nom || r.unite.ip || r.unite.mac);
+  if (cg.actif) {
+    const surReseau = cg.horsLigne.filter((r) => r.eq && r.switch);
+    const introuvables = cg.horsLigne.filter((r) => !r.eq || !r.switch);
+    if (surReseau.length) {
+      ajouter({ gravite: "critique", domaine: "Vidéo (Genetec)", titre: `${surReseau.length} ${surReseau.length > 1 ? "caméras hors ligne" : "caméra hors ligne"} dans Genetec`,
+        constat: enumerer(surReseau.map((r) => `${nomU(r)}${ou(r)}`), 12),
+        preco: "Aller voir le port indiqué : câble, PoE (voyant, budget du switch), alimentation de la caméra. Si le port est actif et la caméra répond au ping, vérifier côté Genetec (identifiants, archiveur, licence).",
+        equipements: surReseau.map((r) => r.eq!.nom).concat(surReseau.map((r) => r.switch!)), reference: "ISO 27001 A.8.16 · A.8.14" });
+    }
+    if (introuvables.length) {
+      ajouter({ gravite: "importante", domaine: "Vidéo (Genetec)", titre: `${introuvables.length} ${introuvables.length > 1 ? "caméras hors ligne et non localisées" : "caméra hors ligne et non localisée"}`,
+        constat: enumerer(introuvables.map((r) => `${nomU(r)}${r.unite.ip ? ` · ${r.unite.ip}` : ""}`), 12),
+        preco: "Hors ligne dans Genetec et absentes de la carte : la retrouver (switch non relevé, câble arraché, caméra déposée), puis relever le switch concerné.",
+        equipements: introuvables.filter((r) => r.eq).map((r) => r.eq!.nom), reference: "ISO 27001 A.5.9 · A.8.16" });
+    }
+    const absentesEnLigne = cg.absentes.filter((r) => r.etat !== "hors ligne");
+    if (absentesEnLigne.length) {
+      ajouter({ gravite: "conseil", domaine: "Vidéo (Genetec)", titre: `${absentesEnLigne.length} ${absentesEnLigne.length > 1 ? "caméras Genetec absentes" : "caméra Genetec absente"} de la carte`,
+        constat: enumerer(absentesEnLigne.map((r) => `${r.unite.nom || r.unite.mac}${r.unite.ip ? ` · ${r.unite.ip}` : ""}`), 12),
+        preco: "Elles enregistrent mais on ne sait pas où elles sont branchées : relever les switchs manquants (ou les ajouter à la carte avec leur port).",
+        equipements: [], reference: "ISO 27001 A.5.9" });
+    }
+    if (cg.nonEnregistrees.length && genetec?.unites.length) {
+      ajouter({ gravite: "importante", domaine: "Vidéo (Genetec)", titre: `${cg.nonEnregistrees.length} ${cg.nonEnregistrees.length > 1 ? "caméras du réseau absentes" : "caméra du réseau absente"} de Genetec`,
+        constat: enumerer(cg.nonEnregistrees.map((e) => e.nom), 12),
+        preco: "Branchées sur le réseau mais inconnues de Genetec : pas d'enregistrement. Les ajouter au logiciel vidéo, ou les débrancher si ce ne sont pas des caméras du site (équipement non autorisé).",
+        equipements: cg.nonEnregistrees.map((e) => e.nom), reference: "ISO 27001 A.5.9 · A.8.1" });
+    }
+    if (cg.ecartsIp.length) {
+      ajouter({ gravite: "importante", domaine: "Vidéo (Genetec)", titre: "IP différente entre Genetec et le réseau",
+        constat: cg.ecartsIp.map((r) => `${nomU(r)} : Genetec ${r.unite.ip}, réseau ${r.eq!.ip}`).join(" · "),
+        preco: "Même adresse MAC, IP différente : la caméra a changé d'IP (DHCP ?) ou Genetec pointe une ancienne adresse. Fixer l'IP (réservation ou IP fixe) et corriger Genetec.",
+        equipements: cg.ecartsIp.map((r) => r.eq!.nom), reference: "ISO 27001 A.8.9" });
+    }
+    if (cg.doublonsIp.length) {
+      ajouter({ gravite: "critique", domaine: "Vidéo (Genetec)", titre: "Même IP pour plusieurs caméras dans Genetec",
+        constat: cg.doublonsIp.map((d) => `${d.ip} : ${d.noms.join(", ")}`).join(" · "),
+        preco: "Conflit d'adresse : une seule de ces caméras peut fonctionner. Corriger l'adressage, puis Genetec.",
+        equipements: [], reference: "ISO 27001 A.8.9 · A.8.20" });
+    }
+    if (cg.ecartsNom.length) {
+      ajouter({ gravite: "conseil", domaine: "Vidéo (Genetec)", titre: "Noms différents entre Genetec et la carte",
+        constat: enumerer(cg.ecartsNom.map((r) => `${r.eq!.nom} = « ${r.unite.nom} »`), 10),
+        preco: "Utiliser le même nom partout (carte, Genetec, étiquette sur la caméra) : c'est ce qui permet de s'y retrouver en dépannage.",
+        equipements: cg.ecartsNom.map((r) => r.eq!.nom), reference: "ISO 27001 A.5.9" });
+    }
+    const satures = cg.debitParSwitch.filter((d) => d.capaciteMbps && d.kbps / 1000 > d.capaciteMbps * 0.7);
+    if (satures.length) {
+      ajouter({ gravite: "importante", domaine: "Cloisonnement et flux", titre: "Lien montant proche de la saturation",
+        constat: satures.map((d) => `${d.switch} : ${(d.kbps / 1000).toFixed(0)} Mb/s de vidéo pour un lien de ${d.capaciteMbps! >= 1000 ? `${d.capaciteMbps! / 1000} Gb/s` : `${d.capaciteMbps} Mb/s`}`).join(" · "),
+        preco: "Au-delà de 70 % du lien, les images se dégradent aux heures chargées : passer le lien en 10G, l'agréger, ou réduire les débits (H.265, images/s).",
+        equipements: satures.map((d) => d.switch), reference: "ISO 27001 A.8.14 · A.8.6" });
+    }
+  }
+
   const modeleDe = (e: Equipement) => e.infos[0] ?? "";
   const versions = new Map<string, Version>();
-  eq.filter((e) => modeleDe(e) || val(e, "firmware")).forEach((e) => {
+  // (une caméra dont Genetec donne la version est comptée avec la version Genetec, plus bas)
+  const versionGenetec = new Set(cg.rapproches.filter((r) => r.eq && r.unite.firmware).map((r) => r.eq!.nom));
+  eq.filter((e) => (modeleDe(e) || val(e, "firmware")) && !versionGenetec.has(e.nom)).forEach((e) => {
     const k = `${modeleDe(e)}§${val(e, "firmware") ?? ""}`;
     const v = versions.get(k) ?? { modele: modeleDe(e) || "(modèle inconnu)", version: val(e, "firmware") ?? "", equipements: [], remarque: e.genre === "switch" ? "switch" : "" };
     v.equipements.push(e.nom);
+    versions.set(k, v);
+  });
+  // Versions des caméras connues de Genetec (rapprochées ou non de la carte).
+  (genetec?.unites ?? []).filter((u) => u.firmware || u.modele).forEach((u) => {
+    const modele = [u.fabricant, u.modele].filter(Boolean).join(" ") || "(modèle inconnu)";
+    const k = `G§${modele}§${u.firmware}`;
+    const v = versions.get(k) ?? { modele, version: u.firmware, equipements: [], remarque: "" };
+    const r = cg.rapproches.find((x) => x.unite === u);
+    v.equipements.push(r?.eq?.nom ?? (u.nom || u.ip));
     versions.set(k, v);
   });
   const liste = [...versions.values()].sort((a, b) => a.modele.localeCompare(b.modele) || a.version.localeCompare(b.version));
@@ -319,9 +393,10 @@ export function analyserSecurite(inv: Inventaire): Bilan {
     "Baies et locaux techniques fermés à clé, ports réseau accessibles au public désactivés.",
     "Mise à jour des logiciels planifiée après lecture des avis CERT-FR / constructeur.",
   ];
+  if (!cg.actif && cameras.length) verifications.unshift("Importer un export Genetec (inventaire matériel, et configuration des caméras pour les débits) : caméras hors ligne, non enregistrées et débits ne sont contrôlés qu'avec lui.");
   if (!releve) verifications.unshift("Relever les switchs (« Relever les switchs.bat ») : ports libres actifs, VLAN 1, trunks et versions ne sont contrôlés qu'avec un relevé.");
 
   const ordre: Record<Gravite, number> = { critique: 0, importante: 1, conseil: 2 };
   precos.sort((x, y) => ordre[x.gravite] - ordre[y.gravite]);
-  return { precos, flux, versions: liste, zones, verifications };
+  return { precos, flux, versions: liste, zones, verifications, genetec: cg, sourcesGenetec: genetec?.sources ?? [] };
 }

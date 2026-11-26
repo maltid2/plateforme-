@@ -1,0 +1,5 @@
+﻿Caméra,Unité,Flux,Résolution,Images par seconde,Débit (kbps),Codec,Qualité
+CAM-QUAI-Ext,CAM-QUAI-Ext,Enregistrement,2688x1520,30,"62 000",H.265,90
+CAM-HALL-Entree,CAM-HALL-Entree,Enregistrement,1920x1080,25,"6 144",H.264,70
+CAM-HALL-Entree,CAM-HALL-Entree,Direct,1920x1080,25,"6 144",H.264,70
+CAM-BATA-Couloir-1,CAM-BATA-Couloir-1,Enregistrement,1920x1080,15,4096,H.265,70

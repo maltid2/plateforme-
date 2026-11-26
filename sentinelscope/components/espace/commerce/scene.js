@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { produits, CONCURRENTS, JOURS, BOUTIQUE, ALERTES, PISTES, FORT, euros, pct } from './data.js';
+import { produits, CONCURRENTS, JOURS, BOUTIQUE, ALERTES, euros, pct } from './data.js';
+import { creerRecherche } from './recherche.js';
 
 /* Porté depuis le prototype. La scène reçoit sa racine au lieu de prendre
    toute la page, et rend une fonction qui défait tout ce qu'elle a créé :
@@ -135,33 +136,10 @@ const voies = produits.map((p, i) => {
   b.position.set(xVoie(i), 0, -profondeur / 2 + 2); b.userData = { voie: i }; marche.add(b); return b;
 });
 
-/* ===================== MODE PISTES ===================== */
-// Les produits que vos concurrents vendent et pas vous. Hauteur = nombre de
-// boutiques qui le vendent ; anneaux = indices, verts quand ils sont forts.
-// Pas de volume de ventes : on ne le connaît pas, donc on ne le dessine pas.
-const pistes = new THREE.Group(); pistes.visible = false; scene.add(pistes);
-const sol = mesh(new THREE.CircleGeometry(14, 64), new THREE.MeshBasicMaterial({ color: C.acc, transparent: true, opacity: .06 }));
-sol.rotation.x = -Math.PI / 2; pistes.add(sol);
-const totems = PISTES.map(([nom, prix, nb, ind], k) => {
-  const g = new THREE.Group();
-  const a = (k - (PISTES.length - 1) / 2) * 0.36;
-  g.position.set(Math.sin(a) * 9, 0, -Math.cos(a) * 9 + 4);
-  const H = nb / CONCURRENTS.length * 5;
-  const fut = mesh(new THREE.CylinderGeometry(.55, .55, H, 28),
-    new THREE.MeshLambertMaterial({ color: 0x2A3346, emissive: C.acc, emissiveIntensity: .25 }));
-  fut.position.y = H / 2; g.add(fut);
-  for (let n = 0; n < CONCURRENTS.length; n++) {     // graduations : une par boutique possible
-    const t = mesh(new THREE.TorusGeometry(.62, .02, 6, 32), MB(0xffffff, n < nb ? .25 : .06));
-    t.rotation.x = Math.PI / 2; t.position.y = (n + 1) / CONCURRENTS.length * 5; g.add(t);
-  }
-  ind.forEach((x, n) => {
-    const fort = FORT.test(x);
-    const t = mesh(new THREE.TorusGeometry(.85, fort ? .09 : .05, 10, 40), MB(fort ? C.ok : 0x6B7684, fort ? .95 : .6));
-    t.rotation.x = Math.PI / 2; t.position.y = H + .35 + n * .32; g.add(t);
-  });
-  g.userData = { piste: k, haut: H + .35 + ind.length * .32 };
-  pistes.add(g); return g;
-});
+/* ===================== MODE RECHERCHE ===================== */
+// Vraies données : le moteur interroge les boutiques du client. Voir recherche.js.
+const aide = $('aide');
+const recherche = creerRecherche({ scene, cam, root, $, L, H, suivre });
 
 /* ===================== INTERFACE ===================== */
 const plusChers = produits.filter(p => p.ecart > .02).length;
@@ -188,22 +166,6 @@ function hudMarche() {
     <div><i style="background:#6F8299"></i>Au-dessus : un concurrent plus cher</div>
     <div><i style="background:linear-gradient(90deg,#6F8299,transparent)"></i>Profondeur : les 30 derniers jours</div>`;
 }
-function hudPistes() {
-  $('titre').textContent = 'Ce que vos concurrents vendent, et pas vous';
-  $('soustitre').textContent = `${PISTES.length} produits absents de votre catalogue · ${CONCURRENTS.length} catalogues lus`;
-  $('compteurs').innerHTML = cpt(PISTES.length, 'Pistes', '#F5F7FA')
-    + cpt(PISTES.filter(p => p[4] >= 2).length, 'Avec 2 indices forts', '#3DDC97');
-  $('liste-titre').textContent = 'Pistes, par force des indices';
-  $('liste').innerHTML = PISTES.map(([nom, , nb], k) =>
-    `<div class="ligne" data-k="${k}"><span>${nom}</span><span class="ecart" style="background:#8D7CFF22;color:#8D7CFF">${nb}/${CONCURRENTS.length}</span></div>`).join('');
-  [...$('liste').children].forEach(d => d.onclick = () => fichePiste(+d.dataset.k));
-  $('legende').innerHTML = `<div class="tt">Lecture</div>
-    <div><i style="background:#8D7CFF"></i>Hauteur : nombre de boutiques qui le vendent</div>
-    <div><i style="background:#3DDC97"></i>Anneau vert : indice fort</div>
-    <div><i style="background:#6B7684"></i>Anneau gris : indice faible</div>
-    <div class="avert"><b>Pas de ventes affichées.</b> Aucune boutique ne publie ses volumes : on montre des indices, pas une demande mesurée.</div>`;
-}
-
 function ficheProduit(i) {
   const p = produits[i];
   const auj = p.series.map((s, c) => [CONCURRENTS[c], s[JOURS - 1]]).sort((a, b) => a[1] - b[1]);
@@ -216,26 +178,12 @@ function ficheProduit(i) {
     (ses.length ? `<div class="sec">Alertes</div>` + ses.map(a => `<p><b style="color:#F5F7FA">${CONCURRENTS[a[1]]}</b> ${a[2]} <span style="font-family:ui-monospace,monospace">· ${a[3]}</span></p>`).join('') : '');
   $('panneau').classList.add('on');
 }
-function fichePiste(k) {
-  const [nom, prix, nb, ind] = PISTES[k];
-  $('p-corps').innerHTML = `<span class="kind">Piste</span><h2>${nom}</h2>
-    <div class="sous">prix médian ${euros(prix)} · vendu par ${nb} concurrents sur ${CONCURRENTS.length}</div>
-    <div class="sec">Indices observés</div>
-    ${ind.map(x => `<span class="ind ${FORT.test(x) ? 'fort' : ''}">${x}</span>`).join('')}
-    <div class="avert"><b>Ce n'est pas un volume de ventes.</b> Ces indices viennent des vitrines publiques : ils suggèrent une demande, ils ne la mesurent pas.</div>`;
-  $('panneau').classList.add('on');
-}
 $('x').onclick = () => $('panneau').classList.remove('on');
 
 /* ---------- étiquettes projetées ---------- */
 const lbls = produits.map((p, i) => {
   const d = document.createElement('div'); d.className = 'lbl3d';
   d.innerHTML = `<b>${p.nom.length > 22 ? p.nom.slice(0, 21) + '…' : p.nom}</b>${pct(p.ecart)}`;
-  $('lbls').appendChild(d); return d;
-});
-const lblsP = PISTES.map(([nom, , nb]) => {
-  const d = document.createElement('div'); d.className = 'lbl3d cache';
-  d.innerHTML = `<b>${nom}</b>${nb} boutiques sur ${CONCURRENTS.length}`;
   $('lbls').appendChild(d); return d;
 });
 const _v = new THREE.Vector3();
@@ -267,12 +215,14 @@ function viser(i) {
 function changerMode(m) {
   mode = m;
   root.querySelectorAll('.modes button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
-  marche.visible = m === 'marche'; pistes.visible = m === 'pistes';
+  marche.visible = m === 'marche'; recherche.montrer(m === 'pistes');
+  // La recherche affiche de vraies données : le bandeau de démonstration n'y a pas sa place.
+  root.querySelector('.demo').classList.toggle('cache', m !== 'marche');
   lbls.forEach(d => d.classList.toggle('cache', m !== 'marche'));
-  lblsP.forEach(d => d.classList.toggle('cache', m !== 'pistes'));
+  aide.classList.remove('on');
   $('panneau').classList.remove('on');
   if (m === 'marche') vueEnsemble();
-  else { focus = null; teinter(null); $('bloc-liste').classList.remove('cache'); $('retour').classList.remove('on'); cPosV.set(0, 6.5, 26); cCibV.set(0, 2.4, -2); hudPistes(); }
+  else { focus = null; teinter(null); $('bloc-liste').classList.remove('cache'); $('retour').classList.remove('on'); cPosV.copy(recherche.cameraVue.pos); cCibV.copy(recherche.cameraVue.cible); }
 }
 root.querySelectorAll('.modes button').forEach(b => b.onclick = () => changerMode(b.dataset.m));
 $('retour').onclick = vueEnsemble;
@@ -286,16 +236,13 @@ suivre(root, 'click', e => {
   if (mode === 'marche') {
     const h = ray.intersectObjects([...colonnes, ...voies])[0];
     if (h) viser(h.object.userData.voie);
-  } else {
-    const h = ray.intersectObjects(totems, true)[0];
-    if (h) { let o = h.object; while (o && o.userData.piste === undefined) o = o.parent; if (o) fichePiste(o.userData.piste); }
-  }
+  } else recherche.cliquer(e);
 });
 suivre(root, 'pointermove', e => {
   ptr.set(e.clientX / L() * 2 - 1, -(e.clientY / H()) * 2 + 1);
   ray.setFromCamera(ptr, cam);
-  const cibles = mode === 'marche' ? [...colonnes, ...voies] : totems;
-  root.style.cursor = ray.intersectObjects(cibles, true).length && !e.target.closest('.ui,.panneau') ? 'pointer' : 'default';
+  if (mode !== 'marche') { root.style.cursor = recherche.survoler(e) ? 'pointer' : 'default'; return; }
+  root.style.cursor = ray.intersectObjects([...colonnes, ...voies], true).length && !e.target.closest('.ui,.panneau') ? 'pointer' : 'default';
 });
 
 /* ---------- boucle ---------- */
@@ -314,25 +261,24 @@ let tPrec = t0;
     o.m.scale.setScalar(.3 + f * 2.2);
     o.m.material.opacity = r < 1 ? 0 : (1 - f) * .7;
   });
-  totems.forEach((g, k) => g.rotation.y += dt * .25);
+  recherche.tick(dt, now);
   cPos.lerp(cPosV, .05); cCib.lerp(cCibV, .05);
   cam.position.copy(cPos); cam.lookAt(cCib);
   produits.forEach((p, i) => placer(lbls[i], xVoie(i), Math.max(0, yEcart(p.min / p.prix - 1)) + 1.1, 1.3,
     mode === 'marche' && (focus === null || focus === i)));
-  totems.forEach((g, k) => placer(lblsP[k], g.position.x, g.userData.haut + .9, g.position.z, mode === 'pistes'));
   rnd.render(scene, cam);
 })();
 suivre(window, 'resize', () => { cam.aspect = L() / H(); cam.updateProjectionMatrix(); rnd.setSize(L(), H()); });
 hudMarche();
 
 // Consigne d'accueil : un client doit savoir quoi faire sans lire la légende.
-const aide = $('aide');
 const minuteur = setTimeout(() => { if (vivant) aide.classList.add('on'); }, 2800);
 suivre(root, 'pointerdown', () => aide.classList.remove('on'), { once: true });
   return () => {
     vivant = false;
     if (typeof minuteur !== 'undefined') clearTimeout(minuteur);
     cancelAnimationFrame(rafId);
+    recherche.detruire();
     ecouteurs.forEach(([c, t, f, o]) => c.removeEventListener(t, f, o));
     scene.traverse(o => { o.geometry?.dispose(); [].concat(o.material || []).forEach(m => m.dispose()); });
     rnd.dispose();

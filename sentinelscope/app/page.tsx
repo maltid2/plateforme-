@@ -4,6 +4,7 @@ import Problem from "@/components/Problem";
 import Features from "@/components/Features";
 import Product from "@/components/Product";
 import JumeauSection from "@/components/JumeauSection";
+import EspaceSection from "@/components/EspaceSection";
 import Security from "@/components/Security";
 import FAQ from "@/components/FAQ";
 import FinalCTA from "@/components/FinalCTA";
@@ -19,6 +20,7 @@ export default function Home() {
         <Features />
         <Product />
         <JumeauSection />
+        <EspaceSection />
         <Security />
         <FAQ />
         <FinalCTA />

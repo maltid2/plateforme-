@@ -61,6 +61,8 @@ const nextConfig = {
   // fonction serverless /api/audit (fichiers .js + la base fingerprints.json).
   outputFileTracingIncludes: {
     "/api/audit": ["./audit-engine/**/*"],
+    // La veille commerce réutilise le garde anti-SSRF de l'audit.
+    "/api/commerce": ["./audit-engine/src/lib/ssrf-guard.js"],
   },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];

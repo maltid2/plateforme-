@@ -400,7 +400,13 @@ npm run fichier    # reconstruit topologie-reseau-v1.html et son empreinte SHA-2
 | `src/securite.ts`, `src/vueSecurite.ts` | préconisations sécurité, matrice de flux, versions à vérifier ; rapport |
 | `src/genetec.ts`, `src/genetecLecture.ts` | export Genetec : lecture, comparaison avec le réseau, débits |
 | `releve-switchs/` | `Relever les switchs.bat` et `commandes.txt` (le script qui interroge les switchs) |
-| `src/main.ts` | l'interface : vues, fiche, recherche, menus, exports, annulation |
+| `src/main.ts` | l'état de l'application et l'orchestration : rendu, vues, recherche, topologies, annulation |
+| `src/ui/fiche.ts` | la fiche d'un équipement (chemin de dépannage, ports, câbles, actions) |
+| `src/ui/preconisations.ts` | la fenêtre des préconisations, l'import et la comparaison Genetec |
+| `src/ui/releves.ts` | import des relevés des switchs, téléchargement du script |
+| `src/ui/exports.ts` | exports SVG, PNG, PDF, GLB et visionneuse |
+| `src/ui/couleurs.ts`, `src/ui/colonnes.ts` | fenêtres « Couleurs » et « Ce que l'outil a compris de votre tableau » |
+| `src/ui/outils.ts`, `src/ui/toast.ts`, `src/ui/largeur.ts` | outils communs, message en bas de l'écran, largeur de la saisie |
 | `src/explication.ts` | la ligne du curseur expliquée en français (mode Texte) |
 | `src/boites.ts` | petites fenêtres de l'outil (à la place de alert / prompt / confirm) |
 | `src/baies.ts`, `src/elevation.ts` | contenu des baies et vue de face (onglet Baies, PDF) |

@@ -1,21 +1,27 @@
-import { ACCENTS, APPARENCE, appliquerCouleurs, COULEUR_MEDIA, COULEUR_TRUNK, type Accent, type Couleurs } from "./apparence.ts";
+import { APPARENCE, appliquerCouleurs, COULEUR_MEDIA, COULEUR_TRUNK, type Couleurs } from "./apparence.ts";
 import { disposer, type Disposition } from "./disposition.ts";
 import { creerEditeur } from "./editeur.ts";
-import { cheminPasserelle, lirePort } from "./facade.ts";
+import { cheminPasserelle } from "./facade.ts";
 import { elevations } from "./elevation.ts";
 import { confirmer, demander, informer } from "./boites.ts";
 import { cartoVersTexte, estExportCarto } from "./carto.ts";
-import { analyserSecurite } from "./securite.ts";
-import { rapportSecurite } from "./vueSecurite.ts";
 import { creerFormulaire } from "./formulaire.ts";
 import { expliquer } from "./explication.ts";
-import { colonnesDe, lireTableur, modeleCsv, SENS, tableurVersTexte, type Feuille, type Sens } from "./tableur.ts";
+import { lireTableur, modeleCsv, tableurVersTexte } from "./tableur.ts";
 import { EXEMPLE_COMPLET, MODELES } from "./modeles.ts";
-import { CLASSIFICATION, imprimer } from "./impression.ts";
 import { creerPlan2D } from "./plan2d.ts";
 import * as projets from "./projets.ts";
-import { analyser, GENRES, MEDIAS, type Genre, type Inventaire, type Liaison, type Media, LIBELLE_CLE } from "./saisie.ts";
+import { analyser, GENRES, MEDIAS, type Genre, type Inventaire, type Liaison, type Media } from "./saisie.ts";
 import type { Vue3D } from "./vue3d.ts";
+import { choisirColonnes, LIBELLE_COLONNE } from "./ui/colonnes.ts";
+import { lireCouleurs, ouvrirCouleurs } from "./ui/couleurs.ts";
+import { dessinerFiche } from "./ui/fiche.ts";
+import { $, dateDuJour, fermerMenu, nomFichier, pl, surFichiers, telecharger } from "./ui/outils.ts";
+import { creerPreconisations } from "./ui/preconisations.ts";
+import { importerReleves, telechargerScript } from "./ui/releves.ts";
+import { installerExports } from "./ui/exports.ts";
+import { installerLargeurSaisie } from "./ui/largeur.ts";
+import { notifier } from "./ui/toast.ts";
 
 // Le modèle de la page, pris AVANT toute modification : il sert à produire
 // la visionneuse autonome (même fichier, données incluses, lecture seule).
@@ -27,16 +33,10 @@ const EMBARQUE = (() => {
 })();
 // Couleurs choisies (menu « Couleurs ») : retenues dans ce navigateur, et
 // emportées dans la visionneuse exportée.
-const CLE_COULEURS = "carte-reseau:couleurs";
-const lireCouleurs = (): Couleurs | null => {
-  if (EMBARQUE) return EMBARQUE.couleurs ?? null;
-  try { return JSON.parse(localStorage.getItem(CLE_COULEURS) ?? "null"); } catch { return null; }
-};
-let couleurs: Couleurs = lireCouleurs() ?? {};
+let couleurs: Couleurs = (EMBARQUE ? EMBARQUE.couleurs : lireCouleurs()) ?? {};
 appliquerCouleurs(couleurs);
 if (EMBARQUE) document.body.classList.add("lecture");
 
-const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const etat = $("etat"), listeAlertes = $("alertes"), fiche = $("fiche"), legende = $("legende");
 const filtre = $<HTMLSelectElement>("filtre-site"), recherche = $<HTMLInputElement>("recherche");
 const selTopo = $<HTMLSelectElement>("topologie");
@@ -68,26 +68,6 @@ const editeur = creerEditeur($("editeur"), () => ({ inv, disp }), (texte) => {
   enregistrer();
   recalculer();
 });
-/* ---------------- message en bas de l'écran, avec « Annuler » ---------------- */
-const toast = document.createElement("div");
-toast.className = "toast";
-toast.setAttribute("role", "status");
-toast.hidden = true;
-document.body.append(toast);
-let minuteurToast = 0;
-function notifier(message: string, action?: { libelle: string; faire: () => void }) {
-  toast.replaceChildren(document.createTextNode(message));
-  if (action) {
-    const b = document.createElement("button");
-    b.type = "button"; b.textContent = action.libelle;
-    b.onclick = () => { toast.hidden = true; action.faire(); };
-    toast.append(b);
-  }
-  toast.hidden = false;
-  clearTimeout(minuteurToast);
-  minuteurToast = window.setTimeout(() => { toast.hidden = true; }, action ? 8000 : 3500);
-}
-
 /* ---------------- annulation des changements faits par l'outil ---------------- */
 // Supprimer, modifier un câble, ajouter… passent par le texte : on garde les
 // versions précédentes pour revenir en arrière (bouton « Annuler » ou Ctrl+Z).
@@ -169,38 +149,7 @@ $("m-form").addEventListener("click", () => mode("form"));
   barre.append(ex);
 }
 
-/* ---------------- largeur de la saisie ---------------- */
-// Barre à glisser entre la saisie et la carte, mémorisée sur le poste.
-{
-  const atelier = document.querySelector<HTMLElement>(".atelier")!;
-  const sep = $("separateur");
-  const CLE_L = "carte-reseau:largeur-saisie";
-  const borner = (px: number) => Math.round(Math.max(300, Math.min(window.innerWidth - 360, px)));
-  const appliquerL = (px: number, garder = true) => {
-    const v = borner(px);
-    atelier.style.setProperty("--largeur-saisie", `${v}px`);
-    sep.setAttribute("aria-valuenow", String(v));
-    if (garder) try { localStorage.setItem(CLE_L, String(v)); } catch { /* sans importance */ }
-  };
-  const actuelle = () => document.querySelector<HTMLElement>(".saisie")!.getBoundingClientRect().width;
-  try { const v = Number(localStorage.getItem(CLE_L)); if (v > 0) appliquerL(v, false); } catch { /* sans importance */ }
-  let depart: { x: number; l: number } | null = null;
-  sep.addEventListener("pointerdown", (e) => {
-    depart = { x: e.clientX, l: actuelle() };
-    sep.setPointerCapture(e.pointerId);
-    sep.classList.add("actif"); document.body.classList.add("redim");
-  });
-  sep.addEventListener("pointermove", (e) => { if (depart) appliquerL(depart.l + e.clientX - depart.x); });
-  const fin = () => { depart = null; sep.classList.remove("actif"); document.body.classList.remove("redim"); };
-  sep.addEventListener("pointerup", fin);
-  sep.addEventListener("pointercancel", fin);
-  // Double-clic : grand (70 % de l'écran) ou normal.
-  sep.addEventListener("dblclick", () => appliquerL(actuelle() > window.innerWidth * 0.55 ? window.innerWidth * 0.38 : window.innerWidth * 0.7));
-  sep.addEventListener("keydown", (e) => {
-    if (e.key === "ArrowLeft" || e.key === "ArrowRight") { e.preventDefault(); appliquerL(actuelle() + (e.key === "ArrowRight" ? 40 : -40)); }
-  });
-  window.addEventListener("resize", () => { const v = Number(atelier.style.getPropertyValue("--largeur-saisie").replace("px", "")); if (v) appliquerL(v, false); });
-}
+installerLargeurSaisie();
 $("m-texte").addEventListener("click", () => mode("texte"));
 
 function enregistrer() {
@@ -349,99 +298,24 @@ function dessiner() {
   planPerime = true;
   if (vue === "2d") planAJour();
   if (vue === "baies") dessinerBaies();
-  if (rapport?.open) remplirRapport();
+  preconisations.rafraichir();
   maj3D();
 }
 /* ---------------- préconisations (sécurité, flux, Genetec) ---------------- */
 // Pas sur la carte : un bouton, une fois la carte faite, ouvre le rapport.
-let rapport: HTMLDialogElement | null = null;
-const bilan = () => analyserSecurite(inv, active().genetec);
-function remplirRapport() {
-  const corps = rapport!.querySelector<HTMLElement>(".rapport-corps")!;
-  const haut = corps.scrollTop;
-  corps.innerHTML = inv.equipements.length
-    ? rapportSecurite(bilan(), { titre: active().nom })
-    : `<p class="s-vide">La carte est vide : ajoutez des équipements, importez un Excel ou les relevés des switchs, puis générez les préconisations.</p>`;
-  corps.scrollTop = haut;
-}
-function ouvrirPreconisations() {
-  fermerMenu();
-  if (!rapport) {
-    rapport = document.createElement("dialog");
-    rapport.className = "colonnes rapport";
-    rapport.innerHTML = `<form method="dialog"><div class="rapport-corps"></div><div class="boutons-col"><button value="ok" type="submit" class="primaire">Fermer</button></div></form>`;
-    rapport.addEventListener("click", (e) => {
-      const t = e.target as HTMLElement;
-      if (t === rapport) { rapport!.close(); return; }
-      const nom = t.closest<HTMLElement>("[data-nom]")?.dataset.nom;
-      if (nom) { rapport!.close(); void montrer(vue === "3d" ? "3d" : "2d").then(() => choisir(nom, true)); return; }
-      const a = t.closest<HTMLElement>("[data-s]")?.dataset.s;
-      if (a === "imprimer") imprimerSecurite();
-      if (a === "genetec") $("f-genetec").click();
-      if (a === "noms-genetec") renommerGenetec();
-    });
-    document.body.append(rapport);
-  }
-  remplirRapport();
-  rapport.showModal();
-}
-$("a-precos").addEventListener("click", ouvrirPreconisations);
-/** Les noms de Genetec remplacent ceux de la carte (« axis-accc8e010001 » → « CAM-BATA-Couloir-1 »). */
-function renommerGenetec() {
-  const c = bilan().genetec;
-  const pris = new Set(inv.equipements.map((e) => e.nom.toLowerCase()));
-  const paires: [string, string][] = [];
-  c.ecartsNom.forEach((r) => {
-    const nouveau = r.unite.nom.split(/\s*\/\s*/)[0].replace(/[\s:|#]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
-    if (!nouveau || pris.has(nouveau.toLowerCase())) return;
-    pris.add(nouveau.toLowerCase());
-    paires.push([r.eq!.nom, nouveau]);
-  });
-  if (!paires.length) { notifier("Aucun nom à reprendre (déjà utilisés sur la carte)."); return; }
-  let texte = editeur.valeur;
-  for (const [ancien, nouveau] of paires) {
-    const re = new RegExp(`(^|[\\s>,:|])${ancien.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?=$|[\\s:|,<]|->)`, "gim");
-    texte = texte.replace(re, (_m, avant) => `${avant}${nouveau}`);
-  }
-  ecrireTexte(texte, `${paires.length} équipement${paires.length > 1 ? "s" : ""} renommé${paires.length > 1 ? "s" : ""} avec les noms Genetec.`);
-}
-
-/* Export Genetec : gardé avec la carte, comparé au réseau dans les préconisations. */
-$("b-genetec").addEventListener("click", () => { fermerMenu(); $("f-genetec").click(); });
-$<HTMLInputElement>("f-genetec").addEventListener("change", async (e) => {
-  const i = e.target as HTMLInputElement;
-  const liste = [...(i.files ?? [])];
-  i.value = "";
-  if (!liste.length) return;
-  const msgs: string[] = [];
-  for (const f of liste) {
-    try { msgs.push(`${f.name} : ${await ajouterGenetec(f)}`); } catch (err) { msgs.push((err as Error).message); }
-  }
-  enregistrer();
-  if (rapport?.open) remplirRapport();
-  else notifier(`Genetec : ${msgs.join(" · ")}. Comparaison dans « ⚑ Générer les préconisations ».`);
+const preconisations = creerPreconisations({
+  inv: () => inv,
+  topologie: active,
+  enregistrer,
+  voir: (nom) => { void montrer(vue === "3d" ? "3d" : "2d").then(() => choisir(nom, true)); },
+  texte: () => editeur.valeur,
+  ecrireTexte,
+  auteur: () => auteur(),
 });
-async function ajouterGenetec(f: File): Promise<string> {
-  const { lireGenetec, lignesCsv } = await import("./genetecLecture.ts");
-  const tableaux = /\.xlsx$/i.test(f.name)
-    ? (await lireTableur(f.name, await f.arrayBuffer())).map((x) => x.lignes)
-    : [lignesCsv(await lireTexte(f))];
-  const r = lireGenetec(tableaux, f.name, active().genetec);
-  active().genetec = r.genetec;
-  return r.msg;
-}
-function imprimerSecurite() {
-  document.getElementById("impression")?.remove();
-  const d = document.createElement("div");
-  d.id = "impression";
-  d.innerHTML = `<section class="i-page i-secu">${rapportSecurite(bilan(), {
-    titre: active().nom, impression: true, auteur: auteur(),
-    date: new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" }) })}</section>`;
-  document.body.append(d);
-  const fin = () => { d.remove(); window.removeEventListener("afterprint", fin); };
-  window.addEventListener("afterprint", fin);
-  setTimeout(() => window.print(), 50);
-}
+$("a-precos").addEventListener("click", () => { fermerMenu(); preconisations.ouvrir(); });
+$("b-genetec").addEventListener("click", () => { fermerMenu(); $("f-genetec").click(); });
+surFichiers("f-genetec", preconisations.importerGenetec);
+
 /**
  * Le plan 2D n'est redessiné que s'il est affiché : en 3D ou dans les baies,
  * il l'est au retour sur l'onglet 2D, ou juste avant un export.
@@ -469,153 +343,14 @@ function choisir(nom: string | null, centrer = false) {
 }
 
 function remplirFiche() {
-  const e = choisi ? inv.equipements.find((x) => x.nom === choisi) : null;
-  if (!e) { fiche.hidden = true; return; }
-  const f = disp.facades.get(e.nom);
-  const h = (tag: string, cls = "", txt = "") => { const n = document.createElement(tag); if (cls) n.className = cls; n.textContent = txt; return n; };
-  const lien = (nom: string, port?: string) => {
-    const s = document.createElement("span");
-    const a = h("a", "", nom);
-    a.setAttribute("role", "button"); a.tabIndex = 0;
-    a.onclick = () => choisir(nom, true);
-    a.onkeydown = (ev) => { if (ev.key === "Enter") choisir(nom, true); };
-    s.append(a, port ? h("span", "port", `:${port}`) : "");
-    return s;
-  };
-
-  fiche.replaceChildren();
-  const fermer = h("button", "fermer", "×") as HTMLButtonElement;
-  fermer.type = "button"; fermer.setAttribute("aria-label", "Fermer la fiche");
-  fermer.onclick = () => choisir(null);
-  const tete = h("div", "tete");
-  tete.style.setProperty("--c", APPARENCE[e.genre].couleur);
-  tete.append(h("div", "genre", GENRES[e.genre].libelle), h("h2", "", e.nom), h("div", "modele", e.infos[0] ?? ""));
-  fiche.append(fermer, tete);
-
-  const dl = document.createElement("dl");
-  const ligne = (k: string, v: string | Node) => { const dd = h("dd"); dd.append(v); dl.append(h("dt", "", k), dd); };
-  ligne("Adresse IP", e.ip ?? "—");
-  ligne("Emplacement", [e.site, e.point, e.baie && `baie ${e.baie}`].filter(Boolean).join(" · "));
-  const ch = cheminPasserelle(e.nom, inv);
-  // Passerelle : une seule ligne (IP de passerelle, et l'équipement qui la porte s'il est sur la carte).
-  if (e.passerelleIp || ch) {
-    const p = document.createElement("span");
-    if (e.passerelleIp) p.append(e.passerelleIp);
-    if (ch) p.append(e.passerelleIp ? " · " : "", lien(ch.passerelle.nom), !e.passerelleIp && ch.passerelle.ip ? ` (${ch.passerelle.ip})` : "");
-    ligne("Passerelle", p);
-  } else if (e.genre !== "passerelle" && e.genre !== "parefeu") ligne("Passerelle", "aucune déclarée sur ce site");
-  if (ch) {
-    // Dépannage : chaque saut jusqu'à la passerelle, avec ses ports (allumé aussi sur le plan).
-    const etapes = [e.nom, ...ch.sauts];
-    const ol = document.createElement("ol");
-    ol.className = "chemin";
-    for (let i = 0; i + 1 < etapes.length; i++) {
-      const a = etapes[i], b = etapes[i + 1];
-      const l = inv.liaisons.find((x) => (x.a === a && x.b === b) || (x.a === b && x.b === a));
-      const [pa, pb] = l ? (l.a === a ? [l.portA, l.portB] : [l.portB, l.portA]) : [undefined, undefined];
-      const li = document.createElement("li");
-      li.append(lien(a), pa ? ` port ${pa}` : "", " → ", lien(b), pb ? ` port ${pb}` : "",
-        l?.media ? ` · ${MEDIAS[l.media]}` : "", l?.mode === "trunk" ? ` · trunk${l.vlans ? ` ${l.vlans}` : ""}` : l?.vlans ? ` · VLAN ${l.vlans}` : "");
-      ol.append(li);
-    }
-    ligne("Chemin", ol);
-  }
-  e.infos.slice(1).forEach((i) => ligne("Info", i));
-  // N° de série, MAC, masque d'abord, puis les autres informations (colonnes Excel en plus…).
-  const rang = (k: string) => { const i = ["masque", "serie", "mac"].indexOf(k); return i < 0 ? 9 : i; };
-  e.kv.filter(([k]) => !/^(ports?|sfp|wan)$/i.test(k))
-    .sort(([a], [b]) => rang(a) - rang(b))
-    .forEach(([k, v]) => ligne(LIBELLE_CLE[k] ?? k, v));
-  fiche.append(dl);
-
-  const liens = inv.liaisons.filter((l) => l.a === e.nom || l.b === e.nom).map((l) => {
-    const moi = l.a === e.nom;
-    return { monPort: moi ? l.portA : l.portB, autre: moi ? l.b : l.a, sonPort: moi ? l.portB : l.portA, l };
+  dessinerFiche(fiche, {
+    eq: choisi ? inv.equipements.find((x) => x.nom === choisi) ?? null : null, inv, disp, lectureSeule: !!EMBARQUE, choisir,
+    modifier: (nom) => { mode("form"); formulaire.modifier(nom); },
+    supprimer: (nom) => formulaire.supprimer(nom),
+    editerLien: (l) => formulaire.editerLien(l),
+    supprimerLien: (l) => formulaire.supprimerLien(l),
+    versLigne: (n) => { mode("texte"); editeur.allerLigne(n); },
   });
-
-  if (f) {
-    const total = f.ports.filter((p) => p.type !== "autre").length;
-    const occupes = new Set([...f.branches.keys()].map((k) => f.parId.get(k)));
-    fiche.append(h("h3", "", `Ports · ${occupes.size} / ${total} utilisés`));
-    // Mini-façade cliquable : un carré par port.
-    const mini = h("div", "mini");
-    f.ports.forEach((p) => {
-      const b = [...f.branches.values()].find((x) => f.parId.get(x.port) === p);
-      const c = h("button", `p ${p.haut ? "h" : "b"} ${b ? "pris" : ""} ${b?.liaison.mode === "trunk" ? "trunk" : ""}`, "") as HTMLButtonElement;
-      c.type = "button";
-      c.title = b ? `${p.id} → ${b.vers}${b.liaison.vlans ? ` · VLAN ${b.liaison.vlans}` : ""}` : `${p.id} · libre`;
-      if (b) {
-        c.style.setProperty("--c", b.liaison.mode === "trunk" ? COULEUR_TRUNK : APPARENCE[inv.equipements.find((x) => x.nom === b.vers)?.genre ?? "autre"].couleur);
-        c.onclick = () => choisir(b.vers, true);
-      }
-      mini.append(c);
-    });
-    fiche.append(mini);
-  } else {
-    // Serveur, NAS, enregistreur… avec des ports déclarés : la liste, libres ou pris.
-    const n = (re: RegExp) => Math.min(96, parseInt(e.kv.find(([k]) => re.test(k))?.[1] ?? "", 10) || 0);
-    const rj = n(/^ports?$/i), sfp = n(/^sfp$/i), wan = n(/^wan$/i);
-    const tous = [...Array.from({ length: rj }, (_, i) => String(i + 1)), ...Array.from({ length: sfp }, (_, i) => `SFP${i + 1}`),
-      ...Array.from({ length: wan }, (_, i) => (wan > 1 ? `WAN${i + 1}` : "WAN"))];
-    if (tous.length) {
-      const cle = (p?: string) => { if (!p) return ""; const l = lirePort(p); return l.n !== null ? `${l.type}:${l.n}` : p.toLowerCase(); };
-      const pris = new Map(liens.filter((x) => x.monPort).map((x) => [cle(x.monPort), x]));
-      fiche.append(h("h3", "", `Ports · ${tous.filter((p) => pris.has(cle(p))).length} / ${tous.length} utilisés`));
-      const mini = h("div", "mini");
-      tous.forEach((p) => {
-        const b = pris.get(cle(p));
-        const c = h("button", `p h ${b ? "pris" : ""} ${b?.l.mode === "trunk" ? "trunk" : ""}`, "") as HTMLButtonElement;
-        c.type = "button";
-        c.title = b ? `${p} → ${b.autre}${b.sonPort ? ` port ${b.sonPort}` : ""}` : `${p} · libre`;
-        if (b) { c.style.setProperty("--c", APPARENCE[inv.equipements.find((x) => x.nom === b.autre)?.genre ?? "autre"].couleur); c.onclick = () => choisir(b.autre, true); }
-        mini.append(c);
-      });
-      fiche.append(mini);
-    }
-  }
-
-  fiche.append(h("h3", "", `Câbles (${liens.length})`));
-  if (!liens.length) fiche.append(h("p", "vide-fiche", "Aucun câble déclaré."));
-  else {
-    const tab = document.createElement("table");
-    tab.innerHTML = `<thead><tr><th>Port</th><th>Branché sur</th><th>Câble · VLAN</th>${EMBARQUE ? "" : "<th></th>"}</tr></thead>`;
-    const tb = document.createElement("tbody");
-    liens.sort((x, y) => (x.monPort ?? "").localeCompare(y.monPort ?? "", "fr", { numeric: true })).forEach((x) => {
-      const tr = document.createElement("tr");
-      const td = (v: string | Node, cls = "") => { const c = h("td", cls); c.append(v); tr.append(c); };
-      td(x.monPort ?? "—", "mono");
-      td(lien(x.autre, x.sonPort));
-      // « trunk · VLAN 10,30 », « VLAN 30 », le type de câble s'il est précisé, la remarque.
-      td([x.l.media ? MEDIAS[x.l.media] : "", x.l.mode === "trunk" ? "trunk" : "", x.l.vlans ? `VLAN ${x.l.vlans}` : "", x.l.libelle ?? ""].filter(Boolean).join(" · ") || "—",
-        x.l.mode === "trunk" ? "trunk" : "");
-      if (!EMBARQUE) {
-        // Chaque câble se modifie ou se supprime d'ici.
-        const act = h("td", "act");
-        const b1 = h("button", "", "✎") as HTMLButtonElement; b1.type = "button"; b1.title = "Modifier ce câble"; b1.onclick = () => formulaire.editerLien(x.l);
-        const b2 = h("button", "danger", "✕") as HTMLButtonElement; b2.type = "button"; b2.title = "Supprimer ce câble"; b2.onclick = () => formulaire.supprimerLien(x.l);
-        act.append(b1, b2); tr.append(act);
-      }
-      tb.append(tr);
-    });
-    tab.append(tb);
-    fiche.append(tab);
-  }
-  if (!EMBARQUE) {
-    // Les actions simples, en haut de la fiche : modifier, ajouter un câble, supprimer.
-    const actions = h("div", "actions-fiche");
-    const bouton = (txt: string, titre: string, f: () => void, cls = "") => {
-      const b = h("button", cls, txt) as HTMLButtonElement; b.type = "button"; b.title = titre; b.onclick = f; actions.append(b);
-    };
-    bouton("✎ Modifier", "Modifier cet équipement dans le formulaire", () => { mode("form"); formulaire.modifier(e.nom); });
-    bouton("＋ Câble", "Ajouter un câble depuis cet équipement", () => formulaire.editerLien({ a: e.nom, b: "", mode: undefined, ligne: 0, vlans: undefined, libelle: undefined, media: undefined } as unknown as Liaison));
-    bouton("🗑 Supprimer", "Supprimer cet équipement", () => { formulaire.supprimer(e.nom); }, "danger");
-    tete.after(actions);
-  }
-  const aller = h("button", "modifier", `Voir la ligne ${e.ligne} dans le texte`) as HTMLButtonElement;
-  aller.type = "button";
-  aller.onclick = () => { mode("texte"); editeur.allerLigne(e.ligne); };
-  fiche.append(aller);
-  fiche.hidden = false;
 }
 
 /* ---------------- vues ---------------- */
@@ -754,17 +489,8 @@ $("accueil").addEventListener("click", (e) => {
 
 /* ---------------- fichiers ---------------- */
 
-function telecharger(nom: string, contenu: BlobPart, type: string) {
-  const url = URL.createObjectURL(new Blob([contenu], { type }));
-  const a = Object.assign(document.createElement("a"), { href: url, download: nom });
-  document.body.append(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
-}
-const nomFichier = (n: string) => n.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^\w-]+/g, "_").slice(0, 60) || "carte";
-const date = () => new Date().toISOString().slice(0, 10);
-const fermerMenu = () => document.querySelectorAll("details.menu").forEach((m) => m.removeAttribute("open"));
 
-$("b-sauvegarde").addEventListener("click", () => { fermerMenu(); telecharger(`topologie-reseau-sauvegarde-${date()}.json`, projets.exporter(classeur, auteur()), "application/json"); });
+$("b-sauvegarde").addEventListener("click", () => { fermerMenu(); telecharger(`topologie-reseau-sauvegarde-${dateDuJour()}.json`, projets.exporter(classeur, auteur()), "application/json"); });
 
 /* ---------------- signature ---------------- */
 // En visionneuse, c'est la signature de celui qui l'a exportée ; sinon celle du poste.
@@ -821,7 +547,6 @@ $<HTMLInputElement>("f-tableur").addEventListener("change", async (e) => {
     if (!r.equipements) { void informer("Aucun équipement trouvé", "Vérifiez que la colonne « Nom » est remplie, puis réessayez."); return; }
     creer(f.name.replace(/\.(xlsx|xls|csv|txt)$/i, ""), r.texte);
     const nb = inv.alertes.filter((a) => a.niveau === "erreur").length;
-    const pl = (n: number, mot: string) => `${n} ${mot}${n > 1 ? "s" : ""}`;
     void informer(carto ? "Relevé Cartographie Réseau importé" : "Tableau importé", `${pl(r.equipements, "équipement")} et ${pl(r.liaisons, "câble")} dans une nouvelle topologie « ${active().nom} ».`
       + (r.onglets.length > 1 ? `\n\nOnglets :\n${r.onglets.map((o) => `  • ${o.nom} : ${o.lu}`).join("\n")}` : "")
       + (r.ignorees ? `\n\n${pl(r.ignorees, "ligne")} sans nom ou en double ignorée${r.ignorees > 1 ? "s" : ""}.` : "")
@@ -830,237 +555,24 @@ $<HTMLInputElement>("f-tableur").addEventListener("change", async (e) => {
   } catch (err) { void informer("Fichier illisible", (err as Error).message || "Ce fichier ne peut pas être lu. Enregistrez-le en .xlsx ou .csv, puis réessayez."); }
 });
 /* ---------- relevés des switchs (« Relever les switchs.bat ») ---------- */
-// Le script se connecte aux switchs ; cette page, elle, lit seulement les
-// fichiers qu'il a écrits. Les sauvegardes de configuration ne sont pas lues.
 $("b-releves-dossier").addEventListener("click", () => { fermerMenu(); $("f-dossier").click(); });
 $("b-releves").addEventListener("click", () => { fermerMenu(); $("f-releves").click(); });
-for (const id of ["f-dossier", "f-releves"]) {
-  $<HTMLInputElement>(id).addEventListener("change", async (e) => {
-    const i = e.target as HTMLInputElement;
-    const liste = [...(i.files ?? [])];
-    i.value = "";
-    if (liste.length) await importerReleves(liste);
-  });
-}
-$("b-script").addEventListener("click", async () => {
-  fermerMenu();
-  const { default: script } = await import("../releve-switchs/Relever les switchs.bat?raw");
-  telecharger("Relever les switchs.bat", script.replace(/\r?\n/g, "\r\n"), "application/octet-stream");
-  void informer("Script de relevé des switchs", "1. Créez un dossier (ex. « Carto Réseau ») et mettez-y « Relever les switchs.bat » et plink.exe (outil de PuTTY).\n"
-    + "2. Double-cliquez le script sur un PC du réseau des switchs : il demande le site, les IP des switchs et les identifiants, puis relève chaque switch.\n"
-    + "3. Ici : ⇪ Relevés des switchs, et choisissez le dossier « Sites › votre site » (ou « Log Switch »).\n\n"
-    + "Le script ne fait que lire (show …). Les sauvegardes de configuration qu'il range dans « Config Switch » ne sont jamais lues par cette page.");
-});
-
-/** Texte d'un relevé : UTF-8, ou l'ancien codage Windows si les accents sont cassés. */
-async function lireTexte(f: File): Promise<string> {
-  const octets = new Uint8Array(await f.arrayBuffer());
-  const t = new TextDecoder("utf-8").decode(octets);
-  return t.includes("\uFFFD") ? new TextDecoder("windows-1252").decode(octets) : t;
-}
-async function importerReleves(liste: File[]) {
-  try {
-    const { relevesVersTexte, aIgnorer, siteDuReleve } = await import("./releve.ts");
-    const fichiers = await Promise.all(liste.map(async (f) => {
-      const chemin = ((f as File & { webkitRelativePath?: string }).webkitRelativePath ?? "").split("/").slice(0, -1).join("/");
-      const base = { nom: f.name, chemin };
-      return aIgnorer(base) ? { ...base, texte: "" } : { ...base, texte: await lireTexte(f) };
-    }));
-    // Une topologie par site (le dossier « Sites » peut en contenir plusieurs).
-    const siteDe = (f: { chemin: string; texte: string }) => siteDuReleve(f.texte) || f.chemin.match(/(?:^|\/)Sites\/([^/]+)/i)?.[1] || "";
-    const sites = [...new Set(fichiers.map(siteDe).filter(Boolean))];
-    const groupes = sites.length ? sites.map((s) => ({ site: s, fichiers: fichiers.filter((f) => siteDe(f) === s || (!siteDe(f) && sites.length === 1)) })) : [{ site: "", fichiers }];
-    const bilans: string[] = [];
-    let crees = 0;
-    for (const g of groupes) {
-      try {
-        const r = relevesVersTexte(g.fichiers);
-        creer(r.site, r.texte);
-        crees++;
-        // Un export Genetec dans le lot (pas le _bilan.csv du script) : gardé pour la comparaison.
-        for (const f of liste.filter((x) => /\.(csv|xlsx)$/i.test(x.name) && !aIgnorer({ nom: x.name }))) {
-          try { await ajouterGenetec(f); } catch { /* pas un export Genetec */ }
-        }
-        enregistrer();
-        const nSw = r.onglets.find((o) => o.nom === "Switchs")?.lu ?? "";
-        const crit = r.anomalies.filter((a) => a.gravite === "critique").length;
-        const pl = (n: number, mot: string) => `${n} ${mot}${n > 1 ? "s" : ""}`;
-        bilans.push(`Site « ${r.site} » : ${nSw} relevés, ${pl(r.equipements, "équipement")}, ${pl(r.liaisons, "câble")}.`
-          + (r.anomalies.length ? `\n${pl(r.anomalies.length, "anomalie")}${crit ? ` dont ${crit} critique${crit > 1 ? "s" : ""}` : ""} : sur la fiche des switchs et à la fin du texte.` : "")
-          + (r.onglets.find((o) => o.nom === "Équipements" && /non placés/.test(o.lu)) ? `\n${r.onglets.find((o) => o.nom === "Équipements")!.lu}.` : ""));
-      } catch (err) { bilans.push(`${g.site ? `Site « ${g.site} » : ` : ""}${(err as Error).message}`); }
-    }
-    const ignores = fichiers.filter((f) => aIgnorer(f));
-    const configs = ignores.filter((f) => /configuration/.test(aIgnorer(f)!)).length;
-    void informer(crees ? (crees > 1 ? `${crees} sites importés` : "Relevés importés") : "Aucun relevé lu", bilans.join("\n\n")
-      + (configs ? `\n\n${configs} sauvegarde${configs > 1 ? "s" : ""} de configuration laissée${configs > 1 ? "s" : ""} de côté (jamais lue${configs > 1 ? "s" : ""}).` : ""));
-  } catch (err) { void informer("Relevés illisibles", (err as Error).message); }
-}
+const contexteReleves = { creer, ajouterGenetec: preconisations.ajouterGenetec, enregistrer };
+surFichiers("f-dossier", (l) => importerReleves(l, contexteReleves));
+surFichiers("f-releves", (l) => importerReleves(l, contexteReleves));
+$("b-script").addEventListener("click", () => { fermerMenu(); void telechargerScript(); });
 
 /* ---------- couleurs ---------- */
-const fondDefaut = () => (couleurs.theme === "studio" ? "#000000" : couleurs.theme === "clair" ? "#f5f7fa" : "#07090d");
-$("b-couleurs").addEventListener("click", () => {
-  const d = document.createElement("dialog");
-  d.className = "colonnes couleurs";
-  const ligne = (cle: string, libelle: string, valeur: string, pastille: "trait" | "carre") =>
-    `<label class="coul"><input type="color" data-cle="${cle}" value="${valeur}" /><i class="${pastille}"></i><span>${libelle}</span></label>`;
-  const rendre = () => {
-    d.innerHTML = `<form method="dialog">
-      <h2>Couleurs</h2>
-      <p class="aide-col">Cliquez une pastille pour changer sa couleur : le plan 2D, la 3D, le PDF, le SVG et la visionneuse suivent. Vos couleurs sont retenues sur ce poste.</p>
-      <div class="blocs-col">
-        <h3>Apparence</h3><div class="grille-coul themes">
-          <label class="coul"><input type="radio" name="theme" value="standard" ${!couleurs.theme || couleurs.theme === "standard" ? "checked" : ""} /><span>Standard (sombre)</span></label>
-          <label class="coul"><input type="radio" name="theme" value="clair" ${couleurs.theme === "clair" ? "checked" : ""} /><span>Clair — fond blanc, 2D et 3D</span></label>
-          <label class="coul"><input type="radio" name="theme" value="studio" ${couleurs.theme === "studio" ? "checked" : ""} /><span>Noir studio — noir pur, majuscules, sans arrondis</span></label>
-        </div>
-        <h3>Accent de l'interface</h3><div class="grille-coul themes">
-          ${(Object.keys(ACCENTS) as Accent[]).filter((k) => k !== "perso").map((k) => `<label class="coul"><input type="radio" name="accent" value="${k}" ${(couleurs.accent ?? "bleu") === k ? "checked" : ""} /><i class="carre" style="display:inline-block;width:16px;height:16px;border-radius:4px;background:${ACCENTS[k].acc}"></i><span>${ACCENTS[k].nom}</span></label>`).join("")}
-          <label class="coul"><input type="radio" name="accent" value="perso" ${couleurs.accent === "perso" ? "checked" : ""} /><input type="color" data-cle="a:perso" value="${couleurs.accentPerso ?? "#22C55E"}" /><span>Ma couleur (au choix)</span></label>
-        </div>
-        <h3>Fonds</h3><div class="grille-coul">
-          ${ligne("f:carte", "Fond de la carte (2D et 3D)", couleurs.fondCarte ?? fondDefaut(), "carre")}
-          ${ligne("f:interface", "Fond de l'interface", couleurs.fondInterface ?? fondDefaut(), "carre")}
-        </div>
-        <h3>Câbles</h3><div class="grille-coul">
-          ${(Object.keys(MEDIAS) as Media[]).map((m) => ligne(`m:${m}`, MEDIAS[m], (COULEUR_MEDIA as Record<string, string>)[m], "trait")).join("")}
-          ${ligne("t:trunk", "Trunk (étiquettes, liseré)", COULEUR_TRUNK, "trait")}
-        </div>
-        <h3>Équipements</h3><div class="grille-coul">
-          ${(Object.keys(GENRES) as Genre[]).map((g) => ligne(`g:${g}`, GENRES[g].libelle, APPARENCE[g].couleur, "carre")).join("")}
-        </div>
-      </div>
-      <div class="boutons-col"><button type="button" data-a="defaut">Couleurs d'origine</button><button value="ok" type="submit" class="primaire">Fermer</button></div>
-    </form>`;
-  };
-  rendre();
-  let minuteur = 0;
-  const enregistrer = () => {
-    appliquerCouleurs(couleurs);
-    try { localStorage.setItem(CLE_COULEURS, JSON.stringify(couleurs)); } catch { /* stockage indisponible */ }
-    clearTimeout(minuteur);
-    minuteur = window.setTimeout(() => { recalculer(); maj3D(true); }, 120);
-  };
-  d.addEventListener("input", (ev) => {
-    const i = ev.target as HTMLInputElement;
-    if (i.name === "theme") {
-      // Changer d'apparence remet les fonds de l'apparence (sinon un fond sombre choisi resterait sur le thème clair).
-      const { fondCarte: _fc, fondInterface: _fi, ...reste } = couleurs;
-      couleurs = { ...reste, theme: i.value as "standard" | "studio" | "clair" };
-      enregistrer();
-      d.querySelectorAll<HTMLInputElement>('input[data-cle^="f:"]').forEach((x) => { x.value = i.value === "clair" ? "#f5f7fa" : i.value === "studio" ? "#000000" : "#07090d"; });
-      return;
-    }
-    if (i.name === "accent") { couleurs = { ...couleurs, accent: i.value as Accent }; enregistrer(); return; }
-    const [t, k] = (i.dataset.cle ?? "").split(":");
-    if (!k) return;
-    if (t === "m") couleurs = { ...couleurs, medias: { ...couleurs.medias, [k]: i.value } };
-    else if (t === "g") couleurs = { ...couleurs, genres: { ...couleurs.genres, [k]: i.value } };
-    else if (t === "a") { couleurs = { ...couleurs, accent: "perso", accentPerso: i.value }; d.querySelector<HTMLInputElement>('input[name="accent"][value="perso"]')!.checked = true; }
-    else if (t === "f") couleurs = { ...couleurs, [k === "carte" ? "fondCarte" : "fondInterface"]: i.value };
-    else couleurs = { ...couleurs, trunk: i.value };
-    enregistrer();
-  });
-  d.addEventListener("click", (ev) => {
-    if ((ev.target as HTMLElement).dataset.a !== "defaut") return;
-    couleurs = { theme: couleurs.theme, accent: couleurs.accent };   // l'apparence et l'accent choisis restent
-    enregistrer();
-    rendre();
-  });
-  d.addEventListener("close", () => d.remove());
-  document.body.append(d);
-  d.showModal();
-});
+$("b-couleurs").addEventListener("click", () => ouvrirCouleurs({
+  lire: () => couleurs,
+  ecrire: (c) => { couleurs = c; },
+  redessiner: () => { recalculer(); maj3D(true); },
+}));
 
-/* ---------- fenêtre « ce que l'outil a compris de votre tableau » ---------- */
-const CLE_COLONNES = "carte-reseau:colonnes";
-function lireCorrections(): Map<string, Sens> {
-  try { return new Map(Object.entries(JSON.parse(localStorage.getItem(CLE_COLONNES) ?? "{}")) as [string, Sens][]); } catch { return new Map(); }
-}
-function choisirColonnes(feuilles: Feuille[]): Promise<Map<string, Sens> | null> {
-  const memo = lireCorrections();
-  const blocs = colonnesDe(feuilles, memo);
-  if (!blocs.length) return Promise.resolve(memo);
-  const auto = new Map(colonnesDe(feuilles).flatMap((b) => b.colonnes.map((c) => [c.cle, c.sens] as const)));
-  const choix = new Map<string, Sens>(blocs.flatMap((b) => b.colonnes.map((c) => [c.cle, c.sens] as const)));
-  const esc = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-  const d = document.createElement("dialog");
-  d.className = "colonnes";
-  d.innerHTML = `<form method="dialog">
-    <h2>Ce que l'outil a compris de votre tableau</h2>
-    <p class="aide-col">Vérifiez chaque colonne : si une colonne est mal comprise, choisissez ce qu'elle contient. Vos choix sont retenus pour les prochains imports. Rien ne quitte ce PC.</p>
-    <div class="blocs-col">${blocs.map((b) => `<section>
-      <h3>${esc(b.bloc)}${b.reconnu ? "" : ` <span class="attention-col">⚠ aucune colonne « Nom » reconnue : indiquez-la ci-dessous</span>`}</h3>
-      <table><thead><tr><th>Colonne de votre fichier</th><th>Exemples</th><th>Ce qu'elle contient</th></tr></thead><tbody>
-      ${b.colonnes.map((c) => `<tr class="${c.sens === "info" ? "col-info" : c.sens === "ignorer" ? "col-ignoree" : ""}"><td><b>${esc(c.titre)}</b></td>
-        <td class="ex-col">${c.exemples.filter(Boolean).map(esc).join(" · ") || "—"}</td>
-        <td><select data-cle="${esc(c.cle)}">${SENS.map(([v, t]) => `<option value="${v}"${v === c.sens ? " selected" : ""}>${t}</option>`).join("")}</select></td></tr>`).join("")}
-      </tbody></table></section>`).join("")}</div>
-    <div class="boutons-col"><button type="button" data-fermer>Annuler</button><button value="ok" type="submit" class="primaire">Importer</button></div>
-  </form>`;
-  document.body.append(d);
-  d.addEventListener("click", (ev) => { if ((ev.target as Element).closest("[data-fermer]")) d.close("annuler"); });
-  d.addEventListener("change", (ev) => {
-    const sel = ev.target as HTMLSelectElement;
-    const cle = sel.dataset.cle;
-    if (!cle) return;
-    choix.set(cle, sel.value as Sens);
-    // Le même titre dans un autre onglet suit le même choix.
-    d.querySelectorAll<HTMLSelectElement>("select[data-cle]").forEach((x) => { if (x.dataset.cle === cle) x.value = sel.value; });
-    d.querySelectorAll<HTMLSelectElement>("select[data-cle]").forEach((x) => x.closest("tr")!.className = x.value === "info" ? "col-info" : x.value === "ignorer" ? "col-ignoree" : "");
-  });
-  return new Promise((ok) => {
-    d.addEventListener("close", () => {
-      const v = d.returnValue;
-      d.remove();
-      if (v !== "ok") { ok(null); return; }
-      // On ne retient que ce qui diffère de la lecture automatique.
-      const garder = new Map(memo);
-      choix.forEach((sens, cle) => { if (auto.get(cle) !== sens) garder.set(cle, sens); else garder.delete(cle); });
-      try { localStorage.setItem(CLE_COLONNES, JSON.stringify(Object.fromEntries(garder))); } catch { /* stockage indisponible : tant pis */ }
-      ok(new Map([...garder, ...choix]));
-    });
-    d.showModal();
-  });
-}
-const LIBELLE_COLONNE: Record<string, string> = { type: "Type", ip: "IP", site: "Site", vers: "Branché sur", port: "Port" };
-$("b-svg").addEventListener("click", () => { fermerMenu(); planAJour(); telecharger(`${nomFichier(active().nom)}-plan.svg`, plan.exporter(true, auteur()), "image/svg+xml"); });
-$("b-png").addEventListener("click", async () => {
-  fermerMenu();
-  if (vue === "3d" && v3) {
-    // Capture dessinée à l'instant : sans cela, l'image WebGL sort vide.
-    const b = await v3.capturer();
-    if (b) telecharger(`${nomFichier(active().nom)}-3d.png`, b, "image/png");
-    return;
-  }
-  // Le plan 2D est rasterisé en local, sans rien envoyer.
-  planAJour();
-  const svg = plan.exporter(true, auteur());
-  const img = new Image();
-  img.onload = () => {
-    const k = Math.min(1, 8000 / Math.max(img.width, img.height));
-    const c = Object.assign(document.createElement("canvas"), { width: img.width * k, height: img.height * k });
-    c.getContext("2d")!.drawImage(img, 0, 0, c.width, c.height);
-    c.toBlob((b) => b && telecharger(`${nomFichier(active().nom)}-plan.png`, b, "image/png"));
-  };
-  img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
-});
-$("b-pdf").addEventListener("click", () => { fermerMenu(); planAJour(); imprimer(inv, plan.exporter(true), active().nom, site,
-  elevations(inv, disp, { site, clair: true, camerasEnBaie: $<HTMLSelectElement>("o-cams").value === "baie" }), auteur()); });
-$("b-glb").addEventListener("click", async () => {
-  fermerMenu();
-  if (!v3 || vue !== "3d") await montrer("3d");
-  const b = await v3!.exporterGLB();
-  telecharger(`${nomFichier(active().nom)}-3d.glb`, b, "model/gltf-binary");
-});
-$("b-visionneuse").addEventListener("click", () => {
-  fermerMenu();
-  // Le même outil, la topologie incluse, en lecture seule : il s'ouvre sur
-  // n'importe quel poste avec un navigateur, sans réseau ni installation.
-  const donnees = JSON.stringify({ nom: active().nom, texte: editeur.valeur, exporte: new Date().toISOString(), classification: CLASSIFICATION, auteur: auteur(), couleurs })
-    .replace(/</g, "\\u003c");
-  const html = `<!doctype html>\n<html lang="fr">\n<head>${MODELE.head.replace(/<title>[^<]*<\/title>/, `<title>${active().nom.replace(/</g, "")} · Topologie réseau v1</title>`)}</head>\n<body>\n<script type="application/json" id="carte-donnees">${donnees}</script>\n${MODELE.body}\n</body>\n</html>\n`;
-  telecharger(`${nomFichier(active().nom)}-visionneuse.html`, html, "text/html;charset=utf-8");
+installerExports({
+  plan, planAJour, inv: () => inv, disp: () => disp, site: () => site, vue: () => vue,
+  v3: () => v3, montrer3D: () => montrer("3d"), topologie: active, texte: () => editeur.valeur,
+  auteur: () => auteur(), couleurs: () => couleurs, modele: MODELE,
 });
 document.addEventListener("click", (e) => { if (!(e.target as Element).closest("details.menu")) fermerMenu(); });
 // Un seul menu ouvert à la fois (Fichiers ou ⋯).

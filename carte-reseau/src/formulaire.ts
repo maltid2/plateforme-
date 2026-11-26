@@ -1024,7 +1024,6 @@ export function creerFormulaire(racine: HTMLElement, acces: Acces) {
       if (!edition) proposerNom();
       apercu();
     },
-    reinitialiser() { ctx.site = ""; ctx.point = ""; ctx.baie = ""; vider(); },
     modifier,
     supprimer,
     editerLien,

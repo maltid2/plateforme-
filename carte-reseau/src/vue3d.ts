@@ -17,7 +17,7 @@ import { cheminPasserelle, FH, type Facade } from "./facade.ts";
 import { svgFacade } from "./plan2d.ts";
 import { CAM_PAR_PLATEAU, EN_BAIE, HAUTEUR_U, svgSimple, U_PLATEAU } from "./baies.ts";
 import { PICTOS } from "./pictos.ts";
-import type { Equipement, Genre, Inventaire, Liaison } from "./saisie.ts";
+import type { Equipement, Inventaire, Liaison } from "./saisie.ts";
 
 type Rappels = { choisir: (nom: string | null) => void };
 export type Vue3D = {

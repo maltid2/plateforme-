@@ -17,7 +17,7 @@ const ANCIENNE = "carte-reseau:saisie";
 const lire = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
 const ecrire = (k: string, v: string) => { try { localStorage.setItem(k, v); return true; } catch { return false; } };
 
-export const nouvelId = () => `t${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+const nouvelId = () => `t${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
 
 export function nouvelle(nom: string, texte = ""): Topologie {
   return { id: nouvelId(), nom, texte, modifie: Date.now() };
@@ -52,7 +52,7 @@ export function sauver(c: Classeur): boolean {
 
 /** La signature des documents produits : gardée sur ce poste, modifiable. */
 const CLE_AUTEUR = "carte-reseau:auteur";
-export const AUTEUR_DEFAUT = "Dyvan";
+const AUTEUR_DEFAUT = "Dyvan";
 /** Signature enregistrée sur ce poste ; vide = on ne signe pas (choix respecté). */
 export const lireAuteur = () => { const v = lire(CLE_AUTEUR); return v === null ? AUTEUR_DEFAUT : v.trim(); };
 export const ecrireAuteur = (nom: string) => ecrire(CLE_AUTEUR, nom.trim());

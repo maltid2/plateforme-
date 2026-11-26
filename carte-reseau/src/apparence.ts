@@ -17,9 +17,7 @@ export const APPARENCE: Record<Genre, { couleur: string; sigle: string }> = {
   autre:      { couleur: "#8B98A8", sigle: "?" },
 };
 
-export const COULEUR_LIEN = "#5E7A9B";
-export const COULEUR_INTERSITE = "#8D7CFF";
-/** Un trunk se repère de loin : violet clair, plus épais qu'un lien d'accès. */
+/** Un trunk se repère de loin : bleu clair, plus épais qu'un lien d'accès. */
 export let COULEUR_TRUNK = "#93C5FD";
 
 /**
@@ -52,7 +50,7 @@ function accentDe(hex: string) {
 /** Fond de la carte choisi (2D et 3D), ou null pour celui de l'apparence. */
 export let FOND_CARTE: string | null = null;
 /** Les couleurs d'origine, pour « Rétablir ». */
-export const COULEURS_DEFAUT = {
+const COULEURS_DEFAUT = {
   genres: Object.fromEntries(Object.entries(APPARENCE).map(([g, a]) => [g, a.couleur])) as Record<Genre, string>,
   medias: { ...COULEUR_MEDIA } as Record<string, string>,
   trunk: COULEUR_TRUNK,

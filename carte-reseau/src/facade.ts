@@ -124,10 +124,6 @@ export function facade(e: Equipement, inv: Inventaire): Facade {
 }
 
 /** Le port d'un branchement, ou rien si l'équipement n'a pas de façade. */
-export function portDe(f: Facade | undefined, id: string | undefined) {
-  return f && id ? f.parId.get(id) : undefined;
-}
-
 /**
  * Le chemin vers la passerelle : de proche en proche jusqu'à une passerelle
  * ou un pare-feu, en notant le port de sortie de l'équipement de départ.

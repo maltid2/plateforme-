@@ -77,7 +77,7 @@ const IP = /^\d{1,3}(\.\d{1,3}){3}(\/\d{1,2})?$/;
 const FLECHE = /\s*(?:->|<->|<-|—|–|--|=>|→)\s*/;
 
 /** Clés écrites de plusieurs façons → une seule : « sn », « n° série » → serie ; « netmask » → masque. */
-export function cleKv(brut: string): string {
+function cleKv(brut: string): string {
   const k = brut.trim(), p = simple(k).replace(/[^a-z0-9]+/g, " ").trim();
   if (/^(serie|sn|s n|serial|serial number|n serie|no serie|num serie|numero de serie|numero serie|n de serie)$/.test(p)) return "serie";
   if (/^(mac|adresse mac|mac address|adr mac)$/.test(p)) return "mac";
@@ -92,7 +92,7 @@ export const LIBELLE_CLE: Record<string, string> = {
 };
 
 /** « 00-11-22-AA-BB-CC », « 0011.22aa.bbcc », « 001122AABBCC » → « 00:11:22:AA:BB:CC » ; sinon null. */
-export function lireMac(v: string): string | null {
+function lireMac(v: string): string | null {
   const h = v.replace(/[\s:.\-]/g, "").toUpperCase();
   return /^[0-9A-F]{12}$/.test(h) ? h.match(/../g)!.join(":") : null;
 }
@@ -112,7 +112,7 @@ export function lireMasque(v: string): number | null {
  * « fibre », « 24 ports » → « ports=24 », « baie A1 » → « baie=A1 »…
  * Les deux écritures marchent ; l'outil comprend l'une comme l'autre.
  */
-export function naturel(brut: string): string {
+function naturel(brut: string): string {
   const c = brut.trim();
   let m: RegExpMatchArray | null;
   if ((m = c.match(/^(?:branch[ée]e?s?|connect[ée]e?s?|reli[ée]e?s?|raccord[ée]e?s?)\s+(?:sur|à|a|au|avec)\s+(.+)$/i))) return `sur ${m[1]}`;

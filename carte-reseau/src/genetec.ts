@@ -22,7 +22,7 @@ export type Genetec = {
 };
 
 const plier = (s: string) => String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "");
-export const macSimple = (s: string) => { const h = String(s ?? "").toLowerCase().replace(/[^0-9a-f]/g, ""); return h.length === 12 ? h : ""; };
+const macSimple = (s: string) => { const h = String(s ?? "").toLowerCase().replace(/[^0-9a-f]/g, ""); return h.length === 12 ? h : ""; };
 
 export type EtatGenetec = "en ligne" | "hors ligne" | "autre" | "inconnu";
 export function etatDe(t: string): EtatGenetec {

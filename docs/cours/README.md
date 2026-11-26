@@ -115,6 +115,7 @@ Statuts : `vu` · `à revoir` · `acquis`. Mis à jour à chaque fiche.
 | Réseau : table MAC contre table ARP (apprentissage, inondation, RFC 826) | 2 | 2026-11-23 | vu (fiche rédigée, en attente de lecture) |
 | Active Directory : SPN, quel compte porte le service (unicité, erreurs KDC) | AD | 2026-11-24 | vu (fiche rédigée, en attente de lecture) ; calibrage AD toujours sans réponse |
 | SQL : sous-requêtes `IN` et semi-jointure (MariaDB) | SQL | 2026-11-25 | vu (fiche rédigée, en attente de lecture) ; calibrage SQL toujours sans réponse |
+| Sécurité infra : chemin alternatif d'authentification (Cisco Expressway CVE-2026-76466, vCenter CVE-2026-123890) | 4 | 2026-11-26 | vu (fiche rédigée, en attente de lecture) |
 
 ## Calibrage
 

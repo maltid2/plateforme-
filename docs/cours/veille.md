@@ -880,3 +880,13 @@ Pas de nouvel avis de ta liste lu ; pannes non vérifiées ; aucune issue ATLAS.
 **Catalogue CISA (KEV) :** version **2026.11.24**, **1795** entrées (+3 depuis 2026.11.23), toutes ajoutées le 2026-11-24, échéance **2026-11-27** : Optimizely Web Experimentation CVE-2026-132224 ; Idunno AntiCsrf CVE-2026-131914 (désérialisation) ; Drupal Core CVE-2026-132165 (installateur). **Aucun éditeur de ta liste ; avis non lus.** Rappel : échéances du 24 novembre (Outlook, Chromium, BroadWorks) passées.
 Pas de nouvel avis de ta liste lu ; pannes non vérifiées ; aucune issue ATLAS.
 **Fiche :** SQL, sous-requêtes `IN` et semi-jointure (documentation MariaDB lue).
+
+---
+
+## 2026-11-26 (jeudi)
+
+**Catalogue CISA (KEV) :** version **2026.11.25**, **1805** entrées (+10 depuis 2026.11.24), ajoutées le 2026-11-25 (échéance surtout **2026-11-28**) : HPE Juniper Session Smart Conductor et Session Smart Router CVE-2026-103406 (injection de commandes) ; Vates Xen Orchestra CVE-2026-133469 (contournement d'authentification) ; Mitel MiCollab (cinq CVE, composant AWV : CVE-2026-133324, -133275, -133311, -133303, -133323) ; Danfoss AK-SM 800A (CVE-2025-41450, CVE-2023-25914, CVE-2023-25915). **Aucun éditeur de ta liste** (HPE Juniper, Vates, Mitel, Danfoss n'y figurent pas) ; avis non lus. Si tu utilises l'un de ces produits : échéance du 28/11.
+
+**Mise à jour d'un point déjà consigné (Cisco Expressway CVE-2026-76466) :** l'avis Cisco est passé en **version 1.1 le 2026-11-23** : ajout au KEV ; « Cisco ne dispose pas de preuve directe d'exploitation active ». La divergence notée le 21 novembre (« l'avis dit ne pas connaître d'exploitation ») était due à la version 1.0 ; **aucune contradiction restante**. vCenter (VMSA-2026-0009.1, mis à jour le 2026-11-20) : pas de déclaration d'exploitation dans l'avis.
+**Pannes :** non vérifiées. **Issue ATLAS :** aucune.
+**Fiche :** sécurité de l'infrastructure, chemin alternatif d'authentification (Expressway, vCenter).

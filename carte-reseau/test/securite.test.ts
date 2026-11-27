@@ -2,75 +2,113 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { analyser } from "../src/saisie.ts";
-import { analyserSecurite } from "../src/securite.ts";
+import { analyserSecurite, codeLieu, nomParDefaut } from "../src/securite.ts";
 import { relevesVersTexte } from "../src/releve.ts";
 import { desactiverPorts, marqueDe, relancerPoe, vlanNatif } from "../src/commandes.ts";
 
 const bilan = (t: string) => analyserSecurite(analyser(t));
-/** Toutes les actions, « cible : gravité : titre ». */
-const actions = (t: string) => bilan(t).fiches.flatMap((f) => f.actions.map((a) => `${f.cible}:${a.gravite}:${a.titre}`));
+const mesure = (b: ReturnType<typeof bilan>, id: string) => b.mesures.find((m) => m.id === id)!;
+const textes = (b: ReturnType<typeof bilan>, id: string) => mesure(b, id).elements.map((e) => `${e.cible}: ${e.texte}`);
 
-test("Préconisations : actions précises par switch et pour tout le réseau", () => {
+test("Préconisations : mesures par classe, avec le pourquoi et l'effet sur le dépannage", () => {
+  const b = bilan("site Lyon\nswitch SW-1 | ip 10.0.1.2");
+  assert.deepEqual([...new Set(b.mesures.map((m) => m.classe))], [1, 2, 3]);
+  b.mesures.forEach((m) => { assert.ok(m.pourquoi.length > 20, m.id); assert.ok(m.impactTexte, m.id); assert.ok(m.constat, m.id); });
+  // Le verrouillage par MAC est en classe 3, avec un impact fort sur le dépannage.
+  assert.equal(mesure(b, "mac").classe, 3);
+  assert.equal(mesure(b, "mac").impact, "fort");
+  // Pas d'ACL ni d'Internet dans les préconisations.
+  const tout = JSON.stringify(b.mesures);
+  assert.doesNotMatch(tout, /pare-feu|ACL à|filtrer les flux|mise à jour automatique/i);
+  // Sans relevé : les points qui en dépendent sont « à vérifier », pas « OK ».
+  assert.equal(b.releve, false);
+  assert.equal(mesure(b, "boucles").etat, "a-verifier");
+  assert.equal(mesure(b, "ports-libres").etat, "a-verifier");
+});
+
+test("Préconisations : VLAN 1, IP en double, trunk vers une caméra, deux VLAN caméras", () => {
   const t = [
     "site Lyon",
-    "switch SW-1 | ip 10.0.1.2 | modèle C9300-48P",
+    "switch SW-1 | ip 10.0.1.2 | modèle C9300-48P | point=Local A",
     "camera CAM-1 | ip 10.0.1.11 | sur SW-1:Gi1/0/1 | vlan=1",
     "camera CAM-2 | ip 10.0.1.12 | sur SW-1:Gi1/0/2 | vlan=1",
     "poste PC-1 | ip 10.0.1.50 | sur SW-1:Gi1/0/3 | vlan=1",
     "camera CAM-3 | ip 10.0.1.12 | sur SW-1:Gi1/0/4 | trunk | vlan=1,20",
+    "camera CAM-4 | ip 10.0.2.14 | sur SW-1:Gi1/0/5 | vlan=20",
+    "camera CAM-5 | ip 10.0.3.15 | sur SW-1:Gi1/0/6 | vlan=30",
   ].join("\n");
-  const a = actions(t);
-  // Sur le switch, avec les ports exacts.
-  assert.ok(a.some((x) => x.startsWith("SW-1:importante:Sortir du VLAN 1 : Gi1/0/1, Gi1/0/2, Gi1/0/3")), a.join("\n"));
-  assert.ok(a.includes("SW-1:importante:Passer le port Gi1/0/4 en accès (CAM-3 n'a besoin que d'un VLAN)"));
-  // Pour tout le réseau.
-  assert.ok(a.includes("Ensemble du réseau:critique:Corriger l'IP 10.0.1.12, utilisée par CAM-2 et CAM-3"));
-  assert.ok(a.some((x) => x.startsWith("Ensemble du réseau:importante:Isoler l'administration de SW-1")));
-  assert.ok(a.includes("Ensemble du réseau:importante:Filtrer les flux entre VLAN (aucun pare-feu sur la carte)"));
-  // Commandes Cisco pour sortir du VLAN 1.
   const b = bilan(t);
-  const cmd = b.fiches.find((f) => f.cible === "SW-1")!.actions.find((x) => x.titre.startsWith("Sortir du VLAN 1"))!.commandes[0].lignes;
-  assert.ok(cmd.includes("interface range Gi1/0/1 , Gi1/0/2 , Gi1/0/3"), cmd.join("\n"));
-  // Par où commencer : la critique d'abord.
-  assert.equal(b.priorites[0].action.gravite, "critique");
+  // VLAN 1 : les ports exacts et la commande Cisco.
+  const v1 = mesure(b, "vlan-usage").elements.find((e) => e.cible === "SW-1" && /VLAN 1/.test(e.texte))!;
+  assert.match(v1.texte, /Gi1\/0\/1, Gi1\/0\/2, Gi1\/0\/3/);
+  assert.ok(v1.commandes[0].lignes.includes("interface range Gi1/0/1 , Gi1/0/2 , Gi1/0/3"), v1.commandes[0].lignes.join("\n"));
+  assert.ok(textes(b, "vlan-usage").some((x) => /administration de SW-1/.test(x)));
+  // Même IP.
+  assert.ok(textes(b, "ip").includes("CAM-2: 10.0.1.12 est utilisée par CAM-2 et CAM-3"));
+  // Trunk vers une caméra, caméras dans deux VLAN.
+  assert.ok(textes(b, "vlan-coherence").some((x) => x.startsWith("SW-1: port Gi1/0/4 en trunk vers CAM-3")));
+  assert.ok(textes(b, "vlan-coherence").some((x) => /2 VLAN différents/.test(x)));
+  // À corriger en premier : les indispensables à faire.
+  assert.ok(b.premiers.some((p) => p.startsWith("Une adresse IP pour un seul équipement")));
 });
 
-test("Préconisations : un réseau bien cloisonné ne déclenche rien sur le cloisonnement", () => {
-  const t = [
+test("Préconisations : noms par défaut ou sans l'emplacement → nom proposé et commandes", () => {
+  assert.ok(nomParDefaut("Switch"));
+  assert.ok(nomParDefaut("HP-2530-24G"));
+  assert.ok(nomParDefaut("Aruba-6200F"));
+  assert.ok(nomParDefaut("10.0.0.2"));
+  assert.ok(!nomParDefaut("SW-BATA-R0-01"));
+  assert.equal(codeLieu("Bâtiment A - local R+0"), "BATA-R0");
+  const b = bilan([
     "site Lyon",
-    "parefeu FW-1 | ip 10.0.0.1",
-    "switch SW-1 | ip 10.0.0.2 | sur FW-1:1 | firmware=17.6.5 | modèle C9300-48P",
-    "camera CAM-1 | ip 10.0.30.11 | sur SW-1:1 | vlan=30",
-    "nvr NVR-1 | ip 10.0.30.2 | sur SW-1:2 | vlan=30",
-    "poste PC-1 | ip 10.0.10.50 | sur SW-1:3 | vlan=10",
-  ].join("\n");
-  const b = bilan(t);
-  assert.deepEqual(b.fiches, []);
-  assert.equal(b.ouFiltrer, "Sur FW-1");
-  assert.ok(b.flux.some((f) => f.source.startsWith("Caméras · VLAN 30") && f.destination.includes("NVR-1 10.0.30.2") && f.decision === "Autoriser"));
-  assert.ok(b.flux.some((f) => f.source.startsWith("Postes") && f.destination.startsWith("Caméras") && f.decision === "Interdire"));
-  assert.equal(b.flux[b.flux.length - 1].decision, "Interdire");
+    "switch HP-2530-24G | ip 10.0.0.3 | modèle 2530-24G | point=Bâtiment A - local R+0",
+    "switch SW-NORD | ip 10.0.0.4 | modèle C9300-48P | point=Parking - baie P1",
+    "switch SW-PARKING-P1 | ip 10.0.0.5 | point=Parking - baie P1",
+    "switch SW-BAT-A | ip 10.0.0.6 | point=Bâtiment A - local R+0",
+  ].join("\n"));
+  const n = mesure(b, "noms").elements;
+  const hp = n.find((e) => e.cible === "HP-2530-24G")!;
+  assert.match(hp.texte, /nom par défaut → proposé : SW-BATA-R0-01/);
+  assert.deepEqual(hp.commandes[0].lignes, ["configure", 'hostname "SW-BATA-R0-01"', "write memory"]);
+  assert.ok(hp.commandes[1].lignes.includes('snmp-server location "Bâtiment A - local R+0"'));
+  const nord = n.find((e) => e.cible === "SW-NORD")!;
+  assert.match(nord.texte, /ne dit pas où il est \(Parking - baie P1\) → proposé : SW-PARK-P1-01/);
+  assert.ok(nord.commandes[0].lignes.includes("hostname SW-PARK-P1-01"));
+  assert.ok(!n.some((e) => e.cible === "SW-PARKING-P1" || e.cible === "SW-BAT-A"));
+});
+
+test("Préconisations : boucle physique entre switchs", () => {
+  const b = bilan([
+    "site Lyon",
+    "switch SW-A | ip 10.0.0.1 | point=A", "switch SW-B | ip 10.0.0.2 | point=B", "switch SW-C | ip 10.0.0.3 | point=C",
+    "SW-A:1 -> SW-B:1", "SW-B:2 -> SW-C:2", "SW-C:3 -> SW-A:3",
+  ].join("\n"));
+  assert.equal(mesure(b, "boucles").etat, "a-faire");
+  assert.ok(textes(b, "boucles").some((x) => /anneau/.test(x)), textes(b, "boucles").join("\n"));
 });
 
 test("Préconisations : relevés des switchs → ports exacts, deux bouts des trunks, mise à jour", () => {
   const d = new URL("./fixtures/releves/", import.meta.url);
   const r = relevesVersTexte(readdirSync(d).map((nom) => ({ nom, texte: readFileSync(new URL(encodeURIComponent(nom), d), "utf8") })));
   const b = analyserSecurite(analyser(r.texte));
-  const coeur1 = b.fiches.find((f) => f.cible === "SW-COEUR-1")!;
-  assert.match(coeur1.sousTitre, /^Cisco IOS \/ IOS-XE · C9300-48P/);
-  const libres = coeur1.actions.find((a) => a.titre.startsWith("Désactiver les 4 ports libres"))!;
-  assert.match(libres.titre, /Gi1\/0\/1, Gi1\/0\/5, Gi1\/0\/14, Te1\/1\/4/);
+  assert.equal(b.releve, true);
+  const libres = mesure(b, "ports-libres").elements.find((e) => e.cible === "SW-COEUR-1")!;
+  assert.equal(libres.texte, "Gi1/0/1, Gi1/0/5, Gi1/0/14, Te1/1/4");
   assert.ok(libres.commandes[0].lignes.includes(" shutdown"));
-  const natif = coeur1.actions.find((a) => a.titre.startsWith("Mettre le VLAN natif 999"))!;
-  assert.match(natif.aussi!, /SW-PARKING port 25/);
-  const coeur2 = b.fiches.find((f) => f.cible === "SW-COEUR-2")!;
-  assert.ok(coeur2.actions.some((a) => a.titre === "Mettre à jour le logiciel : 17.03.04 → 17.06.05 (version de SW-COEUR-1)"));
-  assert.equal(coeur2.gravite, "critique");   // liaison agrégée dégradée
-  // Aruba CX : commandes propres à la marque.
-  const batA = b.fiches.find((f) => f.cible === "SW-BAT-A")!;
-  assert.match(batA.sousTitre, /^Aruba CX/);
+  const natif = mesure(b, "natif").elements.find((e) => e.cible === "SW-COEUR-1")!;
+  assert.match(natif.texte, /en face : .*SW-PARKING port 25/);
+  assert.ok(textes(b, "versions").includes("SW-COEUR-2: 17.03.04 → 17.06.05 (version de SW-COEUR-1)"));
+  // Plusieurs racines STP (anomalie sur deux switchs) : une seule fois, dans « Pas de boucle ».
+  assert.equal(textes(b, "boucles").filter((x) => /chefs d'orchestre/.test(x)).length, 1);
+  // VLAN natif différent aux deux bouts : dans la cohérence des VLAN, avec l'autre bout.
+  assert.ok(textes(b, "vlan-coherence").some((x) => /VLAN natif.*autre bout : SW-COEUR-2 port Te1\/1\/1/.test(x)));
+  // Liaison agrégée dégradée : une panne critique, en tête.
+  assert.ok(b.pannes[0].critique);
+  assert.ok(b.pannes.some((p) => p.cible === "SW-COEUR-2" && /agrégée/.test(p.titre)));
   // Les équipements vus sans être relevés : où ils ont été vus.
-  assert.ok(b.fiches.find((f) => f.cible === "Inventaire")!.actions.some((a) => a.titre === "Ajouter FW-SITE au relevé (vu sur SW-COEUR-1 port Gi1/0/20)"));
+  assert.ok(textes(b, "a-jour").includes("FW-SITE: vu sur SW-COEUR-1 port Gi1/0/20 mais pas relevé : ajouter son IP dans switchs.txt"));
+  // SW-PARKING : caméras en zone accessible → verrouillage MAC à décider.
+  assert.ok(mesure(b, "mac").elements.some((e) => e.cible === "SW-PARKING"));
 });
 
 test("Commandes : la marque reconnue au modèle, la bonne syntaxe", () => {

@@ -1,70 +1,75 @@
 /**
- * Préconisations sécurité et flux, tirées des données de la carte.
+ * Préconisations sécurité pour un réseau vidéo ISOLÉ (aucun accès à Internet)
+ * et SANS ACL : la séparation repose uniquement sur des VLAN bien configurés.
  *
- * Elles sont rangées PAR ÉQUIPEMENT : chaque switch a sa fiche, avec des
- * actions précises (les ports concernés, l'autre bout du lien quand il faut
- * le traiter aussi) et les commandes à taper pour sa marque (commandes.ts).
- * Ce qui concerne tout le réseau, la vidéo (Genetec) ou l'inventaire a sa
- * propre fiche. En tête : les actions par lesquelles commencer.
+ * Les mesures sont rangées en trois classes :
+ *   1 · Indispensable — le basique. Aucun effet sur le dépannage, ou il le
+ *       rend plus rapide. À avoir partout.
+ *   2 · Recommandé — un peu de travail en plus en maintenance, gain net.
+ *   3 · Renforcé — plus de sécurité, mais chaque dépannage prend plus de
+ *       temps : à décider au cas par cas (zones accessibles au public…).
+ * Chaque mesure dit POURQUOI la mettre, ce qu'elle COÛTE en dépannage et en
+ * maintenance, et son état sur le réseau de la carte (fait, à faire, à
+ * vérifier sur place), avec les équipements concernés et les commandes.
  *
- * Tout est calculé sur le poste. Pas de base de vulnérabilités (CVE)
- * embarquée : sans connexion, elle serait périmée en quelques semaines. À la
- * place, chaque couple modèle / version est listé pour être comparé aux avis
- * du CERT-FR et du constructeur.
- *
- * Références : ISO/IEC 27001:2022, annexe A (A.5.9 inventaire, A.8.8
- * vulnérabilités, A.8.9 configuration, A.8.14 redondance, A.8.15
- * journalisation, A.8.16 surveillance, A.8.17 horloges, A.8.20 sécurité des
- * réseaux, A.8.22 cloisonnement) et guide d'hygiène informatique de l'ANSSI.
+ * À part : les pannes trouvées (caméras hors ligne, liens en erreur…), qui
+ * relèvent du dépannage plutôt que de la sécurité.
  */
 import { lireMasque, type Equipement, type Genre, type Inventaire } from "./saisie.ts";
 import { comparerGenetec, type Comparaison, type Genetec, type Rapprochement } from "./genetec.ts";
-import { accesVlan, controlerLien, controlerPort, desactiverPorts, macDuPort, marqueDe, NOM_MARQUE, relancerPoe, trunkAutorises, vlanNatif, type Marque } from "./commandes.ts";
+import {
+  accesVlan, controlerLien, controlerPort, desactiverPorts, emplacement, macDuPort, marqueDe, relancerPoe,
+  renommer, trunkAutorises, verrouillageMac, vlanNatif, type Marque,
+} from "./commandes.ts";
 
-export type Gravite = "critique" | "importante" | "conseil";
 export type Commande = { libelle: string; lignes: string[] };
-export type Action = {
-  gravite: Gravite;
-  /** Ce qu'il faut faire, avec les ports ou les équipements précis. */
+export type Etat = "a-faire" | "a-verifier" | "ok";
+export type Impact = "plus-rapide" | "aucun" | "faible" | "moyen" | "fort";
+/** Ce qu'il faut faire à un endroit précis. `cible` : un équipement de la carte, ou "" pour tout le réseau. */
+export type Element = { cible: string; texte: string; commandes: Commande[] };
+export type Mesure = {
+  id: string;
+  classe: 1 | 2 | 3;
   titre: string;
-  /** Pourquoi, et comment le vérifier. */
-  detail: string;
-  commandes: Commande[];
-  /** À faire en même temps ailleurs (l'autre bout d'un lien…). */
-  aussi?: string;
-  equipements: string[];
-  reference: string;
+  /** Pourquoi, en une phrase que tout le monde comprend. */
+  pourquoi: string;
+  /** Ce que la mesure coûte (ou fait gagner) en dépannage et en maintenance. */
+  impact: Impact;
+  impactTexte: string;
+  etat: Etat;
+  /** Ce qui a été constaté sur la carte. */
+  constat: string;
+  elements: Element[];
 };
-export type Fiche = {
-  cible: string;
-  type: "equipement" | "reseau" | "video" | "inventaire";
-  sousTitre: string;
-  gravite: Gravite;
-  actions: Action[];
-};
-export type Flux = { source: string; destination: string; flux: string; decision: "Autoriser" | "Restreindre" | "Interdire"; motif: string };
+export type Panne = { cible: string; critique: boolean; titre: string; detail: string; commandes: Commande[] };
 export type Version = { modele: string; version: string; equipements: string[]; remarque: string };
 export type Bilan = {
-  fiches: Fiche[];
-  /** Les actions par lesquelles commencer (les plus graves d'abord). */
-  priorites: { cible: string; action: Action }[];
-  compteurs: Record<Gravite, number>;
-  flux: Flux[]; ouFiltrer: string;
-  versions: Version[];
+  mesures: Mesure[];
+  pannes: Panne[];
+  /** À corriger en premier : quelques phrases courtes. */
+  premiers: string[];
   zones: { groupe: string; vlans: string; reseaux: string; nombre: number }[];
-  verifications: string[];
+  versions: Version[];
   genetec: Comparaison; sourcesGenetec: Genetec["sources"];
+  /** Des relevés de switchs ont-ils été importés ? (sinon beaucoup de points restent « à vérifier ») */
+  releve: boolean;
 };
 
-const ORDRE: Record<Gravite, number> = { critique: 0, importante: 1, conseil: 2 };
+export const CLASSES: Record<Mesure["classe"], { nom: string; texte: string }> = {
+  1: { nom: "Indispensable", texte: "Le basique, à avoir partout. Ne ralentit pas le dépannage, souvent l'accélère." },
+  2: { nom: "Recommandé", texte: "Un peu de travail en plus en maintenance, pour un vrai gain." },
+  3: { nom: "Renforcé — à décider", texte: "Plus de sécurité, mais chaque dépannage prend plus de temps. Au cas par cas." },
+};
+
 const val = (e: Equipement, k: string) => e.kv.find(([c]) => c.toLowerCase() === k)?.[1];
 const pl = (n: number, mot: string, pluriel = `${mot}s`) => `${n} ${n > 1 ? pluriel : mot}`;
-const enumerer = (noms: string[], max = 8) => (noms.length > max ? `${noms.slice(0, max).join(", ")} et ${noms.length - max} autres` : noms.join(", "));
-/** Liste de ports écrite par le relevé (« Gi1/0/5,Gi1/0/6 ») ; un nombre seul = ancien relevé, sans détail. */
 const ports = (v?: string) => (!v || /^\d+$/.test(v) ? [] : v.split(",").map((x) => x.replace(/…$/, "").trim()).filter(Boolean));
 const compteDe = (v?: string) => (!v ? 0 : /^\d+$/.test(v) ? Number(v) : ports(v).length);
+const simple = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+/** « Gi1/0/2 : texte » → « Gi1/0/2 ». */
+const portDe = (t: string) => t.match(/^([A-Za-z-]{0,12}\d[\d/.]*)\s*:/)?.[1];
+const sansPuce = (t: string) => t.replace(/^[⛔⚠]\s*/, "");
 
-/** Réseau d'une IP : avec son masque s'il est connu, sinon le /24 (hypothèse courante, signalée). */
 function reseau(e: Equipement): string | null {
   if (!e.ip) return null;
   const [ip, suffixe] = e.ip.split("/");
@@ -76,417 +81,414 @@ function reseau(e: Equipement): string | null {
   const r = (n & m) >>> 0;
   return `${r >>> 24}.${(r >> 16) & 255}.${(r >> 8) & 255}.${r & 255}/${bits}`;
 }
-/** « 17.03.04 » < « 17.06.05 » (comparaison par nombres). */
 function compareVersions(a: string, b: string) {
   const x = a.split(/[^0-9]+/).filter(Boolean).map(Number), y = b.split(/[^0-9]+/).filter(Boolean).map(Number);
   for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] ?? 0) - (y[i] ?? 0); if (d) return d; }
   return 0;
 }
+/** « 1,10,20-30 » → l'ensemble des numéros de VLAN. */
+function vlans(t?: string): Set<string> {
+  const s = new Set<string>();
+  (t ?? "").split(/[,\s]+/).filter(Boolean).forEach((p) => {
+    const m = p.match(/^(\d+)(?:-(\d+))?$/);
+    if (!m) return;
+    const a = Number(m[1]), b = Math.min(Number(m[2] ?? m[1]), 4094);
+    for (let i = a; i <= b; i++) s.add(String(i));
+  });
+  return s;
+}
+
+/** Nom laissé par défaut ou générique : « Switch », « HP-2530-24G », « Aruba-6200F », une IP, « SW1 »… */
+export function nomParDefaut(nom: string): boolean {
+  const n = nom.trim();
+  return /^(switch|sw|hp|hpe|aruba|cisco|procurve|netgear|planet|comnet|d-?link|tp-?link|zyxel|core|coeur|access|acces|default|new)[-_ ]?\d*([-_ ]\d+)?$/i.test(n)
+    || /^(\d{1,3}[-_.]){3}\d{1,3}$/.test(n)
+    || /^(hp|hpe|aruba|cisco|procurve)?[-_ ]?(2530|2540|2920|2930[FM]?|3810|5400|6[0-4]00[FM]?|C9[23]\d\d|WS-C\w+|JL\d{3}A|J\d{4}A)/i.test(n);
+}
+/** Le nom contient-il l'emplacement (un mot de son local ou de sa baie) ? */
+function nomAvecEmplacement(e: Equipement): boolean {
+  const mots = (e.point || "").split(/[^A-Za-z0-9À-ÿ+]+/)
+    .map(simple).filter((w) => w.length >= 2 && !/^(local|site|baie|batiment|bat|niveau|etage|salle|zone|de|du|la|le|les)$/.test(w));
+  const n = simple(e.nom).replace(/[^a-z0-9+]/g, "");
+  // « SW-BAT-A » pour « Bâtiment A - local R+0 » : le code du lieu (BATA) suffit.
+  if (e.point && codeLieu(e.point).split("-").some((c) => c.length >= 3 && n.includes(c.toLowerCase()))) return true;
+  return mots.some((w) => n.includes(w.replace(/\+/g, "")) || (w.length >= 5 && n.includes(w.slice(0, 4))));
+}
+/** Un code court pour un lieu : « Bâtiment A - local R+0 » → « BATA-R0 ». */
+export function codeLieu(t: string): string {
+  const mots = simple(t).replace(/batiment|bat\./g, "bat").split(/[^a-z0-9+]+/)
+    .filter((w) => w && !/^(de|du|des|la|le|les|l|d|et|local|salle|baie|site)$/.test(w));
+  const parties = mots.map((w) => (/^\d/.test(w) || w.length <= 3 ? w : w.slice(0, 4)).replace(/\+/g, "").toUpperCase());
+  // On colle les petits morceaux (« BAT » + « A ») et on sépare les autres par des tirets.
+  const out: string[] = [];
+  parties.forEach((p) => { if (out.length && (p.length === 1 || out[out.length - 1].length <= 3)) out[out.length - 1] += p; else out.push(p); });
+  return out.join("-").slice(0, 14) || "SITE";
+}
 
 const RESEAU: Genre[] = ["switch", "passerelle", "parefeu", "borne"];
 const VIDEO_SRV: Genre[] = ["nvr", "serveur", "nas"];
-const UTILISATEURS: Genre[] = ["poste", "imprimante", "telephone"];
-const REF = {
-  ports: "ISO 27001 A.8.20 · ANSSI : désactiver les ports inutilisés",
-  vlan: "ISO 27001 A.8.20 · A.8.22",
-  surveillance: "ISO 27001 A.8.16 · A.8.14",
-  inventaire: "ISO 27001 A.5.9",
-  versions: "ISO 27001 A.8.8 · A.8.9",
-};
+const FINAUX: Genre[] = ["camera", "poste", "imprimante", "telephone"];
+const EST_BOUCLE = /boucle|MAC .*sur \d+ ports|flapp|change sans cesse de port|STP|chefs? d.orchestre|racine/i;
+const EST_VLAN = /natif|m[êe]mes r[ée]seaux|mode diff|mal configur/i;
+const EST_IP = /m[êe]me adresse IP|IP .* port[ée]e par/i;
+
+/** Agrégation entre deux switchs : les commandes de vérification. */
+function verifierAgregation(m: Marque): string[] | null {
+  if (m === "cisco") return ["show etherchannel summary", "show spanning-tree blockedports"];
+  if (m === "arubacx") return ["show lacp aggregates", "show spanning-tree"];
+  if (m === "hp") return ["show trunks", "show spanning-tree"];
+  return null;
+}
 
 export function analyserSecurite(inv: Inventaire, genetec?: Genetec | null): Bilan {
   const eq = inv.equipements;
   const parNom = new Map(eq.map((e) => [e.nom, e]));
-  const de = (g: Genre | Genre[]) => eq.filter((e) => (Array.isArray(g) ? g : [g]).includes(e.genre));
-  const cameras = de("camera"), switchs = de("switch"), serveurs = de(VIDEO_SRV), utilisateurs = de(UTILISATEURS);
-  const releve = switchs.some((s) => val(s, "ports-relevés") || val(s, "firmware"));
+  const de = (g: Genre[]) => eq.filter((e) => g.includes(e.genre));
+  const voisin = (e: Equipement) => /voisin/i.test(val(e, "source") ?? "");
+  const cameras = de(["camera"]), switchs = de(["switch"]).filter((s) => !voisin(s)), serveurs = de(VIDEO_SRV);
+  const releve = switchs.some((s) => val(s, "ports-relevés") || val(s, "firmware") || val(s, "releve-date"));
   const cg = comparerGenetec(inv, genetec);
-
-  const lienReseau = (e: Equipement) => inv.liaisons.find((l) => (l.a === e.nom || l.b === e.nom) && RESEAU.includes(parNom.get(l.a === e.nom ? l.b : l.a)?.genre ?? "autre"));
-  /** VLAN d'un équipement : son champ vlan=, sinon celui de son câble vers le réseau. */
-  const vlanDe = (e: Equipement): string | undefined => val(e, "vlan") ?? (lienReseau(e)?.mode !== "trunk" ? lienReseau(e)?.vlans : undefined);
-  /** Le switch et le port d'un équipement terminal. */
-  const brancheSur = (e: Equipement) => {
+  const mq = (nom: string): Marque => { const e = parNom.get(nom); return e ? marqueDe(e) : "autre"; };
+  const cmd = (libelle: string, lignes: string[] | null): Commande[] => (lignes?.length ? [{ libelle, lignes }] : []);
+  const web = (nom: string) => (mq(nom) === "autre" ? " (à faire dans l'interface web du switch)" : "");
+  const autreBout = (l: Inventaire["liaisons"][number], nom: string) => parNom.get(l.a === nom ? l.b : l.a);
+  const liensDe = (nom: string) => inv.liaisons.filter((l) => l.a === nom || l.b === nom);
+  const lienReseau = (e: Equipement) => liensDe(e.nom).find((l) => RESEAU.includes(autreBout(l, e.nom)?.genre ?? "autre"));
+  const vlanDe = (e: Equipement): string | undefined => {
+    // Un seul VLAN : « 1,20 » (un trunk) ne dit pas dans quel VLAN est l'équipement.
+    const un = (v?: string) => (v && /^\d+$/.test(v.trim()) ? v.trim() : undefined);
     const l = lienReseau(e);
-    return l ? (l.a === e.nom ? { sw: l.b, port: l.portB } : { sw: l.a, port: l.portA }) : null;
+    return un(val(e, "vlan")) ?? (l && l.mode !== "trunk" ? un(l.vlans) : undefined);
   };
-  /** L'autre bout d'un port de switch (pour traiter les deux côtés d'un lien). */
+  const brancheSur = (e: Equipement) => { const l = lienReseau(e); return l ? (l.a === e.nom ? { sw: l.b, port: l.portB } : { sw: l.a, port: l.portA }) : null; };
   const enFace = (sw: string, port: string) => {
     const l = inv.liaisons.find((x) => (x.a === sw && x.portA === port) || (x.b === sw && x.portB === port));
     return l ? (l.a === sw ? `${l.b}${l.portB ? ` port ${l.portB}` : ""}` : `${l.a}${l.portA ? ` port ${l.portA}` : ""}`) : null;
   };
-  // VLAN vidéo : le plus courant chez les caméras.
-  const comptesVlan = new Map<string, number>();
-  cameras.forEach((c) => { const v = vlanDe(c); if (v && v !== "1") comptesVlan.set(v, (comptesVlan.get(v) ?? 0) + 1); });
-  const vlanVideo = [...comptesVlan].sort((a, b) => b[1] - a[1])[0]?.[0];
-
-  /* ---------- fiches ---------- */
-  const fiches = new Map<string, Fiche>();
-  const fiche = (cible: string, type: Fiche["type"], sousTitre = "") => {
-    let f = fiches.get(cible);
-    if (!f) { f = { cible, type, sousTitre, gravite: "conseil", actions: [] }; fiches.set(cible, f); }
-    return f;
+  const anomalies = (s: Equipement) => (val(s, "anomalies") ?? "").split(" — ").slice(1).join(" — ").split(" · ").map((x) => x.trim()).filter(Boolean);
+  /** Les anomalies des relevés qui passent le filtre, une seule fois chacune (certaines concernent plusieurs switchs). */
+  const anomaliesDe = (garder: (t: string) => boolean) => {
+    const vues = new Map<string, { switchs: string[]; texte: string; critique: boolean; port?: string }>();
+    switchs.forEach((s) => anomalies(s).filter(garder).forEach((x) => {
+      const t = sansPuce(x), a = vues.get(t);
+      if (a) a.switchs.push(s.nom); else vues.set(t, { switchs: [s.nom], texte: t, critique: x.startsWith("⛔"), port: portDe(t) });
+    }));
+    return [...vues.values()].map((a) => ({ ...a, cible: a.switchs.length === 1 ? a.switchs[0] : "", texte: a.switchs.length === 1 ? a.texte : `${a.switchs.join(", ")} : ${a.texte}` }));
   };
-  const ajouter = (f: Fiche, a: Omit<Action, "commandes" | "equipements"> & { commandes?: (Commande | null)[]; equipements?: string[] }) => {
-    f.actions.push({ ...a, commandes: (a.commandes ?? []).filter((c): c is Commande => !!c && c.lignes.length > 0), equipements: [...new Set(a.equipements ?? [])] });
+  const comptes = new Map<string, number>();
+  cameras.forEach((c) => { const v = vlanDe(c); if (v && v !== "1") comptes.set(v, (comptes.get(v) ?? 0) + 1); });
+  const vlanVideo = [...comptes].sort((a, b) => b[1] - a[1])[0]?.[0];
+
+  const mesures: Mesure[] = [];
+  /** `sansReleve` : ce que la carte seule ne permet pas de voir. */
+  const mesure = (m: Omit<Mesure, "etat" | "constat"> & { etat?: Etat; constat?: string; sansReleve?: string }) => {
+    const { sansReleve, ...x } = m;
+    const etat = x.etat ?? (x.elements.length ? "a-faire" : sansReleve && !releve ? "a-verifier" : "ok");
+    const constat = x.constat ?? (etat === "a-faire" ? `${pl(x.elements.length, "point")} à traiter.` : etat === "a-verifier" ? sansReleve ?? "À contrôler sur place." : "Rien à signaler sur la carte.");
+    mesures.push({ ...x, etat, constat });
   };
-  const cmd = (libelle: string, lignes: string[] | null): Commande | null => (lignes ? { libelle, lignes } : null);
-  const sansCommande = (m: Marque) => (m === "autre" ? " Pas de commande pour cette marque : à faire dans l'interface web du switch (ou sa console)." : "");
-  const ficheSwitch = (s: Equipement) => {
-    const m = marqueDe(s);
-    const parts = [NOM_MARQUE[m] || "", s.infos[0], s.ip, [s.point, s.baie && `baie ${s.baie}`].filter(Boolean).join(" · ")].filter(Boolean) as string[];
-    return { f: fiche(s.nom, "equipement", [...new Set(parts)].join(" · ")), m };
-  };
-  const reseauF = () => fiche("Ensemble du réseau", "reseau", "Cloisonnement, adressage, filtrage, liaisons");
-  const videoF = () => fiche("Vidéo (Genetec)", "video", genetec?.sources.map((x) => x.nom).join(" · ") ?? "");
-  const inventaireF = () => fiche("Inventaire", "inventaire", "Ce qui manque pour tout contrôler");
+  const RELEVE = "Se voit avec un relevé des switchs (« Relever les switchs.bat ») : à importer.";
 
-  /* ================= par switch ================= */
-  const horsLigneParSwitch = new Map<string, Rapprochement[]>();
-  cg.horsLigne.filter((r) => r.eq && r.switch).forEach((r) => horsLigneParSwitch.set(r.switch!, [...(horsLigneParSwitch.get(r.switch!) ?? []), r]));
-  const versionsParModele = new Map<string, { nom: string; v: string }[]>();
-  switchs.forEach((s) => { const v = val(s, "firmware"); if (v && s.infos[0]) versionsParModele.set(s.infos[0], [...(versionsParModele.get(s.infos[0]) ?? []), { nom: s.nom, v }]); });
+  /* ======================= CLASSE 1 · INDISPENSABLE ======================= */
 
-  for (const s of switchs) {
-    const { f, m } = ficheSwitch(s);
-    const releveS = val(s, "releve") ?? "";
-    // 1. Clé SSH changée : possible interception.
-    if (/cl[ée] d.h[ôo]te/i.test(releveS)) {
-      ajouter(f, { gravite: "critique", titre: "Ne pas s'y connecter avant d'avoir vérifié le switch : sa clé SSH a changé",
-        detail: `${releveS}. Si le switch n'a été ni remplacé ni réinitialisé, un équipement peut s'être intercalé (interception des identifiants). Vérifier sur place, puis accepter la nouvelle clé seulement si le changement est expliqué.`,
-        reference: "ISO 27001 A.8.20 · A.8.16" });
-    } else if (/non relev|marque inconnue|partiel/i.test(releveS)) {
-      ajouter(f, { gravite: "importante", titre: "Relever ce switch (aujourd'hui, il n'est pas contrôlé)",
-        detail: `${releveS}. Fournir le bon compte (lecture seule si possible) ou ajouter sa marque à commandes.txt, puis relancer « Relever les switchs.bat ».`,
-        reference: REF.inventaire });
+  // Noms des switchs : clairs, avec l'emplacement.
+  const numeros = new Map<string, number>();
+  const elNoms: Element[] = [];
+  switchs.forEach((s) => {
+    // Le lieu, c'est le local ou la baie (« point ») ; le site seul ne dit pas où aller.
+    const lieu = s.point || s.site;
+    const defaut = nomParDefaut(s.nom);
+    if (!defaut && (!s.point || nomAvecEmplacement(s))) {
+      if (!s.point) elNoms.push({ cible: s.nom, texte: "on ne sait pas dans quel local il est : le noter sur la carte (champ « Où ») et dans le switch", commandes: cmd("Écrire l'emplacement dans le switch", emplacement(mq(s.nom), "<bâtiment - local - baie>")) });
+      return;
     }
-    // 2. Caméras hors ligne (Genetec) branchées sur ce switch.
-    const hl = horsLigneParSwitch.get(s.nom) ?? [];
-    if (hl.length) {
-      ajouter(f, { gravite: "critique",
-        titre: `Contrôler ${hl.length > 1 ? `les ports ${hl.map((r) => r.port ?? "?").join(", ")}` : `le port ${hl[0].port ?? "?"}`} : ${pl(hl.length, "caméra hors ligne", "caméras hors ligne")} dans Genetec`,
-        detail: `${hl.map((r) => `${r.eq!.nom}${r.unite.nom && r.unite.nom !== r.eq!.nom ? ` (« ${r.unite.nom.split(" / ")[0]} »)` : ""} sur le port ${r.port ?? "?"}`).join(" ; ")}. `
-          + "Lien coupé ou PoE à 0 W : câble, prise, alimentation de la caméra. Lien actif et adresse MAC vue : la caméra répond, le problème est côté Genetec (identifiants, archiveur, licence).",
-        commandes: (() => {
-          const ps = hl.map((r) => r.port).filter((p): p is string => !!p);
-          const ctl = ps.flatMap((p) => controlerPort(m, p) ?? []);
-          return [cmd(`1. Contrôler ${ps.length > 1 ? "les ports" : "le port"} (lecture seule)`, ctl.length ? ctl : null),
-            cmd(`2. Si le port est actif sans adresse MAC : redémarrer ${ps.length > 1 ? "les caméras" : "la caméra"} (PoE)`, relancerPoe(m, ps))];
-        })(),
-        equipements: [s.nom, ...hl.map((r) => r.eq!.nom)], reference: REF.surveillance });
-    }
-    // 3. Anomalies relevées : une action par port (plusieurs anomalies du même port réunies).
-    const an = val(s, "anomalies");
-    if (an) {
-      const parPort = new Map<string, { crit: boolean; textes: string[] }>();
-      an.split(" — ").slice(1).join(" — ").split(" · ").map((x) => x.trim()).filter(Boolean).forEach((x) => {
-        const texte = x.replace(/^[⛔⚠]\s*/, "");
-        // Le relevé incomplet est déjà dit plus haut (« Relever ce switch »).
-        if (/relev/i.test(texte) && /non relev|marque inconnue|partiel/i.test(releveS)) return;
-        const port = texte.match(/^([A-Za-z]{0,12}[\d/]+[\d])\s*:/)?.[1] ?? "";
-        const g = parPort.get(port) ?? { crit: false, textes: [] };
-        g.crit ||= x.startsWith("⛔");
-        g.textes.push(port ? texte.slice(port.length).replace(/^\s*:\s*/, "") : texte);
-        parPort.set(port, g);
-      });
-      parPort.forEach((g, port) => {
-        // Lien entre équipements (fibre, agrégation, trunk) ou port d'accès (caméra…) : pas les mêmes contrôles.
-        const lien = /^(te|tw|fo|hu|xe|po|lag|sfp|trk)/i.test(port) || inv.liaisons.some((l) => ((l.a === s.nom && l.portA === port) || (l.b === s.nom && l.portB === port)) && l.mode === "trunk");
-        const face = port ? enFace(s.nom, port) : null;
-        ajouter(f, { gravite: g.crit ? "critique" : "importante",
-          titre: port ? `${port} : ${g.textes[0]}` : g.textes[0],
-          detail: (g.textes.length > 1 ? `Sur ce port : ${g.textes.slice(1).join(" ; ")}. ` : "") + "Trouvé par l'analyse du relevé (Cartographie Réseau).",
-          aussi: face && lien ? `Contrôler aussi l'autre bout : ${face}.` : undefined,
-          commandes: port ? [cmd(`Contrôler ${port}`, lien ? controlerLien(m, port) : controlerPort(m, port))] : [],
-          equipements: [s.nom, ...(face ? [face.split(" port ")[0]] : [])], reference: REF.surveillance });
-      });
-    }
-    // 4. Ports libres restés actifs.
-    const libres = ports(val(s, "ports-libres-actifs")), nLibres = compteDe(val(s, "ports-libres-actifs"));
-    if (nLibres) {
-      ajouter(f, { gravite: "importante",
-        titre: libres.length ? `Désactiver ${libres.length > 1 ? `les ${libres.length} ports libres` : "le port libre"} : ${libres.join(", ")}` : `Désactiver les ${nLibres} ports libres`,
-        detail: "Ports sans rien de branché mais actifs : n'importe qui peut s'y brancher et entrer sur le réseau."
-          + (libres.length ? "" : " Relancer le relevé pour avoir leur liste exacte.") + sansCommande(m),
-        commandes: [cmd("Désactiver", desactiverPorts(m, libres))], equipements: [s.nom], reference: REF.ports });
-    }
-    // 5. Ports d'accès dans le VLAN 1 (relevé) + équipements déclarés en VLAN 1 sur ce switch.
-    const declares = eq.filter((e) => !RESEAU.includes(e.genre) && vlanDe(e) === "1" && brancheSur(e)?.sw === s.nom);
-    const p1 = [...new Set([...ports(val(s, "acces-vlan1")), ...declares.map((e) => brancheSur(e)!.port).filter((p): p is string => !!p)])];
-    if (p1.length) {
-      const camsSeules = declares.length && declares.every((e) => e.genre === "camera");
-      const cible = camsSeules && vlanVideo ? vlanVideo : "<vlan>";
-      ajouter(f, { gravite: "importante", titre: `Sortir du VLAN 1 : ${p1.join(", ")}${camsSeules && vlanVideo ? ` (vers le VLAN vidéo ${vlanVideo})` : ""}`,
-        detail: "Le VLAN 1 est celui de tous les ports non configurés : un équipement inconnu branché n'importe où y retrouve ces équipements."
-          + (cible === "<vlan>" ? " Remplacer <vlan> par le VLAN dédié à ces équipements." : "") + sansCommande(m),
-        commandes: [cmd("Passer en accès dans le bon VLAN", accesVlan(m, p1, cible))], equipements: [s.nom, ...declares.map((e) => e.nom)], reference: REF.vlan });
-    }
-    // 6. Trunks en VLAN natif 1 : les deux bouts.
-    const n1 = ports(val(s, "trunk-natif-vlan1"));
-    if (n1.length) {
-      const faces = n1.map((p) => enFace(s.nom, p)).filter((x): x is string => !!x);
-      ajouter(f, { gravite: "conseil", titre: `Mettre le VLAN natif 999 sur ${n1.length > 1 ? "les trunks" : "le trunk"} ${n1.join(", ")}`,
-        detail: "VLAN natif 1 sur un trunk : risque de saut de VLAN. Le VLAN natif doit être le même aux deux bouts, sinon le lien tombe : faire les deux côtés dans la même intervention." + sansCommande(m),
-        aussi: faces.length ? `De l'autre côté, en même temps : ${faces.join(", ")}.` : undefined,
-        commandes: [cmd("VLAN natif inutilisé", vlanNatif(m, n1))], equipements: [s.nom, ...faces.map((x) => x.split(" port ")[0])], reference: REF.vlan });
-    }
-    // 7. Trunks ouverts à tous les VLAN.
-    const tous = ports(val(s, "trunk-tous-vlan"));
-    if (tous.length) {
-      const vl = [...new Set(tous.flatMap((p) => inv.liaisons.filter((l) => (l.a === s.nom && l.portA === p) || (l.b === s.nom && l.portB === p)).map((l) => l.vlans ?? "")).filter(Boolean))].join(",");
-      ajouter(f, { gravite: "conseil", titre: `Limiter les VLAN autorisés sur ${tous.join(", ")}`,
-        detail: `Ces trunks laissent passer tous les VLAN. N'autoriser que ceux utilisés de l'autre côté${vl ? ` (sur la carte : ${vl})` : ""}.`,
-        commandes: [cmd("VLAN autorisés", trunkAutorises(m, tous, vl || "<vlans>"))], equipements: [s.nom], reference: REF.vlan });
-    }
-    // 8. Plusieurs adresses MAC sur un port d'accès : switch non géré ou concentrateur.
-    const multi = ports(val(s, "multi-mac"));
-    if (multi.length) {
-      ajouter(f, { gravite: "importante", titre: `Identifier ce qui est branché sur ${multi.join(", ")}`,
-        detail: "Plusieurs équipements derrière un seul port d'accès : petit switch non géré ou concentrateur probable, invisible sur la carte. Le retrouver, puis le remplacer par un switch géré ou limiter le nombre d'adresses MAC du port.",
-        commandes: multi.map((x) => x.split(" ")[0]).map((p) => cmd(`Voir ce qui est derrière ${p}`, macDuPort(m, p))), equipements: [s.nom], reference: "ISO 27001 A.8.20 · A.5.9" });
-    }
-    // 9. Trunk vers un équipement terminal.
-    inv.liaisons.filter((l) => l.mode === "trunk" && (l.a === s.nom || l.b === s.nom)).forEach((l) => {
-      const autre = parNom.get(l.a === s.nom ? l.b : l.a), port = l.a === s.nom ? l.portA : l.portB;
-      if (!autre || !["camera", "poste", "imprimante", "telephone", "autre"].includes(autre.genre) || !port) return;
-      const v = vlanDe(autre) ?? (autre.genre === "camera" ? vlanVideo : undefined) ?? "<vlan>";
-      ajouter(f, { gravite: "importante", titre: `Passer le port ${port} en accès (${autre.nom} n'a besoin que d'un VLAN)`,
-        detail: `${autre.nom} reçoit un trunk : il peut voir plusieurs VLAN. Un équipement terminal reste dans un seul VLAN.`,
-        commandes: [cmd("Port d'accès", accesVlan(m, [port], v))], equipements: [s.nom, autre.nom], reference: REF.vlan });
-    });
-    // 10. Version différente d'un autre switch du même modèle : mettre à jour.
-    const v = val(s, "firmware"), memes = s.infos[0] ? versionsParModele.get(s.infos[0]) ?? [] : [];
-    const plusRecente = memes.filter((x) => v && compareVersions(x.v, v) > 0).sort((a, b) => compareVersions(b.v, a.v))[0];
-    if (v && plusRecente) {
-      ajouter(f, { gravite: "conseil", titre: `Mettre à jour le logiciel : ${v} → ${plusRecente.v} (version de ${plusRecente.nom})`,
-        detail: `Même modèle (${s.infos[0]}), versions différentes. Vérifier d'abord les avis du CERT-FR et du constructeur pour ${plusRecente.v} (ou une version plus récente).`,
-        equipements: [s.nom, plusRecente.nom], reference: REF.versions });
-    }
-    // 11. Lien montant chargé par la vidéo (débits Genetec).
-    const d = cg.debitParSwitch.find((x) => x.switch === s.nom && x.capaciteMbps && x.kbps / 1000 > x.capaciteMbps * 0.7);
-    if (d) {
-      ajouter(f, { gravite: "importante", titre: `Désengorger le lien montant ${d.lien ?? ""} : ${Math.round(d.kbps / 1000)} Mb/s de vidéo pour ${d.capaciteMbps! >= 1000 ? `${d.capaciteMbps! / 1000} Gb/s` : `${d.capaciteMbps} Mb/s`}`,
-        detail: "Au-delà de 70 % du lien, les images se dégradent aux heures chargées : passer le lien en 10G, l'agréger, ou réduire les débits (H.265, images/s).",
-        equipements: [s.nom], reference: "ISO 27001 A.8.14 · A.8.6" });
-    }
-    // 12. Un seul lien pour beaucoup de caméras.
-    const nCams = inv.liaisons.filter((l) => (l.a === s.nom || l.b === s.nom) && parNom.get(l.a === s.nom ? l.b : l.a)?.genre === "camera").length;
-    const nLiens = inv.liaisons.filter((l) => (l.a === s.nom || l.b === s.nom) && RESEAU.includes(parNom.get(l.a === s.nom ? l.b : l.a)?.genre ?? "autre")).length;
-    if (nLiens === 1 && nCams >= 8) {
-      ajouter(f, { gravite: "conseil", titre: `Doubler le lien montant (${nCams} caméras derrière un seul câble)`,
-        detail: "Si ce câble ou son module SFP lâche, toutes ces caméras tombent. Ajouter un deuxième lien (agrégation) vers le cœur.",
-        equipements: [s.nom], reference: "ISO 27001 A.8.14" });
-    }
-  }
+    const k = codeLieu(s.point || "SITE");
+    const n = (numeros.get(k) ?? 0) + 1; numeros.set(k, n);
+    const propose = `SW-${k}-${String(n).padStart(2, "0")}`;
+    elNoms.push({ cible: s.nom, texte: `${defaut ? "nom par défaut" : `le nom ne dit pas où il est (${s.point})`} → proposé : ${propose}${web(s.nom)}`,
+      commandes: [...cmd(`Renommer en ${propose}`, renommer(mq(s.nom), propose)), ...(lieu ? cmd("Écrire l'emplacement", emplacement(mq(s.nom), lieu)) : [])] });
+  });
+  anomaliesDe((t) => /m[êe]me nom|nomm[ée]s /i.test(t)).forEach((a) => elNoms.push({ cible: a.cible, texte: a.texte, commandes: [] }));
+  mesure({ id: "noms", classe: 1, titre: "Chaque switch a un nom qui dit où il est",
+    pourquoi: "En panne, on sait tout de suite dans quel bâtiment et quelle baie aller. Convention proposée : SW-<lieu>-<numéro>, par exemple SW-BATA-R0-01.",
+    impact: "plus-rapide", impactTexte: "Fait gagner du temps à chaque intervention.",
+    constat: elNoms.length ? `${pl(elNoms.length, "switch", "switchs")} à renommer ou à situer.` : undefined, elements: elNoms });
 
-  /* ================= ensemble du réseau ================= */
-  const vlansCam = new Set(cameras.map(vlanDe).filter(Boolean) as string[]);
-  if (cameras.length && !vlansCam.size) {
-    ajouter(reseauF(), { gravite: "importante", titre: "Créer un VLAN vidéo et y mettre toutes les caméras",
-      detail: `Aucune des ${pl(cameras.length, "caméra")} n'a de VLAN connu : rien ne montre que la vidéo est séparée du reste.`,
-      equipements: cameras.map((c) => c.nom).slice(0, 40), reference: REF.vlan });
-  }
-  const melanges = eq.filter((e) => !["camera", ...RESEAU, ...VIDEO_SRV].includes(e.genre) && vlansCam.has(vlanDe(e) ?? "§"));
-  if (melanges.length) {
-    ajouter(reseauF(), { gravite: "importante", titre: `Sortir du VLAN vidéo : ${enumerer(melanges.map((e) => e.nom))}`,
-      detail: `${melanges.map((e) => `${e.nom} (${e.genre}${brancheSur(e) ? `, ${brancheSur(e)!.sw} port ${brancheSur(e)!.port ?? "?"}` : ""})`).join(" ; ")} : dans le VLAN des caméras (${[...vlansCam].join(", ")}). Un poste compromis ne doit pas joindre les caméras directement.`,
-      equipements: melanges.map((e) => e.nom), reference: REF.vlan });
-  }
-  const resCam = new Set(cameras.map(reseau).filter(Boolean) as string[]);
-  const memeRes = utilisateurs.filter((u) => resCam.has(reseau(u) ?? "§"));
-  if (memeRes.length) {
-    ajouter(reseauF(), { gravite: "importante", titre: `Changer l'adressage de ${enumerer(memeRes.map((e) => e.nom))} : même réseau IP que les caméras`,
-      detail: `Réseaux partagés : ${[...new Set(memeRes.map(reseau))].join(", ")}. Sans réseau propre, la vidéo ne peut pas être filtrée au pare-feu.`,
-      equipements: memeRes.map((e) => e.nom), reference: REF.vlan });
-  }
-  const resUtil = new Set([...cameras, ...utilisateurs].map(reseau).filter(Boolean) as string[]);
-  const adminMelange = switchs.filter((s) => resUtil.has(reseau(s) ?? "§"));
-  if (adminMelange.length) {
-    ajouter(reseauF(), { gravite: "importante", titre: `Isoler l'administration de ${enumerer(adminMelange.map((s) => s.nom))}`,
-      detail: `Leur adresse d'administration (${[...new Set(adminMelange.map(reseau))].join(", ")}) est dans un réseau de caméras ou de postes. Créer un VLAN d'administration, joignable seulement depuis les postes d'administration (SSH, HTTPS).`,
-      equipements: adminMelange.map((s) => s.nom), reference: "ISO 27001 A.8.22 · A.8.2 · ANSSI : réseau d'administration dédié" });
-  }
-  const parefeux = de("parefeu");
-  if (cameras.length && !parefeux.length) {
-    ajouter(reseauF(), { gravite: "importante", titre: "Filtrer les flux entre VLAN (aucun pare-feu sur la carte)",
-      detail: "Appliquer la matrice de flux ci-dessous sur le pare-feu du site, ou en ACL sur le cœur de réseau s'il n'y en a pas.",
-      reference: REF.vlan });
-  }
+  // Pas de boucle réseau.
+  const elBoucles: Element[] = [];
+  anomaliesDe((t) => EST_BOUCLE.test(t)).forEach((a) => elBoucles.push({ cible: a.cible, texte: a.texte,
+    commandes: a.cible && a.port ? cmd(`Voir ce qui est branché sur ${a.port}`, macDuPort(mq(a.cible), a.port)) : [] }));
+  // Boucle physique : des switchs reliés en cercle (sans danger seulement si le STP coupe un chemin).
+  const chef = new Map<string, string>();
+  const racine = (x: string): string => { const p = chef.get(x) ?? x; if (p === x) return x; const r = racine(p); chef.set(x, r); return r; };
+  const cables = new Map<string, number>();
+  const fermetures: string[] = [];
+  inv.liaisons.forEach((l) => {
+    if (parNom.get(l.a)?.genre !== "switch" || parNom.get(l.b)?.genre !== "switch") return;
+    const k = [l.a, l.b].sort().join(" ↔ ");
+    cables.set(k, (cables.get(k) ?? 0) + 1);
+    if (cables.get(k)! > 1) return;   // plusieurs câbles entre deux switchs : traité juste après
+    const ra = racine(l.a), rb = racine(l.b);
+    if (ra === rb) fermetures.push(k); else chef.set(ra, rb);
+  });
+  if (fermetures.length) elBoucles.push({ cible: "", texte: `les switchs forment un anneau (fermé par ${fermetures.join(", ")}) : vérifier que la protection anti-boucle (STP) est active sur tous, elle doit couper un des chemins`,
+    commandes: cmd("Sur chaque switch de l'anneau", verifierAgregation(mq(fermetures[0].split(" ↔ ")[0]))) });
+  [...cables].filter(([, n]) => n > 1).forEach(([k, n]) => {
+    const [a, b] = k.split(" ↔ ");
+    // Le relevé a vu une agrégation (Port-channel, LAG) entre eux : c'est voulu.
+    const agrege = [a, b].some((x) => parNom.get(x) && anomalies(parNom.get(x)!).some((t) => /agr[ée]g|\b(po|lag|trk)\d/i.test(t)));
+    if (!agrege) elBoucles.push({ cible: a, texte: `${n} câbles entre ${k} : vérifier qu'ils sont agrégés (LACP), sinon c'est une boucle`, commandes: cmd("Vérifier l'agrégation", verifierAgregation(mq(a))) });
+  });
+  mesure({ id: "boucles", classe: 1, titre: "Pas de boucle réseau",
+    pourquoi: "Une boucle fait tourner les trames sans fin : le réseau sature et toutes les caméras tombent en même temps, souvent après un simple câble branché au mauvais endroit.",
+    impact: "plus-rapide", impactTexte: "Évite la panne la plus longue à trouver.",
+    constat: elBoucles.length ? undefined : releve ? "Aucune boucle vue dans les relevés." : undefined, sansReleve: RELEVE, elements: elBoucles });
+
+  // Une IP = un seul équipement.
   const ips = new Map<string, string[]>();
-  eq.forEach((e) => { if (e.ip) ips.set(e.ip.split("/")[0], [...(ips.get(e.ip.split("/")[0]) ?? []), e.nom]); });
-  [...ips].filter(([, n]) => n.length > 1).forEach(([ip, n]) => {
-    ajouter(reseauF(), { gravite: "critique", titre: `Corriger l'IP ${ip}, utilisée par ${n.join(" et ")}`,
-      detail: "Une même IP sur deux équipements : l'un des deux ne répond pas (ou mal). Corriger l'adressage, ou l'inventaire si c'est une erreur de saisie.",
-      equipements: n, reference: "ISO 27001 A.5.9 · A.8.20" });
-  });
-  inv.liaisons.filter((l) => l.media === "radio").forEach((l) => {
-    ajouter(reseauF(), { gravite: "importante", titre: `Vérifier le chiffrement du pont radio ${l.a} ↔ ${l.b}`,
-      detail: "WPA2/WPA3 ou chiffrement du constructeur, clé longue propre au site ; interface d'administration du pont non joignable depuis le réseau vidéo.",
-      equipements: [l.a, l.b], reference: "ISO 27001 A.8.20 · A.8.24" });
-  });
-  inv.liaisons.filter((l) => l.media === "vpn").forEach((l) => {
-    ajouter(reseauF(), { gravite: "conseil", titre: `Vérifier le VPN ${l.a} ↔ ${l.b} : IPsec ou TLS avec certificats`,
-      detail: "Pas de clé partagée faible ; filtrer les flux qui le traversent comme entre deux VLAN.",
-      equipements: [l.a, l.b], reference: "ISO 27001 A.8.20 · A.8.21" });
-  });
+  eq.forEach((e) => { const ip = e.ip?.split("/")[0]; if (ip) ips.set(ip, [...(ips.get(ip) ?? []), e.nom]); });
+  const elIp: Element[] = [...ips].filter(([, n]) => n.length > 1).map(([ip, n]) => ({ cible: n[0], texte: `${ip} est utilisée par ${n.join(" et ")}`, commandes: [] }));
+  cg.doublonsIp.forEach((d) => elIp.push({ cible: "", texte: `${d.ip} est utilisée par ${d.noms.join(" et ")} dans Genetec`, commandes: [] }));
+  anomaliesDe((t) => EST_IP.test(t)).forEach((a) => elIp.push({ cible: a.cible, texte: a.texte, commandes: [] }));
+  mesure({ id: "ip", classe: 1, titre: "Une adresse IP pour un seul équipement",
+    pourquoi: "Deux équipements avec la même IP se coupent l'un l'autre : la caméra « disparaît » par moments, et c'est long à comprendre.",
+    impact: "plus-rapide", impactTexte: "Supprime des pannes intermittentes.", elements: elIp });
 
-  /* ================= vidéo (Genetec) ================= */
-  if (cg.actif) {
-    const introuvables = cg.horsLigne.filter((r) => !r.eq || !r.switch);
-    introuvables.forEach((r) => {
-      ajouter(videoF(), { gravite: "importante", titre: `Retrouver ${r.unite.nom || r.unite.mac} : hors ligne et introuvable sur le réseau`,
-        detail: `${r.unite.ip ? `IP ${r.unite.ip} · ` : ""}${r.unite.mac ? `MAC ${r.unite.mac} · ` : ""}${r.unite.archiveur ? `archiveur ${r.unite.archiveur}. ` : ""}Aucun switch relevé ne la voit : câble arraché, caméra déposée, ou switch non relevé.`,
-        reference: "ISO 27001 A.5.9 · A.8.16" });
-    });
-    if (cg.nonEnregistrees.length && genetec?.unites.length) {
-      ajouter(videoF(), { gravite: "importante", titre: `Ajouter dans Genetec (ou débrancher) ${pl(cg.nonEnregistrees.length, "caméra non enregistrée", "caméras non enregistrées")}`,
-        detail: cg.nonEnregistrees.map((e) => { const b = brancheSur(e); return `${e.nom}${e.ip ? ` ${e.ip}` : ""}${b ? ` (${b.sw} port ${b.port ?? "?"})` : ""}`; }).join(" ; ")
-          + ". Branchées mais inconnues de Genetec : aucune image enregistrée. Dans Config Tool, ajouter l'unité vidéo (par son IP) ; si ce n'est pas une caméra du site, la débrancher.",
-        equipements: cg.nonEnregistrees.map((e) => e.nom), reference: "ISO 27001 A.5.9 · A.8.1" });
-    }
-    cg.ecartsIp.forEach((r) => {
-      ajouter(videoF(), { gravite: "importante", titre: `Corriger l'IP de ${r.unite.nom.split(" / ")[0] || r.eq!.nom} dans Genetec : ${r.unite.ip} → ${r.eq!.ip}`,
-        detail: `Même adresse MAC (${r.unite.mac}), IP différente : la caméra a changé d'IP (DHCP ?). Lui donner une IP fixe (ou une réservation DHCP), puis corriger l'unité dans Config Tool.`,
-        equipements: [r.eq!.nom], reference: "ISO 27001 A.8.9" });
-    });
-    cg.doublonsIp.forEach((d) => {
-      ajouter(videoF(), { gravite: "critique", titre: `Séparer ${d.noms.join(" et ")} : même IP ${d.ip} dans Genetec`,
-        detail: "Une seule des deux peut fonctionner. Donner une IP libre à l'une, puis mettre Genetec à jour.",
-        reference: "ISO 27001 A.8.9 · A.8.20" });
-    });
-    const absentes = cg.absentes.filter((r) => r.etat !== "hors ligne");
-    if (absentes.length) {
-      ajouter(videoF(), { gravite: "conseil", titre: `Localiser ${pl(absentes.length, "caméra")} qui ${absentes.length > 1 ? "enregistrent" : "enregistre"} mais n'${absentes.length > 1 ? "apparaissent" : "apparaît"} pas sur la carte`,
-        detail: absentes.map((r) => `${r.unite.nom || r.unite.mac}${r.unite.ip ? ` ${r.unite.ip}` : ""}`).join(" ; ") + ". Le switch où elles sont branchées n'est pas relevé : le relever.",
-        reference: REF.inventaire });
-    }
-    if (cg.ecartsNom.length) {
-      ajouter(videoF(), { gravite: "conseil", titre: `Reprendre les noms Genetec sur la carte (${cg.ecartsNom.length})`,
-        detail: cg.ecartsNom.slice(0, 12).map((r) => `${r.eq!.nom} → ${r.unite.nom.split(" / ")[0]}`).join(" ; ") + (cg.ecartsNom.length > 12 ? " ; …" : "") + ". Un seul nom partout (carte, Genetec, étiquette) : bouton ci-dessous.",
-        equipements: cg.ecartsNom.map((r) => r.eq!.nom), reference: REF.inventaire });
-    }
-  }
+  // Des IP fixes.
+  const elFixes: Element[] = cg.ecartsIp.map((r) => ({ cible: r.eq!.nom, texte: `${r.eq!.ip} sur le réseau, ${r.unite.ip} dans Genetec : l'IP a changé (DHCP ?). Lui donner une IP fixe et corriger Genetec.`, commandes: [] }));
+  mesure({ id: "ip-fixes", classe: 1, titre: "Des IP fixes pour les caméras et les serveurs",
+    pourquoi: "Une caméra dont l'IP change est perdue par Genetec : plus d'image, plus d'enregistrement.",
+    impact: "plus-rapide", impactTexte: "Une caméra garde toujours la même adresse : on la retrouve.",
+    etat: elFixes.length ? "a-faire" : cg.actif ? "ok" : "a-verifier",
+    constat: elFixes.length ? undefined : cg.actif ? "Les IP du réseau et de Genetec concordent." : "Se voit avec un export Genetec : « Comparer avec un export Genetec ».", elements: elFixes });
 
-  /* ================= inventaire ================= */
-  eq.filter((e) => /voisin/i.test(val(e, "source") ?? "") && RESEAU.includes(e.genre)).forEach((e) => {
-    const vu = inv.liaisons.find((l) => l.a === e.nom || l.b === e.nom);
-    const par = vu ? (vu.a === e.nom ? `${vu.b} port ${vu.portB ?? "?"}` : `${vu.a} port ${vu.portA ?? "?"}`) : "";
-    ajouter(inventaireF(), { gravite: "conseil", titre: `Ajouter ${e.nom} au relevé${par ? ` (vu sur ${par})` : ""}`,
-      detail: "Vu par un switch voisin (LLDP/CDP) mais pas relevé : ses ports et sa configuration ne sont pas contrôlés. Ajouter son IP dans switchs.txt, ou confirmer qu'un autre service le gère.",
-      equipements: [e.nom], reference: REF.inventaire });
+  // Chaque usage dans son VLAN : sans ACL, c'est la seule séparation.
+  const elVlan: Element[] = [];
+  const vlansCam = new Set(cameras.map(vlanDe).filter((v): v is string => !!v));
+  if (cameras.length && !vlansCam.size) elVlan.push({ cible: "", texte: `aucun VLAN connu pour les ${pl(cameras.length, "caméra")} : créer un VLAN vidéo dédié (ou le noter sur la carte s'il existe)`, commandes: [] });
+  eq.filter((e) => !["camera", ...RESEAU, ...VIDEO_SRV].includes(e.genre) && vlansCam.has(vlanDe(e) ?? "§")).forEach((e) => {
+    const b = brancheSur(e);
+    elVlan.push({ cible: e.nom, texte: `${e.genre} dans le VLAN des caméras (${vlanDe(e)})${b ? `, sur ${b.sw} port ${b.port ?? "?"}` : ""} : à déplacer`, commandes: [] });
   });
-  const sansIp = eq.filter((e) => !e.ip && ["camera", "switch", "nvr", "serveur", "parefeu", "passerelle"].includes(e.genre) && !/voisin/i.test(val(e, "source") ?? ""));
-  if (sansIp.length) {
-    ajouter(inventaireF(), { gravite: "conseil", titre: `Renseigner l'IP de ${enumerer(sansIp.map((e) => e.nom))}`,
-      detail: sansIp.map((e) => { const b = brancheSur(e); return `${e.nom}${b ? ` (${b.sw} port ${b.port ?? "?"})` : ""}`; }).join(" ; ") + ". Sans IP, impossible de les filtrer ni de suivre leurs mises à jour.",
-      equipements: sansIp.map((e) => e.nom), reference: REF.inventaire });
+  const resUtil = new Set(eq.filter((e) => FINAUX.includes(e.genre)).map(reseau).filter((r): r is string => !!r));
+  const adminMelange = switchs.filter((s) => resUtil.has(reseau(s) ?? "§"));
+  if (adminMelange.length) elVlan.push({ cible: adminMelange.length === 1 ? adminMelange[0].nom : "", texte: `l'administration de ${adminMelange.map((s) => s.nom).join(", ")} est dans le même réseau que des caméras ou des postes : la mettre dans un VLAN d'administration`, commandes: [] });
+  switchs.forEach((s) => {
+    const decl = eq.filter((e) => !RESEAU.includes(e.genre) && vlanDe(e) === "1" && brancheSur(e)?.sw === s.nom);
+    const p1 = [...new Set([...ports(val(s, "acces-vlan1")), ...decl.map((e) => brancheSur(e)!.port).filter((p): p is string => !!p)])];
+    if (!p1.length) return;
+    const cible = vlanVideo && (!decl.length || decl.every((e) => e.genre === "camera")) ? vlanVideo : "<vlan>";
+    elVlan.push({ cible: s.nom, texte: `${pl(p1.length, "port")} dans le VLAN 1 (celui de tout port non configuré) : ${p1.join(", ")}${web(s.nom)}`, commandes: cmd(`Passer dans le VLAN ${cible}`, accesVlan(mq(s.nom), p1, cible)) });
+  });
+  mesure({ id: "vlan-usage", classe: 1, titre: "Chaque usage dans son VLAN : caméras, serveurs, administration",
+    pourquoi: "Sans ACL, le VLAN est la seule barrière : un PC branché dans le VLAN des caméras les voit toutes. Le VLAN 1 est celui où tombe tout port oublié.",
+    impact: "aucun", impactTexte: "Aucun, tant que le plan des VLAN est tenu à jour (voir plus bas).", elements: elVlan });
+
+  // Les mêmes VLAN aux deux bouts (« deux VLAN différents »).
+  const elCoherence: Element[] = [];
+  anomaliesDe((t) => EST_VLAN.test(t) && !EST_BOUCLE.test(t)).forEach((a) => {
+    const face = a.cible && a.port ? enFace(a.cible, a.port) : null;
+    elCoherence.push({ cible: a.cible, texte: `${a.texte}${face ? ` (autre bout : ${face})` : ""}`, commandes: a.cible && a.port ? cmd(`Comparer les deux bouts de ${a.port}`, controlerLien(mq(a.cible), a.port)) : [] });
+  });
+  switchs.forEach((s) => {
+    const vCams = new Set(cameras.filter((c) => brancheSur(c)?.sw === s.nom).map(vlanDe).filter((v): v is string => !!v && v !== "1"));
+    const montants = liensDe(s.nom).filter((l) => l.mode === "trunk" && l.vlans && autreBout(l, s.nom)?.genre === "switch");
+    if (!vCams.size || !montants.length) return;
+    const passent = new Set(montants.flatMap((l) => [...vlans(l.vlans)]));
+    const manquants = [...vCams].filter((v) => !passent.has(v));
+    if (manquants.length) elCoherence.push({ cible: s.nom, texte: `ses caméras sont en VLAN ${manquants.join(", ")}, mais ce VLAN ne passe pas par ses liens vers les autres switchs (autorisés : ${[...new Set(montants.map((l) => l.vlans))].join(" / ")}) : les images n'arrivent pas à l'archiveur`, commandes: [] });
+  });
+  if (comptes.size > 1) {
+    const autres = cameras.filter((c) => { const v = vlanDe(c); return v && v !== vlanVideo && v !== "1"; });
+    elCoherence.push({ cible: "", texte: `les caméras sont dans ${comptes.size} VLAN différents (${[...comptes].map(([v, n]) => `VLAN ${v} : ${n}`).join(", ")}). Si ce n'est pas voulu (un VLAN par site, par exemple), passer ${autres.slice(0, 6).map((c) => c.nom).join(", ")}${autres.length > 6 ? "…" : ""} dans le VLAN ${vlanVideo}`, commandes: [] });
   }
-  const dates = switchs.map((s) => val(s, "releve-date")).filter(Boolean) as string[];
+  inv.liaisons.filter((l) => l.mode === "trunk").forEach((l) => {
+    const [sw, autre, port] = parNom.get(l.a)?.genre === "switch" ? [parNom.get(l.a), parNom.get(l.b), l.portA] : [parNom.get(l.b), parNom.get(l.a), l.portB];
+    if (!sw || sw.genre !== "switch" || !autre || !FINAUX.includes(autre.genre) || !port) return;
+    const v = vlanDe(autre) ?? (autre.genre === "camera" ? vlanVideo : undefined) ?? "<vlan>";
+    elCoherence.push({ cible: sw.nom, texte: `port ${port} en trunk vers ${autre.nom} : un équipement final n'a besoin que d'un VLAN`, commandes: cmd("Passer en port d'accès", accesVlan(mq(sw.nom), [port], v)) });
+  });
+  mesure({ id: "vlan-coherence", classe: 1, titre: "Les mêmes VLAN aux deux bouts de chaque lien",
+    pourquoi: "Un lien qui n'a pas les mêmes VLAN des deux côtés empêche des caméras d'atteindre l'archiveur, ou mélange deux VLAN sans qu'on le voie.",
+    impact: "plus-rapide", impactTexte: "Évite les « caméras qui ne remontent plus » après une intervention.",
+    constat: elCoherence.length ? undefined : releve ? "VLAN cohérents dans les relevés." : undefined, sansReleve: RELEVE, elements: elCoherence });
+
+  // Comptes et mots de passe : sur place.
+  mesure({ id: "comptes", classe: 1, titre: "Mots de passe d'usine changés, un compte par intervenant",
+    pourquoi: "Les mots de passe d'usine des caméras et des switchs se trouvent dans leur notice : n'importe qui branché sur le réseau peut les modifier.",
+    impact: "aucun", impactTexte: "Aucun, si les mots de passe sont rangés dans le coffre de l'équipe.",
+    etat: "a-verifier", constat: "Ne se voit pas sur la carte : à contrôler sur les switchs, les caméras et Genetec.", elements: [] });
+
+  // Tout relevé, carte et sauvegardes à jour.
+  const elAJour: Element[] = [];
+  eq.filter((e) => voisin(e) && RESEAU.includes(e.genre)).forEach((e) => {
+    const l = liensDe(e.nom)[0];
+    const ou = l ? (l.a === e.nom ? `${l.b} port ${l.portB ?? "?"}` : `${l.a} port ${l.portA ?? "?"}`) : "";
+    elAJour.push({ cible: e.nom, texte: `vu${ou ? ` sur ${ou}` : ""} mais pas relevé : ajouter son IP dans switchs.txt`, commandes: [] });
+  });
+  switchs.filter((s) => /non relev|marque|partiel|cl[ée] d.h[ôo]te|[ée]chec/i.test(val(s, "releve") ?? "")).forEach((s) =>
+    elAJour.push({ cible: s.nom, texte: `relevé incomplet : ${val(s, "releve")}`, commandes: [] }));
+  const dates = switchs.map((s) => val(s, "releve-date")).filter((d): d is string => !!d).sort();
   if (dates.length) {
-    const plusVieux = dates.sort()[0];
-    const jours = Math.floor((Date.now() - new Date(plusVieux).getTime()) / 864e5);
-    if (jours > 90) ajouter(inventaireF(), { gravite: "conseil", titre: `Relancer le relevé (le plus ancien a ${jours} jours)`,
-      detail: `Relevé du ${new Date(plusVieux).toLocaleDateString("fr-FR")}. À refaire chaque trimestre et après chaque intervention.`, reference: REF.inventaire });
+    const jours = Math.floor((Date.now() - new Date(dates[0]).getTime()) / 864e5);
+    if (jours > 90) elAJour.push({ cible: "", texte: `le plus ancien relevé date de ${jours} jours : le refaire`, commandes: [] });
   }
+  mesure({ id: "a-jour", classe: 1, titre: "Tous les switchs relevés, carte et sauvegardes à jour",
+    pourquoi: "Ce qui n'est pas relevé n'est ni contrôlé ni sauvegardé : en cas de panne, on repart de zéro.",
+    impact: "plus-rapide", impactTexte: "Une carte juste et une configuration sauvegardée raccourcissent chaque intervention.",
+    constat: elAJour.length ? undefined : releve ? "Tous les switchs de la carte sont relevés." : undefined, sansReleve: RELEVE, elements: elAJour });
 
-  /* ================= versions ================= */
-  const modeleDe = (e: Equipement) => e.infos[0] ?? "";
-  const versions = new Map<string, Version>();
-  const versionGenetec = new Set(cg.rapproches.filter((r) => r.eq && r.unite.firmware).map((r) => r.eq!.nom));
-  eq.filter((e) => (modeleDe(e) || val(e, "firmware")) && !versionGenetec.has(e.nom) && !/voisin/i.test(val(e, "source") ?? "")).forEach((e) => {
-    const k = `${modeleDe(e)}§${val(e, "firmware") ?? ""}`;
-    const v = versions.get(k) ?? { modele: modeleDe(e) || "(modèle inconnu)", version: val(e, "firmware") ?? "", equipements: [], remarque: e.genre === "switch" ? "switch" : "" };
-    v.equipements.push(e.nom);
-    versions.set(k, v);
+  /* ======================= CLASSE 2 · RECOMMANDÉ ======================= */
+
+  let nLibres = 0;
+  const elLibres: Element[] = switchs.filter((s) => compteDe(val(s, "ports-libres-actifs"))).map((s) => {
+    const p = ports(val(s, "ports-libres-actifs")), n = compteDe(val(s, "ports-libres-actifs"));
+    nLibres += n;
+    return { cible: s.nom, texte: p.length ? `${p.join(", ")}${web(s.nom)}` : `${pl(n, "port")} (relancer le relevé pour avoir la liste)`, commandes: cmd("Désactiver", desactiverPorts(mq(s.nom), p)) };
   });
+  mesure({ id: "ports-libres", classe: 2, titre: "Désactiver les ports qui ne servent pas",
+    pourquoi: "Un port actif dans une baie, c'est une prise où n'importe qui peut brancher un PC sur le réseau des caméras.",
+    impact: "faible", impactTexte: "Faible : pour ajouter une caméra, réactiver le port (une commande).",
+    constat: elLibres.length ? `${pl(nLibres, "port libre", "ports libres")} encore ${nLibres > 1 ? "actifs" : "actif"} sur ${pl(elLibres.length, "switch", "switchs")}.` : undefined, sansReleve: RELEVE, elements: elLibres });
+
+  const elNatif: Element[] = switchs.filter((s) => ports(val(s, "trunk-natif-vlan1")).length).map((s) => {
+    const p = ports(val(s, "trunk-natif-vlan1"));
+    const faces = p.map((x) => enFace(s.nom, x)).filter(Boolean);
+    return { cible: s.nom, texte: `${p.join(", ")}${faces.length ? ` — à faire en même temps en face : ${faces.join(", ")}` : ""}${web(s.nom)}`, commandes: cmd("VLAN natif 999", vlanNatif(mq(s.nom), p)) };
+  });
+  mesure({ id: "natif", classe: 2, titre: "Un VLAN natif inutilisé (999) sur les liens entre switchs",
+    pourquoi: "Avec le VLAN 1 en natif, une erreur de configuration peut faire passer du trafic d'un VLAN à l'autre.",
+    impact: "faible", impactTexte: "Faible, mais à faire aux deux bouts du lien en même temps, sinon le lien est coupé.",
+    sansReleve: RELEVE, elements: elNatif });
+
+  const elTrunks: Element[] = switchs.filter((s) => ports(val(s, "trunk-tous-vlan")).length).map((s) => {
+    const p = ports(val(s, "trunk-tous-vlan"));
+    const vl = [...new Set(p.flatMap((x) => inv.liaisons.filter((l) => (l.a === s.nom && l.portA === x) || (l.b === s.nom && l.portB === x)).map((l) => l.vlans ?? "")).filter(Boolean))].join(",");
+    return { cible: s.nom, texte: `${p.join(", ")} laissent passer tous les VLAN${web(s.nom)}`, commandes: cmd("Ne garder que les VLAN utiles", trunkAutorises(mq(s.nom), p, vl || "<vlans>")) };
+  });
+  mesure({ id: "trunks", classe: 2, titre: "Les liens entre switchs ne transportent que les VLAN utiles",
+    pourquoi: "Un VLAN qui n'a rien à faire sur un switch n'y passe pas : une erreur reste limitée à un endroit.",
+    impact: "moyen", impactTexte: "Moyen : un nouveau VLAN doit être ajouté sur chaque lien de son chemin.",
+    sansReleve: RELEVE, elements: elTrunks });
+
+  const elCaches: Element[] = switchs.filter((s) => ports(val(s, "multi-mac")).length).map((s) => {
+    const p = ports(val(s, "multi-mac"));
+    return { cible: s.nom, texte: p.join(", "), commandes: p.slice(0, 3).flatMap((x) => cmd(`Ce qui est derrière ${x.split(" ")[0]}`, macDuPort(mq(s.nom), x.split(" ")[0]))) };
+  });
+  mesure({ id: "non-geres", classe: 2, titre: "Pas de petit switch caché derrière une prise",
+    pourquoi: "Plusieurs appareils derrière un seul port : un switch « de bureau » invisible sur la carte, qui peut créer une boucle.",
+    impact: "plus-rapide", impactTexte: "Ce qui est caché est ce qui fait perdre le plus de temps en dépannage.",
+    sansReleve: RELEVE, elements: elCaches });
+
+  const parModele = new Map<string, { nom: string; v: string }[]>();
+  switchs.forEach((s) => { const v = val(s, "firmware"); if (v && s.infos[0]) parModele.set(s.infos[0], [...(parModele.get(s.infos[0]) ?? []), { nom: s.nom, v }]); });
+  const elVersions: Element[] = [];
+  switchs.forEach((s) => {
+    const v = val(s, "firmware");
+    const mieux = (s.infos[0] ? parModele.get(s.infos[0]) ?? [] : []).filter((x) => v && compareVersions(x.v, v) > 0).sort((a, b) => compareVersions(b.v, a.v))[0];
+    if (v && mieux) elVersions.push({ cible: s.nom, texte: `${v} → ${mieux.v} (version de ${mieux.nom})`, commandes: [] });
+  });
+  mesure({ id: "versions", classe: 2, titre: "La même version logicielle pour un même modèle",
+    pourquoi: "Deux switchs identiques avec deux versions ne réagissent pas pareil : ce qui marche sur l'un ne s'explique pas sur l'autre. Sans Internet, les mises à jour se font à la main.",
+    impact: "faible", impactTexte: "Faible : une mise à jour par switch, en fenêtre de maintenance.",
+    sansReleve: RELEVE, elements: elVersions });
+
+  mesure({ id: "ntp", classe: 2, titre: "Tout le monde à la même heure (serveur de temps interne)",
+    pourquoi: "Sans Internet, il faut une horloge de référence sur le réseau (souvent le serveur Genetec). Une vidéo avec une heure fausse ne vaut rien comme preuve.",
+    impact: "plus-rapide", impactTexte: "Les journaux des switchs et des caméras se recoupent à la seconde.",
+    etat: "a-verifier", constat: "À contrôler sur place (show clock sur les switchs, date et heure des caméras).", elements: [] });
+
+  const elRedondance: Element[] = [];
+  switchs.forEach((s) => {
+    const l = liensDe(s.nom);
+    const nCams = l.filter((x) => autreBout(x, s.nom)?.genre === "camera").length;
+    const nLiens = l.filter((x) => RESEAU.includes(autreBout(x, s.nom)?.genre ?? "autre")).length;
+    if (nLiens === 1 && nCams >= 8) elRedondance.push({ cible: s.nom, texte: `${nCams} caméras derrière un seul câble vers le reste du réseau`, commandes: [] });
+  });
+  mesure({ id: "redondance", classe: 2, titre: "Doubler le lien des switchs qui portent beaucoup de caméras",
+    pourquoi: "Si l'unique câble (ou son module SFP) lâche, toutes les caméras du switch tombent d'un coup.",
+    impact: "aucun", impactTexte: "Aucun en maintenance (deux câbles agrégés) ; un câble et deux ports de plus.", elements: elRedondance });
+
+  /* ======================= CLASSE 3 · RENFORCÉ (à décider) ======================= */
+
+  const exterieur = (t: string) => /parking|exter|ext\b|portail|quai|cour\b|toit|facade|entree|guerite|parvis|barriere/i.test(simple(t));
+  const portsExt = new Map<string, string[]>();
+  cameras.forEach((c) => {
+    const b = brancheSur(c);
+    if (b?.port && exterieur(`${c.nom} ${c.point} ${c.infos.join(" ")}`)) portsExt.set(b.sw, [...(portsExt.get(b.sw) ?? []), b.port]);
+  });
+  const elMac: Element[] = [...portsExt].map(([sw, p]) => ({ cible: sw, texte: `caméras en zone accessible au public : ports ${p.join(", ")}`, commandes: cmd("Exemple Cisco (à adapter)", verrouillageMac(mq(sw), p)) }));
+  mesure({ id: "mac", classe: 3, titre: "Verrouiller les ports des caméras sur leur adresse MAC",
+    pourquoi: "Quelqu'un qui débranche une caméra extérieure pour brancher un PC à la place est bloqué.",
+    impact: "fort", impactTexte: "Fort : à chaque remplacement de caméra, le port reste bloqué tant qu'on n'a pas effacé l'ancienne adresse sur le switch (15 à 30 min de plus, accès au switch obligatoire). À réserver aux caméras accessibles au public (parking, extérieur).",
+    etat: elMac.length ? "a-verifier" : "ok",
+    constat: elMac.length ? "À décider pour les caméras ci-dessous." : "Pas de caméra en zone accessible repérée d'après les noms : rien à faire.", elements: elMac });
+  mesure({ id: "8021x", classe: 3, titre: "Authentifier chaque équipement branché (802.1X)",
+    pourquoi: "Seul un équipement reconnu peut se connecter, quel que soit le port.",
+    impact: "fort", impactTexte: "Très fort : il faut un serveur d'authentification sur le réseau isolé, et chaque caméra remplacée doit y être enregistrée. Déconseillé ici, sauf exigence du client.",
+    etat: "ok", constat: "Non conseillé pour ce réseau.", elements: [] });
+  mesure({ id: "lldp", classe: 3, titre: "Laisser LLDP / CDP actifs",
+    pourquoi: "On lit parfois qu'il faut les couper pour cacher les voisins d'un switch : le gain est faible sur un réseau isolé.",
+    impact: "fort", impactTexte: "Les couper empêcherait le relevé et la carte de voir les liens : dépannage beaucoup plus long. À ne pas faire.",
+    etat: "ok", constat: "Ne rien changer.", elements: [] });
+
+  /* ======================= PANNES (dépannage) ======================= */
+  const pannes: Panne[] = [];
+  const horsLigne = new Map<string, Rapprochement[]>();
+  cg.horsLigne.filter((r) => r.eq && r.switch).forEach((r) => horsLigne.set(r.switch!, [...(horsLigne.get(r.switch!) ?? []), r]));
+  horsLigne.forEach((hl, sw) => {
+    const m = mq(sw), ps = hl.map((r) => r.port).filter((p): p is string => !!p);
+    pannes.push({ cible: sw, critique: true, titre: `${pl(hl.length, "caméra hors ligne", "caméras hors ligne")} : ${hl.map((r) => `${r.eq!.nom} (port ${r.port ?? "?"})`).join(", ")}`,
+      detail: "Port éteint ou PoE à 0 W : câble, prise ou alimentation. Port actif avec l'adresse MAC de la caméra : le problème est côté Genetec (identifiants, archiveur).",
+      commandes: [...cmd("1. Contrôler (lecture seule)", ps.flatMap((p) => controlerPort(m, p) ?? [])), ...cmd("2. Redémarrer la caméra (coupe le PoE)", relancerPoe(m, ps))] });
+  });
+  cg.horsLigne.filter((r) => !r.eq || !r.switch).forEach((r) => pannes.push({ cible: "", critique: false, titre: `${r.unite.nom || r.unite.mac} hors ligne dans Genetec, introuvable sur le réseau`,
+    detail: `${r.unite.ip ? `IP ${r.unite.ip}. ` : ""}Aucun switch relevé ne la voit : câble arraché, caméra déposée ou switch non relevé.`, commandes: [] }));
+  // Le reste des anomalies des relevés (déjà classées ailleurs : boucles, VLAN, IP, noms, relevé, versions).
+  anomaliesDe((t) => !EST_BOUCLE.test(t) && !EST_VLAN.test(t) && !EST_IP.test(t) && !/m[êe]me nom|nomm[ée]s |relev|m[êe]me version|firmware diff/i.test(t)).forEach((a) => {
+    const face = a.cible && a.port ? enFace(a.cible, a.port) : null;
+    const lien = !!a.port && (/^(te|tw|fo|hu|xe|po|lag|sfp|trk)/i.test(a.port) || !!face);
+    pannes.push({ cible: a.cible, critique: a.critique, titre: a.texte, detail: face && lien ? `Contrôler aussi l'autre bout : ${face}.` : "",
+      commandes: a.cible && a.port ? cmd(`Contrôler ${a.port}`, lien ? controlerLien(mq(a.cible), a.port) : controlerPort(mq(a.cible), a.port)) : [] });
+  });
+  if (cg.actif && cg.nonEnregistrees.length && cg.rapproches.length) {
+    pannes.push({ cible: "", critique: false, titre: `${pl(cg.nonEnregistrees.length, "caméra branchée", "caméras branchées")} mais absente${cg.nonEnregistrees.length > 1 ? "s" : ""} de Genetec : pas d'enregistrement`,
+      detail: `${cg.nonEnregistrees.slice(0, 10).map((e) => { const b = brancheSur(e); return `${e.nom}${b ? ` (${b.sw} port ${b.port ?? "?"})` : ""}`; }).join(", ")}${cg.nonEnregistrees.length > 10 ? "…" : ""}. Les ajouter dans Config Tool, ou les débrancher si elles ne sont pas du site.`, commandes: [] });
+  }
+  pannes.sort((a, b) => Number(b.critique) - Number(a.critique));
+
+  /* ======================= à corriger en premier ======================= */
+  const premiers = [
+    ...pannes.filter((p) => p.critique).map((p) => `${p.cible ? `${p.cible} : ` : ""}${p.titre}`),
+    ...mesures.filter((x) => x.classe === 1 && x.etat === "a-faire").map((x) => `${x.titre} — ${x.constat}`),
+  ].slice(0, 5);
+
+  /* ======================= plan des VLAN et versions ======================= */
+  const zone = (groupe: string, l: Equipement[]) => {
+    const vl = [...new Set(l.map(vlanDe).filter((v): v is string => !!v))].sort((a, b) => Number(a) - Number(b));
+    const res = [...new Set(l.map(reseau).filter((r): r is string => !!r))].sort();
+    return { groupe, vlans: vl.join(", ") || "—", reseaux: res.length > 4 ? `${res.slice(0, 4).join(", ")}…` : res.join(", ") || "—", nombre: l.length };
+  };
+  const zones = [zone("Caméras", cameras), zone("Archiveurs et serveurs", serveurs), zone("Administration (switchs…)", de(RESEAU).filter((e) => !voisin(e))),
+    zone("Postes", de(["poste"])), zone("Téléphones", de(["telephone"])), zone("Imprimantes", de(["imprimante"]))].filter((x) => x.nombre);
+
+  const parVersion = new Map<string, Version>();
+  const ajouter = (k: string, modele: string, version: string, nom: string) => {
+    const v = parVersion.get(k) ?? { modele, version, equipements: [], remarque: "" };
+    v.equipements.push(nom); parVersion.set(k, v);
+  };
+  const vusGenetec = new Set(cg.rapproches.filter((r) => r.eq && r.unite.firmware).map((r) => r.eq!.nom));
+  eq.filter((e) => (e.infos[0] || val(e, "firmware")) && !vusGenetec.has(e.nom) && !voisin(e))
+    .forEach((e) => ajouter(`${e.infos[0] ?? ""}§${val(e, "firmware") ?? ""}`, e.infos[0] || "(modèle inconnu)", val(e, "firmware") ?? "", e.nom));
   (genetec?.unites ?? []).filter((u) => u.firmware || u.modele).forEach((u) => {
     const modele = [u.fabricant, u.modele].filter(Boolean).join(" ") || "(modèle inconnu)";
-    const k = `G§${modele}§${u.firmware}`;
-    const v = versions.get(k) ?? { modele, version: u.firmware, equipements: [], remarque: "" };
-    const r = cg.rapproches.find((x) => x.unite === u);
-    v.equipements.push(r?.eq?.nom ?? (u.nom || u.ip));
-    versions.set(k, v);
+    ajouter(`G§${modele}§${u.firmware}`, modele, u.firmware, cg.rapproches.find((x) => x.unite === u)?.eq?.nom ?? (u.nom || u.ip));
   });
-  const liste = [...versions.values()].sort((a, b) => a.modele.localeCompare(b.modele) || compareVersions(a.version, b.version));
-  liste.forEach((v) => {
-    const autres = liste.filter((x) => x.modele === v.modele && x.version && x.version !== v.version);
-    const max = [v, ...autres].filter((x) => x.version).sort((a, b) => compareVersions(b.version, a.version))[0];
-    v.remarque = !v.version ? (v.remarque === "switch" ? "Version inconnue : relever le switch." : "Version inconnue : la noter, puis firmware=… sur sa ligne.")
-      : autres.length && max && max.version !== v.version ? `Mettre à jour vers ${max.version} (déjà sur ${max.equipements[0]}), après lecture des avis.`
-        : "Comparer aux avis du CERT-FR et du constructeur.";
+  const versions = [...parVersion.values()].sort((a, b) => a.modele.localeCompare(b.modele) || compareVersions(a.version, b.version));
+  versions.forEach((v) => {
+    const max = versions.filter((x) => x.modele === v.modele && x.version).sort((a, b) => compareVersions(b.version, a.version))[0];
+    v.remarque = !v.version ? "Version inconnue." : max && max.version !== v.version ? `Passer en ${max.version} (déjà sur ${max.equipements[0]}).` : "—";
   });
-  const camerasAMettreAJour = liste.filter((v) => !v.remarque.startsWith("Version inconnue") && /Mettre à jour/.test(v.remarque) && !v.equipements.some((n) => parNom.get(n)?.genre === "switch"));
-  if (camerasAMettreAJour.length) {
-    ajouter(videoF(), { gravite: "conseil", titre: `Harmoniser le firmware de ${pl(camerasAMettreAJour.reduce((t, v) => t + v.equipements.length, 0), "caméra")}`,
-      detail: camerasAMettreAJour.map((v) => `${v.modele} ${v.version} → ${v.remarque.match(/vers ([^ ]+)/)?.[1]} : ${enumerer(v.equipements, 5)}`).join(" ; ") + ". Vérifier d'abord les avis du constructeur.",
-      equipements: camerasAMettreAJour.flatMap((v) => v.equipements), reference: REF.versions });
-  }
-  if (!liste.some((v) => v.version)) {
-    ajouter(inventaireF(), { gravite: "importante", titre: "Relever les versions logicielles (aucune n'est connue)",
-      detail: "Sans version, impossible de savoir si des failles publiées concernent ce parc. « Relever les switchs.bat » les lit automatiquement ; pour les caméras, l'export Genetec (inventaire matériel) les donne.",
-      reference: REF.versions });
-  }
 
-  /* ================= zones et matrice de flux ================= */
-  const zone = (nom: string, l: Equipement[]) => {
-    const vl = [...new Set(l.map(vlanDe).filter(Boolean))].sort((a, b) => Number(a) - Number(b));
-    const res = [...new Set(l.map(reseau).filter(Boolean))].sort();
-    return { groupe: nom, vlans: vl.length ? vl.join(", ") : "—", reseaux: res.length ? (res.length > 4 ? `${res.slice(0, 4).join(", ")}…` : res.join(", ")) : "—", nombre: l.length };
-  };
-  const z = {
-    cam: zone("Caméras", cameras), srv: zone("Enregistreurs / serveurs", serveurs), post: zone("Postes", de("poste")),
-    res: zone("Équipements réseau (administration)", de(RESEAU)), tel: zone("Téléphones", de("telephone")), imp: zone("Imprimantes", de("imprimante")),
-  };
-  const zones = Object.values(z).filter((x) => x.nombre);
-  const nomZ = (x: typeof z.cam) => `${x.groupe}${x.vlans !== "—" ? ` · VLAN ${x.vlans}` : ""}${x.reseaux !== "—" ? ` · ${x.reseaux}` : ""}`;
-  // Les serveurs vidéo réels : archiveurs Genetec et serveurs de la carte.
-  const archiveurs = [...new Set((genetec?.unites ?? []).map((u) => u.archiveur).filter(Boolean))];
-  const srvVideo = [...archiveurs.map((a) => `${a} (archiveur)`), ...serveurs.map((s) => `${s.nom}${s.ip ? ` ${s.ip}` : ""}`)];
-  const destSrv = srvVideo.length ? enumerer(srvVideo, 6) : nomZ(z.srv);
-  const flux: Flux[] = [];
-  const f = (cond: boolean, source: string, destination: string, fl: string, decision: Flux["decision"], motif: string) => { if (cond) flux.push({ source, destination, flux: fl, decision, motif }); };
-  const a = (x: typeof z.cam) => x.nombre > 0;
-  f(a(z.cam) && (a(z.srv) || archiveurs.length > 0), nomZ(z.cam), destSrv, "RTSP 554/TCP (+ RTP), HTTP/HTTPS 80-443/TCP (ONVIF)", "Autoriser", "Enregistrement : les archiveurs vont chercher les flux des caméras.");
-  f(a(z.post) && (a(z.srv) || archiveurs.length > 0), nomZ(z.post), destSrv, cg.actif ? "Security Center : Directory 5500/TCP + ports des rôles (selon votre version)" : "HTTPS 443/TCP + ports du logiciel vidéo", "Autoriser", "Exploitation : Security Desk passe par les serveurs, pas par les caméras.");
-  f(a(z.post) && a(z.cam), nomZ(z.post), nomZ(z.cam), "tous", "Interdire", "Pas d'accès direct aux caméras depuis les postes (sauf poste d'administration vidéo désigné).");
-  f(a(z.cam), nomZ(z.cam), nomZ(z.cam), "tous", "Interdire", "Les caméras n'ont pas à se parler : isolation de ports ou ACL.");
-  f(a(z.cam), nomZ(z.cam), "Internet", "tous", "Interdire", "Aucune sortie Internet des caméras (ni cloud constructeur, ni P2P, ni UPnP).");
-  f(a(z.res), "Postes d'administration (réseau dédié)", nomZ(z.res), "SSH 22/TCP, HTTPS 443/TCP", "Restreindre", "Administration chiffrée, depuis les seuls postes d'administration.");
-  f(a(z.res), "Tout réseau", nomZ(z.res), "Telnet 23/TCP, HTTP 80/TCP, SNMP v1/v2c 161/UDP", "Interdire", "Protocoles en clair : à désactiver sur les équipements.");
-  f(a(z.res) || a(z.cam), "Supervision", "Switchs, caméras, serveurs", "SNMPv3 161/UDP, ICMP", "Restreindre", "Surveillance, depuis le serveur de supervision uniquement.");
-  f(true, "Tous les équipements", "Serveur de temps interne", "NTP 123/UDP", "Autoriser", "Horloges à l'heure : journaux et preuve vidéo (A.8.17).");
-  f(true, "Tous les équipements", "Serveur de journaux", "Syslog 514/UDP ou 6514/TCP (TLS)", "Autoriser", "Journalisation centralisée (A.8.15).");
-  f(a(z.tel), nomZ(z.tel), "Serveur de téléphonie (IPBX)", "SIP 5060-5061, RTP (plage de l'IPBX)", "Restreindre", "Voix dans son propre VLAN.");
-  f(a(z.imp), nomZ(z.post), nomZ(z.imp), "IPP 631/TCP, RAW 9100/TCP", "Restreindre", "Impression depuis les postes seulement.");
-  f(de("borne").length > 0, "Wi-Fi invités", "Réseau interne", "tous", "Interdire", "Réseau invité séparé, sortie Internet seule.");
-  f(true, "Tout le reste", "Tout le reste", "tous", "Interdire", "Interdit par défaut : on n'ouvre que ce qui est listé ci-dessus.");
-  const ouFiltrer = parefeux.length ? `Sur ${parefeux.map((p) => `${p.nom}${p.infos[0] ? ` (${p.infos[0]})` : ""}`).join(", ")}` : "Sur le pare-feu du site, ou en ACL sur le cœur de réseau";
-
-  const verifications = [
-    "Mots de passe par défaut changés sur toutes les caméras, archiveurs et switchs (un compte nominatif par intervenant).",
-    "Services inutiles coupés : Telnet, HTTP non chiffré, UPnP, accès « cloud » des caméras, SNMP v1/v2c.",
-    "Compte de relevé des switchs en lecture seule.",
-    "NTP configuré partout, journaux envoyés vers un serveur central.",
-    "Dossier « Config Switch » du relevé rangé à l'abri : il peut contenir des secrets.",
-    "Baies et locaux techniques fermés à clé.",
-  ];
-  if (!cg.actif && cameras.length) verifications.unshift("Importer un export Genetec : caméras hors ligne, non enregistrées et débits ne sont contrôlés qu'avec lui.");
-  if (!releve) verifications.unshift("Relever les switchs (« Relever les switchs.bat ») : ports libres, VLAN 1, trunks et versions ne sont contrôlés qu'avec un relevé.");
-
-  /* ================= tri, priorités, compteurs ================= */
-  const lesFiches = [...fiches.values()].filter((x) => x.actions.length);
-  lesFiches.forEach((x) => {
-    x.actions.sort((p, q) => ORDRE[p.gravite] - ORDRE[q.gravite]);
-    x.gravite = x.actions[0].gravite;
-  });
-  const rangType: Record<Fiche["type"], number> = { equipement: 1, video: 1, reseau: 0, inventaire: 2 };
-  lesFiches.sort((p, q) => ORDRE[p.gravite] - ORDRE[q.gravite] || rangType[p.type] - rangType[q.type]
-    || q.actions.filter((x) => x.gravite === p.gravite).length - p.actions.filter((x) => x.gravite === p.gravite).length || p.cible.localeCompare(q.cible));
-  const toutes = lesFiches.flatMap((x) => x.actions.map((action) => ({ cible: x.cible, action })));
-  const priorites = [...toutes].sort((p, q) => ORDRE[p.action.gravite] - ORDRE[q.action.gravite]).slice(0, 5);
-  const compteurs = { critique: 0, importante: 0, conseil: 0 };
-  toutes.forEach((x) => compteurs[x.action.gravite]++);
-
-  return { fiches: lesFiches, priorites, compteurs, flux, ouFiltrer, versions: liste, zones, verifications, genetec: cg, sourcesGenetec: genetec?.sources ?? [] };
+  return { mesures, pannes, premiers, zones, versions, genetec: cg, sourcesGenetec: genetec?.sources ?? [], releve };
 }
-

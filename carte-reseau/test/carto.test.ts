@@ -64,7 +64,7 @@ test("Relevés des switchs : du .txt brut à la carte, avec le moteur de Cartogr
   assert.deepEqual([l.portA, l.portB, l.media, l.vlans], ["SFP1", "Te1/1/3", "fibre", "1,10,20,30"]);
   assert.ok(inv.liaisons.some((x) => x.b === "SW-QUAI" && x.portB === "2"));   // caméra sur SW-QUAI port 2
   assert.ok(r.anomalies.some((a) => a.gravite === "critique" && a.equipement === "SW-COEUR-2"));
-  assert.match(r.texte, /anomalies=1 dont 1 critique — ⛔ Po1 : Une liaison agrégée/);
+  assert.match(r.texte, /anomalies=3 dont 1 critique — ⛔ Po1 : Une liaison agrégée/);
   // La sauvegarde de configuration n'est jamais lue.
   assert.equal(aIgnorer({ nom: "x.txt", chemin: "Sites/Melun/Config Switch" }), "configuration sauvegardée (jamais lue)");
   assert.ok(!r.texte.includes("secret"));

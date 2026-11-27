@@ -106,3 +106,25 @@ export function macDuPort(m: Marque, port: string): string[] | null {
   if (m === "hp") return [`show mac-address ${port}`, `show lldp info remote-device ${port}`];
   return null;
 }
+
+/** Renommer le switch (le nom apparaît dans l'invite, les relevés et LLDP/CDP). */
+export function renommer(m: Marque, nom: string): string[] | null {
+  if (m === "hp") return config(m, [`hostname "${nom}"`]);
+  if (m === "cisco" || m === "arubacx") return config(m, [`hostname ${nom}`]);
+  return null;
+}
+
+/** Écrire l'emplacement dans le switch (lu par le relevé : « System Location »). */
+export function emplacement(m: Marque, texte: string): string[] | null {
+  if (m === "cisco") return config(m, [`snmp-server location ${texte}`]);
+  if (m === "arubacx") return config(m, [`snmp-server system-location ${texte}`]);
+  if (m === "hp") return config(m, [`snmp-server location "${texte}"`]);
+  return null;
+}
+
+/** Verrouillage d'un port sur l'adresse MAC de l'équipement branché (Cisco seulement : exemple). */
+export function verrouillageMac(m: Marque, ports: string[]): string[] | null {
+  if (m !== "cisco" || !ports.length) return null;
+  return config(m, rangesCisco(ports).flatMap((r) => [r, " switchport mode access", " switchport port-security", " switchport port-security maximum 1",
+    " switchport port-security mac-address sticky", " switchport port-security violation restrict", " exit"]));
+}

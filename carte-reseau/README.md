@@ -282,13 +282,18 @@ le reste estompé), dans les **Baies** (équipements du chemin encadrés) et en
 ports, le type de câble et les VLAN : « CAM-13 → SW-ACC1 port 5 · RJ45 ·
 VLAN 30 », « SW-ACC1 port SFP1 → SW-CORE port SFP1 · fibre · trunk 10,30 »…
 
-## Préconisations : sécurité, flux et Genetec
+## Préconisations : sécurité et Genetec
 
 Elles ne s'affichent pas sur la carte : une fois la carte faite, le bouton
 **⚑ Générer les préconisations** (au bout de la barre d'actions) ouvre le
 rapport, calculé sur le poste à partir de tout ce que la carte contient
 (saisie, Excel, relevés des switchs, export Genetec). Il est recalculé à chaque
 ouverture : rien à mettre à jour.
+
+Le rapport part de **notre cas** : un réseau vidéo **isolé, sans accès à
+Internet**, et **sans ACL** — la séparation repose uniquement sur des VLAN bien
+configurés. Il ne parle donc ni de pare-feu, ni de matrice de flux, ni de mises
+à jour automatiques.
 
 **Comparaison avec Genetec.** Dans le rapport (ou *Importer › Export Genetec*), ajoutez l'export de Security Center : l'inventaire matériel
 (nom, IP, MAC, modèle, firmware, archiveur, **état**) et, pour les débits, la
@@ -303,48 +308,52 @@ Genetec sur la carte, annulable), les IP en double, le **débit vidéo par
 switch** (charge du lien montant quand il est unique et que sa vitesse est
 connue) et par archiveur, et les versions des caméras.
 
-**Présentation.** En tête, **Par où commencer** : les 5 actions les plus
-graves. Puis le **plan d'action par équipement** : une fiche par switch (marque,
-modèle, IP, emplacement) avec des actions précises — les ports exacts, l'autre
-bout du lien quand il faut le traiter aussi — et les **commandes à copier**
-pour sa marque : Cisco IOS / IOS-XE, Aruba CX, HP / ArubaOS-Switch (pour les
-autres marques, l'action dit quoi faire dans l'interface web). Exemples :
-« Désactiver les 4 ports libres : Gi1/0/1, Gi1/0/5, Gi1/0/14, Te1/1/4 »,
-« Mettre le VLAN natif 999 sur Gi1/0/2… — de l'autre côté, en même temps :
-SW-PARKING port 25 », « Contrôler les ports 1/1/2, 1/1/3 : 2 caméras hors ligne
-dans Genetec » (commandes de contrôle, puis de redémarrage PoE), « Mettre à
-jour le logiciel : 17.03.04 → 17.06.05 (version de SW-COEUR-1) ». Les fiches
-**Ensemble du réseau**, **Vidéo (Genetec)** et **Inventaire** regroupent le
-reste. Les commandes de modification sont à passer en fenêtre de maintenance,
-après une sauvegarde de la configuration.
+**Présentation** — courte, lisible par tous :
 
-Les préconisations portent sur :
+1. **À corriger en premier** : 5 phrases au plus (pannes critiques, puis
+   mesures indispensables à faire).
+2. **Les mesures, par classe.** Chaque mesure dit **pourquoi** la mettre (une
+   phrase simple), **son effet sur le dépannage et la maintenance**, et son
+   **état** sur la carte : *À faire*, *À vérifier* (sur place, ou faute de
+   relevé) ou *OK*. Le détail — équipements concernés (un clic les montre sur
+   le plan) et **commandes à copier** pour leur marque (Cisco IOS / IOS-XE,
+   Aruba CX, HP / ArubaOS-Switch ; sinon « dans l'interface web ») — est replié
+   sous « Où et comment » et déplié à l'impression.
+   - **Classe 1 · Indispensable** (ne ralentit pas le dépannage, souvent
+     l'accélère) : un nom de switch qui dit où il est (nom par défaut ou sans
+     le local → nom proposé `SW-<lieu>-<numéro>`, commandes `hostname` et
+     emplacement SNMP) ; pas de boucle réseau (STP, MAC qui change de port,
+     plusieurs racines STP, switchs reliés en anneau, câbles doublés non
+     agrégés) ; une IP pour un seul équipement ; des IP fixes (écart avec
+     Genetec) ; chaque usage dans son VLAN (VLAN 1, postes dans le VLAN
+     caméras, administration mélangée) ; les mêmes VLAN aux deux bouts de
+     chaque lien (VLAN natif ou VLAN autorisés différents, VLAN des caméras
+     absent du lien montant, caméras réparties sur plusieurs VLAN, trunk vers
+     une caméra) ; mots de passe d'usine changés ; tous les switchs relevés.
+   - **Classe 2 · Recommandé** (un peu de travail en plus) : ports libres
+     désactivés, VLAN natif 999, VLAN autorisés limités sur les trunks, pas de
+     petit switch caché, même version logicielle par modèle, heure commune
+     (serveur de temps interne), double lien pour les switchs chargés.
+   - **Classe 3 · Renforcé — à décider** (dépannage nettement plus long) :
+     verrouillage des ports par adresse MAC (seulement pour les caméras
+     accessibles au public : parking, extérieur), 802.1X (déconseillé ici),
+     et garder LLDP/CDP actifs (les couper aveuglerait le relevé et la carte).
+3. **Pannes et anomalies relevées** (caméras hors ligne avec le switch et le
+   port, liaison agrégée dégradée, erreurs de câble, PoE…), avec les commandes
+   de contrôle puis de redémarrage PoE.
+4. **Genetec**, **plan des VLAN**, **versions logicielles** (repliées).
 
-- **cloisonnement** : caméras sans VLAN, VLAN vidéo partagé avec des postes,
-  caméras et postes dans le même réseau IP, administration des switchs non
-  isolée, équipements dans le VLAN 1, VLAN natif 1 sur les trunks, trunks
-  ouverts à tous les VLAN, trunk vers un équipement terminal, absence de pare-feu ;
-- **accès** : ports libres restés actifs, plusieurs MAC sur un port d'accès
-  (switch non administré), clé SSH d'un switch modifiée, switchs non relevés,
-  équipements vus en LLDP/CDP mais pas relevés ;
-- **liaisons** : radio (chiffrement), VPN ;
-- **disponibilité** : un seul lien pour beaucoup de caméras, anomalies relevées ;
-- **inventaire et versions** : IP en double, équipements sans IP, versions
-  différentes sur un même modèle, versions inconnues.
+Exemples : « SW-COEUR-1 : Gi1/0/1, Gi1/0/5, Gi1/0/14, Te1/1/4 » sous *Désactiver
+les ports qui ne servent pas* ; « HP-2530-24G : nom par défaut → proposé :
+SW-BATA-R0-01 » ; « Gi1/0/2… — à faire en même temps en face : SW-PARKING
+port 25 » sous *VLAN natif 999*. Les commandes de modification sont à passer en
+fenêtre de maintenance, après une sauvegarde de la configuration. **Imprimer /
+PDF** produit le rapport.
 
-Chaque préconisation donne le constat, l'action, les équipements concernés
-(un clic les montre sur le plan) et la référence (ISO 27001:2022 annexe A,
-ANSSI). Suivent les **zones** (VLAN et réseaux par type d'équipement), une
-**matrice des flux préconisée** (caméras → enregistreurs en RTSP/ONVIF, postes
-→ logiciel vidéo, administration en SSH/HTTPS seulement, NTP, syslog, sortie
-Internet des caméras interdite, tout le reste interdit), le tableau des
-**versions à vérifier** et une liste de **contrôles sur place** (mots de passe
-par défaut, services inutiles…). **Imprimer / PDF** produit le rapport.
-
-**Pas de base CVE embarquée**, volontairement : sans connexion, elle serait
-périmée en quelques semaines et donnerait une fausse assurance. L'outil liste
-chaque couple modèle / version à comparer aux avis du CERT-FR et du
-constructeur depuis un poste connecté.
+**Versions.** Pas de base de failles embarquée : sans connexion, elle serait
+vite périmée. Les équipements n'ayant pas Internet, les mises à jour se
+téléchargent chez le constructeur depuis un poste de l'entreprise, puis
+s'installent à la main.
 
 ## Couleurs
 
@@ -415,7 +424,7 @@ npm run fichier    # reconstruit topologie-reseau-v1.html et son empreinte SHA-2
 | `src/carto.ts` | lecture de l'export Excel de Cartographie Réseau (relevé automatique) |
 | `src/releve.ts` | relevés des switchs (.txt du script) → carte, anomalies |
 | `src/releve/` | moteur d'analyse de Cartographie Réseau v3.2, repris tel quel |
-| `src/securite.ts`, `src/vueSecurite.ts` | préconisations par équipement, matrice de flux, versions à vérifier ; rapport |
+| `src/securite.ts`, `src/vueSecurite.ts` | préconisations par classe (pourquoi, effet sur le dépannage, état), pannes, VLAN, versions ; rapport |
 | `src/commandes.ts` | commandes par marque de switch (Cisco, Aruba CX, HP) pour appliquer les préconisations |
 | `src/genetec.ts`, `src/genetecLecture.ts` | export Genetec : lecture, comparaison avec le réseau, débits |
 | `releve-switchs/` | `Relever les switchs.bat` et `commandes.txt` (le script qui interroge les switchs) |

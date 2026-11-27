@@ -138,7 +138,8 @@ export function relevesVersTexte(fichiers: FichierReleve[]): ResultatReleve {
   // Les anomalies du relevé : sur la fiche de chaque switch, et toutes à la fin du texte.
   let texte = r.texte;
   const parSwitch = new Map<string, Anomalie[]>();
-  anomalies.filter((a) => a.gravite !== "info" && a.equipement).forEach((a) => parSwitch.set(a.equipement, [...(parSwitch.get(a.equipement) ?? []), a]));
+  // Une anomalie qui concerne plusieurs switchs (« SW-1, SW-2 ») va sur la fiche de chacun.
+  anomalies.filter((a) => a.gravite !== "info" && a.equipement).forEach((a) => a.equipement.split(/,\s*/).forEach((sw) => parSwitch.set(sw, [...(parSwitch.get(sw) ?? []), a])));
   texte = texte.split("\n").map((l) => {
     const m = l.match(/^switch (\S+) \|/);
     if (m && faits.has(m[1])) l = `${l} | ${faits.get(m[1])!.join(" | ")}`;

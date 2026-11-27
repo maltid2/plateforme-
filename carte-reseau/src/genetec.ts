@@ -9,7 +9,7 @@
  *   - lesquelles sont dans Genetec mais pas sur le réseau (débranchées,
  *     déplacées, switch non relevé) ;
  *   - lesquelles sont sur le réseau mais pas dans Genetec (non enregistrées) ;
- *   - les écarts d'IP ou de nom ; le débit vidéo par switch et par archiveur.
+ *   - les écarts d'IP ou de nom ; le débit de chaque caméra (charge des liens : flux.ts).
  */
 import type { Equipement, Inventaire } from "./saisie.ts";
 
@@ -46,18 +46,14 @@ export type Comparaison = {
   ecartsIp: Rapprochement[];              // même MAC, IP différente
   ecartsNom: Rapprochement[];
   doublonsIp: { ip: string; noms: string[] }[];
-  debitParCamera: Map<string, number>;    // nom carte → kb/s
-  debitParSwitch: { switch: string; cameras: number; kbps: number; lien?: string; capaciteMbps?: number }[];
-  debitParArchiveur: { archiveur: string; cameras: number; kbps: number }[];
+  debitParCamera: Map<string, number>;    // nom carte → kb/s (enregistrement + direct) ; la charge des liens : flux.ts
 };
 
 const valeur = (e: Equipement, k: string) => e.kv.find(([c]) => c.toLowerCase() === k)?.[1];
 const RESEAU = ["switch", "passerelle", "parefeu", "borne"];
-/** « 1G », « 10G », « 100M » → Mb/s. */
-const capacite = (t?: string) => { const m = String(t ?? "").match(/(\d+(?:[.,]\d+)?)\s*([GM])/i); return m ? Number(m[1].replace(",", ".")) * (/g/i.test(m[2]) ? 1000 : 1) : undefined; };
 
 export function comparerGenetec(inv: Inventaire, g?: Genetec | null): Comparaison {
-  const vide: Comparaison = { actif: false, rapproches: [], horsLigne: [], absentes: [], nonEnregistrees: [], ecartsIp: [], ecartsNom: [], doublonsIp: [], debitParCamera: new Map(), debitParSwitch: [], debitParArchiveur: [] };
+  const vide: Comparaison = { actif: false, rapproches: [], horsLigne: [], absentes: [], nonEnregistrees: [], ecartsIp: [], ecartsNom: [], doublonsIp: [], debitParCamera: new Map() };
   if (!g || (!g.unites.length && !g.flux.length)) return vide;
   const parMac = new Map<string, Equipement>(), parIp = new Map<string, Equipement>(), parNom = new Map<string, Equipement>();
   inv.equipements.forEach((e) => {
@@ -95,27 +91,6 @@ export function comparerGenetec(inv: Inventaire, g?: Genetec | null): Comparaiso
     const n = nomCarte(f.camera);
     if (n && f.kbps > 0) debitParCamera.set(n, (debitParCamera.get(n) ?? 0) + f.kbps);
   });
-  const parSw = new Map<string, { cameras: number; kbps: number }>();
-  debitParCamera.forEach((kbps, n) => {
-    const e = parEq.get(n); if (!e) return;
-    const sw = (brancheDe(e) as { switch?: string }).switch; if (!sw) return;
-    const x = parSw.get(sw) ?? { cameras: 0, kbps: 0 }; x.cameras++; x.kbps += kbps; parSw.set(sw, x);
-  });
-  const debitParSwitch = [...parSw].map(([sw, x]) => {
-    // Lien montant : seulement quand le switch n'a qu'un lien vers le reste du réseau
-    // (sinon, on ne sait pas par où passe la vidéo : pas de taux de charge inventé).
-    const liens = inv.liaisons.filter((l) => (l.a === sw || l.b === sw) && RESEAU.includes(parEq.get(l.a === sw ? l.b : l.a)?.genre ?? ""));
-    const best = liens.length === 1 && capacite(liens[0].libelle) ? { l: liens[0], c: capacite(liens[0].libelle) } : undefined;
-    return { switch: sw, cameras: x.cameras, kbps: x.kbps, lien: best ? `${best.l.a === sw ? best.l.portA ?? "" : best.l.portB ?? ""} → ${best.l.a === sw ? best.l.b : best.l.a}` : undefined, capaciteMbps: best?.c };
-  }).sort((a, b) => b.kbps - a.kbps);
-  const parArch = new Map<string, { cameras: number; kbps: number }>();
-  rapproches.forEach((r) => {
-    if (!r.unite.archiveur) return;
-    const x = parArch.get(r.unite.archiveur) ?? { cameras: 0, kbps: 0 };
-    x.cameras++; x.kbps += r.eq ? debitParCamera.get(r.eq.nom) ?? 0 : 0;
-    parArch.set(r.unite.archiveur, x);
-  });
-
   return {
     actif: true,
     rapproches,
@@ -126,7 +101,5 @@ export function comparerGenetec(inv: Inventaire, g?: Genetec | null): Comparaiso
     ecartsNom: rapproches.filter((r) => r.eq && r.par !== "nom" && r.unite.nom && !r.unite.nom.split(/\s*\/\s*/).some((n) => plier(n) === plier(r.eq!.nom))),
     doublonsIp: [...ips].filter(([, n]) => n.length > 1).map(([ip, noms]) => ({ ip, noms })),
     debitParCamera,
-    debitParSwitch,
-    debitParArchiveur: [...parArch].map(([archiveur, x]) => ({ archiveur, ...x })).sort((a, b) => b.cameras - a.cameras),
   };
 }

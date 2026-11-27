@@ -7,6 +7,8 @@ import type { Couleurs } from "../apparence.ts";
 import type { Disposition } from "../disposition.ts";
 import { elevations } from "../elevation.ts";
 import { CLASSIFICATION, imprimer } from "../impression.ts";
+import { lireEntreprise } from "../entreprise.ts";
+import { NOM_OUTIL } from "../version.ts";
 import type { Plan2D } from "../plan2d.ts";
 import type { Topologie } from "../projets.ts";
 import type { Inventaire } from "../saisie.ts";
@@ -57,9 +59,9 @@ export function installerExports(ctx: ContexteExports) {
     fermerMenu();
     // Le même outil, la topologie incluse, en lecture seule : il s'ouvre sur
     // n'importe quel poste avec un navigateur, sans réseau ni installation.
-    const donnees = JSON.stringify({ nom: ctx.topologie().nom, texte: ctx.texte(), exporte: new Date().toISOString(), classification: CLASSIFICATION, auteur: ctx.auteur(), couleurs: ctx.couleurs() })
+    const donnees = JSON.stringify({ nom: ctx.topologie().nom, texte: ctx.texte(), exporte: new Date().toISOString(), classification: CLASSIFICATION, auteur: ctx.auteur(), couleurs: ctx.couleurs(), entreprise: lireEntreprise() })
       .replace(/</g, "\\u003c");
-    const html = `<!doctype html>\n<html lang="fr">\n<head>${ctx.modele.head.replace(/<title>[^<]*<\/title>/, `<title>${ctx.topologie().nom.replace(/</g, "")} · Topologie réseau v1</title>`)}</head>\n<body>\n<script type="application/json" id="carte-donnees">${donnees}</script>\n${ctx.modele.body}\n</body>\n</html>\n`;
+    const html = `<!doctype html>\n<html lang="fr">\n<head>${ctx.modele.head.replace(/<title>[^<]*<\/title>/, `<title>${ctx.topologie().nom.replace(/</g, "")} · ${NOM_OUTIL}</title>`)}</head>\n<body>\n<script type="application/json" id="carte-donnees">${donnees}</script>\n${ctx.modele.body}\n</body>\n</html>\n`;
     telecharger(`${nomFichier(ctx.topologie().nom)}-visionneuse.html`, html, "text/html;charset=utf-8");
   });
 }

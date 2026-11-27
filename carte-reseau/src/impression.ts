@@ -5,6 +5,8 @@
  * partout, sans logiciel particulier, et il est produit sur le poste, sans
  * service en ligne.
  */
+import { lireEntreprise, marqueEntreprise } from "./entreprise.ts";
+import { NOM_OUTIL } from "./version.ts";
 import { APPARENCE, COULEUR_MEDIA } from "./apparence.ts";
 import { cheminPasserelle } from "./facade.ts";
 import { GENRES, MEDIAS, type Equipement, type Genre, type Inventaire, type Media } from "./saisie.ts";
@@ -69,9 +71,9 @@ export function imprimer(inv: Inventaire, svgPlan: string, titre: string, site: 
   d.innerHTML = `
     <section class="i-page i-plan">
       <header class="i-cartouche">
-        <div><div class="i-classif">${echap(CLASSIFICATION)}</div><h1>${echap(titre)}</h1>
+        ${marqueEntreprise()}<div><div class="i-classif">${echap(CLASSIFICATION)}</div><h1>${echap(titre)}</h1>
           <div class="i-sous">${site ? `Site : ${echap(site)}` : pl(sites.length, "site")} · ${pl(eqs.length, "équipement")} · ${pl(liens.length, "câble")}</div></div>
-        <dl>${auteur ? `<dt>Établi par</dt><dd>${echap(auteur)}</dd>` : ""}<dt>Date</dt><dd>${date}</dd><dt>Plan</dt><dd>Topologie réseau 2D</dd><dt>Version</dt><dd>${new Date().toISOString().slice(0, 16).replace("T", " ")}</dd></dl>
+        <dl>${auteur ? `<dt>Établi par</dt><dd>${echap(auteur)}</dd>` : ""}<dt>Date</dt><dd>${date}</dd><dt>Plan</dt><dd>Topologie réseau 2D</dd><dt>Édité le</dt><dd>${new Date().toISOString().slice(0, 16).replace("T", " ")}</dd><dt>Outil</dt><dd>${echap(NOM_OUTIL)}</dd></dl>
       </header>
       <div class="i-svg">${svgPlan.replace(/^(<svg[^>]*?) width="[\d.]+" height="[\d.]+"/, "$1")}</div>
       <footer class="i-legende">
@@ -81,11 +83,11 @@ export function imprimer(inv: Inventaire, svgPlan: string, titre: string, site: 
       </footer>
     </section>
     ${baies && !baies.includes("b-vide") ? `<section class="i-page i-baies">
-      <div class="i-classif">${echap(CLASSIFICATION)} · ${echap(titre)} · ${date}${auteur ? ` · établi par ${echap(auteur)}` : ""}</div>
+      <div class="i-classif">${echap([lireEntreprise().nom, CLASSIFICATION].filter(Boolean).join(" · "))} · ${echap(titre)} · ${date}${auteur ? ` · établi par ${echap(auteur)}` : ""}</div>
       <h2 class="i-titre-baies">Baies — vue de face</h2>${baies}
     </section>` : ""}
     <section class="i-page i-tableau">
-      <div class="i-classif">${echap(CLASSIFICATION)} · ${echap(titre)} · ${date}${auteur ? ` · établi par ${echap(auteur)}` : ""}</div>
+      <div class="i-classif">${echap([lireEntreprise().nom, CLASSIFICATION].filter(Boolean).join(" · "))} · ${echap(titre)} · ${date}${auteur ? ` · établi par ${echap(auteur)}` : ""}</div>
       ${tableau}${tableInter}
     </section>`;
   document.body.append(d);

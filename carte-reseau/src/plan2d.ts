@@ -10,6 +10,7 @@
  * ce qui y est branché.
  */
 import { APPARENCE, COULEUR_MEDIA } from "./apparence.ts";
+import { NOM_OUTIL } from "./version.ts";
 import { CARTE_H, CARTE_W, NOM_H, type Disposition, type Point } from "./disposition.ts";
 import { cheminPasserelle, FH, PH, PW, type Facade, type Port } from "./facade.ts";
 import { PICTOS } from "./pictos.ts";
@@ -688,7 +689,7 @@ export function creerPlan2D(hote: HTMLElement, cb: Rappels): Plan2D {
       if (signature) {
         const t = el("text", { x: bornes.x + bornes.w, y: bornes.y + bornes.h + 1.4, "text-anchor": "end", "font-size": 0.7,
           fill: clair ? "#56606C" : "#8B98A8", "font-style": "italic" }, c);
-        t.textContent = `Topologie réseau v1 · établi par ${signature} · ${new Date().toLocaleDateString("fr-FR")}`;
+        t.textContent = `${NOM_OUTIL} · établi par ${signature} · ${new Date().toLocaleDateString("fr-FR")}`;
       }
       // L'export garde tout le détail : pas de cartes résumé ni d'estompage,
       // ni sélection, ni chemin de dépannage allumé, ni zones de clic.

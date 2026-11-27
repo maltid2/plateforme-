@@ -5,8 +5,11 @@
  * son POURQUOI et son effet sur le dépannage. Le détail (équipements,
  * commandes) est replié ; il est déplié à l'impression.
  */
+import { DEBIT_ESTIME_KBPS, mbps, vitesse } from "./flux.ts";
 import { CLASSES, type Bilan, type Commande, type Element, type Etat, type Impact, type Mesure, type Panne } from "./securite.ts";
 import { CLASSIFICATION } from "./impression.ts";
+import { lireEntreprise, marqueEntreprise } from "./entreprise.ts";
+import { NOM_OUTIL } from "./version.ts";
 import { icone } from "./ui/icones.ts";
 
 const echap = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -43,9 +46,9 @@ export function rapportSecurite(b: Bilan, o: { titre: string; impression?: boole
   return `
   <div class="secu${o.impression ? " secu-imprime" : ""}">
     <header class="s-tete">
-      ${o.impression ? `<div class="i-classif">${echap(CLASSIFICATION)}</div>` : ""}
+      ${o.impression ? `<div class="s-entete">${marqueEntreprise()}<div class="i-classif">${echap(CLASSIFICATION)}</div></div>` : ""}
       <h2>Préconisations — ${echap(o.titre)}</h2>
-      <p class="s-note">Réseau vidéo isolé (sans Internet), cloisonné par VLAN (sans ACL). Calculé sur ce poste à partir de la carte${b.releve ? ", des relevés des switchs" : ""}${b.genetec.actif ? " et de l'export Genetec" : ""}${o.date ? ` · ${echap(o.date)}` : ""}${o.auteur ? ` · établi par ${echap(o.auteur)}` : ""}.</p>
+      <p class="s-note">Réseau vidéo isolé (sans Internet), cloisonné par VLAN (sans ACL). Calculé sur ce poste à partir de la carte${b.releve ? ", des relevés des switchs" : ""}${b.genetec.actif ? " et de l'export Genetec" : ""}${o.date ? ` · ${echap(o.date)}` : ""}${o.auteur ? ` · établi par ${echap(o.auteur)}` : ""}${lireEntreprise().nom ? ` (${echap(lireEntreprise().nom)})` : ""} · ${echap(NOM_OUTIL)}.</p>
       <div class="s-compteurs">
         <span class="g-critique">${n("a-faire")} à faire</span>
         <span class="g-importante">${n("a-verifier")} à vérifier</span>
@@ -58,6 +61,7 @@ export function rapportSecurite(b: Bilan, o: { titre: string; impression?: boole
     <section class="s-premiers"><h3>À corriger en premier</h3>
       ${b.premiers.length ? `<ol>${b.premiers.map((p) => `<li>${echap(p)}</li>`).join("")}</ol>` : `<p class="s-vide">Rien d'urgent dans les données de la carte.</p>`}</section>
     ${classe(1)}${classe(2)}${classe(3)}
+    ${sectionFlux(b, puce, mesure, ouvert)}
     ${b.pannes.length ? `<section><h3>Pannes et anomalies relevées</h3><p class="s-note">Du dépannage plutôt que de la sécurité : à traiter à la prochaine intervention.</p><ul class="s-pannes">${b.pannes.map(panne).join("")}</ul></section>` : ""}
     ${sectionGenetec(b, puce, ouvert)}
     ${b.zones.length ? `<section><h3>Plan des VLAN</h3>
@@ -82,7 +86,6 @@ function sectionGenetec(b: Bilan, puce: (n: string) => string, ouvert: string): 
   const ligne = (r: Bilan["genetec"]["rapproches"][number]) => `<tr><td>${echap(r.unite.nom || "—")}</td><td>${r.eq ? puce(r.eq.nom) : "—"}</td><td class="m">${echap(r.unite.ip || "—")}</td>
     <td>${r.switch ? `${puce(r.switch)}${r.port ? ` <span class="m">port ${echap(r.port)}</span>` : ""}` : "—"}</td><td>${echap(r.unite.archiveur || "—")}</td><td>${echap(r.unite.etat || "—")}</td></tr>`;
   const tete = `<thead><tr><th>Nom Genetec</th><th>Sur la carte</th><th>IP</th><th>Switch · port</th><th>Archiveur</th><th>État Genetec</th></tr></thead>`;
-  const mbps = (k: number) => `${(k / 1000).toFixed(k >= 100000 ? 0 : 1).replace(".", ",")} Mb/s`;
   return `<section><h3>Vidéo : comparaison avec Genetec</h3>
     <p class="s-note">Export${b.sourcesGenetec.length > 1 ? "s" : ""} : ${b.sourcesGenetec.map((x) => `${echap(x.nom)} (${x.type}, ${new Date(x.date).toLocaleDateString("fr-FR")})`).join(" · ")}</p>
     <div class="s-compteurs s-gen">
@@ -95,10 +98,34 @@ function sectionGenetec(b: Bilan, puce: (n: string) => string, ouvert: string): 
     ${g.ecartsNom.length && !ouvert ? `<p><button type="button" data-s="noms-genetec">${icone("crayon")}Reprendre les noms Genetec sur la carte (${g.ecartsNom.length})</button> <span class="s-note">Annulable (Ctrl+Z).</span></p>` : ""}
     ${g.horsLigne.length ? `<h4 class="s-sous">Hors ligne — où aller voir</h4><table class="s-table">${tete}<tbody>${g.horsLigne.map(ligne).join("")}</tbody></table>` : ""}
     ${g.absentes.length ? `<details class="s-detail"${ouvert}><summary>${icone("chevron")}Dans Genetec, introuvables sur la carte · ${g.absentes.length}</summary><table class="s-table">${tete}<tbody>${g.absentes.map(ligne).join("")}</tbody></table></details>` : ""}
-    ${g.debitParSwitch.length ? `<details class="s-detail"${ouvert}><summary>${icone("chevron")}Débit vidéo par switch</summary><table class="s-table"><thead><tr><th>Switch</th><th>Caméras</th><th>Débit</th><th>Lien montant</th><th>Charge</th></tr></thead><tbody>
-      ${g.debitParSwitch.map((d) => { const pc = d.capaciteMbps ? Math.round(d.kbps / 10 / d.capaciteMbps) : null; return `<tr><td>${puce(d.switch)}</td><td>${d.cameras}</td><td class="m">${mbps(d.kbps)}</td><td class="m">${echap(d.lien ? `${d.lien} (${d.capaciteMbps! >= 1000 ? `${d.capaciteMbps! / 1000} Gb/s` : `${d.capaciteMbps} Mb/s`})` : "plusieurs liens ou vitesse inconnue")}</td><td>${pc === null ? "—" : `<span class="s-dec ${pc > 70 ? "d-non" : pc > 50 ? "d-lim" : "d-ok"}">${pc} %</span>`}</td></tr>`; }).join("")}
+  </section>`;
+}
+
+/** Flux vidéo : les mesures, puis la charge de chaque lien et de chaque archiveur. */
+function sectionFlux(b: Bilan, puce: (n: string) => string, mesure: (m: Mesure) => string, ouvert: string): string {
+  const f = b.flux;
+  if (!f.cameras) return "";
+  const source = f.source === "genetec" ? "débits réels de l'export Genetec"
+    : f.source === "estimation" ? `débits estimés à ${mbps(DEBIT_ESTIME_KBPS)} par caméra (importer la configuration Genetec pour les vrais chiffres)`
+    : `débits Genetec, ${f.estimees} caméra${f.estimees > 1 ? "s" : ""} estimée${f.estimees > 1 ? "s" : ""}`;
+  const jauge = (pc?: number) => pc === undefined ? "—"
+    : `<span class="s-jauge ${pc > 70 ? "j-non" : pc > 50 ? "j-lim" : "j-ok"}"><span style="width:${Math.min(pc, 100)}%"></span></span><b>${pc} %</b>`;
+  const haut = f.troncons[0];
+  const alerte = f.troncons.some((t) => (t.charge ?? 0) > 50) || f.archiveurs.some((a) => (a.charge ?? 0) > 50);
+  return `<section class="s-flux"><h3>Flux vidéo</h3>
+    <p class="s-note">Chaque caméra envoie sa vidéo vers son archiveur par le chemin le plus court de la carte ; ${echap(source)}.</p>
+    <div class="s-compteurs s-gen">
+      <span>${mbps(f.totalKbps)} au total</span><span>${f.cameras} caméra${f.cameras > 1 ? "s" : ""}</span>
+      ${haut ? `<span class="${(haut.charge ?? 0) > 70 ? "g-critique" : (haut.charge ?? 0) > 50 ? "g-importante" : "g-ok"}">lien le plus chargé : ${haut.charge ?? "?"} %</span>` : ""}
+    </div>
+    <div class="s-mesures">${b.mesuresFlux.map(mesure).join("")}</div>
+    ${f.troncons.length ? `<details class="s-detail"${ouvert || (alerte ? " open" : "")}><summary>${icone("chevron")}Charge des liens · ${f.troncons.length}</summary>
+      <table class="s-table"><thead><tr><th>Lien</th><th>Ports</th><th>Caméras</th><th>Vidéo</th><th>Vitesse</th><th>Charge</th></tr></thead><tbody>
+      ${f.troncons.map((t) => `<tr><td>${puce(t.a)} ↔ ${puce(t.b)}</td><td class="m">${echap(t.ports.join(" + "))}</td><td>${t.cameras}${t.estimees ? `<small title="débit estimé"> (${t.estimees} est.)</small>` : ""}</td><td class="m">${mbps(t.kbps)}</td><td class="m">${t.capaciteMbps ? vitesse(t.capaciteMbps) : "?"}</td><td class="s-charge">${jauge(t.charge)}</td></tr>`).join("")}
       </tbody></table>
-      ${g.debitParArchiveur.length ? `<table class="s-table"><thead><tr><th>Archiveur</th><th>Caméras</th><th>Débit connu</th></tr></thead><tbody>
-      ${g.debitParArchiveur.map((a) => `<tr><td>${echap(a.archiveur)}</td><td>${a.cameras}</td><td class="m">${a.kbps ? mbps(a.kbps) : "—"}</td></tr>`).join("")}</tbody></table>` : ""}</details>` : ""}
+      ${f.archiveurs.length ? `<table class="s-table"><thead><tr><th>Archiveur</th><th>Caméras</th><th>Vidéo reçue</th><th>Carte réseau</th><th>Charge</th></tr></thead><tbody>
+      ${f.archiveurs.map((a) => `<tr><td>${a.eq ? puce(a.eq) : echap(a.nom)}</td><td>${a.cameras}</td><td class="m">${mbps(a.kbps)}</td><td class="m">${a.capaciteMbps ? vitesse(a.capaciteMbps) : "?"}</td><td class="s-charge">${jauge(a.charge)}</td></tr>`).join("")}</tbody></table>` : ""}
+      <p class="s-note">Vitesse d'un lien : son libellé sur la carte (« 1G », « 10G »), sinon le nom du port (Gi = 1 Gb/s, Te = 10 Gb/s). Un « ? » : la noter pour avoir la charge.</p>
+    </details>` : ""}
   </section>`;
 }

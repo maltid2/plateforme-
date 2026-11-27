@@ -4,7 +4,9 @@ import { readFileSync, readdirSync } from "node:fs";
 import { analyser } from "../src/saisie.ts";
 import { analyserSecurite, codeLieu, nomParDefaut } from "../src/securite.ts";
 import { relevesVersTexte } from "../src/releve.ts";
-import { desactiverPorts, marqueDe, relancerPoe, vlanNatif } from "../src/commandes.ts";
+import { accesVlan, desactiverPorts, igmpSnooping, marqueDe, relancerPoe, renommer, vlanNatif } from "../src/commandes.ts";
+import { analyserFlux, capaciteLien } from "../src/flux.ts";
+import { comparerGenetec } from "../src/genetec.ts";
 
 const bilan = (t: string) => analyserSecurite(analyser(t));
 const mesure = (b: ReturnType<typeof bilan>, id: string) => b.mesures.find((m) => m.id === id)!;
@@ -124,3 +126,62 @@ test("Commandes : la marque reconnue au modèle, la bonne syntaxe", () => {
   assert.equal(desactiverPorts("cisco", ["Gi1/0/1", "Gi1/0/2", "Gi1/0/3", "Gi1/0/4", "Gi1/0/5", "Gi1/0/6"])!.filter((l) => l.startsWith("interface range")).length, 2);
   assert.equal(desactiverPorts("autre", ["1"]), null);
 });
+
+test("Commandes : MikroTik, Planet et Zyxel", () => {
+  const sw = (modele: string) => analyser(`site A\nswitch S | modèle ${modele}`).equipements[0];
+  assert.equal(marqueDe(sw("CRS328-24P-4S+")), "mikrotik");
+  assert.equal(marqueDe(sw("GS-4210-24P2S")), "planet");
+  assert.equal(marqueDe(sw("Zyxel GS2210-24HP")), "zyxel");
+  assert.equal(marqueDe(sw("XGS2210-28HP")), "zyxel");
+  assert.deepEqual(desactiverPorts("mikrotik", ["5", "ether6"]), ["/interface ethernet disable ether5,ether6", "/interface ethernet set ether5 comment=INUTILISE", "/interface ethernet set ether6 comment=INUTILISE"]);
+  assert.deepEqual(relancerPoe("mikrotik", "ether3"), ["/interface ethernet poe power-cycle ether3 duration=5s"]);
+  assert.deepEqual(renommer("mikrotik", "SW-A-01"), ["/system identity set name=SW-A-01"]);
+  assert.deepEqual(accesVlan("planet", ["1/3"], "30"), ["configure terminal", "interface GigabitEthernet 1/3", " switchport mode access", " switchport access vlan 30", " exit", "end", "copy running-config startup-config"]);
+  assert.deepEqual(desactiverPorts("zyxel", ["4", "5"]), ["configure", "interface port-channel 4,5", " inactive", " exit", "exit", "write memory"]);
+  assert.ok(vlanNatif("zyxel", ["25"])!.includes(" pvid 999"));
+  assert.deepEqual(igmpSnooping("hp", "30"), ["configure", "vlan 30 ip igmp", "write memory"]);
+  // Pas de commande inventée : PoE Planet, trunk Zyxel → interface web.
+  assert.equal(relancerPoe("planet", "1/3"), null);
+  assert.equal(igmpSnooping("autre", "30"), null);
+});
+
+test("Flux vidéo : débit par lien, charge, archiveur, point unique de panne", () => {
+  const cams = (sw: string, n: number) => Array.from({ length: n }, (_, i) => `camera ${sw}-C${i + 1} | sur ${sw}:${i + 1} | vlan=30`);
+  const inv = analyser([
+    "site Lyon",
+    "switch COEUR-1 | ip 10.0.0.1", "switch COEUR-2 | ip 10.0.0.2", "switch ACC-1 | ip 10.0.0.3", "switch ACC-2 | ip 10.0.0.4",
+    "serveur ARCH-1 | ip 10.0.30.2 | sur COEUR-1:Gi1/0/48 | vlan=30",
+    "COEUR-1:Te1/1/1 -> COEUR-2:Te1/1/1 | fibre",
+    "ACC-1:Gi1/0/49 -> COEUR-1:Gi1/0/1 | fibre | 1G",
+    "ACC-2:Gi1/0/49 -> ACC-1:Gi1/0/50",
+    ...cams("ACC-1", 100), ...cams("ACC-2", 120),
+  ].join("\n"));
+  const f = analyserFlux(inv, comparerGenetec(inv, null));
+  assert.equal(f.source, "estimation");
+  assert.equal(f.totalKbps, 220 * 4000);
+  // ACC-1 → COEUR-1 : 220 caméras × 4 Mb/s = 880 Mb/s sur 1 Gb/s.
+  const t = f.troncons.find((x) => [x.a, x.b].sort().join() === "ACC-1,COEUR-1")!;
+  assert.equal(t.cameras, 220);
+  assert.equal(t.charge, 88);
+  assert.equal(f.troncons[0], t);                 // le plus chargé en tête
+  assert.ok(!f.troncons.some((x) => /-C\d/.test(x.a + x.b)));   // pas les câbles des caméras
+  assert.equal(capaciteLien({ a: "x", b: "y", portA: "Te1/1/1", ligne: 0 }), 10000);
+  // Archiveur : tout arrive sur ARCH-1 (lien Gi = 1 Gb/s).
+  assert.equal(f.archiveurs[0].eq, "ARCH-1");
+  assert.equal(f.archiveurs[0].charge, 88);
+  // Points uniques de panne. ACC-2 ne tient qu'à ACC-1 : 2e lien vers COEUR-1 (le cœur le mieux relié).
+  const acc2 = f.dependances.find((d) => d.sw === "ACC-2")!;
+  assert.equal(acc2.vers, "ACC-1");
+  assert.equal(acc2.secours, "COEUR-1");
+  // ACC-1 ne tient qu'à COEUR-1, où est l'archiveur : passer par COEUR-2 ne sert à rien → 2e câble agrégé.
+  const acc1 = f.dependances.find((d) => d.sw === "ACC-1")!;
+  assert.equal(acc1.secours, "COEUR-1");
+  assert.equal(acc1.cameras, 220);
+  // Dans le rapport : le lien saturé est « à faire », en tête de ce qu'il faut corriger.
+  const b = analyserSecurite(inv);
+  assert.equal(b.mesuresFlux.find((m) => m.id === "flux-liens")!.etat, "a-faire");
+  const red = mesure(b, "redondance").elements;
+  assert.ok(red.some((e) => e.cible === "ACC-2" && /ajouter un 2e lien vers COEUR-1/.test(e.texte)), red.map((e) => e.texte).join("\n"));
+  assert.ok(red.some((e) => e.cible === "ACC-1" && /2e câble vers COEUR-1, agrégé/.test(e.texte)));
+});
+

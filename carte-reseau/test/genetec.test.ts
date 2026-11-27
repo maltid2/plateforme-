@@ -38,8 +38,8 @@ test("Genetec ↔ réseau : hors ligne localisées, absentes, non enregistrées,
   assert.ok(c.doublonsIp.some((d) => d.ip === "10.20.9.9"));
   // Caméras du réseau inconnues de Genetec.
   assert.ok(c.nonEnregistrees.length > 0);
-  // Débit : CAM-HALL-Entree (enregistrement + direct = 12,3 Mb/s) sur SW-COEUR-1.
-  assert.ok(c.debitParSwitch.some((d) => d.switch === "SW-COEUR-1" && d.kbps === 12288));
+  // Débit : CAM-HALL-Entree (enregistrement + direct = 12,3 Mb/s).
+  assert.ok([...c.debitParCamera.values()].includes(12288));
   // Dans les préconisations : la caméra hors ligne et son port, en critique.
   const b = analyserSecurite(inv, g);
   // La caméra hors ligne est rangée sous son switch, avec le port et les commandes Aruba CX.

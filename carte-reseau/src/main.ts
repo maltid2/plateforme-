@@ -1,4 +1,7 @@
 import { APPARENCE, appliquerCouleurs, COULEUR_MEDIA, COULEUR_TRUNK, type Couleurs } from "./apparence.ts";
+import { ENTREPRISE_DEFAUT, figerEntreprise, marqueEntreprise, type Entreprise } from "./entreprise.ts";
+import { ouvrirEntreprise } from "./ui/entreprise.ts";
+import { NOM_OUTIL } from "./version.ts";
 import { disposer, type Disposition } from "./disposition.ts";
 import { creerEditeur } from "./editeur.ts";
 import { cheminPasserelle } from "./facade.ts";
@@ -31,13 +34,17 @@ poserIcones();
 const EMBARQUE = (() => {
   const n = document.getElementById("carte-donnees");
   if (!n) return null;
-  try { return JSON.parse(n.textContent ?? "") as { nom: string; texte: string; exporte: string; auteur?: string; couleurs?: Couleurs }; } catch { return null; }
+  try { return JSON.parse(n.textContent ?? "") as { nom: string; texte: string; exporte: string; auteur?: string; couleurs?: Couleurs; entreprise?: Partial<Entreprise> }; } catch { return null; }
 })();
 // Couleurs choisies (menu « Couleurs ») : retenues dans ce navigateur, et
 // emportées dans la visionneuse exportée.
 let couleurs: Couleurs = (EMBARQUE ? EMBARQUE.couleurs : lireCouleurs()) ?? {};
 appliquerCouleurs(couleurs);
 if (EMBARQUE) document.body.classList.add("lecture");
+// Le logo et le nom de l'entreprise : ceux du poste, ou ceux de la visionneuse.
+if (EMBARQUE) figerEntreprise(EMBARQUE.entreprise ?? ENTREPRISE_DEFAUT);
+const afficherEntreprise = () => { $("entreprise").innerHTML = marqueEntreprise(); };
+afficherEntreprise();
 
 const etat = $("etat"), listeAlertes = $("alertes"), fiche = $("fiche"), legende = $("legende");
 const filtre = $<HTMLSelectElement>("filtre-site"), recherche = $<HTMLInputElement>("recherche");
@@ -165,7 +172,7 @@ function listerTopologies() {
   selTopo.replaceChildren(...[...classeur.topologies]
     .sort((a, b) => a.nom.localeCompare(b.nom, "fr"))
     .map((t) => new Option(t.nom, t.id, false, t.id === classeur.active)));
-  document.title = `${active().nom} · Topologie réseau v1`;
+  document.title = `${active().nom} · ${NOM_OUTIL}`;
 }
 function ouvrirTopologie(id: string) {
   classeur.active = id;
@@ -536,6 +543,9 @@ $("b-signature").addEventListener("click", async () => {
   notifier(v ? `Les documents seront signés « ${projets.lireAuteur()} ».` : "Les documents ne seront plus signés.");
 });
 afficherSignature();
+const reglerEntreprise = () => { fermerMenu(); if (!EMBARQUE) ouvrirEntreprise(() => { afficherEntreprise(); preconisations.rafraichir(); }); };
+$("b-entreprise").addEventListener("click", reglerEntreprise);
+$("entreprise").addEventListener("click", reglerEntreprise);
 $("b-restaurer").addEventListener("click", () => { fermerMenu(); $("f-json").click(); });
 $<HTMLInputElement>("f-json").addEventListener("change", async (e) => {
   const f = (e.target as HTMLInputElement).files?.[0];
@@ -612,7 +622,7 @@ recalculer();
 plan.cadrer();
 try { if (localStorage.getItem("carte-reseau:mode") === "texte" && !EMBARQUE) mode("texte"); } catch { /* sans importance */ }
 if (EMBARQUE) {
-  document.title = `${EMBARQUE.nom} · Topologie réseau v1 (lecture seule)`;
+  document.title = `${EMBARQUE.nom} · ${NOM_OUTIL} (lecture seule)`;
   // Bandeau visible dans la barre du haut : on sait tout de suite qu'on regarde une copie figée.
   const bandeau = document.createElement("span");
   bandeau.className = "bandeau-lecture";

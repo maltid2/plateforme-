@@ -1,4 +1,4 @@
-# Topologie réseau v1 — outil interne, 100 % hors ligne
+# Topologie réseau — outil interne, 100 % hors ligne
 
 On renseigne ses sites, ses lieux (écoles, bâtiments…), ses baies, ses
 switchs et ce qui est branché dessus, port par port. L'outil produit **deux
@@ -26,7 +26,7 @@ switch, sans pare-feu ni onduleur.
 
 ## Installer : un seul fichier, rien d'autre
 
-**`topologie-reseau-v1.html`** contient tout l'outil. On le copie sur le poste et on
+**`topologie-reseau-v2.0.html`** contient tout l'outil (le numéro de version est dans le nom du fichier, voir « Versions »). On le copie sur le poste et on
 l'ouvre en double-cliquant (Edge, Chrome ou Firefox). Pas d'installation, pas
 de compte, pas de serveur.
 
@@ -36,10 +36,10 @@ de compte, pas de serveur.
   sécurité (`connect-src 'none'`, aucune ressource externe) ; le navigateur
   bloque toute tentative d'envoi. Vérifié : zéro requête réseau en usage.
 - **Les données restent sur le poste**, dans le navigateur qui ouvre le fichier.
-- **Intégrité** : `topologie-reseau-v1.html.sha256` donne l'empreinte du fichier
+- **Intégrité** : `topologie-reseau-v2.0.html.sha256` donne l'empreinte du fichier
   livré. Avant de le déployer, vérifiez-la :
   ```powershell
-  Get-FileHash .\topologie-reseau-v1.html -Algorithm SHA256
+  Get-FileHash .\topologie-reseau-v2.0.html -Algorithm SHA256
   ```
 - **Marquage** : le dossier imprimé porte « Document interne — diffusion
   restreinte » sur chaque page.
@@ -304,9 +304,8 @@ rapproche chaque caméra Genetec de la carte (MAC, puis IP, puis nom) et donne :
 les caméras **hors ligne avec le switch et le port où aller voir**, celles de
 Genetec introuvables sur le réseau, celles du réseau **absentes de Genetec (non
 enregistrées)**, les écarts d'IP ou de nom (bouton pour reprendre les noms
-Genetec sur la carte, annulable), les IP en double, le **débit vidéo par
-switch** (charge du lien montant quand il est unique et que sa vitesse est
-connue) et par archiveur, et les versions des caméras.
+Genetec sur la carte, annulable), les IP en double, le **débit de chaque
+caméra** (il sert aux flux vidéo, plus bas) et les versions des caméras.
 
 **Présentation** — courte, lisible par tous :
 
@@ -316,8 +315,11 @@ connue) et par archiveur, et les versions des caméras.
    phrase simple), **son effet sur le dépannage et la maintenance**, et son
    **état** sur la carte : *À faire*, *À vérifier* (sur place, ou faute de
    relevé) ou *OK*. Le détail — équipements concernés (un clic les montre sur
-   le plan) et **commandes à copier** pour leur marque (Cisco IOS / IOS-XE,
-   Aruba CX, HP / ArubaOS-Switch ; sinon « dans l'interface web ») — est replié
+   le plan) et **commandes à copier** pour leur marque — Cisco IOS / IOS-XE,
+   Aruba CX, HP / ArubaOS-Switch, MikroTik RouterOS 7, Planet (CLI ICLI :
+   GS-4210, GS-5220…), Zyxel ZyNOS (GS1920, GS2210, XGS2210) ; la syntaxe
+   utilisée est écrite sur chaque bloc, et une commande qu'une marque n'a pas
+   n'est pas inventée (« dans l'interface web ») — est replié
    sous « Où et comment » et déplié à l'impression.
    - **Classe 1 · Indispensable** (ne ralentit pas le dépannage, souvent
      l'accélère) : un nom de switch qui dit où il est (nom par défaut ou sans
@@ -333,15 +335,34 @@ connue) et par archiveur, et les versions des caméras.
    - **Classe 2 · Recommandé** (un peu de travail en plus) : ports libres
      désactivés, VLAN natif 999, VLAN autorisés limités sur les trunks, pas de
      petit switch caché, même version logicielle par modèle, heure commune
-     (serveur de temps interne), double lien pour les switchs chargés.
+     (serveur de temps interne), **un 2e lien pour les switchs qui portent
+     plusieurs caméras** (4 et plus, en comptant celles des switchs en
+     dessous) : l'outil suit le chemin de la vidéo jusqu'à l'archiveur, repère
+     le tronçon dont la coupure isolerait les caméras et propose un 2e lien
+     vers un autre switch qui rejoint l'archiveur sans passer par le premier
+     (« SW-BAT-A : 5 caméras ne tiennent qu'au lien SFP1 vers SW-COEUR-1 →
+     ajouter un 2e lien vers SW-COEUR-2 ») ; s'il n'y en a pas, un 2e câble
+     agrégé (LACP) vers le même switch.
    - **Classe 3 · Renforcé — à décider** (dépannage nettement plus long) :
      verrouillage des ports par adresse MAC (seulement pour les caméras
      accessibles au public : parking, extérieur), 802.1X (déconseillé ici),
      et garder LLDP/CDP actifs (les couper aveuglerait le relevé et la carte).
-3. **Pannes et anomalies relevées** (caméras hors ligne avec le switch et le
+3. **Flux vidéo** : chaque caméra envoie sa vidéo vers son archiveur
+   (celui de Genetec, sinon le serveur vidéo le plus proche sur la carte) par
+   le chemin le plus court ; l'outil additionne les débits sur chaque lien
+   entre switchs et sur la carte réseau de chaque archiveur. Débits : ceux de
+   l'export Genetec (configuration des flux), sinon **4 Mb/s par caméra**
+   (signalé « estimé »). Vitesse d'un lien : son libellé sur la carte (« 1G »,
+   « 10G »), sinon le nom du port (Gi = 1 Gb/s, Te = 10 Gb/s…). Mesures : aucun
+   lien au-delà de 70 % (au-delà de 50 % : à surveiller), cartes réseau des
+   archiveurs, IGMP snooping dans le VLAN vidéo si le direct passe en
+   multicast (commandes par marque), caméras au-dessus de 8 Mb/s (profil
+   d'encodage). Le tableau « Charge des liens » donne pour chaque lien les
+   caméras, le débit, la vitesse et une jauge.
+4. **Pannes et anomalies relevées** (caméras hors ligne avec le switch et le
    port, liaison agrégée dégradée, erreurs de câble, PoE…), avec les commandes
    de contrôle puis de redémarrage PoE.
-4. **Genetec**, **plan des VLAN**, **versions logicielles** (repliées).
+5. **Genetec**, **plan des VLAN**, **versions logicielles** (repliées).
 
 Exemples : « SW-COEUR-1 : Gi1/0/1, Gi1/0/5, Gi1/0/14, Te1/1/4 » sous *Désactiver
 les ports qui ne servent pas* ; « HP-2530-24G : nom par défaut → proposé :
@@ -354,6 +375,31 @@ PDF** produit le rapport.
 vite périmée. Les équipements n'ayant pas Internet, les mises à jour se
 téléchargent chez le constructeur depuis un poste de l'entreprise, puis
 s'installent à la main.
+
+## Logo de l'entreprise
+
+En haut à gauche, le nom de l'entreprise (**INEO** par défaut). Un clic dessus
+(ou *Fichiers › Logo et nom de l'entreprise*) permet de changer le nom et de
+choisir le logo (PNG, JPG ou SVG, 300 Ko au plus) depuis le poste. Le logo est
+gardé dans ce navigateur — rien n'est téléchargé ni envoyé — et figure sur le
+plan imprimé (cartouche), le rapport de préconisations et les visionneuses
+exportées.
+
+## Versions
+
+Une seule source : `version` dans `package.json`. Elle s'affiche dans l'outil
+(« Topologie réseau v2.0 ») et donne son nom au fichier livré :
+`npm run fichier` produit `topologie-reseau-v<majeur.mineur>.html` et son
+empreinte, et retire du dossier le fichier de la version précédente (son
+historique reste dans git). Pour une nouvelle version : changer `version`,
+puis `npm run fichier`.
+
+- **v2.0** — préconisations par classe (pourquoi, effet sur le dépannage),
+  flux vidéo et charge des liens, 2e lien pour les switchs à caméras,
+  commandes MikroTik / Planet / Zyxel, logo de l'entreprise, version dans le
+  nom du fichier.
+- **v1** — carte 2D, baies, 3D, imports (formulaire, texte, Excel, relevés des
+  switchs, Genetec), exports, préconisations.
 
 ## Couleurs
 
@@ -406,7 +452,7 @@ modification coûte environ 0,07 s en 2D et 0,4 s avec la 3D ouverte.
 npm install
 npm run dev        # http://localhost:5173
 npm test           # analyseur, façades, placement, lieux, supports
-npm run fichier    # reconstruit topologie-reseau-v1.html et son empreinte SHA-256
+npm run fichier    # reconstruit topologie-reseau-v<version>.html et son empreinte SHA-256
 ```
 
 | Fichier | Rôle |
@@ -425,7 +471,10 @@ npm run fichier    # reconstruit topologie-reseau-v1.html et son empreinte SHA-2
 | `src/releve.ts` | relevés des switchs (.txt du script) → carte, anomalies |
 | `src/releve/` | moteur d'analyse de Cartographie Réseau v3.2, repris tel quel |
 | `src/securite.ts`, `src/vueSecurite.ts` | préconisations par classe (pourquoi, effet sur le dépannage, état), pannes, VLAN, versions ; rapport |
-| `src/commandes.ts` | commandes par marque de switch (Cisco, Aruba CX, HP) pour appliquer les préconisations |
+| `src/commandes.ts` | commandes par marque de switch (une « syntaxe » par famille : Cisco, Aruba CX, HP, MikroTik, Planet, Zyxel) |
+| `src/flux.ts` | flux vidéo : chemin caméra → archiveur, charge des liens et des archiveurs, points uniques de panne |
+| `src/entreprise.ts`, `src/ui/entreprise.ts` | logo et nom de l'entreprise (INEO par défaut) sur l'outil et les documents |
+| `src/version.ts`, `scripts/fichier.mjs` | la version (package.json) dans l'interface et dans le nom du fichier livré |
 | `src/genetec.ts`, `src/genetecLecture.ts` | export Genetec : lecture, comparaison avec le réseau, débits |
 | `releve-switchs/` | `Relever les switchs.bat` et `commandes.txt` (le script qui interroge les switchs) |
 | `src/main.ts` | l'état de l'application et l'orchestration : rendu, vues, recherche, topologies, annulation |

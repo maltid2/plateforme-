@@ -9,14 +9,15 @@
     content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'none'; font-src 'none'; form-action 'none'; base-uri 'none'" />
   <meta name="robots" content="noindex, nofollow" />
   <meta name="referrer" content="no-referrer" />
-  <title>Topologie réseau v1</title>
+  <title>Topologie réseau %VERSION%</title>
   <link rel="stylesheet" href="/src/style.css" />
 </head>
 <body>
   <header class="barre">
     <div class="marque">
+      <button id="entreprise" type="button" class="bouton-entreprise" title="Logo et nom de l'entreprise (documents)"></button>
       <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="2" y="8" width="20" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M6 12h1.5M9 12h1.5M12 12h1.5" stroke="#3DDC97" stroke-width="1.8" stroke-linecap="round"/><circle cx="18" cy="12" r="1.2" fill="#FFD166"/></svg>
-      <strong>Topologie réseau v1</strong>
+      <strong>Topologie réseau <span class="version">%VERSION%</span></strong>
     </div>
 
     <div class="topos">
@@ -53,6 +54,7 @@
           <div class="menu-titre edition">Outils</div>
           <button id="b-script" type="button"><i data-ic="reseau"></i><span><b>Script de relevé des switchs (.bat)</b><small>À lancer sur un PC du réseau des switchs</small></span></button>
           <button id="b-modele-tableur" type="button"><i data-ic="tableau"></i><span><b>Modèle de tableau à remplir (.csv)</b></span></button>
+          <button id="b-entreprise" type="button" class="edition"><i data-ic="crayon"></i><span><b>Logo et nom de l'entreprise</b><small>Sur l'outil et les documents produits</small></span></button>
           <button id="b-signature" type="button" title="Signature apposée sur les documents produits (PDF, plan, visionneuse)."></button>
         </div>
       </details>
@@ -177,7 +179,7 @@
           <p><b>Plan 2D</b> : molette pour zoomer, glisser pour se déplacer, double-clic pour zoomer, <b>Recentrer</b> pour tout revoir.</p>
           <p><b>Baies</b> : la façade de chaque baie, U par U, avec les ports branchés.</p>
           <p><b>Vue 3D</b> : glisser pour tourner, clic droit (ou <kbd>Maj</kbd> + glisser) pour se déplacer, molette pour zoomer. Cliquez le sol d'un site pour y entrer ; de près, les numéros de port s'affichent sur les câbles.</p>
-          <p><b>Générer les préconisations</b> (une fois la carte faite) : pour un réseau vidéo isolé, sans Internet ni ACL. D'abord <b>ce qu'il faut corriger en premier</b>, puis les mesures en trois classes — <b>indispensable</b>, <b>recommandé</b>, <b>renforcé (à décider)</b> — chacune avec son <b>pourquoi</b> et son effet sur le dépannage, son état (à faire, à vérifier, OK), les équipements concernés et les commandes à copier. Puis les pannes relevées et la <b>comparaison avec un export Genetec</b> (caméras hors ligne avec le switch et le port, caméras non enregistrées, débits). Un clic sur un équipement cité le montre sur le plan ; <b>Imprimer / PDF</b> pour le rapport.</p>
+          <p><b>Générer les préconisations</b> (une fois la carte faite) : pour un réseau vidéo isolé, sans Internet ni ACL. D'abord <b>ce qu'il faut corriger en premier</b>, puis les mesures en trois classes — <b>indispensable</b>, <b>recommandé</b>, <b>renforcé (à décider)</b> — chacune avec son <b>pourquoi</b> et son effet sur le dépannage, son état (à faire, à vérifier, OK), les équipements concernés et les commandes à copier. Puis les <b>flux vidéo</b> (charge de chaque lien et de chaque archiveur, d'après les débits Genetec ou 4 Mb/s par caméra), les pannes relevées et la <b>comparaison avec un export Genetec</b> (caméras hors ligne avec le switch et le port, caméras non enregistrées). Commandes pour Cisco, Aruba, HP, MikroTik, Planet et Zyxel. Un clic sur un équipement cité le montre sur le plan ; <b>Imprimer / PDF</b> pour le rapport.</p>
           <p><b>Couleurs</b> : apparence sombre, claire ou noir studio, couleur d'accent, couleurs des câbles et des équipements.</p>
           <p><b>Fichiers</b> : PDF imprimable, visionneuse à envoyer (lecture seule), images, plan SVG, maquette 3D, sauvegarde. Tout reste sur ce poste : l'outil ne se connecte à rien.</p>
         </section>

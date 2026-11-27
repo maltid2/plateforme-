@@ -816,6 +816,16 @@ button.s-eq:hover { border-color: var(--acc); color: var(--acc-lien); }
 .s-cmd-tete .ic { width: 13px; height: 13px; }
 .s-cmd pre { margin: 0; padding: 8px 10px; font: 12px/1.5 var(--mono); background: var(--bg); overflow-x: auto; white-space: pre; }
 
+/* Flux vidéo : jauge de charge */
+.s-flux .s-mesures { margin-bottom: 10px; }
+.s-charge { white-space: nowrap; }
+.s-charge b { margin-left: 6px; font-size: 12px; }
+.s-jauge { display: inline-block; vertical-align: middle; width: 90px; height: 8px; border-radius: 4px; background: var(--trait); overflow: hidden; }
+.s-jauge > span { display: block; height: 100%; border-radius: 4px; }
+.j-ok > span { background: var(--ok); }
+.j-lim > span { background: #f59e0b; }
+.j-non > span { background: #ef4444; }
+
 /* Pannes */
 .s-pannes { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
 .s-pannes li { padding: 9px 12px; border: 1px solid var(--trait); border-left: 4px solid #f59e0b; border-radius: var(--r); background: var(--carte); font-size: 13px; }
@@ -867,7 +877,7 @@ button.s-eq:hover { border-color: var(--acc); color: var(--acc-lien); }
   .i-secu .s-table th { color: #333; background: #eee; border: 1px solid #bbb; }
   .i-secu .s-table td { border: 1px solid #ccc; }
   .i-secu .s-table tr { break-inside: avoid; }
-  .i-secu .s-mesure, .i-secu .s-num, .i-secu .s-cmd-tete, .i-secu .s-table th, .i-secu .s-compteurs span { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .i-secu .s-jauge, .i-secu .s-jauge > span, .i-secu .s-mesure, .i-secu .s-num, .i-secu .s-cmd-tete, .i-secu .s-table th, .i-secu .s-compteurs span { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 
 /* Bouton « Générer les préconisations » : en fin de barre, bien visible sans voler la vedette à « Équipement » */
@@ -896,3 +906,25 @@ body.lecture .menu-corps .edition { display: none; }
 /* Noir studio : les sous-titres des menus restent en minuscules (lisibles) */
 .theme-studio .menu-corps small { text-transform: none; letter-spacing: 0; }
 
+
+/* ---------- entreprise : logo (ou nom) en haut de l'outil et sur les documents ---------- */
+.bouton-entreprise { display: inline-flex; align-items: center; padding: 2px 8px; min-height: 0; background: transparent; border: 1px solid transparent; }
+.bouton-entreprise:hover { border-color: var(--trait); }
+body.lecture .bouton-entreprise { pointer-events: none; }
+.entreprise { display: inline-flex; align-items: center; }
+.entreprise img { display: block; max-height: 26px; max-width: 140px; object-fit: contain; }
+.entreprise-nom { font-weight: 800; font-size: 15px; letter-spacing: 0.08em; color: var(--encre); }
+.marque .version { color: var(--sourd); font-weight: 600; }
+.boite-entreprise { width: min(520px, 94vw) !important; }
+.champ-entreprise { display: flex; flex-direction: column; gap: 4px; padding: 0 20px 10px; font-size: 13px; color: var(--sourd); }
+.apercu-entreprise { margin: 0 20px; padding: 14px; border: 1px dashed var(--trait); border-radius: var(--r); display: flex; justify-content: center; min-height: 40px; background: #fff; }
+.apercu-entreprise .entreprise img { max-height: 48px; max-width: 260px; }
+.apercu-entreprise .entreprise-nom { color: #111; font-size: 20px; }
+.boutons-logo { padding: 10px 20px 0; display: flex; gap: 8px; flex-wrap: wrap; }
+.s-entete { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+.s-entete .entreprise img { max-height: 34px; }
+@media print {
+  .i-cartouche .entreprise { margin-right: 14px; }
+  .i-cartouche .entreprise img { max-height: 42px; max-width: 160px; }
+  .i-cartouche .entreprise-nom, .i-secu .entreprise-nom { color: #111; font-size: 16pt; }
+}

@@ -8,6 +8,7 @@
  * Aucun modèle ni image à télécharger — l'outil fonctionne hors ligne.
  */
 import * as THREE from "three";
+import { NOM_OUTIL } from "./version.ts";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { CSS2DObject, CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
@@ -1037,7 +1038,7 @@ export function creerVue3D(hote: HTMLElement, cb: Rappels): Vue3D {
     if (sb) racine.remove(sb);
     const vu = apercu.visible;
     apercu.visible = false; // les pastilles n'ont de sens qu'à l'écran
-    racine.name = "Topologie réseau v1";
+    racine.name = NOM_OUTIL;
     racine.traverse((o) => { if (o.userData.nom && !o.name) o.name = String(o.userData.nom); });
     try {
       const res = await new GLTFExporter().parseAsync(racine, { binary: true, onlyVisible: true });

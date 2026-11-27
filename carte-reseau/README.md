@@ -303,6 +303,21 @@ Genetec sur la carte, annulable), les IP en double, le **débit vidéo par
 switch** (charge du lien montant quand il est unique et que sa vitesse est
 connue) et par archiveur, et les versions des caméras.
 
+**Présentation.** En tête, **Par où commencer** : les 5 actions les plus
+graves. Puis le **plan d'action par équipement** : une fiche par switch (marque,
+modèle, IP, emplacement) avec des actions précises — les ports exacts, l'autre
+bout du lien quand il faut le traiter aussi — et les **commandes à copier**
+pour sa marque : Cisco IOS / IOS-XE, Aruba CX, HP / ArubaOS-Switch (pour les
+autres marques, l'action dit quoi faire dans l'interface web). Exemples :
+« Désactiver les 4 ports libres : Gi1/0/1, Gi1/0/5, Gi1/0/14, Te1/1/4 »,
+« Mettre le VLAN natif 999 sur Gi1/0/2… — de l'autre côté, en même temps :
+SW-PARKING port 25 », « Contrôler les ports 1/1/2, 1/1/3 : 2 caméras hors ligne
+dans Genetec » (commandes de contrôle, puis de redémarrage PoE), « Mettre à
+jour le logiciel : 17.03.04 → 17.06.05 (version de SW-COEUR-1) ». Les fiches
+**Ensemble du réseau**, **Vidéo (Genetec)** et **Inventaire** regroupent le
+reste. Les commandes de modification sont à passer en fenêtre de maintenance,
+après une sauvegarde de la configuration.
+
 Les préconisations portent sur :
 
 - **cloisonnement** : caméras sans VLAN, VLAN vidéo partagé avec des postes,
@@ -400,7 +415,8 @@ npm run fichier    # reconstruit topologie-reseau-v1.html et son empreinte SHA-2
 | `src/carto.ts` | lecture de l'export Excel de Cartographie Réseau (relevé automatique) |
 | `src/releve.ts` | relevés des switchs (.txt du script) → carte, anomalies |
 | `src/releve/` | moteur d'analyse de Cartographie Réseau v3.2, repris tel quel |
-| `src/securite.ts`, `src/vueSecurite.ts` | préconisations sécurité, matrice de flux, versions à vérifier ; rapport |
+| `src/securite.ts`, `src/vueSecurite.ts` | préconisations par équipement, matrice de flux, versions à vérifier ; rapport |
+| `src/commandes.ts` | commandes par marque de switch (Cisco, Aruba CX, HP) pour appliquer les préconisations |
 | `src/genetec.ts`, `src/genetecLecture.ts` | export Genetec : lecture, comparaison avec le réseau, débits |
 | `releve-switchs/` | `Relever les switchs.bat` et `commandes.txt` (le script qui interroge les switchs) |
 | `src/main.ts` | l'état de l'application et l'orchestration : rendu, vues, recherche, topologies, annulation |

@@ -845,3 +845,47 @@ article.s-preco { color: var(--encre); background: var(--carte, transparent); }
 body.lecture .menu-corps .edition { display: none; }
 /* Noir studio : les sous-titres des menus restent en minuscules (lisibles) */
 .theme-studio .menu-corps small { text-transform: none; letter-spacing: 0; }
+
+/* ---------- préconisations : par où commencer, fiches par équipement, commandes ---------- */
+.s-prio { margin: 0; padding: 0; list-style: none; counter-reset: p; display: grid; gap: 6px; }
+.s-prio li { display: flex; gap: 10px; align-items: baseline; padding: 9px 12px; border: 1px solid var(--trait); border-radius: var(--r); background: var(--carte); font-size: 13.5px; }
+.s-prio li::before { counter-increment: p; content: counter(p); font-weight: 800; color: var(--sourd); min-width: 1.2em; }
+.s-badge { font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; padding: 1px 7px; border-radius: 999px; border: 1px solid; white-space: nowrap; }
+.s-badge.b-critique { color: #ff8a8a; border-color: rgba(239, 68, 68, 0.5); }
+.s-badge.b-importante { color: #fbbf24; border-color: rgba(245, 158, 11, 0.5); }
+.s-badge.b-conseil { color: var(--acc-lien); border-color: rgba(var(--acc-rgb), 0.45); }
+.s-fiche { border: 1px solid var(--trait); border-left-width: 4px; border-radius: var(--r-l); padding: 12px 14px; margin-bottom: 12px; background: var(--carte); }
+.s-fiche.f-critique { border-left-color: #ef4444; }
+.s-fiche.f-importante { border-left-color: #f59e0b; }
+.s-fiche.f-conseil { border-left-color: var(--acc); }
+.s-fiche > header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 6px; }
+.s-fiche h4 { margin: 0; font-size: 16px; }
+.s-fiche h4 .s-eq { font: 700 15px var(--mono); padding: 2px 10px; }
+.s-sous-titre { display: block; color: var(--sourd); font-size: 12px; margin-top: 4px; }
+.s-nb { color: var(--sourd); font-size: 12px; white-space: nowrap; }
+.s-actions { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.s-action { border-top: 1px solid var(--trait); padding-top: 8px; }
+.s-action-tete { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.s-action-tete b { font-size: 14px; }
+.s-num { font-weight: 800; color: var(--sourd); min-width: 1.1em; }
+.s-action p { margin: 4px 0 4px 1.9em; font-size: 13px; line-height: 1.5; color: var(--sourd); }
+.s-action small { display: block; margin-left: 1.9em; color: var(--sourd); font-size: 11px; opacity: 0.85; }
+.s-aussi { display: flex; gap: 6px; align-items: center; color: var(--encre) !important; font-weight: 600; }
+.s-cmd { margin: 6px 0 6px 1.9em; border: 1px solid var(--trait); border-radius: var(--r); overflow: hidden; }
+.s-cmd-tete { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 4px 6px 4px 10px; background: rgba(var(--acc-rgb), 0.07); font-size: 12px; font-weight: 600; }
+.s-cmd-tete button { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; font-size: 11.5px; min-height: 0; }
+.s-cmd-tete .ic { width: 13px; height: 13px; }
+.s-cmd pre { margin: 0; padding: 8px 10px; font: 12px/1.5 var(--mono); background: var(--bg); overflow-x: auto; white-space: pre; }
+.theme-clair .s-badge.b-critique { color: #b91c1c; }
+.theme-clair .s-badge.b-importante { color: #b45309; }
+.theme-clair .s-cmd pre { background: #f1f5f9; }
+@media print {
+  .i-secu .s-prio li, .i-secu .s-fiche { background: #fff; color: #111; break-inside: avoid; }
+  .i-secu .s-action { break-inside: avoid; }
+  .i-secu .s-action p, .i-secu .s-sous-titre, .i-secu .s-nb, .i-secu .s-action small { color: #333; }
+  .i-secu .s-cmd pre { background: #f4f4f4; color: #111; white-space: pre-wrap; }
+  .i-secu .s-cmd-tete { background: #eee; color: #111; }
+  .i-secu .s-badge.b-critique { color: #b91c1c; } .i-secu .s-badge.b-importante { color: #b45309; } .i-secu .s-badge.b-conseil { color: #1d4ed8; }
+  .i-secu .s-fiche.f-critique { border-left-color: #b91c1c; } .i-secu .s-fiche.f-importante { border-left-color: #b45309; } .i-secu .s-fiche.f-conseil { border-left-color: #1d4ed8; }
+  .i-secu .s-fiche, .i-secu .s-cmd-tete { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

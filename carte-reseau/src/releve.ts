@@ -105,7 +105,8 @@ export function relevesVersTexte(fichiers: FichierReleve[]): ResultatReleve {
   const ajouter = (sw: string, kv: string) => faits.set(sw, [...(faits.get(sw) ?? []), kv]);
   const parSw = new Map<string, any[]>();
   (M.portRows || []).forEach((p: any) => parSw.set(p.switch, [...(parSw.get(p.switch) ?? []), p]));
-  const liste = (ps: string[]) => (ps.length > 6 ? `${ps.slice(0, 6).join(",")}…` : ps.join(","));
+  // Listes complètes : les préconisations en tirent les ports exacts (et les commandes).
+  const liste = (ps: string[]) => ps.join(",");
   parSw.forEach((ports, sw) => {
     const phys = ports.filter((p) => V.isPhysical(p.port));
     const libres = phys.filter((p) => p.status === "Déconnecté" && !/disab|d[ée]sactiv|shut|admin/i.test(p.statusRaw || ""));
@@ -114,7 +115,7 @@ export function relevesVersTexte(fichiers: FichierReleve[]): ResultatReleve {
     const multi = acces.filter((p) => (p.macCount || 0) > 2);
     const ext = phys.filter((p) => p.cls === "externe");
     if (phys.length) ajouter(sw, `ports-relevés=${phys.length}`);
-    if (libres.length) ajouter(sw, `ports-libres-actifs=${libres.length}`);
+    if (libres.length) ajouter(sw, `ports-libres-actifs=${liste(libres.map((p) => p.port))}`);
     if (vlan1.length) ajouter(sw, `acces-vlan1=${liste(vlan1.map((p) => p.port))}`);
     if (multi.length) ajouter(sw, `multi-mac=${liste(multi.map((p) => `${p.port} (${p.macCount} MAC)`))}`);
     if (ext.length) ajouter(sw, `vers-non-releve=${liste(ext.map((p) => p.port))}`);

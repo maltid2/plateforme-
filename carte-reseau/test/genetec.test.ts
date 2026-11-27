@@ -42,9 +42,11 @@ test("Genetec ↔ réseau : hors ligne localisées, absentes, non enregistrées,
   assert.ok(c.debitParSwitch.some((d) => d.switch === "SW-COEUR-1" && d.kbps === 12288));
   // Dans les préconisations : la caméra hors ligne et son port, en critique.
   const b = analyserSecurite(inv, g);
-  const p = b.precos.find((x) => /hors ligne dans Genetec/.test(x.titre))!;
+  // La caméra hors ligne est rangée sous son switch, avec le port et les commandes Aruba CX.
+  const p = b.fiches.find((f) => f.cible === "SW-BAT-A")!.actions.find((x) => /hors ligne dans Genetec/.test(x.titre))!;
   assert.equal(p.gravite, "critique");
-  assert.match(p.constat, /SW-BAT-A port 1\/1\/2/);
+  assert.match(p.titre, /1\/1\/2/);
+  assert.ok(p.commandes.some((c) => c.lignes.includes("show power-over-ethernet 1/1/2")));
   // Les versions des caméras viennent de Genetec.
   assert.ok(b.versions.some((v) => v.modele === "Axis P3245-V" && v.version === "10.4.0"));
 });

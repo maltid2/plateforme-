@@ -49,6 +49,7 @@ export function creerPreconisations(ctx: ContextePreconisations) {
         if (a === "imprimer") imprimer();
         if (a === "genetec") document.getElementById("f-genetec")?.click();
         if (a === "noms-genetec") renommerGenetec();
+        if (a === "copier") copier(t.closest(".s-cmd")?.querySelector("pre")?.textContent ?? "");
       });
       document.body.append(fenetre);
     }
@@ -67,6 +68,16 @@ export function creerPreconisations(ctx: ContextePreconisations) {
     const fin = () => { d.remove(); window.removeEventListener("afterprint", fin); };
     window.addEventListener("afterprint", fin);
     setTimeout(() => window.print(), 50);
+  }
+
+  /** Copie un bloc de commandes (presse-papiers du poste, rien n'est envoyé). */
+  function copier(texte: string) {
+    if (!texte) return;
+    const ok = () => notifier("Commandes copiées : à coller dans la console du switch.");
+    navigator.clipboard?.writeText(texte).then(ok, () => {
+      const z = Object.assign(document.createElement("textarea"), { value: texte });
+      fenetre!.append(z); z.select(); document.execCommand("copy"); z.remove(); ok();
+    }) ?? ok();
   }
 
   /** Les noms de Genetec remplacent ceux de la carte (« axis-accc8e010001 » → « CAM-BATA-Couloir-1 »). */

@@ -88,7 +88,9 @@ function cleKv(brut: string): string {
 export const LIBELLE_CLE: Record<string, string> = {
   serie: "N° de série", mac: "Adresse MAC", masque: "Masque", VLAN: "VLAN",
   // Informations venues du relevé automatique (Cartographie Réseau)
-  firmware: "Firmware", releve: "Relevé", archiveur: "Archiveur", lldp: "Nom LLDP", source: "Source", anomalies: "Anomalies du relevé",
+  firmware: "Firmware", releve: "Relevé", archiveur: "Archiveur", lldp: "Nom LLDP", source: "Source", anomalies: "Anomalies du relevé", marque: "Marque",
+  "ports-libres-actifs": "Ports libres restés actifs", "trunk-natif-vlan1": "Trunks en VLAN natif 1", "acces-vlan1": "Ports d'accès en VLAN 1",
+  "multi-mac": "Ports à plusieurs MAC", "trunk-tous-vlan": "Trunks ouverts à tous les VLAN", "vers-non-releve": "Ports vers un équipement non relevé", "ports-relevés": "Ports relevés", "releve-date": "Date du relevé",
 };
 
 /** « 00-11-22-AA-BB-CC », « 0011.22aa.bbcc », « 001122AABBCC » → « 00:11:22:AA:BB:CC » ; sinon null. */

@@ -23,6 +23,7 @@ const TRACES: Record<string, string> = {
   video: "M16 10l6-4v12l-6-4M2 6h14v12H2z",
   exemple: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM16.2 7.8l-2.1 6.3-6.3 2.1 2.1-6.3z",
   chevron: "M6 9l6 6 6-6",
+  copier: "M9 9h11v11H9zM5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1",
   liste: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01",
 };
 

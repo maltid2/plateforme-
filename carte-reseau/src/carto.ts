@@ -138,6 +138,7 @@ export function cartoVersTexte(fs: Feuille[]): ResultatImport {
       `switch ${nom}`,
       v(l, "ip") && `ip ${v(l, "ip")}`,
       modele ? `modèle ${modele}` : marque && !/inconnu/i.test(marque) ? `modèle ${marque}` : "",
+      marque && !/inconnu/i.test(marque) ? `marque=${marque}` : "",
       p.rj && `ports=${p.rj}`,
       p.sfp && `sfp=${p.sfp}`,
       v(l, "n serie", "numero de serie", "serie") && `serie=${v(l, "n serie", "numero de serie", "serie")}`,

@@ -117,6 +117,7 @@ Statuts : `vu` · `à revoir` · `acquis`. Mis à jour à chaque fiche.
 | SQL : sous-requêtes `IN` et semi-jointure (MariaDB) | SQL | 2026-11-25 | vu (fiche rédigée, en attente de lecture) ; calibrage SQL toujours sans réponse |
 | Sécurité infra : chemin alternatif d'authentification (Cisco Expressway CVE-2026-76466, vCenter CVE-2026-123890) | 4 | 2026-11-26 | vu (fiche rédigée, en attente de lecture) |
 | Projet : relire un outillage tiers embarqué (compétences, mod et hook `blast-radius`) | 1/5 | 2026-11-27 | vu (fiche rédigée, en attente de lecture) |
+| Poste de travail : session sans contrôleur de domaine, identifiants mis en cache | 2/6 | 2026-11-28 | vu (fiche rédigée, en attente de lecture) |
 
 ## Calibrage
 

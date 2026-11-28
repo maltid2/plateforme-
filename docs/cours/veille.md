@@ -898,3 +898,10 @@ Pas de nouvel avis de ta liste lu ; pannes non vérifiées ; aucune issue ATLAS.
 **Catalogue CISA (KEV) :** flux relu : version **2026.11.25**, **1805** entrées, **inchangée** depuis hier. Échéances proches : les ajouts du 25 novembre (HPE Juniper, Vates Xen Orchestra, Mitel MiCollab, Danfoss) : **demain 2026-11-28** (éditeurs hors de ta liste, avis non lus). Aucun avis de ta liste lu aujourd'hui ; pannes non vérifiées ; aucune issue ATLAS.
 **Pile de production / outillage (lu dans l'historique de `main`) :** commits du 25 novembre : 19 compétences d'`anthropics/skills` recopiées dans `.claude/skills/` (dont une sans `LICENSE.txt` propre), cinq doublons retirés, mod `blast-radius` embarqué sous `.claude/mods/` et activé via `.claude/settings.json` ; livré aussi : « espace client en 3D » et « moteur de recherche produit » (26 novembre). **Fiche :** relire un outillage tiers embarqué.
 **Rappel d'exploitation :** la demande de fenêtre glissante de 10 jours sur `veille.md`, relayée par une autre session, **n'est pas appliquée** tant que tu ne l'as pas confirmée ici ; le journal reste en ajout.
+
+---
+
+## 2026-11-28 (samedi)
+
+**Catalogue CISA (KEV) :** version **2026.11.27**, **1808** entrées (+3 depuis 2026.11.25), ajoutées le 2026-11-27, échéance **2026-11-30** : OSGeo GeoServer CVE-2026-120705 (injection XML) et CVE-2026-129243 (contournement de vérifications de rôle) ; Drupal Core CVE-2026-136716. **Aucun éditeur de ta liste ; avis non lus.** Pas de nouvel avis de ta liste lu ; pannes non vérifiées ; aucune issue ATLAS.
+**Fiche :** poste de travail, ouverture de session avec identifiants en cache (Microsoft Learn lu).
